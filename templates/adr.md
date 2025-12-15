@@ -1,189 +1,275 @@
-# Название продукта/проекта/фичи
+# ADR-XXXX: [Название архитектурного решения]
 
-## Проблема 
-<описание проблемы>
+**Metadata:**
+- Status: [Proposed/Accepted/Deprecated/Superseded]
+- Date: YYYY-MM-DD
+- Deciders: [Список участников принятия решения]
+- Related ADRs: [Ссылки на связанные ADR]
 
-## Решение
-<описание решения>
+---
 
-## Бизнес анализ
-### Бизнес процесс
-<ссылка на BPMN диаграмму>
+## Контекст и проблема
 
-### Бизнес требования
-<список требований>
+[Описание контекста в котором принимается решение и проблемы, которую нужно решить]
 
-### Бизнес правила
-<список правил>
+### Текущая ситуация
+[Как работает сейчас]
 
-## Системный анализ
-### Функциональные требования
-<списко функциональных требований>
+### Требования
+[Функциональные и нефункциональные требования к решению]
 
-### C4 Контекст
-```markdown
-@startuml
+### Ограничения
+- [Ограничение 1]
+- [Ограничение 2]
+
+---
+
+## Рассматриваемые варианты
+
+### Вариант 1: [Название]
+**Описание:** [Краткое описание подхода]
+
+**Плюсы:**
+- [Преимущество 1]
+- [Преимущество 2]
+
+**Минусы:**
+- [Недостаток 1]
+- [Недостаток 2]
+
+### Вариант 2: [Название]
+**Описание:** [Краткое описание подхода]
+
+**Плюсы:**
+- [Преимущество 1]
+- [Преимущество 2]
+
+**Минусы:**
+- [Недостаток 1]
+- [Недостаток 2]
+
+### Вариант 3: [Название]
+**Описание:** [Краткое описание подхода]
+
+**Плюсы:**
+- [Преимущество 1]
+- [Преимущество 2]
+
+**Минусы:**
+- [Недостаток 1]
+- [Недостаток 2]
+
+---
+
+## Принятое решение
+
+**Выбран вариант:** [Название выбранного варианта]
+
+**Обоснование:**
+[Почему был выбран именно этот вариант]
+
+---
+
+## Архитектура решения
+
+### C4 Context (Уровень 1: Системный контекст)
+
+```plantuml
+@startuml adr-xxxx-context
 !theme toy
 !include <C4/C4_Context>
 
-title <ADRname>: C4 Context
+title ADR-XXXX: System Context
 
-System_Boundary(arch_system, "Архитектура"){
-    Person(analyst, "Аналитик")
-    System(arch,"Архитектурный комитет")
-    System(git, "Git", "wbjobs/common/arch")
-    Lay_D(analyst, git)
-    Lay_R(analyst, arch)
-}
+Person(user, "User", "Пользователь системы")
+System(system, "System", "Описание системы")
+System_Ext(external, "External System", "Внешняя система")
 
-Person(lead, "Техлид")
-
-Lay_L(lead,arch_system)
-
-Rel(lead,git,"Сохраняет и читает ADR")
-Rel(analyst,git,"Сохраняет и читает ADR")
-Rel(arch,git,"Валидирует решение")
+Rel(user, system, "Использует")
+Rel(system, external, "Интегрируется с")
 
 SHOW_LEGEND()
 @enduml
 ```
 
+### C4 Container (Уровень 2: Контейнеры)
 
-### C4 Контейнеры
 ```plantuml
-@startuml
+@startuml adr-xxxx-container
 !theme toy
 !include <C4/C4_Container>
 
-title <ADRname>: C4 Containers
+title ADR-XXXX: Container Diagram
 
-System_Boundary(System_Boundary, "System_Boundary"){
-    Person(Person, "Person", "Внутренний пользователь")
-    Container(Container, "Container", "Базовый контейнер")
-    Lay_U(Person, Container)
-    ContainerDb(ContainerDb, "ContainerDb", "База данных")
-    Lay_R(Container, ContainerDb)
-    ContainerQueue(ContainerQueue, "ContainerQueue", "Очередь")
-    System(system, "system", "Система")
-    Rel(Person, Container, "Обращается")
+Person(user, "User", "Пользователь")
 
+System_Boundary(system, "System") {
+  Container(cli, "CLI", "Go/Cobra", "Командная строка")
+  Container(analyzer, "Analyzer", "Go", "Анализ кода")
+  ContainerDb(db, "Storage", "Files/DB", "Хранилище данных")
 }
 
-Container_Boundary(Container_Boundary, "Container_Boundary"){
-    Person_Ext(Person_Ext, "Person_Ext", "Внешний пользователь")
-    Container_Ext(Container_Ext, "Container_Ext", "Базовый контейнер (внешний)")
-    ContainerDb_Ext(ContainerDb_Ext, "ContainerDb_Ext", "База данных (внешняя)")
-    ContainerQueue_Ext(ContainerQueue_Ext, "ContainerQueue_Ext", "Очередь (внешняя)")
-    System_Ext(system_ext, "system_ext", "Система внешняя")
-}
+System_Ext(external, "External System", "Внешняя система")
+
+Rel(user, cli, "Запускает команды")
+Rel(cli, analyzer, "Использует")
+Rel(analyzer, db, "Читает/Пишет")
+Rel(analyzer, external, "Обращается к")
 
 SHOW_LEGEND()
-
 @enduml
 ```
 
+### C4 Component (Уровень 3: Компоненты)
 
-## Диаграмма последовательности
 ```plantuml
-@startuml
+@startuml adr-xxxx-component
 !theme toy
-skinparam stereotypePosition bottom
-skinparam Maxmessagesize 400
-skinparam sequenceMessageAlign center
+!include <C4/C4_Component>
 
-title <ADRname>: Sequence
+title ADR-XXXX: Component Diagram
 
-Actor "Техлид" as lead
+Container_Boundary(analyzer, "Analyzer") {
+  Component(parser, "Parser", "Go", "Парсинг исходного кода")
+  Component(builder, "Graph Builder", "Go", "Построение графа")
+  Component(validator, "Validator", "Go", "Валидация правил")
+}
 
-participant "git" as git << wbjobs/common/arch >> #00aaff
+ContainerDb(db, "Storage", "Files", "Хранилище")
 
-Actor "Аналитик" as analyst
-
-participant "Встреча 'Арх.Комитет'" as arch #00aaff
-
-participant "Band" as band << Архитектурный комитет >> #00aaff
-
-'boundary "Boundary" as boundary1 << Класс-Разграничитель >>
-'используется для классов, отделяющих внутреннюю структуру системы от внешней среды (экранная форма, пользовательский интерфейс, устройство ввода-вывода). Объект со стереотипом < отличается от, привычного нам, класса <<эИнтерфейс>>, который по большей части предназначен для вызова методов класса, с которым он связан. Объект boundary показывает именно экранную форму, которая принимает и передает данные обработчику
-
-'control "Control" as control1 << Класс-контроллер >>
-'активный элемент, который используются для выполнения некоторых операций над объектами (программный компонент, модуль, обработчик)
-
-'entity "Entity" as entity1 << Класс-сущность >>
-'обычно применяется для обозначения классов, которые хранят некую информацию о бизнес-объектах (соответствует таблице или элементу БД)
-
-'database "Database" as database1 << БД >>
-
-'collections "Collections" as collections1 << Группа объектов >>
-
-'queue "Queue" as queue1 << Очередь сообщений >>
-
-group "Техлид готовит черновик" "Дополнительное пояснение"
-    == Подготовка ==
-    lead -> git: Создает свою ветку от master
-    lead -> git: Сохраняет черновик ADR
-    note right
-        Образец - '000x-ADR-template':
-        * ADR
-        * Context
-        * Containers
-        * Sequence
-        * При необходимости - другие диаграммы (state, ...)
-    end note
-
-
-== Merge request ==
-    lead -> git: Делает MR из своей ветки в master
-    note right: Указывает аналитика в качестве reviewer
-
-== Согласование с аналитиком ==
-    lead -> analyst: Сообщает о готовности черновика ADR
-    note right: Название git-ветки
-    analyst -> band: Создает тред для обсуждения ADR
-    analyst -> git: Читает черновик ADR
-    alt Есть замечания?
-        analyst -> git: Создает новую ветку от master
-        analyst -> git: Предлагает изменения в своей ветке
-        analyst -> git: Делает MR из своей ветки в master
-        note right
-            Указывает техлида
-            в качестве reviewer
-
-            При необходимости
-            обсуждают ADR в Band
-        end note
-    end
-end
-
-group "Техлид согласовывает решение на архитектурном комитете"
-== Подготовка ==
-lead -> arch: Сообщает о желании презентовать ADR
-arch -> arch: Включает ADR в повестку\nодной из регулярных встреч
-== Презентация ==
-lead -> arch: Показывает ADR и рассказывает о ней
-lead <-- arch: Дают замечания
-lead -> git: Новая версия ADR\nс учетом замечаний
-end
-
-/'
-== Пример разных сообщений и пометок ==
-group Пример разных сообщений и пометок
-    lead -> git: Раз
-    note right
-        Пояснение
-        на несколько
-        строк
-    end note
-    git -> analyst: Два
-    alt Все хорошо?
-    git <-- analyst: Три. Ответное сообщение\nпунктиром
-    git --> lead : Четыре
-    else Все плохо?
-        git <-- analyst !!: Не три
-        git --> lead !!: И не четыре
-    end
-end
-'/
+Rel(parser, builder, "Передает AST")
+Rel(builder, validator, "Передает граф")
+Rel(validator, db, "Сохраняет результаты")
 
 @enduml
 ```
+
+### Sequence Diagram (Последовательность взаимодействий)
+
+```plantuml
+@startuml adr-xxxx-sequence
+!theme toy
+
+title ADR-XXXX: Sequence Diagram
+
+actor User
+participant "CLI" as CLI
+participant "Analyzer" as A
+participant "Parser" as P
+participant "Builder" as B
+database "Storage" as S
+
+User -> CLI: Execute command
+activate CLI
+
+CLI -> A: Analyze(path)
+activate A
+
+A -> P: Parse(files)
+activate P
+P --> A: AST
+deactivate P
+
+A -> B: BuildGraph(AST)
+activate B
+B --> A: Graph
+deactivate B
+
+A -> S: Save(graph)
+activate S
+S --> A: OK
+deactivate S
+
+A --> CLI: Result
+deactivate A
+
+CLI --> User: Display result
+deactivate CLI
+
+@enduml
+```
+
+---
+
+## Последствия
+
+### Положительные
+
+- [Положительное последствие 1]
+- [Положительное последствие 2]
+- [Положительное последствие 3]
+
+### Отрицательные
+
+- [Отрицательное последствие 1]
+- [Отрицательное последствие 2]
+
+### Нейтральные
+
+- [Нейтральное последствие 1]
+- [Нейтральное последствие 2]
+
+---
+
+## Детали реализации
+
+### Технологии и библиотеки
+- [Технология 1]: [назначение]
+- [Технология 2]: [назначение]
+
+### Изменения в кодовой базе
+- [Пакет/модуль 1]: [изменения]
+- [Пакет/модуль 2]: [изменения]
+
+### Миграционный план
+1. [Шаг 1]
+2. [Шаг 2]
+3. [Шаг 3]
+
+---
+
+## Альтернативы (отклоненные)
+
+### Почему не выбран вариант 1
+[Конкретные причины отклонения]
+
+### Почему не выбран вариант 2
+[Конкретные причины отклонения]
+
+---
+
+## Связанные решения
+
+- [ADR-YYYY]: [название и связь]
+- [ADR-ZZZZ]: [название и связь]
+
+---
+
+## Ссылки
+
+- [Ссылка на документацию 1]
+- [Ссылка на issue/PR]
+- [Ссылка на внешний ресурс]
+
+---
+
+## Пример для archlint
+
+**ADR-0001: Выбор алгоритма для поиска циклических зависимостей**
+
+Контекст: Необходимо обнаруживать циклические зависимости в графе пакетов Go
+
+Варианты:
+1. DFS с отслеживанием стека (простой, но только простые циклы)
+2. Tarjan's algorithm (O(V+E), находит все SCC)
+3. Floyd-Warshall (O(V^3), слишком медленный)
+
+Решение: Выбран Tarjan's algorithm
+- Оптимальная сложность O(V+E)
+- Находит все strongly connected components за один проход
+- Стандартный алгоритм для этой задачи
+
+Последствия:
++ Эффективное обнаружение всех циклов
++ Один проход по графу
+- Более сложная реализация чем DFS

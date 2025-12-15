@@ -1,12 +1,11 @@
-# Task XXX: [Task Title]
+# Task XXXX: [Task Title]
 
 **Metadata:**
-- Priority: XXX (High/Medium/Low)
-- Status: Todo/InProgress/Done
+- Priority: XXXX (High/Medium/Low)
+- Status: Todo
 - Created: YYYY-MM-DD
-- Owner: [Name]
-- Parent Task: [Parent ID if subtask]
-- Estimated Effort: [S/M/L/XL]
+- Effort: XS/S/M/L/XL
+- Parent Task: [Parent task ID if applicable, or `-`]
 
 ---
 
@@ -21,185 +20,192 @@
 ### Success Metrics
 - [Метрика 1]
 - [Метрика 2]
+- [Метрика 3]
 
 ---
 
-## Architecture Context (C4 Level 1: System Context)
+## Architecture
+
+<!--
+ВАЖНО: Объем диаграмм зависит от размера задачи:
+- XS/S задачи: только Data Model (UML Class)
+- M задачи: Component + Data Model + Sequence
+- L/XL задачи: все диаграммы (Context, Container, Component, Data Model, Sequence, Activity)
+-->
+
+### System Context (C4 Level 1)
+<!-- Для L/XL задач: показывает систему в окружении -->
+<!-- Для S/M задач: можно пропустить эту секцию -->
 
 ```plantuml
-@startuml task-xxx-context
+@startuml task-xxxx-context
 !theme toy
 !include <C4/C4_Context>
 
-title System Context Diagram for [Task Name]
+title System Context: [Task Name]
 
-Person(user, "User", "End user of the system")
-System(system, "Target System", "System being modified")
-System_Ext(external, "External System", "Dependencies")
+Person(developer, "Developer", "Go developer using archlint")
+System(archlint, "archlint", "Architecture linting tool")
+System_Ext(codebase, "Go Codebase", "Source code to analyze")
 
-Rel(user, system, "Uses")
-Rel(system, external, "Calls", "API")
+Rel(developer, archlint, "Runs analysis", "CLI")
+Rel(archlint, codebase, "Analyzes", "AST parsing")
 
+SHOW_LEGEND()
 @enduml
 ```
 
 ---
 
-## Architecture Design (C4 Level 2: Containers)
+### Container Diagram (C4 Level 2)
+<!-- Для L/XL задач: показывает контейнеры системы -->
+<!-- Для S/M задач: можно пропустить эту секцию -->
 
 ```plantuml
-@startuml task-xxx-container
+@startuml task-xxxx-container
 !theme toy
 !include <C4/C4_Container>
 
-title Container Diagram for [Task Name]
+title Container Diagram: archlint
 
-Container(app, "Application", "Go", "Main application")
-ContainerDb(db, "Database", "PostgreSQL", "Stores data")
-Container(cache, "Cache", "Redis", "Caching layer")
+Person(developer, "Developer", "Go developer")
 
-Rel(app, db, "Reads/Writes", "SQL")
-Rel(app, cache, "Uses", "Redis Protocol")
+System_Boundary(archlint, "archlint") {
+  Container(cli, "CLI", "Cobra", "Command-line interface")
+  Container(analyzer, "Code Analyzer", "Go", "AST parsing & graph building")
+  Container(linter, "Linter", "Go", "Rule validation")
+  Container(reporter, "Reporter", "Go", "Results formatting")
+}
 
+Rel(developer, cli, "Executes commands")
+Rel(cli, analyzer, "Analyzes code")
+Rel(analyzer, linter, "Validates graph")
+Rel(linter, reporter, "Formats results")
+
+SHOW_LEGEND()
 @enduml
 ```
 
 ---
 
-## Component Design (C4 Level 3: Component)
+### Component Overview (C4 Component)
+<!-- Для M/L/XL задач: показывает компоненты внутри контейнера -->
+<!-- Для XS/S задач: можно пропустить или сильно упростить -->
 
 ```plantuml
-@startuml task-xxx-component
+@startuml task-xxxx-component
 !theme toy
 !include <C4/C4_Component>
 
-title Component Diagram for [Task Name]
+title Component Diagram: [Package Name]
 
-Component(handler, "Handler", "Go", "HTTP request handler")
-Component(service, "Service", "Go", "Business logic")
-Component(repo, "Repository", "Go", "Data access")
+Container_Boundary(package, "[Package]") {
+  Component(comp1, "Component 1", "Go", "Description")
+  Component(comp2, "Component 2", "Go", "Description")
+  Component(comp3, "Component 3", "Go", "Description")
+}
 
-Rel(handler, service, "Calls")
-Rel(service, repo, "Uses")
+Rel(comp1, comp2, "Uses")
+Rel(comp2, comp3, "Calls")
 
 @enduml
 ```
 
 ---
 
-## Data Model (UML Class Diagram)
+### Data Model
+<!-- ОБЯЗАТЕЛЬНО для всех задач: показывает структуры данных -->
 
 ```plantuml
-@startuml task-xxx-classes
+@startuml task-xxxx-model
 !theme toy
 
-title Data Model for [Task Name]
+title Data Model: [Task Name]
 
-class Entity1 {
-  +ID: string
-  +Name: string
-  +CreatedAt: time.Time
+class TypeName {
+  +Field1: type
+  +Field2: type
   --
-  +Validate() error
-  +ToJSON() string
+  +Method1(param type) (result, error)
+  +Method2() type
 }
 
-class Entity2 {
-  +ID: string
-  +Entity1ID: string
-  +Value: float64
+class AnotherType {
+  +Field: type
   --
-  +Calculate() float64
+  +Method() error
 }
 
-enum Status {
-  PENDING
-  ACTIVE
-  COMPLETED
-}
+TypeName --> AnotherType
 
-Entity1 "1" -- "many" Entity2
-Entity2 --> Status
+note right of TypeName
+  Ключевые моменты:
+  - Указывайте типы полей
+  - Указывайте сигнатуры методов
+  - Показывайте связи между типами
+end note
 
 @enduml
 ```
 
 ---
 
-## Sequence Flow (UML Sequence Diagram)
+### Sequence Flow (UML Sequence Diagram)
+<!-- Для M/L/XL задач: показывает взаимодействия компонентов -->
+<!-- Для XS/S задач: можно пропустить или упростить -->
 
 ```plantuml
-@startuml task-xxx-sequence
+@startuml task-xxxx-sequence
 !theme toy
 
-title Sequence Diagram for [Task Name]
+title Sequence: [Task Name]
 
 actor User
-participant "Handler" as H
-participant "Service" as S
-participant "Repository" as R
-database "Database" as DB
+participant "Component A" as A
+participant "Component B" as B
+participant "Component C" as C
 
-User -> H: Request
-activate H
+User -> A: Action
+activate A
 
-H -> S: ProcessRequest()
-activate S
+A -> B: Call
+activate B
+B -> C: Request
+activate C
+C --> B: Response
+deactivate C
+B --> A: Result
+deactivate B
 
-S -> R: GetData()
-activate R
-
-R -> DB: SELECT
-activate DB
-DB --> R: Result
-deactivate DB
-
-R --> S: Data
-deactivate R
-
-S -> S: BusinessLogic()
-
-S --> H: Response
-deactivate S
-
-H --> User: HTTP 200
-deactivate H
+A --> User: Output
+deactivate A
 
 @enduml
 ```
 
 ---
 
-## Process Flow (UML Activity Diagram)
+### Process Flow (UML Activity Diagram)
+<!-- Для L/XL задач: показывает сложные алгоритмы -->
+<!-- Для XS/S/M задач: можно пропустить -->
 
 ```plantuml
-@startuml task-xxx-activity
+@startuml task-xxxx-activity
 !theme toy
 
-title Activity Diagram for [Task Name]
+title Activity: [Algorithm Name]
 
 start
 
-:Receive Input;
+:Initialize;
 
-if (Valid?) then (yes)
-  :Process Data;
-
-  fork
-    :Step A;
-  fork again
-    :Step B;
-  end fork
-
-  :Combine Results;
+if (Condition?) then (yes)
+  :Process A;
 else (no)
-  :Return Error;
-  stop
+  :Process B;
 endif
 
-:Save to Database;
-
-:Return Success;
+:Finalize;
 
 stop
 
@@ -210,105 +216,130 @@ stop
 
 ## Requirements
 
-### Functional Requirements
+<!--
+ВАЖНО: Количество и детализация зависят от размера:
+- XS/S: 1-3 простых требования
+- M: 3-5 требований с некоторыми деталями
+- L/XL: 5-11 детальных требований с API, примерами, валидацией
+-->
 
-**FR1: [Requirement Name]**
-- Description: [Detailed description]
-- Input: [Expected input]
-- Output: [Expected output]
-- Dependencies: [Other components/tasks]
+### R1: [Requirement Name]
+**Description:** [Описание требования]
 
-**FR2: [Requirement Name]**
-- Description: [Detailed description]
-- Input: [Expected input]
-- Output: [Expected output]
-- Dependencies: [Other components/tasks]
+<!-- Для L/XL задач добавьте детали: -->
+**Input:**
+- [Parameter]: [type] - [description]
 
-### Non-Functional Requirements
+**Output:**
+- [Return value]: [type] - [description]
 
-**NFR1: Performance**
-- [Specific performance criteria]
+**API/Methods:**
+```go
+// Package: [package path]
+// File: [file path]
 
-**NFR2: Security**
-- [Security requirements]
+type [TypeName] struct {
+    [field] [type]
+}
 
-**NFR3: Scalability**
-- [Scalability requirements]
+func New[TypeName]([params]) *[TypeName] {
+    // Constructor
+}
+
+func (t *[TypeName]) [Method]([params]) ([returns], error) {
+    // Description
+}
+```
+
+**Validation Rules:**
+- [Rule 1]
+- [Rule 2]
+
+---
+
+### R2: [Requirement Name]
+[Описание требования]
+
+<!-- Для маленьких задач достаточно краткого описания -->
 
 ---
 
 ## Acceptance Criteria
 
-### AC1: [Criterion Name]
-- [ ] Condition 1
-- [ ] Condition 2
-- [ ] Condition 3
+<!--
+ВАЖНО: Количество критериев зависит от размера:
+- XS: 3-5 критериев
+- S: 5-10 критериев
+- M: 10-15 критериев
+- L: 15-25 критериев
+- XL: 25-35 критериев
 
-### AC2: [Criterion Name]
-- [ ] Condition 1
-- [ ] Condition 2
+Каждый критерий проверяет ОДНУ конкретную вещь
+-->
 
-### AC3: [Criterion Name]
-- [ ] Condition 1
-- [ ] Condition 2
+- [ ] AC1: [Конкретный проверяемый критерий]
+- [ ] AC2: [Конкретный проверяемый критерий]
+- [ ] AC3: [Конкретный проверяемый критерий]
+- [ ] AC4: [Конкретный проверяемый критерий]
+- [ ] AC5: All tests pass
+- [ ] AC6: Code reviewed
+
+<!-- Для L/XL задач добавьте больше критериев:
+- Детальные проверки функциональности
+- Edge cases
+- Performance requirements
+- Error handling
+- Integration points
+- Backward compatibility
+-->
 
 ---
 
-## Implementation Plan
+## Implementation Steps
 
+<!--
+ВАЖНО: Детализация шагов зависит от размера:
+- XS/S: 3-5 простых шагов
+- M: 5-10 шагов с некоторыми деталями
+- L/XL: Разбивка по фазам, 10-20+ детальных шагов
+-->
+
+**Step 1:** [Step name]
+- Files: [file paths]
+- Action: [Create/Modify/Delete]
+- Details: [What to do]
+
+**Step 2:** [Step name]
+- Files: [file paths]
+- Action: [Create/Modify/Delete]
+- Details: [What to do]
+
+**Step 3:** Tests
+- Files: [test file paths]
+- Action: Create
+- Details: Write tests
+
+<!-- Для L/XL задач используйте фазы: -->
+
+<!--
 ### Phase 1: Foundation
-**Step 1.1: [Step Name]**
-- Files: `path/to/file.go`
-- Action: Create/Modify
-- Details: [Implementation details]
-- Tests: [Test requirements]
-
-**Step 1.2: [Step Name]**
-- Files: `path/to/file.go`
-- Action: Create/Modify
-- Details: [Implementation details]
-- Tests: [Test requirements]
+**Step 1.1:** ...
+**Step 1.2:** ...
 
 ### Phase 2: Core Logic
-**Step 2.1: [Step Name]**
-- Files: `path/to/file.go`
-- Action: Create/Modify
-- Details: [Implementation details]
-- Tests: [Test requirements]
+**Step 2.1:** ...
+**Step 2.2:** ...
 
-### Phase 3: Integration & Testing
-**Step 3.1: Integration Tests**
-- Test scenarios
-- Expected behavior
-
-**Step 3.2: Documentation**
-- Update README
-- Add code comments
-- Update API docs
-
----
-
-## Dependencies
-
-### Internal Dependencies
-- Task XXX: [Description]
-- Task YYY: [Description]
-
-### External Dependencies
-- Package/Library: [Name] ([Version])
-- API: [Name] ([Endpoint])
-
----
-
-## Risks & Mitigations
-
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| [Risk description] | High/Medium/Low | High/Medium/Low | [Mitigation strategy] |
+### Phase 3: Integration
+**Step 3.1:** ...
+**Step 3.2:** ...
+-->
 
 ---
 
 ## Testing Strategy
+
+<!-- Для всех задач: укажите какие тесты нужны -->
 
 ### Unit Tests
 - [ ] Test [Component A]
@@ -316,64 +347,337 @@ stop
 - Coverage target: 80%+
 
 ### Integration Tests
-- [ ] Test [Integration scenario 1]
-- [ ] Test [Integration scenario 2]
-
-### Manual Testing
-- [ ] Test [Scenario 1]
-- [ ] Test [Scenario 2]
+<!-- Для M/L/XL задач -->
+- [ ] Test [Integration scenario]
 
 ---
 
-## Technical Notes
+## Notes
+
+<!--
+ВАЖНО: Секция Notes критична для spec driven development:
+- Для XS/S: минимальные примеры
+- Для M: примеры кода
+- Для L/XL: детальные примеры, конфигурации, design decisions
+-->
 
 ### Design Decisions
-- [Decision 1]: Rationale
-- [Decision 2]: Rationale
-
-### Performance Considerations
-- [Consideration 1]
-- [Consideration 2]
-
-### Security Considerations
-- [Consideration 1]
-- [Consideration 2]
+<!-- Для M/L/XL задач -->
+[Ключевые проектные решения]
 
 ### Code Examples
 
 ```go
-// Example implementation
+// Пример использования
 package example
 
-type Service struct {
-    repo Repository
+import "github.com/mshogin/archlint/[package]"
+
+func Example() {
+    // Код примера
+}
+```
+
+### References
+- [Ссылка на документацию]
+- [Ссылка на related issue]
+
+---
+
+## Примеры задач разного размера
+
+### XS задача (50-100 строк): Fix typo in error message
+
+```markdown
+# Task 0099: Fix Error Message Typo
+
+Metadata: Priority: 0099, Status: Todo, Effort: XS
+
+## Overview
+Problem: Error message has typo "dependecy" instead of "dependency"
+Solution: Fix typo in internal/analyzer/go.go:142
+
+## Architecture
+### Data Model
+(пропустить для XS)
+
+## Requirements
+R1: Fix typo in error message string
+
+## Acceptance Criteria
+- [ ] AC1: Typo fixed in go.go:142
+- [ ] AC2: Tests pass
+- [ ] AC3: No other typos introduced
+
+## Implementation Steps
+Step 1: Fix typo in go.go
+Step 2: Run tests
+
+## Notes
+Location: internal/analyzer/go.go:142
+```
+
+---
+
+### S задача (100-200 строк): Add new link type
+
+```markdown
+# Task 0080: Add "Implements" Link Type
+
+Metadata: Priority: 0080, Status: Todo, Effort: S
+
+## Overview
+Problem: Graph doesn't represent interface implementation relationships
+Solution: Add new LinkType "implements" to model
+
+## Architecture
+### Data Model
+class Link {
+  +Type: string  // add "implements" value
 }
 
-func NewService(repo Repository) *Service {
-    return &Service{repo: repo}
+## Requirements
+R1: Add "implements" to LinkType enum
+R2: Update validation to accept new type
+
+## Acceptance Criteria
+- [ ] AC1: LinkType supports "implements"
+- [ ] AC2: Validation accepts "implements"
+- [ ] AC3: Example added to tests
+- [ ] AC4: Documentation updated
+- [ ] AC5: Tests pass
+
+## Implementation Steps
+Step 1: Add "implements" to model.go
+Step 2: Update validation
+Step 3: Add tests
+
+## Notes
+Location: internal/model/model.go
+```
+
+---
+
+### M задача (200-400 строк): Implement graph export to JSON
+
+```markdown
+# Task 0050: Export Graph to JSON
+
+Metadata: Priority: 0050, Status: Todo, Effort: M
+
+## Overview
+Problem: archlint only exports to YAML, need JSON for other tools
+Solution: Add JSON exporter
+
+## Architecture
+### Component Overview
+Component(exporter, "JSONExporter", "Go", "Export to JSON")
+
+### Data Model
+class JSONExporter {
+  +Export(graph Graph) ([]byte, error)
 }
 
-func (s *Service) Process(input string) error {
-    // Implementation
-    return nil
+### Sequence Flow
+User -> CLI: --output json
+CLI -> JSONExporter: Export(graph)
+JSONExporter --> CLI: JSON bytes
+
+## Requirements
+R1: JSONExporter type
+- Input: Graph
+- Output: []byte, error
+- Method: Export(g Graph) ([]byte, error)
+
+R2: CLI integration
+- Add --format flag (yaml|json)
+- Default: yaml
+
+## Acceptance Criteria
+- [ ] AC1: JSONExporter.Export() exists
+- [ ] AC2: Exports all graph components
+- [ ] AC3: Valid JSON output
+- [ ] AC4: CLI --format json works
+- [ ] AC5: CLI --format yaml works (backward compat)
+- [ ] AC6: Error handling for invalid graphs
+- [ ] AC7: Tests cover all node types
+- [ ] AC8: Integration test
+- [ ] AC9: Documentation updated
+- [ ] AC10: golangci-lint passes
+
+## Implementation Steps
+Step 1: Create internal/exporter/json.go
+Step 2: Implement Export() method
+Step 3: Add CLI flag
+Step 4: Write tests
+Step 5: Update README
+
+## Testing Strategy
+### Unit Tests
+- Test Export with simple graph
+- Test Export with complex graph
+- Test error cases
+
+### Integration Tests
+- Test full CLI flow
+
+## Notes
+JSON format:
+{
+  "components": {...},
+  "links": {...}
 }
 ```
 
 ---
 
-## References
+### L задача (400-700 строк): Implement cycle detection
 
-- [Related Documentation](link)
-- [API Documentation](link)
-- [Architecture Decision Record](link)
+```markdown
+# Task 0030: Implement Cycle Detection with Tarjan's Algorithm
+
+Metadata: Priority: 0030, Status: Todo, Effort: L
+
+## Overview
+Problem: archlint builds graph but doesn't detect circular dependencies
+Solution: Implement Tarjan's algorithm for cycle detection
+
+## Architecture
+### System Context
+(full C4 context diagram)
+
+### Container Diagram
+(full C4 container diagram)
+
+### Component Overview
+(full C4 component diagram)
+
+### Data Model
+(detailed class diagram with all methods)
+
+### Sequence Flow
+(detailed sequence diagram)
+
+### Process Flow
+(activity diagram for Tarjan's algorithm)
+
+## Requirements
+FR1: CycleDetector Type
+Input: Graph
+Output: [][]string (cycles)
+API:
+  type CycleDetector struct { graph Graph }
+  func NewCycleDetector(g Graph) *CycleDetector
+  func (cd *CycleDetector) FindCycles() [][]string
+  func (cd *CycleDetector) HasCycle() bool
+Complexity: O(V+E)
+
+FR2: Tarjan's Algorithm Implementation
+(detailed requirements)
+
+FR3: CLI Integration
+(detailed requirements)
+
+NFR1: Performance
+- < 1s for 1000 node graph
+- O(V+E) complexity
+
+NFR2: Correctness
+- Find ALL cycles
+- No false positives
+
+## Acceptance Criteria
+(25-30 detailed criteria)
+- [ ] AC1: File pkg/analyzer/graph/cycles.go exists
+- [ ] AC2: CycleDetector type defined
+- [ ] AC3: NewCycleDetector constructor
+- [ ] AC4: FindCycles() method
+...
+- [ ] AC25: golangci-lint passes
+- [ ] AC26: Test coverage > 90%
+
+## Implementation Steps
+### Phase 1: Foundation
+Step 1.1: Create cycles.go
+Step 1.2: Define CycleDetector type
+
+### Phase 2: Algorithm
+Step 2.1: Implement Tarjan's algorithm
+Step 2.2: Add helper methods
+
+### Phase 3: Integration
+Step 3.1: CLI integration
+Step 3.2: Reporter integration
+
+### Phase 4: Testing
+Step 4.1: Unit tests
+Step 4.2: Integration tests
+Step 4.3: Benchmarks
+
+## Testing Strategy
+(detailed testing plan)
+
+## Notes
+### Design Decisions
+Decision: Use Tarjan's algorithm
+Rationale: O(V+E), finds all SCC
+
+### Performance Considerations
+- Use adjacency list
+- Cache results
+
+### Code Examples
+(detailed code examples)
+
+### Algorithm Reference
+(link to Tarjan's algorithm documentation)
+```
 
 ---
 
-## Progress Log
+### XL задача (700-1000 строк): Implement configuration system
 
-### YYYY-MM-DD
-- [Update 1]
-- [Update 2]
+```markdown
+# Task 0010: Implement Strategy Configuration System with TimeGrid
 
-### YYYY-MM-DD
-- [Update 3]
+(Similar to aitrader's 0005-01-strategy-config.md - 968 lines)
+
+Metadata: Priority: 0010, Status: Todo, Effort: XL
+
+## Overview
+(detailed problem statement with context)
+
+## Architecture
+(all 5 diagrams: Context, Container, Component, 2x Sequence, Activity)
+
+## Requirements
+(11 detailed functional requirements with full API specifications)
+
+FR1: Config Interface
+FR2: Config Implementation
+FR3: TimeGrid System
+FR4: Serialization
+FR5: CLI Integration
+FR6: Validation
+FR7: Factory Pattern
+FR8: Backward Compatibility
+FR9: Migration Strategy
+FR10: Performance Optimization
+FR11: Error Handling
+
+NFR1: Performance
+NFR2: Scalability
+NFR3: Maintainability
+
+## Acceptance Criteria
+(30-35 criteria covering all aspects)
+
+## Implementation Steps
+(20+ steps organized in 4-5 phases)
+
+## Testing Strategy
+(comprehensive testing plan with multiple test types)
+
+## Notes
+(extensive notes with examples, configurations, formulas, etc.)
+```

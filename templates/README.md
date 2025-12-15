@@ -1,318 +1,563 @@
-# Task Templates
+# Task Templates для archlint
 
 Шаблоны для создания задач с использованием Markdown + PlantUML (C4 + UML).
 
+Эти шаблоны предназначены для **spec driven development** с Claude Code - детальные спецификации позволяют AI эффективно реализовывать функциональность.
+
+---
+
+## Иерархия артефактов
+
+```
+Goal (Цель)
+  |
+  +-- Epic (Крупная инициатива)
+       |
+       +-- Story (User Story)
+            |
+            +-- Task (Техническая задача)
+```
+
+**ADR** (Architecture Decision Record) - документирование архитектурных решений, может быть связан с любым уровнем.
+
+---
+
 ## Доступные шаблоны
 
-### 1. task-template.md (Полный)
-**Когда использовать:**
-- Большие задачи (L/XL)
-- Архитектурные изменения
-- Новые модули/компоненты
-- Требуется детальное проектирование
+### 1. goal.md
+**Назначение:** Высокоуровневая бизнес-цель
+
+**Когда использовать:** Для определения стратегических целей проекта
+
+**Пример:** "Улучшить анализ архитектуры Go проектов"
+
+---
+
+### 2. epic.md
+**Назначение:** Крупная техническая инициатива
+
+**Когда использовать:** Для группировки связанных stories
+
+**Пример:** "Анализ графа зависимостей"
+
+---
+
+### 3. story.md
+**Назначение:** User Story
+
+**Когда использовать:** Для описания функциональности с точки зрения пользователя
+
+**Пример:** "Как разработчик, я хочу обнаруживать циклические зависимости"
+
+---
+
+### 4. task-template.md (Универсальный)
+**Назначение:** Технические задачи ЛЮБОГО размера (XS/S/M/L/XL)
+
+**Ключевая особенность:** Один шаблон, но разная детализация при заполнении
+
+**Подход:**
+- Шаблон содержит ВСЕ возможные секции
+- HTML-комментарии указывают, что нужно для каждого размера задачи
+- Неиспользуемые секции просто удаляются или упрощаются
+
+**Структура:**
+```
+- Metadata
+- Overview (Problem, Solution, Success Metrics)
+- Architecture (Context, Container, Component, Data Model, Sequence, Activity)
+- Requirements
+- Acceptance Criteria
+- Implementation Steps
+- Testing Strategy
+- Notes
+```
+
+**Размеры задач:**
+
+#### XS задачи (50-100 строк)
+**Пример:** Fix typo in error message
+
+**Что заполняем:**
+- Metadata: Effort: XS
+- Overview: краткое
+- Architecture: пропустить диаграммы
+- Requirements: 1-2 простых
+- Acceptance Criteria: 3-5
+- Implementation Steps: 2-3 шага
+- Notes: минимально
+
+**Шаблон показывает:** `<!-- Для XS задач можно пропустить -->`
+
+---
+
+#### S задачи (100-200 строк)
+**Пример:** Add new link type to graph
+
+**Что заполняем:**
+- Metadata: Effort: S
+- Overview: краткое
+- Architecture: только Data Model
+- Requirements: 2-3
+- Acceptance Criteria: 5-10
+- Implementation Steps: 3-5 шагов
+- Notes: примеры кода
+
+**Шаблон показывает:** `<!-- Для S задач: только Data Model -->`
+
+---
+
+#### M задачи (200-400 строк)
+**Пример:** Implement JSON exporter
+
+**Что заполняем:**
+- Metadata: Effort: M
+- Overview: детальное
+- Architecture: Component + Data Model + Sequence
+- Requirements: 3-5 с деталями
+- Acceptance Criteria: 10-15
+- Implementation Steps: 5-10 шагов
+- Testing Strategy: Unit + Integration
+- Notes: примеры, конфигурации
+
+**Шаблон показывает:** `<!-- Для M задач: Component + Data Model + Sequence -->`
+
+---
+
+#### L задачи (400-700 строк)
+**Пример:** Implement cycle detection with Tarjan's algorithm
+
+**Что заполняем:**
+- Metadata: Effort: L
+- Overview: очень детальное
+- Architecture: Context + Container + Component + Data Model + Sequence + Activity
+- Requirements: 5-8 детальных с API
+- Acceptance Criteria: 15-25
+- Implementation Steps: разбивка по фазам (10-15 шагов)
+- Testing Strategy: полная стратегия
+- Notes: Design decisions, performance, примеры
+
+**Шаблон показывает:** `<!-- Для L задач: все диаграммы -->`
+
+---
+
+#### XL задачи (700-1000 строк)
+**Пример:** Implement configuration system with TimeGrid (как в aitrader)
+
+**Что заполняем:**
+- Metadata: Effort: XL
+- Overview: максимально детальное с контекстом
+- Architecture: ВСЕ диаграммы + несколько Sequence для разных сценариев
+- Requirements: 8-11 максимально детальных (FR + NFR)
+- Acceptance Criteria: 25-35
+- Implementation Steps: 4-5 фаз, 20+ шагов
+- Testing Strategy: все типы тестов
+- Notes: развернутые примеры, формулы, конфигурации, миграция
+
+**Шаблон показывает:** `<!-- Для XL задач: максимальная детализация -->`
+
+---
+
+### 5. adr.md
+**Назначение:** Architecture Decision Record
+
+**Когда использовать:** При принятии важных архитектурных решений
 
 **Содержит:**
-- C4 диаграммы (Context, Container, Component)
-- UML диаграммы (Class, Sequence, Activity)
-- Детальные требования
-- План реализации по фазам
-- Управление рисками
-- Стратегия тестирования
+- Контекст и проблема
+- Рассматриваемые варианты (3+)
+- Принятое решение с обоснованием
+- C4: Context, Container, Component
+- Sequence диаграмма
+- Последствия (положительные/отрицательные)
+- Альтернативы (почему отклонены)
 
-### 2. task-template-simple.md (Упрощенный)
-**Когда использовать:**
-- Небольшие задачи (S/M)
-- Рефакторинг
-- Багфиксы
-- Добавление функциональности
+**Пример:** Выбор алгоритма для поиска циклов
 
-**Содержит:**
-- Базовые C4/UML диаграммы
-- Основные требования
-- Критерии приемки
-- Простой план реализации
+---
 
-## Как использовать
+## Как работать с универсальным шаблоном
 
-### Создание новой задачи
+### Шаг 1: Определите размер задачи
 
-1. Выберите подходящий шаблон
-2. Скопируйте в `tasks/todo/`
-3. Переименуйте: `XXXX-task-name.md`
-   - XXXX = 4-значный приоритет (0001-9999)
-   - Меньше число = выше приоритет
+**XS** - опечатка, простой баг, косметические изменения
+**S** - добавить поле/метод, простая функциональность
+**M** - новая feature с интеграцией
+**L** - новый модуль, сложный алгоритм
+**XL** - архитектурные изменения, новая подсистема
+
+### Шаг 2: Скопируйте шаблон
 
 ```bash
-# Пример создания задачи
+cp templates/task-template.md tasks/todo/0042-your-task.md
+```
+
+### Шаг 3: Читайте комментарии
+
+В шаблоне есть HTML-комментарии:
+
+```markdown
+<!--
+ВАЖНО: Объем диаграмм зависит от размера задачи:
+- XS/S задачи: только Data Model (UML Class)
+- M задачи: Component + Data Model + Sequence
+- L/XL задачи: все диаграммы
+-->
+```
+
+```markdown
+<!-- Для L/XL задач: показывает систему в окружении -->
+<!-- Для S/M задач: можно пропустить эту секцию -->
+```
+
+### Шаг 4: Заполните по рекомендациям
+
+- Для **XS** - удалите большинство диаграмм, минимум текста
+- Для **S** - только Data Model, краткие Requirements
+- Для **M** - Component + Data Model + Sequence, детальнее
+- Для **L** - все диаграммы, детальные Requirements
+- Для **XL** - все максимально детально
+
+### Шаг 5: Удалите неиспользуемые секции
+
+Если секция не нужна - просто удалите её!
+
+### Шаг 6: Посмотрите примеры
+
+В конце шаблона есть **5 примеров** задач разного размера:
+- XS: Fix typo (50-100 строк)
+- S: Add link type (100-200 строк)
+- M: JSON exporter (200-400 строк)
+- L: Cycle detection (400-700 строк)
+- XL: Config system (700-1000 строк)
+
+---
+
+## Структура директорий
+
+```
+tasks/
+├── todo/          # Задачи в очереди
+├── inprogress/    # Задачи в работе
+└── done/          # Завершенные задачи
+```
+
+### Именование файлов задач
+
+```
+PPPP-short-description.md
+```
+
+- `PPPP` = 4-значный приоритет (0001-9999)
+- Меньше число = выше приоритет
+
+**Примеры:**
+```
+0010-implement-cycle-detection.md      # Критическая
+0100-add-metrics-calculation.md        # Высокий
+0500-improve-error-messages.md         # Средний
+```
+
+### Подзадачи
+
+```
+PPPP-XX-subtask-name.md
+```
+
+**Пример:**
+```
+0050-graph-analysis.md               # Родительская
+0050-01-cycle-detection.md           # Подзадача 1
+0050-02-metrics-calculation.md       # Подзадача 2
+```
+
+---
+
+## Workflow
+
+### Создание задачи
+
+1. Выберите размер (XS/S/M/L/XL)
+2. Скопируйте `task-template.md` в `tasks/todo/`
+3. Назовите: `PPPP-description.md`
+4. Следуйте комментариям в шаблоне
+5. Удалите неиспользуемые секции
+
+```bash
 cp templates/task-template.md tasks/todo/0042-implement-feature-x.md
 ```
 
-4. Заполните метаданные
-5. Замените все `[Placeholder]` на реальные значения
-6. Обновите/удалите неиспользуемые секции
+### Начало работы
 
-### Работа с задачей
-
-**Todo -> InProgress:**
 ```bash
-mv tasks/todo/0042-implement-feature-x.md tasks/inprogress/
+mv tasks/todo/0042-feature-x.md tasks/inprogress/
 ```
 
-**InProgress -> Done:**
+Обновите: `Status: InProgress`
+
+### Завершение
+
 ```bash
-mv tasks/inprogress/0042-implement-feature-x.md tasks/done/
+mv tasks/inprogress/0042-feature-x.md tasks/done/
 ```
 
-## Секции шаблона
+Обновите: `Status: Done`
 
-### PlantUML диаграммы
+---
 
-#### C4 Diagrams (Архитектура)
+## Ключевые секции (для spec driven development)
 
-**Level 1: System Context**
-- Показывает систему в контексте окружения
-- Внешние пользователи и системы
-- Граничные взаимодействия
+### 1. Architecture - Data Model (ОБЯЗАТЕЛЬНО!)
 
-```plantuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
-```
-
-**Level 2: Container**
-- Контейнеры внутри системы
-- Приложения, БД, сервисы
-- Технологии
+UML Class диаграмма с **полями И методами**:
 
 ```plantuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
-```
-
-**Level 3: Component**
-- Компоненты внутри контейнера
-- Модули, пакеты
-- Зависимости
-
-```plantuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-```
-
-#### UML Diagrams (Детали реализации)
-
-**Class Diagram**
-- Структуры данных
-- Интерфейсы
-- Отношения между типами
-
-```plantuml
-class MyClass {
-  +field: type
+class Graph {
+  +Nodes: []Node           # Поля с типами
   --
-  +method(): returnType
+  +AddNode(node Node)      # Методы с параметрами!
+  +GetNode(id string) Node # И возвращаемыми значениями!
+  +Validate() error
 }
 ```
 
-**Sequence Diagram**
-- Взаимодействие компонентов во времени
-- Порядок вызовов
-- Жизненный цикл объектов
+**НЕ ТАК:** просто список полей
+**ТАК:** поля + методы + типы
 
-```plantuml
-Actor -> Component: message
-activate Component
-Component -> Database: query
-deactivate Component
+### 2. Requirements - детализация критична
+
+**XS/S:** краткие описания
+```
+R1: Fix typo in error message
 ```
 
-**Activity Diagram**
-- Процессы и алгоритмы
-- Условные переходы
-- Параллельное выполнение
-
-```plantuml
-start
-:Action;
-if (condition?) then (yes)
-  :Step A;
-else (no)
-  :Step B;
-endif
-stop
+**M:** с некоторыми деталями
+```
+R1: JSONExporter type
+- Input: Graph
+- Output: []byte, error
+- Method: Export(g Graph) ([]byte, error)
 ```
 
-### Markdown секции
+**L/XL:** полные API спецификации
+```go
+FR1: CycleDetector Type
+Input: Graph
+Output: [][]string (cycles)
 
-**Overview**
-- Краткое описание проблемы и решения
-- Метрики успеха
+API:
+type CycleDetector struct {
+    graph Graph
+    visited map[string]bool
+    stack []string
+}
 
-**Requirements**
-- Функциональные требования (FR)
-- Нефункциональные требования (NFR)
+func NewCycleDetector(g Graph) *CycleDetector {
+    // Initialize detector with graph
+    return &CycleDetector{graph: g, visited: make(map[string]bool)}
+}
 
-**Acceptance Criteria**
-- Конкретные проверяемые условия
-- Чеклисты для проверки
+func (cd *CycleDetector) FindCycles() [][]string {
+    // Find all cycles using Tarjan's algorithm
+    // Returns list of cycles, each cycle is list of node IDs
+}
 
-**Implementation Plan**
-- Пошаговый план реализации
-- Список файлов
-- Требования к тестам
+func (cd *CycleDetector) HasCycle() bool {
+    // Quick check if graph has any cycles
+}
 
-**Dependencies**
-- Связи с другими задачами
-- Внешние зависимости
+Validation Rules:
+- Graph must not be nil
+- Graph must have at least 2 nodes to form cycle
+- Node IDs must be valid
 
-**Risks & Mitigations**
-- Потенциальные риски
-- Планы по снижению рисков
+Performance:
+- Time complexity: O(V + E)
+- Space complexity: O(V)
 
-## Примеры из реальных проектов
-
-### Пример 1: Большая задача (aitrader)
-```
-tasks/todo/0005-01-strategy-config.puml
-- Рефакторинг архитектуры стратегий
-- Использует PlantUML с пакетами и зависимостями
-```
-
-### Пример 2: Описательная задача (aitrader)
-```
-tasks/todo/0004-backtest.md
-- Описание архитектуры Trade Engine
-- Markdown с ASCII диаграммами
-- Детальный план реализации
+Error Conditions:
+- Returns error if graph is nil: "graph cannot be nil"
+- Returns empty list if no cycles found
 ```
 
-## Рекомендации
+### 3. Acceptance Criteria - количество зависит от размера
 
-### Диаграммы
-1. **Начинайте с C4**: контекст -> контейнеры -> компоненты
-2. **Используйте UML для деталей**: классы, последовательности
-3. **Держите диаграммы простыми**: фокус на главном
-4. **Обновляйте диаграммы**: по мере реализации
+**XS:** 3-5 критериев
+```
+- [ ] AC1: Typo fixed
+- [ ] AC2: Tests pass
+- [ ] AC3: No regressions
+```
 
-### Требования
-1. **Будьте конкретны**: избегайте неоднозначности
-2. **Измеримые критерии**: как проверить выполнение
-3. **Приоритизация**: не все требования равнозначны
+**S:** 5-10 критериев
+```
+- [ ] AC1: LinkType supports "implements"
+- [ ] AC2: Validation accepts new type
+- [ ] AC3: Tests cover new type
+- [ ] AC4: Documentation updated
+- [ ] AC5: Backward compatible
+```
 
-### План реализации
-1. **Разбивайте на шаги**: каждый шаг - 1-4 часа работы
-2. **Указывайте файлы**: где будут изменения
-3. **Тесты обязательны**: для каждого шага
+**M:** 10-15 критериев
+```
+- [ ] AC1: JSONExporter.Export() exists
+- [ ] AC2: Exports all components
+- [ ] AC3: Valid JSON output
+- [ ] AC4: CLI --format json works
+- [ ] AC5: Backward compatible (yaml)
+- [ ] AC6: Error handling
+- [ ] AC7: Edge cases covered
+- [ ] AC8: Integration test
+- [ ] AC9: Documentation
+- [ ] AC10: golangci-lint passes
+```
 
-### Общие советы
-1. **Шаблон - это основа**: адаптируйте под задачу
-2. **Удаляйте лишнее**: ненужные секции можно убрать
-3. **Добавляйте нужное**: можно добавить специфичные секции
-4. **Используйте ссылки**: на ADR, документацию, код
+**L/XL:** 20-35 критериев
+```
+Component Implementation (5)
+Functionality (10)
+Validation (5)
+Performance (3)
+Testing (5)
+Code Quality (5)
+Integration (3)
+```
 
-## Инструменты
+### 4. Notes - критично для Claude Code
 
-### Просмотр PlantUML
+**XS/S:** минимальные примеры
+```go
+// Location: internal/model/model.go:42
+```
 
-**Online:**
-- http://www.plantuml.com/plantuml/
+**M:** примеры использования
+```go
+exporter := NewJSONExporter()
+data, err := exporter.Export(graph)
+```
+
+**L/XL:** развернутые примеры, design decisions, конфигурации
+```go
+// Example 1: Basic usage
+detector := NewCycleDetector(graph)
+cycles := detector.FindCycles()
+
+// Example 2: With error handling
+if err := detector.Validate(); err != nil {
+    return err
+}
+
+// Design Decision: Why Tarjan's algorithm
+// - O(V+E) complexity (optimal)
+// - Finds all SCC in single pass
+// - Standard algorithm for this task
+
+// Performance optimization:
+// - Use adjacency list for O(1) lookup
+// - Cache visited nodes
+```
+
+---
+
+## Компоненты archlint (для примеров)
+
+- **CLI** - cmd/archlint (Cobra: collect, trace, analyze)
+- **GoAnalyzer** - internal/analyzer/go.go (AST parsing)
+- **Graph** - internal/model/model.go (Graph, Node, Edge, DocHub)
+- **Tracer** - pkg/tracer (execution tracing)
+- **Reporter** - форматирование в YAML/PlantUML
+- **Linter** - internal/linter (validation)
+
+---
+
+## Просмотр PlantUML
+
+**Online:** http://www.plantuml.com/plantuml/
 
 **VS Code:**
 ```bash
-# Установить расширение
 code --install-extension jebbs.plantuml
 ```
 
 **CLI:**
 ```bash
-# Установить PlantUML
 brew install plantuml
-
-# Генерация PNG
 plantuml tasks/todo/0042-task.md
-
-# Генерация SVG
-plantuml -tsvg tasks/todo/0042-task.md
 ```
 
-### Проверка Markdown
-```bash
-# markdownlint
-npm install -g markdownlint-cli
-markdownlint tasks/**/*.md
-```
+---
 
-## Конвенции именования
+## Примеры
 
-### Файлы задач
-```
-PPPP-short-description.md
-```
-- `PPPP` = 4-значный приоритет (0001-9999)
-- `short-description` = краткое описание через дефисы
-- Расширение: `.md`
+**В шаблоне:** 5 примеров (XS/S/M/L/XL) в конце файла
 
-### Приоритеты
-- `0001-0099`: Критические задачи
-- `0100-0499`: Высокий приоритет
-- `0500-0899`: Средний приоритет
-- `0900-9999`: Низкий приоритет
+**Реальные примеры:**
+- `example-task.md` - заполненный пример
+- `../aitrader/tasks/done/` - реальные задачи разных размеров
 
-### Подзадачи
-```
-PPPP-XX-subtask-name.md
-```
-- `PPPP` = приоритет родительской задачи
-- `XX` = номер подзадачи (01-99)
+---
 
-**Пример:**
-```
-0005-walk-forward-optimization.md      (родительская)
-0005-01-strategy-config.md             (подзадача 1)
-0005-02-tax-implementation.md          (подзадача 2)
-0005-03-genetic-algorithm.md           (подзадача 3)
-```
+## Best Practices
 
-## Интеграция с Git
+### 1. Правильно определите размер
 
-### Коммиты
-```bash
-# Создание задачи
-git add tasks/todo/0042-feature-x.md
-git commit -m "Add task 0042: Implement feature X"
+Не переусложняйте! Если задача простая - используйте XS/S.
 
-# Начало работы
-git mv tasks/todo/0042-feature-x.md tasks/inprogress/
-git commit -m "Start task 0042"
+### 2. Следуйте комментариям
 
-# Завершение задачи
-git mv tasks/inprogress/0042-feature-x.md tasks/done/
-git commit -m "Complete task 0042"
-```
+Шаблон содержит подсказки для каждого размера.
 
-### Ветки
-```bash
-# Создать ветку для задачи
-git checkout -b task-0042-feature-x
+### 3. Детализация Requirements
 
-# Упомянуть задачу в коммитах
-git commit -m "task-0042: Add initial implementation"
-```
+Чем больше задача - тем детальнее Requirements с API.
+
+### 4. UML Class с методами
+
+Всегда указывайте методы, не только поля!
+
+### 5. Много Acceptance Criteria для больших задач
+
+L/XL задачи: 20-35 критериев - это нормально.
+
+### 6. Примеры кода
+
+Для M/L/XL обязательно добавляйте примеры в Notes.
+
+### 7. Backward Compatibility
+
+Всегда указывайте требования к обратной совместимости.
+
+---
 
 ## FAQ
 
-**Q: Когда использовать .md vs .puml?**
-A: Используйте .md (этот шаблон) для всех задач. PlantUML встроен в markdown. Чистый .puml используйте только для standalone диаграмм.
+**Q: Как понять какой размер задачи?**
+
+A: Примерная оценка:
+- XS: < 50 строк кода, < 1 час
+- S: 50-200 строк, 1-4 часа
+- M: 200-500 строк, 4-8 часов
+- L: 500-1000 строк, 1-3 дня
+- XL: > 1000 строк, 3-7 дней
 
 **Q: Нужно ли заполнять все секции?**
-A: Нет. Удаляйте неиспользуемые секции. Для маленьких задач используйте simple шаблон.
 
-**Q: Как обновлять диаграммы?**
-A: Обновляйте PlantUML код прямо в .md файле. Пересоздавайте изображения при необходимости.
+A: Нет! Читайте комментарии в шаблоне и удаляйте ненужное.
 
-**Q: Можно ли добавлять свои секции?**
-A: Да! Шаблон - это отправная точка. Адаптируйте под свои нужды.
+**Q: Чем этот подход отличается от двух шаблонов?**
 
-**Q: Где хранить большие диаграммы?**
-A: Если диаграмма очень большая, вынесите в отдельный .puml файл и ссылайтесь на него:
-```markdown
-## Architecture
-См. [диаграмму архитектуры](./diagrams/0042-architecture.puml)
-```
+A: Как в aitrader - один шаблон, разная детализация. Проще поддерживать, одна структура для всех.
+
+**Q: Где посмотреть примеры?**
+
+A: В конце `task-template.md` есть 5 примеров разных размеров. Плюс смотрите `../aitrader/tasks/done/`.
+
+---
+
+## Рекомендации
+
+1. **Изучите примеры в шаблоне** - там показаны все 5 размеров
+2. **Читайте комментарии** - они подсказывают что нужно
+3. **Не переусложняйте** - для простых задач используйте XS/S
+4. **Детализируйте для Claude Code** - L/XL задачи с полными API
+5. **Обновляйте по ходу** - задача может вырасти из S в M
