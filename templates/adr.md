@@ -1,5 +1,7 @@
 # ADR-XXXX: [Название архитектурного решения]
 
+[EN](adr.en.md) | **RU**
+
 **Metadata:**
 - Status: [Proposed/Accepted/Deprecated/Superseded]
 - Date: YYYY-MM-DD
