@@ -1,18 +1,20 @@
-# Task XXXX: [Task Title]
+# Spec XXXX: [Spec Title]
+
+[EN](spec-template.en.md) | **RU**
 
 **Metadata:**
 - Priority: XXXX (High/Medium/Low)
 - Status: Todo
 - Created: YYYY-MM-DD
 - Effort: XS/S/M/L/XL
-- Parent Task: [Parent task ID if applicable, or `-`]
+- Parent Spec: [Parent spec ID if applicable, or `-`]
 
 ---
 
 ## Overview
 
 ### Problem Statement
-[Описание проблемы, которую решает задача]
+[Описание проблемы, которую решает спецификация]
 
 ### Solution Summary
 [Краткое описание предлагаемого решения]
@@ -27,22 +29,22 @@
 ## Architecture
 
 <!--
-ВАЖНО: Объем диаграмм зависит от размера задачи:
-- XS/S задачи: только Data Model (UML Class)
-- M задачи: Component + Data Model + Sequence
-- L/XL задачи: все диаграммы (Context, Container, Component, Data Model, Sequence, Activity)
+ВАЖНО: Объем диаграмм зависит от размера спецификации:
+- XS/S спецификации: только Data Model (UML Class)
+- M спецификации: Component + Data Model + Sequence
+- L/XL спецификации: все диаграммы (Context, Container, Component, Data Model, Sequence, Activity)
 -->
 
 ### System Context (C4 Level 1)
-<!-- Для L/XL задач: показывает систему в окружении -->
-<!-- Для S/M задач: можно пропустить эту секцию -->
+<!-- Для L/XL спецификаций: показывает систему в окружении -->
+<!-- Для S/M спецификаций: можно пропустить эту секцию -->
 
 ```plantuml
-@startuml task-xxxx-context
+@startuml spec-xxxx-context
 !theme toy
 !include <C4/C4_Context>
 
-title System Context: [Task Name]
+title System Context: [Spec Name]
 
 Person(developer, "Developer", "Go developer using archlint")
 System(archlint, "archlint", "Architecture linting tool")
@@ -58,11 +60,11 @@ SHOW_LEGEND()
 ---
 
 ### Container Diagram (C4 Level 2)
-<!-- Для L/XL задач: показывает контейнеры системы -->
-<!-- Для S/M задач: можно пропустить эту секцию -->
+<!-- Для L/XL спецификаций: показывает контейнеры системы -->
+<!-- Для S/M спецификаций: можно пропустить эту секцию -->
 
 ```plantuml
-@startuml task-xxxx-container
+@startuml spec-xxxx-container
 !theme toy
 !include <C4/C4_Container>
 
@@ -89,11 +91,11 @@ SHOW_LEGEND()
 ---
 
 ### Component Overview (C4 Component)
-<!-- Для M/L/XL задач: показывает компоненты внутри контейнера -->
-<!-- Для XS/S задач: можно пропустить или сильно упростить -->
+<!-- Для M/L/XL спецификаций: показывает компоненты внутри контейнера -->
+<!-- Для XS/S спецификаций: можно пропустить или сильно упростить -->
 
 ```plantuml
-@startuml task-xxxx-component
+@startuml spec-xxxx-component
 !theme toy
 !include <C4/C4_Component>
 
@@ -114,13 +116,13 @@ Rel(comp2, comp3, "Calls")
 ---
 
 ### Data Model
-<!-- ОБЯЗАТЕЛЬНО для всех задач: показывает структуры данных -->
+<!-- ОБЯЗАТЕЛЬНО для всех спецификаций: показывает структуры данных -->
 
 ```plantuml
-@startuml task-xxxx-model
+@startuml spec-xxxx-model
 !theme toy
 
-title Data Model: [Task Name]
+title Data Model: [Spec Name]
 
 class TypeName {
   +Field1: type
@@ -151,14 +153,14 @@ end note
 ---
 
 ### Sequence Flow (UML Sequence Diagram)
-<!-- Для M/L/XL задач: показывает взаимодействия компонентов -->
-<!-- Для XS/S задач: можно пропустить или упростить -->
+<!-- Для M/L/XL спецификаций: показывает взаимодействия компонентов -->
+<!-- Для XS/S спецификаций: можно пропустить или упростить -->
 
 ```plantuml
-@startuml task-xxxx-sequence
+@startuml spec-xxxx-sequence
 !theme toy
 
-title Sequence: [Task Name]
+title Sequence: [Spec Name]
 
 actor User
 participant "Component A" as A
@@ -186,11 +188,11 @@ deactivate A
 ---
 
 ### Process Flow (UML Activity Diagram)
-<!-- Для L/XL задач: показывает сложные алгоритмы -->
-<!-- Для XS/S/M задач: можно пропустить -->
+<!-- Для L/XL спецификаций: показывает сложные алгоритмы -->
+<!-- Для XS/S/M спецификаций: можно пропустить -->
 
 ```plantuml
-@startuml task-xxxx-activity
+@startuml spec-xxxx-activity
 !theme toy
 
 title Activity: [Algorithm Name]
@@ -226,7 +228,7 @@ stop
 ### R1: [Requirement Name]
 **Description:** [Описание требования]
 
-<!-- Для L/XL задач добавьте детали: -->
+<!-- Для L/XL спецификаций добавьте детали: -->
 **Input:**
 - [Parameter]: [type] - [description]
 
@@ -260,7 +262,7 @@ func (t *[TypeName]) [Method]([params]) ([returns], error) {
 ### R2: [Requirement Name]
 [Описание требования]
 
-<!-- Для маленьких задач достаточно краткого описания -->
+<!-- Для маленьких спецификаций достаточно краткого описания -->
 
 ---
 
@@ -284,7 +286,7 @@ func (t *[TypeName]) [Method]([params]) ([returns], error) {
 - [ ] AC5: All tests pass
 - [ ] AC6: Code reviewed
 
-<!-- Для L/XL задач добавьте больше критериев:
+<!-- Для L/XL спецификаций добавьте больше критериев:
 - Детальные проверки функциональности
 - Edge cases
 - Performance requirements
@@ -319,7 +321,7 @@ func (t *[TypeName]) [Method]([params]) ([returns], error) {
 - Action: Create
 - Details: Write tests
 
-<!-- Для L/XL задач используйте фазы: -->
+<!-- Для L/XL спецификаций используйте фазы: -->
 
 <!--
 ### Phase 1: Foundation
@@ -339,7 +341,7 @@ func (t *[TypeName]) [Method]([params]) ([returns], error) {
 
 ## Testing Strategy
 
-<!-- Для всех задач: укажите какие тесты нужны -->
+<!-- Для всех спецификаций: укажите какие тесты нужны -->
 
 ### Unit Tests
 - [ ] Test [Component A]
@@ -347,7 +349,7 @@ func (t *[TypeName]) [Method]([params]) ([returns], error) {
 - Coverage target: 80%+
 
 ### Integration Tests
-<!-- Для M/L/XL задач -->
+<!-- Для M/L/XL спецификаций -->
 - [ ] Test [Integration scenario]
 
 ---
@@ -362,7 +364,7 @@ func (t *[TypeName]) [Method]([params]) ([returns], error) {
 -->
 
 ### Design Decisions
-<!-- Для M/L/XL задач -->
+<!-- Для M/L/XL спецификаций -->
 [Ключевые проектные решения]
 
 ### Code Examples
@@ -384,12 +386,12 @@ func Example() {
 
 ---
 
-## Примеры задач разного размера
+## Примеры спецификаций разного размера
 
-### XS задача (50-100 строк): Fix typo in error message
+### XS спецификация (50-100 строк): Fix typo in error message
 
 ```markdown
-# Task 0099: Fix Error Message Typo
+# Spec 0099: Fix Error Message Typo
 
 Metadata: Priority: 0099, Status: Todo, Effort: XS
 
@@ -419,10 +421,10 @@ Location: internal/analyzer/go.go:142
 
 ---
 
-### S задача (100-200 строк): Add new link type
+### S спецификация (100-200 строк): Add new link type
 
 ```markdown
-# Task 0080: Add "Implements" Link Type
+# Spec 0080: Add "Implements" Link Type
 
 Metadata: Priority: 0080, Status: Todo, Effort: S
 
@@ -458,10 +460,10 @@ Location: internal/model/model.go
 
 ---
 
-### M задача (200-400 строк): Implement graph export to JSON
+### M спецификация (200-400 строк): Implement graph export to JSON
 
 ```markdown
-# Task 0050: Export Graph to JSON
+# Spec 0050: Export Graph to JSON
 
 Metadata: Priority: 0050, Status: Todo, Effort: M
 
@@ -531,10 +533,10 @@ JSON format:
 
 ---
 
-### L задача (400-700 строк): Implement cycle detection
+### L спецификация (400-700 строк): Implement cycle detection
 
 ```markdown
-# Task 0030: Implement Cycle Detection with Tarjan's Algorithm
+# Spec 0030: Implement Cycle Detection with Tarjan's Algorithm
 
 Metadata: Priority: 0030, Status: Todo, Effort: L
 
@@ -635,10 +637,10 @@ Rationale: O(V+E), finds all SCC
 
 ---
 
-### XL задача (700-1000 строк): Implement configuration system
+### XL спецификация (700-1000 строк): Implement configuration system
 
 ```markdown
-# Task 0010: Implement Strategy Configuration System with TimeGrid
+# Spec 0010: Implement Strategy Configuration System with TimeGrid
 
 (Similar to aitrader's 0005-01-strategy-config.md - 968 lines)
 

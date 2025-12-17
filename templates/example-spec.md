@@ -1,11 +1,13 @@
-# Task 0001: Implement Dependency Graph Analyzer
+# Spec 0001: Implement Dependency Graph Analyzer
+
+[EN](example-spec.en.md) | **RU**
 
 **Metadata:**
 - Priority: 0001 (High)
 - Status: Todo
 - Created: 2025-12-07
 - Owner: mshogin
-- Parent Task: -
+- Parent Spec: -
 - Estimated Effort: L
 
 ---
@@ -32,7 +34,7 @@
 ## Architecture Context (C4 Level 1: System Context)
 
 ```plantuml
-@startuml task-0001-context
+@startuml spec-0001-context
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
 title System Context: Dependency Graph Analyzer
@@ -52,7 +54,7 @@ Rel(archlint, codebase, "Reads & parses", "AST")
 ## Architecture Design (C4 Level 2: Container)
 
 ```plantuml
-@startuml task-0001-container
+@startuml spec-0001-container
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 title Container Diagram: Archlint Components
@@ -76,7 +78,7 @@ Rel(analyzer, cache, "Caches AST", "File I/O")
 ## Component Design (C4 Level 3: Component)
 
 ```plantuml
-@startuml task-0001-component
+@startuml spec-0001-component
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 title Component Diagram: Graph Analyzer Package
@@ -98,7 +100,7 @@ Rel(sorter, walker, "Uses for traversal")
 ## Data Model (UML Class Diagram)
 
 ```plantuml
-@startuml task-0001-classes
+@startuml spec-0001-classes
 !theme toy
 
 title Data Model: Graph Analysis
@@ -172,7 +174,7 @@ MetricsCalculator --> Graph
 ## Sequence Flow (UML Sequence Diagram)
 
 ```plantuml
-@startuml task-0001-sequence
+@startuml spec-0001-sequence
 !theme toy
 
 title Sequence: Analyze Dependencies
@@ -223,7 +225,7 @@ deactivate CLI
 ## Process Flow (UML Activity Diagram)
 
 ```plantuml
-@startuml task-0001-activity
+@startuml spec-0001-activity
 !theme toy
 
 title Activity: Cycle Detection (Tarjan's Algorithm)
@@ -576,6 +578,6 @@ func main() {
 ## Progress Log
 
 ### 2025-12-07
-- Создана задача
+- Создана спецификация
 - Разработан дизайн архитектуры
 - Определены фазы реализации
