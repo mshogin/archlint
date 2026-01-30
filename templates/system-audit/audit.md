@@ -1,5 +1,7 @@
 # Отчет по валидации архитектуры [Project Name]
 
+[EN](audit.en.md) | **RU**
+
 **Дата:** [YYYY-MM-DD]
 **Коммит:** [commit hash] ([commit message])
 

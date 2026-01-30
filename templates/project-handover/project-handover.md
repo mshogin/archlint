@@ -1,5 +1,7 @@
 # Приёмка проекта: [Project Name]
 
+[EN](project-handover.en.md) | **RU**
+
 ---
 
 ## Исполнительное резюме
