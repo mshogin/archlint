@@ -1,22 +1,24 @@
 # archlint
 
-A tool for building architectural graphs from Go source code.
+> [🇬🇧 English version](README.en.md)
 
-archlint allows you to automatically extract and visualize software system architecture using two types of graphs:
-- **Structural graph** - static code analysis showing all components and relationships
-- **Behavioral graph** - dynamic analysis through tracing showing actual execution flows
+Инструмент для построения архитектурных графов из исходного кода Go.
 
-## Features
+archlint позволяет автоматически извлекать и визуализировать архитектуру программных систем используя два типа графов:
+- **Структурный граф** - статический анализ кода, показывающий все компоненты и связи
+- **Поведенческий граф** - динамический анализ через трассировку, показывающий фактические потоки выполнения
 
-- ✅ Build structural graphs from Go code
-- ✅ Generate behavioral graphs from test traces
-- ✅ Export to DocHub YAML format
-- ✅ Automatic PlantUML sequence diagram generation
-- ✅ Wildcard support for component grouping
+## Возможности
 
-## Installation
+- ✅ Построение структурных графов из Go кода
+- ✅ Генерация поведенческих графов из трассировок тестов
+- ✅ Экспорт в формат DocHub YAML
+- ✅ Автоматическая генерация sequence диаграмм PlantUML
+- ✅ Поддержка wildcards для группировки компонентов
 
-### From Source
+## Установка
+
+### Из исходников
 
 ```bash
 git clone https://github.com/mshogin/archlint
@@ -24,27 +26,27 @@ cd archlint
 make install
 ```
 
-This will install `archlint` to `$GOPATH/bin`.
+Установит `archlint` в `$GOPATH/bin`.
 
-### Building
+### Сборка
 
 ```bash
 make build
 ```
 
-The binary will be created at `bin/archlint`.
+Бинарный файл будет создан в `bin/archlint`.
 
-## Usage
+## Использование
 
-### 1. Building Structural Graph
+### 1. Построение структурного графа
 
-Analyzes source code and builds a graph of all components (packages, types, functions, methods) and their dependencies.
+Анализирует исходный код и строит граф всех компонентов (пакеты, типы, функции, методы) и их зависимостей.
 
 ```bash
 archlint collect . -o architecture.yaml
 ```
 
-**Example output:**
+**Пример вывода:**
 ```
 Analyzing code: . (language: go)
 Found components: 95
@@ -57,7 +59,7 @@ Found links: 129
 ✓ Graph saved to architecture.yaml
 ```
 
-**Graph structure:**
+**Структура графа:**
 ```yaml
 components:
   cmd/archlint:
@@ -87,11 +89,11 @@ contexts:
       - cmd/archlint.main
 ```
 
-### 2. Building Behavioral Graph
+### 2. Построение поведенческого графа
 
-Generates contexts from test traces, showing actual execution flows.
+Генерирует контексты из трассировок тестов, показывая фактические потоки выполнения.
 
-**Step 1:** Add tracing to your tests:
+**Шаг 1:** Добавьте трассировку в тесты:
 
 ```go
 import "github.com/mshogin/archlint/pkg/tracer"
@@ -102,91 +104,91 @@ func TestProcessOrder(t *testing.T) {
         trace.Save("traces/test_process_order.json")
     }()
 
-    // Traced function
+    // Трассируемая функция
     tracer.Enter("OrderService.ProcessOrder")
     result, err := service.ProcessOrder(order)
     tracer.Exit("OrderService.ProcessOrder", err)
 
-    // assertions...
+    // проверки...
 }
 ```
 
-**Step 2:** Run tests:
+**Шаг 2:** Запустите тесты:
 
 ```bash
 go test -v ./...
 ```
 
-**Step 3:** Generate contexts:
+**Шаг 3:** Сгенерируйте контексты:
 
 ```bash
 archlint trace ./traces -o contexts.yaml
 ```
 
-**Result:**
-- `contexts.yaml` - contexts for DocHub
-- `*.puml` - PlantUML sequence diagrams for each test
+**Результат:**
+- `contexts.yaml` - контексты для DocHub
+- `*.puml` - PlantUML sequence диаграммы для каждого теста
 
-### 3. Using Makefile
+### 3. Использование Makefile
 
 ```bash
-# Show help
+# Показать справку
 make help
 
-# Build project
+# Собрать проект
 make build
 
-# Build graph for archlint itself
+# Построить граф для самого archlint
 make collect
 
-# Format code
+# Форматировать код
 make fmt
 
-# Run tests
+# Запустить тесты
 make test
 
-# Clean generated files
+# Очистить сгенерированные файлы
 make clean
 ```
 
-## Project Structure
+## Структура проекта
 
 ```
 archlint/
 ├── cmd/
-│   └── archlint/          # CLI application
-│       ├── main.go        # Entry point
-│       ├── collect.go     # collect command
-│       └── trace.go       # trace command
+│   └── archlint/          # CLI приложение
+│       ├── main.go        # Точка входа
+│       ├── collect.go     # команда collect
+│       └── trace.go       # команда trace
 ├── internal/
-│   ├── model/             # Graph model
+│   ├── model/             # Модель графа
 │   │   └── model.go       # Graph, Node, Edge, DocHub
-│   └── analyzer/          # Code analyzers
-│       └── go.go          # GoAnalyzer (AST parsing)
+│   └── analyzer/          # Анализаторы кода
+│       └── go.go          # GoAnalyzer (AST парсинг)
 ├── pkg/
-│   └── tracer/            # Tracing library
-│       ├── trace.go       # Trace collection
-│       └── context_generator.go  # Context generator
+│   └── tracer/            # Библиотека трассировки
+│       ├── trace.go       # Сбор трассировок
+│       └── context_generator.go  # Генератор контекстов
 ├── go.mod
 ├── Makefile
 └── README.md
 ```
 
-## Examples
+## Примеры
 
-### Analyzing Your Own Project
+### Анализ собственного проекта
 
-archlint uses itself as an example:
+archlint использует себя в качестве примера:
 
 ```bash
 make collect
 ```
 
-Result: `graph/architecture.yaml` with complete project graph.
+Результат: `graph/architecture.yaml` с полным графом проекта.
 
-### Integration with DocHub
+### Интеграция с DocHub
 
-Generated YAML files are compatible with [DocHub](https://dochub.info/):
+Сгенерированные YAML файлы совместимы с [DocHub](https://dochub.info/):
 
 ```yaml
 # dochub.yaml
@@ -196,50 +198,50 @@ contexts:
     - contexts.yaml
 ```
 
-## Data Format
+## Формат данных
 
-### Structural Graph
+### Структурный граф
 
-- **Nodes (components)**: system components
-  - `package` - Go packages
-  - `struct` - structures
-  - `interface` - interfaces
-  - `function` - functions
-  - `method` - methods
-  - `external` - external dependencies
+- **Узлы (components)**: компоненты системы
+  - `package` - Go пакеты
+  - `struct` - структуры
+  - `interface` - интерфейсы
+  - `function` - функции
+  - `method` - методы
+  - `external` - внешние зависимости
 
-- **Edges (links)**: relationships between components
-  - `contains` - containment (package contains type)
-  - `calls` - function/method call
-  - `uses` - type usage in field
-  - `embeds` - type embedding
-  - `import` - package import
+- **Ребра (links)**: связи между компонентами
+  - `contains` - вложенность (пакет содержит тип)
+  - `calls` - вызов функции/метода
+  - `uses` - использование типа в поле
+  - `embeds` - встраивание типа
+  - `import` - импорт пакета
 
-### Behavioral Graph
+### Поведенческий граф
 
-- **Trace**: test execution trace
-  - `test_name` - test name
-  - `calls` - sequence of calls
+- **Trace**: трассировка выполнения теста
+  - `test_name` - имя теста
+  - `calls` - последовательность вызовов
     - `event`: "enter" | "exit_success" | "exit_error"
-    - `function` - function name
-    - `depth` - nesting level
+    - `function` - имя функции
+    - `depth` - уровень вложенности
 
-## Relationship with aiarch
+## Связь с aiarch
 
-archlint contains only graph building functionality from the [aiarch](https://github.com/mshogin/aiarch) project.
+archlint содержит только функциональность построения графов из проекта [aiarch](https://github.com/mshogin/aiarch).
 
-**What is NOT included in archlint:**
-- Graph validation
-- Quality metrics (fan-out, coupling, etc.)
-- Architecture rule checking
+**Что НЕ включено в archlint:**
+- Валидация графов
+- Метрики качества (fan-out, coupling и т.д.)
+- Проверка архитектурных правил
 
-For validation and metrics, use [aiarch](https://github.com/mshogin/aiarch).
+Для валидации и метрик используйте [aiarch](https://github.com/mshogin/aiarch).
 
-## License
+## Лицензия
 
 MIT
 
-## Contacts
+## Контакты
 
 - GitHub: https://github.com/mshogin/archlint
-- Related project: https://github.com/mshogin/aiarch
+- Связанный проект: https://github.com/mshogin/aiarch
