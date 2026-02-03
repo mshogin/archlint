@@ -1,522 +1,286 @@
-# Spec Templates for archlint
+# Templates for Software Architecture & Development
 
-**EN** | [RU](README.md)
-
-Templates for creating specifications using Markdown + PlantUML (C4 + UML).
-
-These templates are designed for **spec driven development** with Claude Code - detailed specifications allow AI to effectively implement functionality.
+A collection of templates for systematic work with architecture: from project handover to specifications and ADRs.
 
 ---
 
-## Available Templates
+## Sections
 
-### 1. spec-template.md (Universal)
-**Purpose:** Technical specifications of ANY size (XS/S/M/L/XL)
+### 📋 [Project Handover](project-handover/) - Project Onboarding
+Process and checklists for project onboarding into architectural oversight.
 
-**Key Feature:** One template, but different levels of detail when filling it out
+**What's inside:**
+- Handover process (6 phases, 7-14 days)
+- Handover checklist (11 sections, 80+ items)
 
-**Approach:**
-- Template contains ALL possible sections
-- Comments indicate what is needed for each specification size
-- Unused sections are simply removed or simplified
-
-**Structure:**
-```
-- Metadata
-- Overview (Problem, Solution, Success Metrics)
-- Architecture (Context, Container, Component, Data Model, Sequence, Activity)
-- Requirements
-- Acceptance Criteria
-- Implementation Steps
-- Testing Strategy
-- Notes
-```
-
-**Specification Sizes:**
-
-#### XS specifications (50-100 lines)
-**Example:** Fix typo in error message
-
-**What to fill in:**
-- Metadata: Effort: XS
-- Overview: brief
-- Architecture: skip diagrams
-- Requirements: 1-2 simple ones
-- Acceptance Criteria: 3-5
-- Implementation Steps: 2-3 steps
-- Notes: minimal
-
-**Template shows:** `<!-- For XS specifications, can skip -->`
+**When to use:**
+- Accepting a project under architectural supervision
+- Need a formal handover process
+- Want to standardize onboarding
 
 ---
 
-#### S specifications (100-200 lines)
-**Example:** Add new link type to graph
+### 🔍 [System Audit](system-audit/) - System Audits
+Templates for detailed architecture audits: manual and automated.
 
-**What to fill in:**
-- Metadata: Effort: S
-- Overview: brief
-- Architecture: Data Model only
-- Requirements: 2-3
-- Acceptance Criteria: 5-10
-- Implementation Steps: 3-5 steps
-- Notes: code examples
+**What's inside:**
+- Manual audit (12 sections, 450+ lines)
+- Automated validation (215 metrics)
 
-**Template shows:** `<!-- For S specifications: Data Model only -->`
-
----
-
-#### M specifications (200-400 lines)
-**Example:** Implement JSON exporter
-
-**What to fill in:**
-- Metadata: Effort: M
-- Overview: detailed
-- Architecture: Component + Data Model + Sequence
-- Requirements: 3-5 with details
-- Acceptance Criteria: 10-15
-- Implementation Steps: 5-10 steps
-- Testing Strategy: Unit + Integration
-- Notes: examples, configurations
-
-**Template shows:** `<!-- For M specifications: Component + Data Model + Sequence -->`
+**When to use:**
+- During project onboarding
+- For quarterly architecture review
+- Before migration/refactoring
+- In CI/CD for continuous validation
 
 ---
 
-#### L specifications (400-700 lines)
-**Example:** Implement cycle detection with Tarjan's algorithm
+### 📝 [Specifications](specifications/) - Specifications
+Templates for spec-driven development with Claude Code.
 
-**What to fill in:**
-- Metadata: Effort: L
-- Overview: very detailed
-- Architecture: Context + Container + Component + Data Model + Sequence + Activity
-- Requirements: 5-8 detailed with API
-- Acceptance Criteria: 15-25
-- Implementation Steps: breakdown by phases (10-15 steps)
-- Testing Strategy: comprehensive strategy
-- Notes: Design decisions, performance, examples
+**What's inside:**
+- Universal template (XS/S/M/L/XL)
+- Filled examples
 
-**Template shows:** `<!-- For L specifications: all diagrams -->`
+**When to use:**
+- For detailed specs before implementation
+- When working with AI (Claude Code)
+- For documenting functionality
 
 ---
 
-#### XL specifications (700-1000 lines)
-**Example:** Implement configuration system with TimeGrid (as in aitrader)
+### 🏛️ [ADR](adr/) - Architecture Decision Records
+Template for documenting architectural decisions.
 
-**What to fill in:**
-- Metadata: Effort: XL
-- Overview: maximally detailed with context
-- Architecture: ALL diagrams + multiple Sequences for different scenarios
-- Requirements: 8-11 maximally detailed (FR + NFR)
-- Acceptance Criteria: 25-35
-- Implementation Steps: 4-5 phases, 20+ steps
-- Testing Strategy: all types of tests
-- Notes: expanded examples, formulas, configurations, migration
+**What's inside:**
+- ADR template (RU/EN)
+- Usage examples
 
-**Template shows:** `<!-- For XL specifications: maximum detail -->`
+**When to use:**
+- When choosing technology
+- When changing architectural style
+- For decisions with trade-offs
 
 ---
 
-### 2. adr.md
-**Purpose:** Architecture Decision Record
+## Quick Start
 
-**When to use:** When making important architectural decisions
+### Project Onboarding
 
-**Contains:**
-- Context and problem
-- Considered options (3+)
-- Decision made with justification
-- C4: Context, Container, Component
-- Sequence diagram
-- Consequences (positive/negative)
-- Alternatives (why rejected)
+1. Read [Handover Process](project-handover/project-handover-process.md)
+2. Use [Handover Checklist](project-handover/project-handover.md)
+3. Conduct [System Audit](system-audit/system-audit.md)
+4. (Optional) Run automated validation
 
-**Example:** Choosing an algorithm for cycle detection
-
----
-
-## How to Work with the Universal Template
-
-### Step 1: Determine the specification size
-
-**XS** - typo, simple bug, cosmetic changes
-**S** - add field/method, simple functionality
-**M** - new feature with integration
-**L** - new module, complex algorithm
-**XL** - architectural changes, new subsystem
-
-### Step 2: Copy the template
-
-```bash
-cp templates/spec-template.md specs/todo/0042-your-spec.md
-```
-
-### Step 3: Read the comments
-
-The template has comments:
-
-```markdown
-<!--
-IMPORTANT: The scope of diagrams depends on the specification size:
-- XS/S specifications: Data Model only (UML Class)
-- M specifications: Component + Data Model + Sequence
-- L/XL specifications: all diagrams
--->
-```
-
-```markdown
-<!-- For L/XL specifications: shows the system in its environment -->
-<!-- For S/M specifications: can skip this section -->
-```
-
-### Step 4: Fill in according to recommendations
-
-- For **XS** - remove most diagrams, minimal text
-- For **S** - Data Model only, brief Requirements
-- For **M** - Component + Data Model + Sequence, more detailed
-- For **L** - all diagrams, detailed Requirements
-- For **XL** - everything in maximum detail
-
-### Step 5: Remove unused sections
-
-If a section is not needed - just delete it!
-
-### Step 6: Look at examples
-
-At the end of the template there are **5 examples** of specifications of different sizes:
-- XS: Fix typo (50-100 lines)
-- S: Add link type (100-200 lines)
-- M: JSON exporter (200-400 lines)
-- L: Cycle detection (400-700 lines)
-- XL: Config system (700-1000 lines)
-
----
-
-## Directory Structure
-
-```
-specs/
-├── todo/          # Specifications in queue
-├── inprogress/    # Specifications in progress
-└── done/          # Completed specifications
-```
-
-### Specification File Naming
-
-```
-PPPP-short-description.md
-```
-
-- `PPPP` = 4-digit priority (0001-9999)
-- Lower number = higher priority
-
-**Examples:**
-```
-0010-implement-cycle-detection.md      # Critical
-0100-add-metrics-calculation.md        # High
-0500-improve-error-messages.md         # Medium
-```
-
-### Sub-specifications
-
-```
-PPPP-XX-subspec-name.md
-```
-
-**Example:**
-```
-0050-graph-analysis.md               # Parent
-0050-01-cycle-detection.md           # Sub-specification 1
-0050-02-metrics-calculation.md       # Sub-specification 2
-```
-
----
-
-## Workflow
-
-### Creating a specification
+### Creating Specification
 
 1. Choose size (XS/S/M/L/XL)
-2. Copy `spec-template.md` to `specs/todo/`
-3. Name it: `PPPP-description.md`
-4. Follow comments in template
-5. Remove unused sections
+2. Copy [spec-template.md](specifications/spec-template.md)
+3. Follow comments in the template
+4. Check [example](specifications/example-spec.md)
 
-```bash
-cp templates/spec-template.md specs/todo/0042-implement-feature-x.md
-```
+### Documenting Decision
 
-### Starting work
-
-```bash
-mv specs/todo/0042-feature-x.md specs/inprogress/
-```
-
-Update: `Status: InProgress`
-
-### Completion
-
-```bash
-mv specs/inprogress/0042-feature-x.md specs/done/
-```
-
-Update: `Status: Done`
+1. Use [ADR template](adr/adr.md)
+2. Describe context, options, decision
+3. Save in `docs/adr/`
 
 ---
 
-## Key Sections (for spec driven development)
+## Typical Workflows
 
-### 1. Architecture - Data Model (REQUIRED!)
+### Workflow 1: Onboarding 4 Projects
 
-UML Class diagram with **fields AND methods**:
+**Situation:** Manager assigned 4 diverse projects for oversight
 
-```plantuml
-class Graph {
-  +Nodes: []Node           # Fields with types
-  --
-  +AddNode(node Node)      # Methods with parameters!
-  +GetNode(id string) Node # And return values!
-  +Validate() error
-}
-```
+**Actions:**
 
-**NOT LIKE THIS:** just a list of fields
-**LIKE THIS:** fields + methods + types
-
-### 2. Requirements - detail is critical
-
-**XS/S:** brief descriptions
-```
-R1: Fix typo in error message
-```
-
-**M:** with some details
-```
-R1: JSONExporter type
-- Input: Graph
-- Output: []byte, error
-- Method: Export(g Graph) ([]byte, error)
-```
-
-**L/XL:** full API specifications
-```go
-FR1: CycleDetector Type
-Input: Graph
-Output: [][]string (cycles)
-
-API:
-type CycleDetector struct {
-    graph Graph
-    visited map[string]bool
-    stack []string
-}
-
-func NewCycleDetector(g Graph) *CycleDetector {
-    // Initialize detector with graph
-    return &CycleDetector{graph: g, visited: make(map[string]bool)}
-}
-
-func (cd *CycleDetector) FindCycles() [][]string {
-    // Find all cycles using Tarjan's algorithm
-    // Returns list of cycles, each cycle is list of node IDs
-}
-
-func (cd *CycleDetector) HasCycle() bool {
-    // Quick check if graph has any cycles
-}
-
-Validation Rules:
-- Graph must not be nil
-- Graph must have at least 2 nodes to form cycle
-- Node IDs must be valid
-
-Performance:
-- Time complexity: O(V + E)
-- Space complexity: O(V)
-
-Error Conditions:
-- Returns error if graph is nil: "graph cannot be nil"
-- Returns empty list if no cycles found
-```
-
-### 3. Acceptance Criteria - quantity depends on size
-
-**XS:** 3-5 criteria
-```
-- [ ] AC1: Typo fixed
-- [ ] AC2: Tests pass
-- [ ] AC3: No regressions
-```
-
-**S:** 5-10 criteria
-```
-- [ ] AC1: LinkType supports "implements"
-- [ ] AC2: Validation accepts new type
-- [ ] AC3: Tests cover new type
-- [ ] AC4: Documentation updated
-- [ ] AC5: Backward compatible
-```
-
-**M:** 10-15 criteria
-```
-- [ ] AC1: JSONExporter.Export() exists
-- [ ] AC2: Exports all components
-- [ ] AC3: Valid JSON output
-- [ ] AC4: CLI --format json works
-- [ ] AC5: Backward compatible (yaml)
-- [ ] AC6: Error handling
-- [ ] AC7: Edge cases covered
-- [ ] AC8: Integration test
-- [ ] AC9: Documentation
-- [ ] AC10: golangci-lint passes
-```
-
-**L/XL:** 20-35 criteria
-```
-Component Implementation (5)
-Functionality (10)
-Validation (5)
-Performance (3)
-Testing (5)
-Code Quality (5)
-Integration (3)
-```
-
-### 4. Notes - critical for Claude Code
-
-**XS/S:** minimal examples
-```go
-// Location: internal/model/model.go:42
-```
-
-**M:** usage examples
-```go
-exporter := NewJSONExporter()
-data, err := exporter.Export(graph)
-```
-
-**L/XL:** expanded examples, design decisions, configurations
-```go
-// Example 1: Basic usage
-detector := NewCycleDetector(graph)
-cycles := detector.FindCycles()
-
-// Example 2: With error handling
-if err := detector.Validate(); err != nil {
-    return err
-}
-
-// Design Decision: Why Tarjan's algorithm
-// - O(V+E) complexity (optimal)
-// - Finds all SCC in single pass
-// - Standard algorithm for this task
-
-// Performance optimization:
-// - Use adjacency list for O(1) lookup
-// - Cache visited nodes
-```
-
----
-
-## archlint Components (for examples)
-
-- **CLI** - cmd/archlint (Cobra: collect, trace, analyze)
-- **GoAnalyzer** - internal/analyzer/go.go (AST parsing)
-- **Graph** - internal/model/model.go (Graph, Node, Edge, DocHub)
-- **Tracer** - pkg/tracer (execution tracing)
-- **Reporter** - formatting to YAML/PlantUML
-- **Linter** - internal/linter (validation)
-
----
-
-## Viewing PlantUML
-
-**Online:** http://www.plantuml.com/plantuml/
-
-**VS Code:**
 ```bash
-code --install-extension jebbs.plantuml
+# For each project:
+
+# 1. Initiation (1 day)
+- Get briefing from PM
+- Request access
+- Schedule kickoff
+
+# 2. Kickoff (1-2 hours)
+- Meeting PM + Tech Lead
+- Understand context and expectations
+
+# 3. Information Gathering (3-5 days)
+cp templates/project-handover/project-handover.md docs/handover/project-a.md
+# Fill checklist
+
+# 4. Audit (3-7 days)
+cp templates/system-audit/system-audit.md docs/audits/project-a-audit.md
+archlint validate > docs/audits/project-a-validation.md
+# Conduct combined audit
+
+# 5. Decision (1 day)
+# Present results
+# Make decision: ACCEPTED / WITH CONDITIONS / REJECTED
+
+# 6. Onboarding (ongoing)
+# Set up regular meetings
+# Define control points
 ```
 
-**CLI:**
-```bash
-brew install plantuml
-plantuml specs/todo/0042-spec.md
-```
+**Result:**
+- 4 projects accepted with assessments and improvement plans
+- Systematic oversight established
+- Everything documented
 
 ---
 
-## Examples
+### Workflow 2: Spec-Driven Development
 
-**In template:** 5 examples (XS/S/M/L/XL) at the end of file
+**Situation:** Need to implement new feature with Claude Code
 
-**Real examples:**
-- `example-spec.md` - filled example
-- `../aitrader/specs/done/` - real specifications of different sizes
+**Actions:**
+
+```bash
+# 1. Define size
+# M-size: new feature with integration
+
+# 2. Create specification
+cp templates/specifications/spec-template.md specs/todo/0042-new-feature.md
+
+# 3. Fill in detail
+# - Component + Data Model + Sequence diagrams
+# - Requirements with API
+# - 10-15 Acceptance Criteria
+# - 5-10 Implementation Steps
+
+# 4. Move to work
+mv specs/todo/0042-new-feature.md specs/inprogress/
+
+# 5. Implement with Claude Code
+# Claude reads specification and implements
+
+# 6. Complete
+mv specs/inprogress/0042-new-feature.md specs/done/
+```
+
+**Result:**
+- Detailed specification for AI
+- Quality implementation
+- Documentation for future
+
+---
+
+### Workflow 3: Architectural Decision
+
+**Situation:** Need to choose between PostgreSQL and MongoDB
+
+**Actions:**
+
+```bash
+# 1. Create ADR
+cp templates/adr/adr.md docs/adr/ADR-0005-database-choice.md
+
+# 2. Fill sections
+# - Context (why DB needed, requirements)
+# - Options (PostgreSQL, MongoDB, MySQL)
+# - Decision (PostgreSQL)
+# - Consequences (pros and cons)
+
+# 3. Review
+# Tech Lead + Architect
+
+# 4. Accept
+# Status: Accepted
+```
+
+**Result:**
+- Documented decision with context
+- Justification for future generations
+- History of architectural decisions
+
+---
+
+## Project Directory Structure
+
+Recommended structure for using templates:
+
+```
+your-project/
+├── docs/
+│   ├── adr/                           # Architecture Decision Records
+│   │   ├── README.md                  # Index of all ADRs
+│   │   ├── ADR-0001-database.md
+│   │   └── ADR-0002-api-gateway.md
+│   ├── audits/                        # Audit results
+│   │   ├── 2026-01-project-audit.md
+│   │   └── 2026-01-validation.md
+│   └── handover/                      # Project handover
+│       └── project-a-handover.md
+├── specs/                             # Specifications
+│   ├── todo/
+│   ├── inprogress/
+│   └── done/
+└── .archlint.yaml                     # Config for automated validation
+```
 
 ---
 
 ## Best Practices
 
-### 1. Correctly determine the size
+### Project Handover
+1. **Follow the process** - don't skip phases
+2. **Kickoff is critical** - make sure you understand expectations
+3. **Document everything** - don't rely on memory
+4. **Combine approaches** - manual audit + automation
+5. **Provide plan** - not just problems, but solutions
 
-Don't overcomplicate! If the specification is simple - use XS/S.
+### System Audits
+1. **Automation first** - quick overview
+2. **Manual for context** - understand causes
+3. **Prioritize** - not everything is critical
+4. **Be objective** - rely on metrics
+5. **Repeat regularly** - track progress
 
-### 2. Follow the comments
+### Specifications
+1. **Define size correctly** - don't overcomplicate
+2. **Follow comments** - template contains hints
+3. **Detail requirements** - larger spec = more detailed API
+4. **UML with methods** - not just fields!
+5. **Code examples** - mandatory for M/L/XL
 
-The template contains hints for each size.
-
-### 3. Requirements detail
-
-The larger the specification - the more detailed Requirements with API.
-
-### 4. UML Class with methods
-
-Always specify methods, not just fields!
-
-### 5. Many Acceptance Criteria for large specifications
-
-L/XL specifications: 20-35 criteria - this is normal.
-
-### 6. Code examples
-
-For M/L/XL always add examples in Notes.
-
-### 7. Backward Compatibility
-
-Always specify backward compatibility requirements.
-
----
-
-## FAQ
-
-**Q: How to understand which specification size?**
-
-A: Rough estimate:
-- XS: < 50 lines of code, < 1 hour
-- S: 50-200 lines, 1-4 hours
-- M: 200-500 lines, 4-8 hours
-- L: 500-1000 lines, 1-3 days
-- XL: > 1000 lines, 3-7 days
-
-**Q: Do I need to fill in all sections?**
-
-A: No! Read the comments in the template and delete unnecessary parts.
-
-**Q: How does this approach differ from two templates?**
-
-A: As in aitrader - one template, different detail levels. Easier to maintain, one structure for all.
-
-**Q: Where to see examples?**
-
-A: At the end of `spec-template.md` there are 5 examples of different sizes. Also see `../aitrader/specs/done/`.
+### ADR
+1. **Document context** - why the problem arose
+2. **Consider alternatives** - minimum 3 options
+3. **Justify decision** - not just "chose X"
+4. **Honest consequences** - positive AND negative
+5. **Update statuses** - don't delete outdated ones
 
 ---
 
-## Recommendations
+## Related Resources
 
-1. **Study examples in template** - they show all 5 sizes
-2. **Read comments** - they suggest what is needed
-3. **Don't overcomplicate** - for simple specifications use XS/S
-4. **Detail for Claude Code** - L/XL specifications with full API
-5. **Update as you go** - specification can grow from S to M
+**Industry Practices:**
+- [Futurice Project Handover Checklist](https://github.com/futurice/project-handover-checklist)
+- [TOGAF Architecture Review](https://www.opengroup.org/architecture/togaf7-doc/arch/p4/comp/clists/syseng.htm)
+- [C4 Model](https://c4model.com/)
+- [ADR GitHub Organization](https://adr.github.io/)
+
+**Books:**
+- Software Architecture in Practice (Bass, Clements, Kazman)
+- Building Evolutionary Architectures (Ford, Parsons, Kua)
+- Fundamentals of Software Architecture (Richards, Ford)
+
+**Tools:**
+- [PlantUML](https://plantuml.com/) - diagrams
+- [archlint](https://github.com/mshogin/archlint) - automated validation
+
+---
+
+## Feedback
+
+Templates are developed and improved continuously. If you have suggestions:
+- Open Issues: https://github.com/mshogin/archlint/issues
+- Create Pull Requests
+- Share your experience
+
+---
+
+*These templates are based on industry practices and real experience working with architecture in enterprise.*
