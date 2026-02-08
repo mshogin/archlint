@@ -56,6 +56,9 @@ clean: ## Очистить сгенерированные файлы
 	rm -rf $(GRAPH_DIR)
 	@echo "✓ Готово"
 
+implement: ## Реализовать спецификацию с помощью Claude Code
+	claude "$(cat .claude/contribution.md)"
+
 all: fmt build collect ## Выполнить всё (форматирование, сборка, построение графа)
 
 .DEFAULT_GOAL := help

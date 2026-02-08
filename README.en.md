@@ -16,6 +16,27 @@ archlint allows you to automatically extract and visualize software system archi
 - ✅ Automatic PlantUML sequence diagram generation
 - ✅ Wildcard support for component grouping
 
+## Contribution
+
+The project evolves through specifications. Each feature or change is described in a spec, and implementation is done with Claude Code.
+
+```bash
+git clone https://github.com/mshogin/archlint
+cd archlint
+make implement
+```
+
+`make implement` launches Claude Code in interactive mode with instructions for implementing specs from `specs/todo/`. Claude Code picks up a spec, moves it to `specs/inprogress/`, commits and pushes (to notify other contributors), then implements the described changes.
+
+Specification structure:
+
+```
+specs/
+├── todo/         # Specs awaiting implementation
+├── inprogress/   # Specs currently being worked on
+└── done/         # Completed specs
+```
+
 ## Installation
 
 ### From Source
