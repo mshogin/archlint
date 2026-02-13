@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Definitions_1"
+             targetNamespace="http://example.com/bpmn">
+  <process id="Process_1" name="Order Processing" isExecutable="true">
+    <startEvent id="StartEvent_1" name="Order Received">
+      <messageEventDefinition id="MsgDef_1"/>
+    </startEvent>
+    <serviceTask id="Task_Validate" name="Validate Order"/>
+    <exclusiveGateway id="Gateway_1" name="Is Valid?"/>
+    <serviceTask id="Task_Process" name="Process Payment"/>
+    <userTask id="Task_Reject" name="Reject Order"/>
+    <endEvent id="EndEvent_1" name="Order Completed"/>
+    <endEvent id="EndEvent_2" name="Order Rejected"/>
+    <sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_Validate"/>
+    <sequenceFlow id="Flow_2" sourceRef="Task_Validate" targetRef="Gateway_1"/>
+    <sequenceFlow id="Flow_3" name="Valid" sourceRef="Gateway_1" targetRef="Task_Process"/>
+    <sequenceFlow id="Flow_4" name="Invalid" sourceRef="Gateway_1" targetRef="Task_Reject"/>
+    <sequenceFlow id="Flow_5" sourceRef="Task_Process" targetRef="EndEvent_1"/>
+    <sequenceFlow id="Flow_6" sourceRef="Task_Reject" targetRef="EndEvent_2"/>
+  </process>
+</definitions>
