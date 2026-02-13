@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Definitions_1"
+             targetNamespace="http://example.com/bpmn">
+  <process id="Process_1" name="Process with Intermediate Events" isExecutable="true">
+    <startEvent id="Start_1" name="Start">
+      <timerEventDefinition id="TimerDef_1"/>
+    </startEvent>
+    <task id="Task_1" name="Prepare"/>
+    <intermediateCatchEvent id="Catch_1" name="Wait for Signal">
+      <signalEventDefinition id="SigDef_1"/>
+    </intermediateCatchEvent>
+    <task id="Task_2" name="Continue"/>
+    <intermediateThrowEvent id="Throw_1" name="Send Error">
+      <errorEventDefinition id="ErrDef_1"/>
+    </intermediateThrowEvent>
+    <endEvent id="End_1" name="Done"/>
+    <sequenceFlow id="Flow_1" sourceRef="Start_1" targetRef="Task_1"/>
+    <sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="Catch_1"/>
+    <sequenceFlow id="Flow_3" sourceRef="Catch_1" targetRef="Task_2"/>
+    <sequenceFlow id="Flow_4" sourceRef="Task_2" targetRef="Throw_1"/>
+    <sequenceFlow id="Flow_5" sourceRef="Throw_1" targetRef="End_1"/>
+  </process>
+</definitions>

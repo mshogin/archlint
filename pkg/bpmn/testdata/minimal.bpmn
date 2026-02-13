@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Definitions_1"
+             targetNamespace="http://example.com/bpmn">
+  <process id="Process_1" name="Minimal Process" isExecutable="true">
+    <startEvent id="Start_1" name="Start"/>
+    <task id="Task_1" name="Do Something"/>
+    <endEvent id="End_1" name="End"/>
+    <sequenceFlow id="Flow_1" sourceRef="Start_1" targetRef="Task_1"/>
+    <sequenceFlow id="Flow_2" sourceRef="Task_1" targetRef="End_1"/>
+  </process>
+</definitions>

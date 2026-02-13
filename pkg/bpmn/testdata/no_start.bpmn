@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             id="Definitions_1"
+             targetNamespace="http://example.com/bpmn">
+  <process id="Process_1" name="No Start Event" isExecutable="true">
+    <task id="Task_1" name="Lonely Task"/>
+    <endEvent id="End_1" name="End"/>
+    <sequenceFlow id="Flow_1" sourceRef="Task_1" targetRef="End_1"/>
+  </process>
+</definitions>
