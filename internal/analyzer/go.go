@@ -72,10 +72,12 @@ type MethodInfo struct {
 
 // CallInfo содержит информацию о вызове.
 type CallInfo struct {
-	Target   string
-	IsMethod bool
-	Receiver string
-	Line     int
+	Target      string
+	IsMethod    bool
+	Receiver    string
+	Line        int
+	IsGoroutine bool
+	IsDeferred  bool
 }
 
 // NewGoAnalyzer создает новый анализатор Go кода.
@@ -378,8 +380,6 @@ func (a *GoAnalyzer) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, f
 }
 
 // collectCalls собирает все вызовы функций/методов из тела функции.
-//
-//nolint:funlen // AST traversal requires handling many expression types.
 func (a *GoAnalyzer) collectCalls(body *ast.BlockStmt, pkgID string, fset *token.FileSet) []CallInfo {
 	tracer.Enter("GoAnalyzer.collectCalls")
 
@@ -392,46 +392,17 @@ func (a *GoAnalyzer) collectCalls(body *ast.BlockStmt, pkgID string, fset *token
 	var calls []CallInfo
 
 	ast.Inspect(body, func(n ast.Node) bool {
-		callExpr, ok := n.(*ast.CallExpr)
-		if !ok {
-			return true
-		}
+		switch stmt := n.(type) {
+		case *ast.GoStmt:
+			calls = append(calls, a.extractCallInfo(stmt.Call, pkgID, fset, true, false)...)
 
-		pos := fset.Position(callExpr.Pos())
+			return false
+		case *ast.DeferStmt:
+			calls = append(calls, a.extractCallInfo(stmt.Call, pkgID, fset, false, true)...)
 
-		switch fun := callExpr.Fun.(type) {
-		case *ast.Ident:
-			calls = append(calls, CallInfo{
-				Target:   pkgID + "." + fun.Name,
-				IsMethod: false,
-				Line:     pos.Line,
-			})
-
-		case *ast.SelectorExpr:
-			switch x := fun.X.(type) {
-			case *ast.Ident:
-				calls = append(calls, CallInfo{
-					Target:   x.Name + "." + fun.Sel.Name,
-					IsMethod: true,
-					Receiver: x.Name,
-					Line:     pos.Line,
-				})
-			case *ast.SelectorExpr:
-				if ident, ok := x.X.(*ast.Ident); ok {
-					calls = append(calls, CallInfo{
-						Target:   ident.Name + "." + x.Sel.Name + "." + fun.Sel.Name,
-						IsMethod: true,
-						Receiver: ident.Name + "." + x.Sel.Name,
-						Line:     pos.Line,
-					})
-				}
-			case *ast.CallExpr:
-				calls = append(calls, CallInfo{
-					Target:   "()." + fun.Sel.Name,
-					IsMethod: true,
-					Line:     pos.Line,
-				})
-			}
+			return false
+		case *ast.CallExpr:
+			calls = append(calls, a.extractCallInfo(stmt, pkgID, fset, false, false)...)
 		}
 
 		return true
@@ -440,6 +411,81 @@ func (a *GoAnalyzer) collectCalls(body *ast.BlockStmt, pkgID string, fset *token
 	tracer.ExitSuccess("GoAnalyzer.collectCalls")
 
 	return calls
+}
+
+// extractCallInfo извлекает информацию о вызове из AST-узла *ast.CallExpr.
+func (a *GoAnalyzer) extractCallInfo(
+	callExpr *ast.CallExpr, pkgID string, fset *token.FileSet,
+	isGoroutine, isDeferred bool,
+) []CallInfo {
+	tracer.Enter("GoAnalyzer.extractCallInfo")
+
+	pos := fset.Position(callExpr.Pos())
+
+	var calls []CallInfo
+
+	switch fun := callExpr.Fun.(type) {
+	case *ast.Ident:
+		calls = append(calls, CallInfo{
+			Target:      pkgID + "." + fun.Name,
+			IsMethod:    false,
+			Line:        pos.Line,
+			IsGoroutine: isGoroutine,
+			IsDeferred:  isDeferred,
+		})
+	case *ast.SelectorExpr:
+		calls = append(calls, a.extractSelectorCall(fun, pos.Line, isGoroutine, isDeferred)...)
+	case *ast.FuncLit:
+		if isGoroutine {
+			calls = append(calls, CallInfo{
+				Target:      pkgID + ".<closure>",
+				IsGoroutine: true,
+				Line:        pos.Line,
+			})
+		}
+	}
+
+	tracer.ExitSuccess("GoAnalyzer.extractCallInfo")
+
+	return calls
+}
+
+func (a *GoAnalyzer) extractSelectorCall(
+	fun *ast.SelectorExpr, line int,
+	isGoroutine, isDeferred bool,
+) []CallInfo {
+	switch x := fun.X.(type) {
+	case *ast.Ident:
+		return []CallInfo{{
+			Target:      x.Name + "." + fun.Sel.Name,
+			IsMethod:    true,
+			Receiver:    x.Name,
+			Line:        line,
+			IsGoroutine: isGoroutine,
+			IsDeferred:  isDeferred,
+		}}
+	case *ast.SelectorExpr:
+		if ident, ok := x.X.(*ast.Ident); ok {
+			return []CallInfo{{
+				Target:      ident.Name + "." + x.Sel.Name + "." + fun.Sel.Name,
+				IsMethod:    true,
+				Receiver:    ident.Name + "." + x.Sel.Name,
+				Line:        line,
+				IsGoroutine: isGoroutine,
+				IsDeferred:  isDeferred,
+			}}
+		}
+	case *ast.CallExpr:
+		return []CallInfo{{
+			Target:      "()." + fun.Sel.Name,
+			IsMethod:    true,
+			Line:        line,
+			IsGoroutine: isGoroutine,
+			IsDeferred:  isDeferred,
+		}}
+	}
+
+	return nil
 }
 
 // getReceiverType извлекает имя типа из receiver.
@@ -829,6 +875,69 @@ func (a *GoAnalyzer) findPackageByImport(importPath string) string {
 	tracer.ExitSuccess("GoAnalyzer.findPackageByImport")
 
 	return ""
+}
+
+// LookupFunction возвращает информацию о функции по ID.
+func (a *GoAnalyzer) LookupFunction(funcID string) *FunctionInfo {
+	return a.functions[funcID]
+}
+
+// LookupMethod возвращает информацию о методе по ID.
+func (a *GoAnalyzer) LookupMethod(methodID string) *MethodInfo {
+	return a.methods[methodID]
+}
+
+// LookupType возвращает информацию о типе по ID.
+func (a *GoAnalyzer) LookupType(typeID string) *TypeInfo {
+	return a.types[typeID]
+}
+
+// FindImplementations ищет конкретные типы, реализующие интерфейс.
+// Возвращает IDs типов, у которых совпадают все методы интерфейса (best-effort).
+func (a *GoAnalyzer) FindImplementations(interfaceID string) []string {
+	iface := a.types[interfaceID]
+	if iface == nil || iface.Kind != "interface" {
+		return nil
+	}
+
+	var result []string
+
+	for typeID, typeInfo := range a.types {
+		if typeInfo.Kind != "struct" || typeID == interfaceID {
+			continue
+		}
+
+		for _, field := range typeInfo.Fields {
+			resolvedType := a.resolveTypeDependency(field.TypeName, field.TypePkg, typeInfo.Package)
+			if resolvedType == interfaceID {
+				result = append(result, typeID)
+
+				break
+			}
+		}
+	}
+
+	return result
+}
+
+// AllFunctions возвращает все найденные функции.
+func (a *GoAnalyzer) AllFunctions() map[string]*FunctionInfo {
+	return a.functions
+}
+
+// AllMethods возвращает все найденные методы.
+func (a *GoAnalyzer) AllMethods() map[string]*MethodInfo {
+	return a.methods
+}
+
+// AllTypes возвращает все найденные типы.
+func (a *GoAnalyzer) AllTypes() map[string]*TypeInfo {
+	return a.types
+}
+
+// ResolveCallTarget разрешает цель вызова в ID узла (публичный доступ).
+func (a *GoAnalyzer) ResolveCallTarget(call CallInfo, callerPkg string) string {
+	return a.resolveCallTarget(call, callerPkg)
 }
 
 // isStdLib проверяет является ли пакет стандартной библиотекой Go.
