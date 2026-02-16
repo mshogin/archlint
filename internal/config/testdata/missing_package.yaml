@@ -1,0 +1,8 @@
+contexts:
+  broken:
+    bpmn_file: minimal.bpmn
+    events:
+      - event_id: "Start_1"
+        entry_point:
+          function: "Handler.Create"
+          type: http
