@@ -1,0 +1,14 @@
+contexts:
+  broken:
+    bpmn_file: minimal.bpmn
+    events:
+      - event_id: "Start_1"
+        entry_point:
+          package: "internal/handler"
+          function: "Handler.Create"
+          type: http
+      - event_id: "Start_1"
+        entry_point:
+          package: "internal/service"
+          function: "Service.Process"
+          type: kafka

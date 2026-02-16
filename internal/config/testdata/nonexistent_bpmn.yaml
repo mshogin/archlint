@@ -1,0 +1,9 @@
+contexts:
+  broken:
+    bpmn_file: does_not_exist.bpmn
+    events:
+      - event_id: "Start_1"
+        entry_point:
+          package: "internal/handler"
+          function: "Handler.Create"
+          type: http

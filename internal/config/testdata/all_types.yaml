@@ -1,0 +1,29 @@
+contexts:
+  all-types:
+    bpmn_file: minimal.bpmn
+    events:
+      - event_id: "event_http"
+        entry_point:
+          package: "internal/api"
+          function: "Handler.Create"
+          type: http
+      - event_id: "event_kafka"
+        entry_point:
+          package: "internal/consumer"
+          function: "Consumer.Handle"
+          type: kafka
+      - event_id: "event_grpc"
+        entry_point:
+          package: "internal/grpc"
+          function: "Server.Process"
+          type: grpc
+      - event_id: "event_cron"
+        entry_point:
+          package: "internal/cron"
+          function: "Job.Run"
+          type: cron
+      - event_id: "event_custom"
+        entry_point:
+          package: "internal/custom"
+          function: "Handler.Execute"
+          type: custom
