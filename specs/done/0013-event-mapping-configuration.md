@@ -2,7 +2,7 @@
 
 **Metadata:**
 - Priority: 0013 (Medium)
-- Status: InProgress
+- Status: Done
 - Created: 2026-02-08
 - Effort: S
 - Parent Spec: 0011

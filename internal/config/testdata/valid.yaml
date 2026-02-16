@@ -1,0 +1,26 @@
+contexts:
+  order-processing:
+    bpmn_file: minimal.bpmn
+    events:
+      - event_id: "Start_1"
+        event_name: "Create Order"
+        entry_point:
+          package: "internal/api/handler"
+          function: "OrderHandler.Create"
+          type: http
+
+      - event_id: "Task_1"
+        event_name: "Process Order"
+        entry_point:
+          package: "internal/service"
+          function: "OrderService.Process"
+          type: custom
+
+  reporting:
+    bpmn_file: minimal.bpmn
+    events:
+      - event_id: "Start_1"
+        entry_point:
+          package: "internal/cron"
+          function: "ReportJob.Run"
+          type: cron
