@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/mshogin/archlint/internal/analyzer"
@@ -218,8 +219,7 @@ func generatePuml(cg *callgraph.CallGraph, name string) error {
 		return fmt.Errorf("ошибка генерации PlantUML: %w", err)
 	}
 
-	safeName := strings.ReplaceAll(name, "/", "_")
-	safeName = strings.ReplaceAll(safeName, ".", "_")
+	safeName := sanitizeFilename(name)
 	pumlPath := filepath.Join(cgOutputDir, safeName+".puml")
 
 	//nolint:gosec // G306: puml files are not sensitive
@@ -230,4 +230,22 @@ func generatePuml(cg *callgraph.CallGraph, name string) error {
 	fmt.Printf("PlantUML: %s\n", pumlPath)
 
 	return nil
+}
+
+var unsafeFilenameChars = regexp.MustCompile(`[^a-zA-Z0-9._-]`)
+
+func sanitizeFilename(name string) string {
+	safe := unsafeFilenameChars.ReplaceAllString(name, "_")
+	safe = strings.TrimLeft(safe, ".")
+
+	const maxLen = 200
+	if len(safe) > maxLen {
+		safe = safe[:maxLen]
+	}
+
+	if safe == "" {
+		safe = "unnamed"
+	}
+
+	return safe
 }

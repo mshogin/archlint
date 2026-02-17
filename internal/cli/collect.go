@@ -98,8 +98,8 @@ func printStats(graph *model.Graph) {
 }
 
 func saveGraph(graph *model.Graph) error {
-	//nolint:gosec // G304: collectOutputFile is a user-provided CLI argument, file path control is expected
-	file, err := os.Create(collectOutputFile)
+	//nolint:gosec // G304: collectOutputFile is a user-provided CLI argument
+	file, err := os.OpenFile(collectOutputFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o640)
 	if err != nil {
 		return fmt.Errorf("%w: %w", errFileCreate, err)
 	}
