@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/mshogin/archlint/internal/model"
-	"github.com/mshogin/archlint/pkg/tracer"
 )
 
 // GoAnalyzer анализирует Go код и строит граф зависимостей.
@@ -82,9 +81,6 @@ type CallInfo struct {
 
 // NewGoAnalyzer создает новый анализатор Go кода.
 func NewGoAnalyzer() *GoAnalyzer {
-	tracer.Enter("NewGoAnalyzer")
-	tracer.ExitSuccess("NewGoAnalyzer")
-
 	return &GoAnalyzer{
 		packages:  make(map[string]*PackageInfo),
 		types:     make(map[string]*TypeInfo),
@@ -96,11 +92,7 @@ func NewGoAnalyzer() *GoAnalyzer {
 }
 
 // Analyze анализирует директорию с Go кодом.
-//
-//nolint:funlen // Main analyzer function orchestrates multiple parsing and building steps.
 func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
-	tracer.Enter("GoAnalyzer.Analyze")
-
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -122,14 +114,10 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 		return a.parseFile(path)
 	})
 	if err != nil {
-		tracer.ExitError("GoAnalyzer.Analyze", err)
-
 		return nil, fmt.Errorf("ошибка обхода директории: %w", err)
 	}
 
 	a.buildGraph()
-
-	tracer.ExitSuccess("GoAnalyzer.Analyze")
 
 	return &model.Graph{
 		Nodes: a.nodes,
@@ -141,14 +129,10 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 //
 //nolint:funlen // AST parsing inherently requires detailed processing of multiple node types.
 func (a *GoAnalyzer) parseFile(filename string) error {
-	tracer.Enter("GoAnalyzer.parseFile")
-
 	fset := token.NewFileSet()
 
 	node, err := goparser.ParseFile(fset, filename, nil, goparser.ParseComments)
 	if err != nil {
-		tracer.ExitError("GoAnalyzer.parseFile", err)
-
 		return fmt.Errorf("ошибка парсинга %s: %w", filename, err)
 	}
 
@@ -186,17 +170,11 @@ func (a *GoAnalyzer) parseFile(filename string) error {
 		}
 	}
 
-	tracer.ExitSuccess("GoAnalyzer.parseFile")
-
 	return nil
 }
 
 // parseTypeDecl парсит объявления типов.
-//
-//nolint:funlen // Type parsing requires handling multiple type categories (struct, interface, etc).
 func (a *GoAnalyzer) parseTypeDecl(decl *ast.GenDecl, pkgID, filename string, fset *token.FileSet) {
-	tracer.Enter("GoAnalyzer.parseTypeDecl")
-
 	for _, spec := range decl.Specs {
 		typeSpec, ok := spec.(*ast.TypeSpec)
 		if !ok {
@@ -232,17 +210,11 @@ func (a *GoAnalyzer) parseTypeDecl(decl *ast.GenDecl, pkgID, filename string, fs
 			Embeds:  embeds,
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.parseTypeDecl")
 }
 
 // parseStructFields извлекает поля и встроенные типы из структуры.
 func (a *GoAnalyzer) parseStructFields(structType *ast.StructType) (fields []FieldInfo, embeds []string) {
-	tracer.Enter("GoAnalyzer.parseStructFields")
-
 	if structType.Fields == nil {
-		tracer.ExitSuccess("GoAnalyzer.parseStructFields")
-
 		return fields, embeds
 	}
 
@@ -262,20 +234,14 @@ func (a *GoAnalyzer) parseStructFields(structType *ast.StructType) (fields []Fie
 		}
 	}
 
-	tracer.ExitSuccess("GoAnalyzer.parseStructFields")
-
 	return fields, embeds
 }
 
 // parseInterfaceEmbeds извлекает встроенные интерфейсы.
 func (a *GoAnalyzer) parseInterfaceEmbeds(iface *ast.InterfaceType) []string {
-	tracer.Enter("GoAnalyzer.parseInterfaceEmbeds")
-
 	var embeds []string
 
 	if iface.Methods == nil {
-		tracer.ExitSuccess("GoAnalyzer.parseInterfaceEmbeds")
-
 		return embeds
 	}
 
@@ -286,67 +252,39 @@ func (a *GoAnalyzer) parseInterfaceEmbeds(iface *ast.InterfaceType) []string {
 		}
 	}
 
-	tracer.ExitSuccess("GoAnalyzer.parseInterfaceEmbeds")
-
 	return embeds
 }
 
 // getTypeName извлекает имя типа из AST выражения.
-//
-//nolint:funlen // Type name extraction requires handling many AST expression types.
 func (a *GoAnalyzer) getTypeName(expr ast.Expr) (typeName, typePkg string) {
-	tracer.Enter("GoAnalyzer.getTypeName")
-
 	switch t := expr.(type) {
 	case *ast.Ident:
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return t.Name, ""
 	case *ast.StarExpr:
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return a.getTypeName(t.X)
 	case *ast.SelectorExpr:
 		if ident, ok := t.X.(*ast.Ident); ok {
-			tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 			return ident.Name + "." + t.Sel.Name, ident.Name
 		}
 
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return "", ""
 	case *ast.ArrayType:
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return a.getTypeName(t.Elt)
 	case *ast.MapType:
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return a.getTypeName(t.Value)
 	case *ast.ChanType:
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return a.getTypeName(t.Value)
 	case *ast.FuncType:
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return "func", ""
 	case *ast.InterfaceType:
-		tracer.ExitSuccess("GoAnalyzer.getTypeName")
-
 		return "interface{}", ""
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.getTypeName")
 
 	return "", ""
 }
 
 // parseFuncDecl парсит объявления функций и методов.
 func (a *GoAnalyzer) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fset *token.FileSet) {
-	tracer.Enter("GoAnalyzer.parseFuncDecl")
-
 	funcName := decl.Name.Name
 	pos := fset.Position(decl.Pos())
 
@@ -375,17 +313,11 @@ func (a *GoAnalyzer) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, f
 			Calls:   calls,
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.parseFuncDecl")
 }
 
 // collectCalls собирает все вызовы функций/методов из тела функции.
 func (a *GoAnalyzer) collectCalls(body *ast.BlockStmt, pkgID string, fset *token.FileSet) []CallInfo {
-	tracer.Enter("GoAnalyzer.collectCalls")
-
 	if body == nil {
-		tracer.ExitSuccess("GoAnalyzer.collectCalls")
-
 		return nil
 	}
 
@@ -408,8 +340,6 @@ func (a *GoAnalyzer) collectCalls(body *ast.BlockStmt, pkgID string, fset *token
 		return true
 	})
 
-	tracer.ExitSuccess("GoAnalyzer.collectCalls")
-
 	return calls
 }
 
@@ -418,8 +348,6 @@ func (a *GoAnalyzer) extractCallInfo(
 	callExpr *ast.CallExpr, pkgID string, fset *token.FileSet,
 	isGoroutine, isDeferred bool,
 ) []CallInfo {
-	tracer.Enter("GoAnalyzer.extractCallInfo")
-
 	pos := fset.Position(callExpr.Pos())
 
 	var calls []CallInfo
@@ -444,8 +372,6 @@ func (a *GoAnalyzer) extractCallInfo(
 			})
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.extractCallInfo")
 
 	return calls
 }
@@ -490,27 +416,18 @@ func (a *GoAnalyzer) extractSelectorCall(
 
 // getReceiverType извлекает имя типа из receiver.
 func (a *GoAnalyzer) getReceiverType(expr ast.Expr) string {
-	tracer.Enter("GoAnalyzer.getReceiverType")
-
 	switch t := expr.(type) {
 	case *ast.Ident:
-		tracer.ExitSuccess("GoAnalyzer.getReceiverType")
-
 		return t.Name
 	case *ast.StarExpr:
-		tracer.ExitSuccess("GoAnalyzer.getReceiverType")
-
 		return a.getReceiverType(t.X)
 	default:
-		tracer.ExitSuccess("GoAnalyzer.getReceiverType")
-
 		return "Unknown"
 	}
 }
 
 // buildGraph строит граф из собранной информации о пакетах.
 func (a *GoAnalyzer) buildGraph() {
-	tracer.Enter("GoAnalyzer.buildGraph")
 	a.buildPackageNodes()
 	a.buildTypeNodes()
 	a.buildFunctionNodes()
@@ -519,12 +436,9 @@ func (a *GoAnalyzer) buildGraph() {
 	a.buildFunctionCallEdges()
 	a.buildMethodCallEdges()
 	a.buildTypeDependencyEdges()
-	tracer.ExitSuccess("GoAnalyzer.buildGraph")
 }
 
 func (a *GoAnalyzer) buildPackageNodes() {
-	tracer.Enter("GoAnalyzer.buildPackageNodes")
-
 	for pkgID, pkg := range a.packages {
 		a.nodes = append(a.nodes, model.Node{
 			ID:     pkgID,
@@ -532,13 +446,9 @@ func (a *GoAnalyzer) buildPackageNodes() {
 			Entity: "package",
 		})
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildPackageNodes")
 }
 
 func (a *GoAnalyzer) buildTypeNodes() {
-	tracer.Enter("GoAnalyzer.buildTypeNodes")
-
 	for typeID, typeInfo := range a.types {
 		a.nodes = append(a.nodes, model.Node{
 			ID:     typeID,
@@ -552,13 +462,9 @@ func (a *GoAnalyzer) buildTypeNodes() {
 			Type: "contains",
 		})
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildTypeNodes")
 }
 
 func (a *GoAnalyzer) buildFunctionNodes() {
-	tracer.Enter("GoAnalyzer.buildFunctionNodes")
-
 	for funcID, funcInfo := range a.functions {
 		a.nodes = append(a.nodes, model.Node{
 			ID:     funcID,
@@ -572,13 +478,9 @@ func (a *GoAnalyzer) buildFunctionNodes() {
 			Type: "contains",
 		})
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildFunctionNodes")
 }
 
 func (a *GoAnalyzer) buildMethodNodes() {
-	tracer.Enter("GoAnalyzer.buildMethodNodes")
-
 	for methodID, methodInfo := range a.methods {
 		a.nodes = append(a.nodes, model.Node{
 			ID:     methodID,
@@ -594,13 +496,9 @@ func (a *GoAnalyzer) buildMethodNodes() {
 			Type: "contains",
 		})
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildMethodNodes")
 }
 
 func (a *GoAnalyzer) buildImportEdges() {
-	tracer.Enter("GoAnalyzer.buildImportEdges")
-
 	for pkgID, pkg := range a.packages {
 		for _, imp := range pkg.Imports {
 			targetID := a.findPackageByImport(imp)
@@ -624,13 +522,9 @@ func (a *GoAnalyzer) buildImportEdges() {
 			}
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildImportEdges")
 }
 
 func (a *GoAnalyzer) buildFunctionCallEdges() {
-	tracer.Enter("GoAnalyzer.buildFunctionCallEdges")
-
 	for funcID, funcInfo := range a.functions {
 		for _, call := range funcInfo.Calls {
 			targetID := a.resolveCallTarget(call, funcInfo.Package)
@@ -644,13 +538,9 @@ func (a *GoAnalyzer) buildFunctionCallEdges() {
 			}
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildFunctionCallEdges")
 }
 
 func (a *GoAnalyzer) buildMethodCallEdges() {
-	tracer.Enter("GoAnalyzer.buildMethodCallEdges")
-
 	for methodID, methodInfo := range a.methods {
 		for _, call := range methodInfo.Calls {
 			targetID := a.resolveCallTarget(call, methodInfo.Package)
@@ -663,13 +553,9 @@ func (a *GoAnalyzer) buildMethodCallEdges() {
 			}
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildMethodCallEdges")
 }
 
 func (a *GoAnalyzer) buildTypeDependencyEdges() {
-	tracer.Enter("GoAnalyzer.buildTypeDependencyEdges")
-
 	for typeID, typeInfo := range a.types {
 		for _, field := range typeInfo.Fields {
 			targetID := a.resolveTypeDependency(field.TypeName, field.TypePkg, typeInfo.Package)
@@ -694,21 +580,15 @@ func (a *GoAnalyzer) buildTypeDependencyEdges() {
 			}
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.buildTypeDependencyEdges")
 }
 
 // resolveCallTarget разрешает цель вызова в ID узла.
 //
 //nolint:funlen,gocyclo // Call resolution requires checking multiple package and type contexts.
 func (a *GoAnalyzer) resolveCallTarget(call CallInfo, callerPkg string) string {
-	tracer.Enter("GoAnalyzer.resolveCallTarget")
-
 	target := call.Target
 
 	if target == "" || strings.HasPrefix(target, "().") {
-		tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 		return ""
 	}
 
@@ -720,34 +600,24 @@ func (a *GoAnalyzer) resolveCallTarget(call CallInfo, callerPkg string) string {
 
 	parts := strings.Split(target, ".")
 	if len(parts) > 0 && builtins[parts[len(parts)-1]] {
-		tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 		return ""
 	}
 
 	if _, exists := a.functions[target]; exists {
-		tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 		return target
 	}
 
 	if _, exists := a.methods[target]; exists {
-		tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 		return target
 	}
 
 	if !strings.Contains(target, "/") {
 		withPkg := callerPkg + "." + target
 		if _, exists := a.functions[withPkg]; exists {
-			tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 			return withPkg
 		}
 
 		if _, exists := a.methods[withPkg]; exists {
-			tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 			return withPkg
 		}
 	}
@@ -755,24 +625,16 @@ func (a *GoAnalyzer) resolveCallTarget(call CallInfo, callerPkg string) string {
 	if call.IsMethod && call.Receiver != "" {
 		for methodID, methodInfo := range a.methods {
 			if methodInfo.Package == callerPkg && strings.HasSuffix(methodID, "."+call.Receiver+"."+parts[len(parts)-1]) {
-				tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 				return methodID
 			}
 		}
 	}
 
-	tracer.ExitSuccess("GoAnalyzer.resolveCallTarget")
-
 	return ""
 }
 
 // resolveTypeDependency разрешает зависимость типа в ID узла.
-//
-//nolint:funlen // Type dependency resolution requires checking multiple package and type contexts.
 func (a *GoAnalyzer) resolveTypeDependency(typeName, typePkg, currentPkg string) string {
-	tracer.Enter("GoAnalyzer.resolveTypeDependency")
-
 	primitives := map[string]bool{
 		"string": true, "int": true, "int8": true, "int16": true, "int32": true, "int64": true,
 		"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
@@ -781,98 +643,66 @@ func (a *GoAnalyzer) resolveTypeDependency(typeName, typePkg, currentPkg string)
 	}
 
 	if primitives[typeName] {
-		tracer.ExitSuccess("GoAnalyzer.resolveTypeDependency")
-
 		return ""
 	}
 
 	if typePkg != "" {
 		for typeID := range a.types {
 			if strings.Contains(typeID, typePkg) && strings.HasSuffix(typeID, "."+strings.Split(typeName, ".")[len(strings.Split(typeName, "."))-1]) {
-				tracer.ExitSuccess("GoAnalyzer.resolveTypeDependency")
-
 				return typeID
 			}
 		}
-
-		tracer.ExitSuccess("GoAnalyzer.resolveTypeDependency")
 
 		return ""
 	}
 
 	localID := currentPkg + "." + typeName
 	if _, exists := a.types[localID]; exists {
-		tracer.ExitSuccess("GoAnalyzer.resolveTypeDependency")
-
 		return localID
 	}
 
 	for typeID := range a.types {
 		if strings.HasSuffix(typeID, "."+typeName) {
-			tracer.ExitSuccess("GoAnalyzer.resolveTypeDependency")
-
 			return typeID
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.resolveTypeDependency")
 
 	return ""
 }
 
 // getPkgID генерирует ID пакета из пути.
 func (a *GoAnalyzer) getPkgID(dir string) string {
-	tracer.Enter("GoAnalyzer.getPkgID")
-
 	parts := strings.Split(filepath.Clean(dir), string(filepath.Separator))
 
 	if len(parts) > 3 {
-		tracer.ExitSuccess("GoAnalyzer.getPkgID")
-
 		return strings.Join(parts[len(parts)-3:], "/")
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.getPkgID")
 
 	return strings.Join(parts, "/")
 }
 
 // getLastPathComponent возвращает последний компонент пути.
 func (a *GoAnalyzer) getLastPathComponent(path string) string {
-	tracer.Enter("GoAnalyzer.getLastPathComponent")
-
 	parts := strings.Split(path, "/")
 
 	if len(parts) > 0 {
-		tracer.ExitSuccess("GoAnalyzer.getLastPathComponent")
-
 		return parts[len(parts)-1]
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.getLastPathComponent")
 
 	return path
 }
 
 // findPackageByImport ищет пакет по пути импорта.
 func (a *GoAnalyzer) findPackageByImport(importPath string) string {
-	tracer.Enter("GoAnalyzer.findPackageByImport")
-
 	for pkgID, pkg := range a.packages {
 		if pkg.Path == importPath {
-			tracer.ExitSuccess("GoAnalyzer.findPackageByImport")
-
 			return pkgID
 		}
 
 		if strings.HasSuffix(pkgID, importPath) {
-			tracer.ExitSuccess("GoAnalyzer.findPackageByImport")
-
 			return pkgID
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.findPackageByImport")
 
 	return ""
 }
@@ -942,11 +772,7 @@ func (a *GoAnalyzer) ResolveCallTarget(call CallInfo, callerPkg string) string {
 
 // isStdLib проверяет является ли пакет стандартной библиотекой Go.
 func (a *GoAnalyzer) isStdLib(importPath string) bool {
-	tracer.Enter("GoAnalyzer.isStdLib")
-
 	if !strings.Contains(importPath, ".") && !strings.Contains(importPath, "/") {
-		tracer.ExitSuccess("GoAnalyzer.isStdLib")
-
 		return true
 	}
 
@@ -959,13 +785,9 @@ func (a *GoAnalyzer) isStdLib(importPath string) bool {
 
 	for _, prefix := range stdlibPrefixes {
 		if strings.HasPrefix(importPath, prefix+"/") || importPath == prefix {
-			tracer.ExitSuccess("GoAnalyzer.isStdLib")
-
 			return true
 		}
 	}
-
-	tracer.ExitSuccess("GoAnalyzer.isStdLib")
 
 	return false
 }

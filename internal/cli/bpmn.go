@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/mshogin/archlint/pkg/bpmn"
-	"github.com/mshogin/archlint/pkg/tracer"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -36,21 +35,14 @@ var bpmnCmd = &cobra.Command{
 }
 
 func init() {
-	tracer.Enter("init")
 	bpmnCmd.Flags().StringVarP(&bpmnOutputFile, "output", "o", "process-graph.yaml", "Выходной YAML файл")
 	rootCmd.AddCommand(bpmnCmd)
-	tracer.ExitSuccess("init")
 }
 
-//nolint:funlen // tracer instrumentation adds lines
 func runBpmn(_ *cobra.Command, args []string) error {
-	tracer.Enter("runBpmn")
-
 	filename := args[0]
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		tracer.ExitError("runBpmn", err)
-
 		return fmt.Errorf("%w: %s", errBpmnFileNotFound, filename)
 	}
 
@@ -58,15 +50,11 @@ func runBpmn(_ *cobra.Command, args []string) error {
 
 	process, err := bpmn.ParseFile(filename)
 	if err != nil {
-		tracer.ExitError("runBpmn", err)
-
 		return fmt.Errorf("%w: %w", errBpmnParse, err)
 	}
 
 	graph, err := bpmn.BuildGraph(process)
 	if err != nil {
-		tracer.ExitError("runBpmn", err)
-
 		return fmt.Errorf("%w: %w", errBpmnBuildGraph, err)
 	}
 
@@ -75,20 +63,15 @@ func runBpmn(_ *cobra.Command, args []string) error {
 	printBpmnStats(process, validationErrors)
 
 	if err := saveProcessGraph(process); err != nil {
-		tracer.ExitError("runBpmn", err)
-
 		return fmt.Errorf("%w: %w", errBpmnSave, err)
 	}
 
 	fmt.Printf("Граф сохранен в %s\n", bpmnOutputFile)
-	tracer.ExitSuccess("runBpmn")
 
 	return nil
 }
 
 func printBpmnStats(process *bpmn.BPMNProcess, validationErrors []error) {
-	tracer.Enter("printBpmnStats")
-
 	var events, tasks, gateways int
 
 	for _, elem := range process.Elements {
@@ -116,14 +99,9 @@ func printBpmnStats(process *bpmn.BPMNProcess, validationErrors []error) {
 			fmt.Printf("  - %s\n", e.Error())
 		}
 	}
-
-	tracer.ExitSuccess("printBpmnStats")
 }
 
-//nolint:funlen // tracer instrumentation adds lines
 func saveProcessGraph(process *bpmn.BPMNProcess) error {
-	tracer.Enter("saveProcessGraph")
-
 	output := bpmn.ProcessGraphOutput{
 		Process: bpmn.ProcessMeta{
 			ID:   process.ID,
@@ -136,8 +114,6 @@ func saveProcessGraph(process *bpmn.BPMNProcess) error {
 	//nolint:gosec // G304: bpmnOutputFile is a user-provided CLI argument
 	file, err := os.Create(bpmnOutputFile)
 	if err != nil {
-		tracer.ExitError("saveProcessGraph", err)
-
 		return fmt.Errorf("%w: %w", errBpmnFileCreate, err)
 	}
 
@@ -157,12 +133,8 @@ func saveProcessGraph(process *bpmn.BPMNProcess) error {
 	}()
 
 	if err := encoder.Encode(output); err != nil {
-		tracer.ExitError("saveProcessGraph", err)
-
 		return fmt.Errorf("%w: %w", errBpmnYAMLEncode, err)
 	}
-
-	tracer.ExitSuccess("saveProcessGraph")
 
 	return nil
 }

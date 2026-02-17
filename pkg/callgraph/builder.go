@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/mshogin/archlint/internal/analyzer"
-	"github.com/mshogin/archlint/pkg/tracer"
 )
 
 // BuildOptions настройки построения графа.
@@ -35,21 +34,13 @@ type Builder struct {
 
 // NewBuilder создает новый строитель.
 func NewBuilder(a *analyzer.GoAnalyzer, opts BuildOptions) (*Builder, error) {
-	tracer.Enter("NewBuilder")
-
 	if a == nil {
-		tracer.ExitError("NewBuilder", ErrAnalyzerRequired)
-
 		return nil, ErrAnalyzerRequired
 	}
 
 	if opts.MaxDepth < 1 || opts.MaxDepth > 50 {
-		tracer.ExitError("NewBuilder", ErrInvalidMaxDepth)
-
 		return nil, fmt.Errorf("%w: %d", ErrInvalidMaxDepth, opts.MaxDepth)
 	}
-
-	tracer.ExitSuccess("NewBuilder")
 
 	return &Builder{
 		analyzer: a,
@@ -59,15 +50,11 @@ func NewBuilder(a *analyzer.GoAnalyzer, opts BuildOptions) (*Builder, error) {
 
 // Build строит граф вызовов от указанной точки входа.
 func (b *Builder) Build(entryPoint string) (*CallGraph, error) {
-	tracer.Enter("Builder.Build")
-
 	return b.buildGraph("", "", entryPoint)
 }
 
 // BuildForEvent строит граф вызовов для BPMN-события.
 func (b *Builder) BuildForEvent(eventID, eventName, entryPoint string) (*CallGraph, error) {
-	tracer.Enter("Builder.BuildForEvent")
-
 	return b.buildGraph(eventID, eventName, entryPoint)
 }
 
@@ -76,7 +63,6 @@ func (b *Builder) buildGraph(eventID, eventName, entryPoint string) (*CallGraph,
 
 	if b.analyzer.LookupFunction(entryPoint) == nil && b.analyzer.LookupMethod(entryPoint) == nil {
 		err := fmt.Errorf("%w: %s", ErrEntryPointNotFound, entryPoint)
-		tracer.ExitError("Builder.buildGraph", err)
 
 		return nil, err
 	}
@@ -99,8 +85,6 @@ func (b *Builder) buildGraph(eventID, eventName, entryPoint string) (*CallGraph,
 		Warnings:    warnings,
 		BuildTime:   time.Since(start),
 	}
-
-	tracer.ExitSuccess("Builder.buildGraph")
 
 	return cg, nil
 }

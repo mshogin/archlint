@@ -2,7 +2,8 @@
 
 **Metadata:**
 - Priority: 0007 (High)
-- Status: Done
+- Status: Superseded
+- Superseded by: 0011, 0012, 0013
 - Created: 2024-12-01
 - Effort: M
 - Parent Spec: 0001

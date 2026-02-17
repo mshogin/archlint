@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mshogin/archlint/pkg/tracer"
 	"github.com/spf13/cobra"
 )
 
@@ -23,16 +22,11 @@ var rootCmd = &cobra.Command{
 
 // Execute запускает выполнение корневой команды CLI.
 func Execute() error {
-	tracer.Enter("Execute")
-
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Ошибка: %v\n", err)
-		tracer.ExitError("Execute", err)
 
 		return fmt.Errorf("ошибка выполнения команды: %w", err)
 	}
-
-	tracer.ExitSuccess("Execute")
 
 	return nil
 }

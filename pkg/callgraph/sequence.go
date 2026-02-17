@@ -3,8 +3,6 @@ package callgraph
 import (
 	"fmt"
 	"strings"
-
-	"github.com/mshogin/archlint/pkg/tracer"
 )
 
 // SequenceOptions настройки генерации диаграммы.
@@ -39,11 +37,7 @@ func NewSequenceGenerator(opts SequenceOptions) *SequenceGenerator {
 
 // Generate генерирует PlantUML код из графа вызовов.
 func (g *SequenceGenerator) Generate(cg *CallGraph) (string, error) {
-	tracer.Enter("SequenceGenerator.Generate")
-
 	if cg == nil || len(cg.Nodes) == 0 {
-		tracer.ExitSuccess("SequenceGenerator.Generate")
-
 		return "", nil
 	}
 
@@ -67,8 +61,6 @@ func (g *SequenceGenerator) Generate(cg *CallGraph) (string, error) {
 	sb.WriteString("\n")
 	g.writeEdges(&sb, cg, nodeByID)
 	sb.WriteString("\n@enduml\n")
-
-	tracer.ExitSuccess("SequenceGenerator.Generate")
 
 	return sb.String(), nil
 }
