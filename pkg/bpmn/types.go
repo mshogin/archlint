@@ -39,6 +39,7 @@ var (
 	ErrNoEndEvent      = errors.New("процесс не содержит endEvent")
 	ErrBrokenRef       = errors.New("ссылка на несуществующий элемент")
 	ErrIsolatedElement = errors.New("элемент изолирован")
+	ErrFileTooLarge    = errors.New("BPMN файл слишком большой")
 )
 
 // BPMNProcess представляет бизнес-процесс.

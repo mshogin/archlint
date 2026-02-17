@@ -112,7 +112,7 @@ func saveProcessGraph(process *bpmn.BPMNProcess) error {
 	}
 
 	//nolint:gosec // G304: bpmnOutputFile is a user-provided CLI argument
-	file, err := os.Create(bpmnOutputFile)
+	file, err := os.OpenFile(bpmnOutputFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o640)
 	if err != nil {
 		return fmt.Errorf("%w: %w", errBpmnFileCreate, err)
 	}

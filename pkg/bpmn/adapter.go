@@ -7,8 +7,19 @@ import (
 	"github.com/olive-io/bpmn/schema"
 )
 
+const maxBPMNFileSize = 50 * 1024 * 1024 // 50MB
+
 // ParseFile читает BPMN 2.0 XML файл и возвращает BPMNProcess.
 func ParseFile(filename string) (*BPMNProcess, error) {
+	info, err := os.Stat(filename)
+	if err != nil {
+		return nil, fmt.Errorf("чтение BPMN файла: %w", err)
+	}
+
+	if info.Size() > maxBPMNFileSize {
+		return nil, fmt.Errorf("%w: %d байт (лимит %d)", ErrFileTooLarge, info.Size(), maxBPMNFileSize)
+	}
+
 	//nolint:gosec // G304: filename is a user-provided CLI argument, file path control is expected
 	data, err := os.ReadFile(filename)
 	if err != nil {

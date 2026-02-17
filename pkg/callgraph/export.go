@@ -55,7 +55,7 @@ func (e *YAMLExporter) MarshalEventSet(set *EventCallGraphSet) ([]byte, error) {
 
 func (e *YAMLExporter) writeYAML(data interface{}, path string) error {
 	//nolint:gosec // G304: path is user-provided CLI argument
-	file, err := os.Create(path)
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o640)
 	if err != nil {
 		return fmt.Errorf("ошибка создания файла %s: %w", path, err)
 	}
