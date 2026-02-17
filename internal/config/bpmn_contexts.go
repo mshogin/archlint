@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mshogin/archlint/pkg/bpmn"
 	"gopkg.in/yaml.v3"
 )
+
+const maxConfigFileSize = 10 * 1024 * 1024 // 10MB
 
 // EntryPointType определяет тип точки входа в коде.
 type EntryPointType string
@@ -45,6 +48,8 @@ var (
 	ErrBPMNFileNotFound = errors.New("файл bpmn_file не найден")
 	ErrConfigRead       = errors.New("ошибка чтения файла конфигурации")
 	ErrConfigParse      = errors.New("ошибка парсинга YAML конфигурации")
+	ErrConfigTooLarge   = errors.New("файл конфигурации слишком большой")
+	ErrPathTraversal    = errors.New("путь выходит за пределы базовой директории")
 )
 
 // Warning представляет предупреждение валидации (не блокирует работу).
@@ -89,6 +94,15 @@ type BehavioralConfig struct {
 
 // LoadBPMNContexts загружает и валидирует конфигурацию контекстов из YAML файла.
 func LoadBPMNContexts(path string) (*BehavioralConfig, []Warning, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w: %w", ErrConfigRead, err)
+	}
+
+	if info.Size() > maxConfigFileSize {
+		return nil, nil, fmt.Errorf("%w: %d байт (лимит %d)", ErrConfigTooLarge, info.Size(), maxConfigFileSize)
+	}
+
 	//nolint:gosec // G304: path is a user-provided CLI argument
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -120,7 +134,11 @@ func validateContexts(config *BehavioralConfig, baseDir string) error {
 			return fmt.Errorf("%w: контекст %q", ErrMissingBPMNFile, ctxName)
 		}
 
-		bpmnPath := resolvePath(baseDir, ctx.BPMNFile)
+		bpmnPath, err := resolvePath(baseDir, ctx.BPMNFile)
+		if err != nil {
+			return fmt.Errorf("контекст %q: %w", ctxName, err)
+		}
+
 		if _, err := os.Stat(bpmnPath); os.IsNotExist(err) {
 			return fmt.Errorf("%w: %s (контекст %q)", ErrBPMNFileNotFound, ctx.BPMNFile, ctxName)
 		}
@@ -193,10 +211,27 @@ func ValidateAgainstBPMN(ctxName string, ctx *BPMNContext, process *bpmn.BPMNPro
 }
 
 // resolvePath разрешает путь относительно базовой директории.
-func resolvePath(baseDir, path string) string {
+// Возвращает ошибку если путь выходит за пределы baseDir.
+func resolvePath(baseDir, path string) (string, error) {
 	if filepath.IsAbs(path) {
-		return path
+		return path, nil
 	}
 
-	return filepath.Join(baseDir, path)
+	resolved := filepath.Clean(filepath.Join(baseDir, path))
+
+	absBase, err := filepath.Abs(baseDir)
+	if err != nil {
+		return "", fmt.Errorf("ошибка разрешения базовой директории: %w", err)
+	}
+
+	absResolved, err := filepath.Abs(resolved)
+	if err != nil {
+		return "", fmt.Errorf("ошибка разрешения пути: %w", err)
+	}
+
+	if !strings.HasPrefix(absResolved, absBase+string(filepath.Separator)) && absResolved != absBase {
+		return "", fmt.Errorf("%w: %q относительно %q", ErrPathTraversal, path, baseDir)
+	}
+
+	return resolved, nil
 }
