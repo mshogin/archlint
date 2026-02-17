@@ -7,7 +7,6 @@ import (
 
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/model"
-	"github.com/mshogin/archlint/pkg/tracer"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -36,21 +35,15 @@ var collectCmd = &cobra.Command{
 }
 
 func init() {
-	tracer.Enter("init")
 	collectCmd.Flags().StringVarP(&collectOutputFile, "output", "o", "architecture.yaml", "Выходной YAML файл")
 	collectCmd.Flags().StringVarP(&collectLanguage, "language", "l", "go", "Язык программирования (go)")
 	rootCmd.AddCommand(collectCmd)
-	tracer.ExitSuccess("init")
 }
 
 func runCollect(cmd *cobra.Command, args []string) error {
-	tracer.Enter("runCollect")
-
 	codeDir := args[0]
 
 	if _, err := os.Stat(codeDir); os.IsNotExist(err) {
-		tracer.ExitError("runCollect", err)
-
 		return fmt.Errorf("%w: %s", errDirNotExist, codeDir)
 	}
 
@@ -58,54 +51,37 @@ func runCollect(cmd *cobra.Command, args []string) error {
 
 	graph, err := analyzeCode(codeDir)
 	if err != nil {
-		tracer.ExitError("runCollect", err)
-
 		return err
 	}
 
 	printStats(graph)
 
 	if err := saveGraph(graph); err != nil {
-		tracer.ExitError("runCollect", err)
-
 		return err
 	}
 
-	fmt.Printf("✓ Граф сохранен в %s\n", collectOutputFile)
-	tracer.ExitSuccess("runCollect")
+	fmt.Printf("Граф сохранен в %s\n", collectOutputFile)
 
 	return nil
 }
 
 func analyzeCode(codeDir string) (*model.Graph, error) {
-	tracer.Enter("analyzeCode")
-
 	switch collectLanguage {
 	case "go":
 		goAnalyzer := analyzer.NewGoAnalyzer()
 
 		graph, err := goAnalyzer.Analyze(codeDir)
 		if err != nil {
-			err = fmt.Errorf("ошибка анализа: %w", err)
-			tracer.ExitError("analyzeCode", err)
-
-			return nil, err
+			return nil, fmt.Errorf("ошибка анализа: %w", err)
 		}
-
-		tracer.ExitSuccess("analyzeCode")
 
 		return graph, nil
 	default:
-		err := fmt.Errorf("%w: %s", errUnsupportedLang, collectLanguage)
-		tracer.ExitError("analyzeCode", err)
-
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", errUnsupportedLang, collectLanguage)
 	}
 }
 
 func printStats(graph *model.Graph) {
-	tracer.Enter("printStats")
-
 	stats := make(map[string]int)
 
 	for _, node := range graph.Nodes {
@@ -119,16 +95,12 @@ func printStats(graph *model.Graph) {
 	}
 
 	fmt.Printf("Найдено связей: %d\n", len(graph.Edges))
-	tracer.ExitSuccess("printStats")
 }
 
 func saveGraph(graph *model.Graph) error {
-	tracer.Enter("saveGraph")
 	//nolint:gosec // G304: collectOutputFile is a user-provided CLI argument, file path control is expected
 	file, err := os.Create(collectOutputFile)
 	if err != nil {
-		tracer.ExitError("saveGraph", err)
-
 		return fmt.Errorf("%w: %w", errFileCreate, err)
 	}
 
@@ -148,12 +120,8 @@ func saveGraph(graph *model.Graph) error {
 	}()
 
 	if err := encoder.Encode(graph); err != nil {
-		tracer.ExitError("saveGraph", err)
-
 		return fmt.Errorf("%w: %w", errYAMLSerialization, err)
 	}
-
-	tracer.ExitSuccess("saveGraph")
 
 	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/mshogin/archlint/internal/analyzer"
-	"github.com/mshogin/archlint/pkg/tracer"
 )
 
 // CallResolver разрешает цели вызовов: прямые, через интерфейс, горутины.
@@ -34,8 +33,6 @@ func NewCallResolver(a *analyzer.GoAnalyzer) *CallResolver {
 //
 //nolint:funlen // Call resolution requires checking multiple target types.
 func (r *CallResolver) Resolve(call analyzer.CallInfo, callerPkg string) *ResolvedCall {
-	tracer.Enter("CallResolver.Resolve")
-
 	targetID := r.analyzer.ResolveCallTarget(call, callerPkg)
 
 	callType := r.determineCallType(call)
@@ -43,12 +40,8 @@ func (r *CallResolver) Resolve(call analyzer.CallInfo, callerPkg string) *Resolv
 
 	if targetID == "" {
 		if call.Target == "" || strings.HasPrefix(call.Target, "().") {
-			tracer.ExitSuccess("CallResolver.Resolve")
-
 			return nil
 		}
-
-		tracer.ExitSuccess("CallResolver.Resolve")
 
 		return &ResolvedCall{
 			TargetID: call.Target,
@@ -61,8 +54,6 @@ func (r *CallResolver) Resolve(call analyzer.CallInfo, callerPkg string) *Resolv
 	}
 
 	if funcInfo := r.analyzer.LookupFunction(targetID); funcInfo != nil {
-		tracer.ExitSuccess("CallResolver.Resolve")
-
 		return &ResolvedCall{
 			TargetID: targetID,
 			NodeType: NodeFunction,
@@ -78,8 +69,6 @@ func (r *CallResolver) Resolve(call analyzer.CallInfo, callerPkg string) *Resolv
 	if methodInfo := r.analyzer.LookupMethod(targetID); methodInfo != nil {
 		nodeType := r.determineMethodNodeType(methodInfo)
 
-		tracer.ExitSuccess("CallResolver.Resolve")
-
 		return &ResolvedCall{
 			TargetID: targetID,
 			NodeType: nodeType,
@@ -92,8 +81,6 @@ func (r *CallResolver) Resolve(call analyzer.CallInfo, callerPkg string) *Resolv
 			Line:     methodInfo.Line,
 		}
 	}
-
-	tracer.ExitSuccess("CallResolver.Resolve")
 
 	return &ResolvedCall{
 		TargetID: targetID,

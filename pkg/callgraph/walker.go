@@ -2,7 +2,6 @@ package callgraph
 
 import (
 	"github.com/mshogin/archlint/internal/analyzer"
-	"github.com/mshogin/archlint/pkg/tracer"
 )
 
 // CallWalker рекурсивно обходит вызовы от точки входа.
@@ -29,9 +28,7 @@ func NewCallWalker(a *analyzer.GoAnalyzer, resolver *CallResolver, maxDepth int)
 
 // Walk запускает рекурсивный обход от указанной функции.
 func (w *CallWalker) Walk(entryPointID string) {
-	tracer.Enter("CallWalker.Walk")
 	w.walk(entryPointID, 0)
-	tracer.ExitSuccess("CallWalker.Walk")
 }
 
 // Results возвращает результат обхода.

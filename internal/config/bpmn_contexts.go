@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/mshogin/archlint/pkg/bpmn"
-	"github.com/mshogin/archlint/pkg/tracer"
 	"gopkg.in/yaml.v3"
 )
 
@@ -56,15 +55,9 @@ type Warning struct {
 
 // String возвращает строковое представление предупреждения.
 func (w Warning) String() string {
-	tracer.Enter("Warning.String")
-
 	if w.Context != "" {
-		tracer.ExitSuccess("Warning.String")
-
 		return fmt.Sprintf("[%s] %s", w.Context, w.Message)
 	}
-
-	tracer.ExitSuccess("Warning.String")
 
 	return w.Message
 }
@@ -96,116 +89,78 @@ type BehavioralConfig struct {
 
 // LoadBPMNContexts загружает и валидирует конфигурацию контекстов из YAML файла.
 func LoadBPMNContexts(path string) (*BehavioralConfig, []Warning, error) {
-	tracer.Enter("LoadBPMNContexts")
-
 	//nolint:gosec // G304: path is a user-provided CLI argument
 	data, err := os.ReadFile(path)
 	if err != nil {
-		tracer.ExitError("LoadBPMNContexts", err)
-
 		return nil, nil, fmt.Errorf("%w: %w", ErrConfigRead, err)
 	}
 
 	var config BehavioralConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		tracer.ExitError("LoadBPMNContexts", err)
-
 		return nil, nil, fmt.Errorf("%w: %w", ErrConfigParse, err)
 	}
 
 	if len(config.Contexts) == 0 {
-		tracer.ExitError("LoadBPMNContexts", ErrEmptyContexts)
-
 		return nil, nil, ErrEmptyContexts
 	}
 
 	baseDir := filepath.Dir(path)
 
 	if err := validateContexts(&config, baseDir); err != nil {
-		tracer.ExitError("LoadBPMNContexts", err)
-
 		return nil, nil, err
 	}
-
-	tracer.ExitSuccess("LoadBPMNContexts")
 
 	return &config, nil, nil
 }
 
 // validateContexts проверяет все контексты конфигурации.
 func validateContexts(config *BehavioralConfig, baseDir string) error {
-	tracer.Enter("validateContexts")
-
 	for ctxName, ctx := range config.Contexts {
 		if ctx.BPMNFile == "" {
-			tracer.ExitError("validateContexts", ErrMissingBPMNFile)
-
 			return fmt.Errorf("%w: контекст %q", ErrMissingBPMNFile, ctxName)
 		}
 
 		bpmnPath := resolvePath(baseDir, ctx.BPMNFile)
 		if _, err := os.Stat(bpmnPath); os.IsNotExist(err) {
-			tracer.ExitError("validateContexts", ErrBPMNFileNotFound)
-
 			return fmt.Errorf("%w: %s (контекст %q)", ErrBPMNFileNotFound, ctx.BPMNFile, ctxName)
 		}
 
 		if len(ctx.Events) == 0 {
-			tracer.ExitError("validateContexts", ErrEmptyEvents)
-
 			return fmt.Errorf("%w: контекст %q", ErrEmptyEvents, ctxName)
 		}
 
 		if err := validateEvents(ctxName, ctx.Events); err != nil {
-			tracer.ExitError("validateContexts", err)
-
 			return err
 		}
 	}
-
-	tracer.ExitSuccess("validateContexts")
 
 	return nil
 }
 
 // validateEvents проверяет список событий внутри контекста.
-//
-//nolint:funlen // validation of all event fields requires many checks
 func validateEvents(ctxName string, events []EventMapping) error {
-	tracer.Enter("validateEvents")
-
 	eventIDs := make(map[string]bool)
 
 	for i, event := range events {
 		if event.EventID == "" {
-			tracer.ExitError("validateEvents", ErrMissingEventID)
-
 			return fmt.Errorf("%w: контекст %q, событие #%d", ErrMissingEventID, ctxName, i+1)
 		}
 
 		if eventIDs[event.EventID] {
-			tracer.ExitError("validateEvents", ErrDuplicateEventID)
-
 			return fmt.Errorf("%w: %q в контексте %q", ErrDuplicateEventID, event.EventID, ctxName)
 		}
 
 		eventIDs[event.EventID] = true
 
 		if event.EntryPoint.Package == "" {
-			tracer.ExitError("validateEvents", ErrMissingPackage)
-
 			return fmt.Errorf("%w: контекст %q, событие %q", ErrMissingPackage, ctxName, event.EventID)
 		}
 
 		if event.EntryPoint.Function == "" {
-			tracer.ExitError("validateEvents", ErrMissingFunction)
-
 			return fmt.Errorf("%w: контекст %q, событие %q", ErrMissingFunction, ctxName, event.EventID)
 		}
 
 		if !validEntryPointTypes[event.EntryPoint.Type] {
-			tracer.ExitError("validateEvents", ErrInvalidType)
-
 			return fmt.Errorf(
 				"%w: %q в контексте %q, событие %q (допустимые: http, kafka, grpc, cron, custom)",
 				ErrInvalidType, event.EntryPoint.Type, ctxName, event.EventID,
@@ -213,15 +168,11 @@ func validateEvents(ctxName string, events []EventMapping) error {
 		}
 	}
 
-	tracer.ExitSuccess("validateEvents")
-
 	return nil
 }
 
 // ValidateAgainstBPMN проверяет что event_id из конфигурации существуют в BPMN-файле.
 func ValidateAgainstBPMN(ctxName string, ctx *BPMNContext, process *bpmn.BPMNProcess) []Warning {
-	tracer.Enter("ValidateAgainstBPMN")
-
 	elementIDs := make(map[string]bool)
 	for _, elem := range process.Elements {
 		elementIDs[elem.ID] = true
@@ -238,22 +189,14 @@ func ValidateAgainstBPMN(ctxName string, ctx *BPMNContext, process *bpmn.BPMNPro
 		}
 	}
 
-	tracer.ExitSuccess("ValidateAgainstBPMN")
-
 	return warnings
 }
 
 // resolvePath разрешает путь относительно базовой директории.
 func resolvePath(baseDir, path string) string {
-	tracer.Enter("resolvePath")
-
 	if filepath.IsAbs(path) {
-		tracer.ExitSuccess("resolvePath")
-
 		return path
 	}
-
-	tracer.ExitSuccess("resolvePath")
 
 	return filepath.Join(baseDir, path)
 }

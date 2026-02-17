@@ -10,7 +10,6 @@ import (
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/config"
 	"github.com/mshogin/archlint/pkg/callgraph"
-	"github.com/mshogin/archlint/pkg/tracer"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +44,6 @@ var callgraphCmd = &cobra.Command{
 }
 
 func init() {
-	tracer.Enter("init")
 	callgraphCmd.Flags().StringVar(&cgBPMNContexts, "bpmn-contexts", "", "Файл конфигурации контекстов (bpmn-contexts.yaml)")
 	callgraphCmd.Flags().StringVar(&cgEntryPoint, "entry", "", "Точка входа (одиночный режим)")
 	callgraphCmd.Flags().StringVarP(&cgOutputDir, "output", "o", "callgraphs", "Директория для результатов")
@@ -54,24 +52,16 @@ func init() {
 	callgraphCmd.Flags().IntVar(&cgPumlDepth, "puml-depth", 5, "Глубина для PlantUML диаграмм")
 	callgraphCmd.Flags().StringVarP(&cgLanguage, "language", "l", "go", "Язык программирования (go)")
 	rootCmd.AddCommand(callgraphCmd)
-	tracer.ExitSuccess("init")
 }
 
-//nolint:funlen // CLI command orchestrates multiple steps.
 func runCallgraph(cmd *cobra.Command, args []string) error {
-	tracer.Enter("runCallgraph")
-
 	codeDir := args[0]
 
 	if _, err := os.Stat(codeDir); os.IsNotExist(err) {
-		tracer.ExitError("runCallgraph", err)
-
 		return fmt.Errorf("%w: %s", errDirNotExist, codeDir)
 	}
 
 	if cgBPMNContexts == "" && cgEntryPoint == "" {
-		tracer.ExitError("runCallgraph", errNoModeSelected)
-
 		return errNoModeSelected
 	}
 
@@ -80,8 +70,6 @@ func runCallgraph(cmd *cobra.Command, args []string) error {
 	goAnalyzer := analyzer.NewGoAnalyzer()
 
 	if _, err := goAnalyzer.Analyze(codeDir); err != nil {
-		tracer.ExitError("runCallgraph", err)
-
 		return fmt.Errorf("ошибка анализа кода: %w", err)
 	}
 
@@ -92,8 +80,6 @@ func runCallgraph(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := os.MkdirAll(cgOutputDir, 0o750); err != nil {
-		tracer.ExitError("runCallgraph", err)
-
 		return fmt.Errorf("ошибка создания директории %s: %w", cgOutputDir, err)
 	}
 
@@ -105,29 +91,19 @@ func runCallgraph(cmd *cobra.Command, args []string) error {
 }
 
 func runSingleMode(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptions) error {
-	tracer.Enter("runSingleMode")
-
 	builder, err := callgraph.NewBuilder(goAnalyzer, opts)
 	if err != nil {
-		tracer.ExitError("runSingleMode", err)
-
 		return fmt.Errorf("создание builder: %w", err)
 	}
 
 	cg, err := builder.Build(cgEntryPoint)
 	if err != nil {
-		tracer.ExitError("runSingleMode", err)
-
 		return fmt.Errorf("ошибка построения графа: %w", err)
 	}
 
 	if err := exportSingleGraph(cg); err != nil {
-		tracer.ExitError("runSingleMode", err)
-
 		return err
 	}
-
-	tracer.ExitSuccess("runSingleMode")
 
 	return nil
 }
@@ -155,22 +131,14 @@ func exportSingleGraph(cg *callgraph.CallGraph) error {
 }
 
 func runFullMode(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptions) error {
-	tracer.Enter("runFullMode")
-
 	set, err := buildEventGraphs(goAnalyzer, opts)
 	if err != nil {
-		tracer.ExitError("runFullMode", err)
-
 		return err
 	}
 
 	if err := exportEventGraphs(set); err != nil {
-		tracer.ExitError("runFullMode", err)
-
 		return err
 	}
-
-	tracer.ExitSuccess("runFullMode")
 
 	return nil
 }

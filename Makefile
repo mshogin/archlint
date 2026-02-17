@@ -1,9 +1,8 @@
-.PHONY: help build install collect trace clean fmt test lint
+.PHONY: help build install collect clean fmt test lint
 
 # Переменные
 BIN_DIR := bin
 BINARY := $(BIN_DIR)/archlint
-TRACELINT := $(BIN_DIR)/tracelint
 GRAPH_DIR := arch
 OUTPUT_ARCH := architecture.yaml
 
@@ -37,18 +36,9 @@ test: ## Запустить тесты
 	@echo "=== Запуск тестов ==="
 	go test -v ./...
 
-lint: ## Проверить код с помощью golangci-lint и tracelint
+lint: ## Проверить код с помощью golangci-lint
 	@echo "=== Проверка кода ==="
-	@echo ""
-	@echo "--- golangci-lint ---"
-	@golangci-lint run ./... || true
-	@echo ""
-	@echo "--- tracelint ---"
-	@mkdir -p $(BIN_DIR)
-	go build -o $(TRACELINT) ./cmd/tracelint
-	@echo "✓ tracelint собран: $(TRACELINT)"
-	@echo "Проверка ./internal ./pkg ./cmd ..."
-	@$(TRACELINT) ./internal/... ./pkg/... ./cmd/... || true
+	@golangci-lint run ./...
 
 clean: ## Очистить сгенерированные файлы
 	@echo "=== Очистка ==="
