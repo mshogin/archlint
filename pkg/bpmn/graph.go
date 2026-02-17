@@ -2,8 +2,6 @@ package bpmn
 
 import (
 	"fmt"
-
-	"github.com/mshogin/archlint/pkg/tracer"
 )
 
 // ProcessGraph - направленный граф бизнес-процесса.
@@ -16,11 +14,7 @@ type ProcessGraph struct {
 
 // BuildGraph строит направленный граф из BPMNProcess.
 func BuildGraph(process *BPMNProcess) (*ProcessGraph, error) {
-	tracer.Enter("BuildGraph")
-
 	if process == nil {
-		tracer.ExitError("BuildGraph", ErrNilProcess)
-
 		return nil, ErrNilProcess
 	}
 
@@ -45,23 +39,16 @@ func BuildGraph(process *BPMNProcess) (*ProcessGraph, error) {
 		}
 	}
 
-	tracer.ExitSuccess("BuildGraph")
-
 	return g, nil
 }
 
 // Successors возвращает список ID элементов-потомков.
 func (g *ProcessGraph) Successors(elementID string) []string {
-	tracer.Enter("ProcessGraph.Successors")
-	tracer.ExitSuccess("ProcessGraph.Successors")
-
 	return g.Adjacency[elementID]
 }
 
 // Predecessors возвращает список ID элементов-предков.
 func (g *ProcessGraph) Predecessors(elementID string) []string {
-	tracer.Enter("ProcessGraph.Predecessors")
-
 	var result []string
 
 	for src, targets := range g.Adjacency {
@@ -72,15 +59,11 @@ func (g *ProcessGraph) Predecessors(elementID string) []string {
 		}
 	}
 
-	tracer.ExitSuccess("ProcessGraph.Predecessors")
-
 	return result
 }
 
 // StartEvents возвращает все стартовые события процесса.
 func (g *ProcessGraph) StartEvents() []*BPMNElement {
-	tracer.Enter("ProcessGraph.StartEvents")
-
 	var result []*BPMNElement
 
 	for _, elem := range g.ElementByID {
@@ -89,15 +72,11 @@ func (g *ProcessGraph) StartEvents() []*BPMNElement {
 		}
 	}
 
-	tracer.ExitSuccess("ProcessGraph.StartEvents")
-
 	return result
 }
 
 // EndEvents возвращает все конечные события процесса.
 func (g *ProcessGraph) EndEvents() []*BPMNElement {
-	tracer.Enter("ProcessGraph.EndEvents")
-
 	var result []*BPMNElement
 
 	for _, elem := range g.ElementByID {
@@ -106,15 +85,11 @@ func (g *ProcessGraph) EndEvents() []*BPMNElement {
 		}
 	}
 
-	tracer.ExitSuccess("ProcessGraph.EndEvents")
-
 	return result
 }
 
 // Validate проверяет корректность графа.
 func (g *ProcessGraph) Validate() []error {
-	tracer.Enter("ProcessGraph.Validate")
-
 	var errs []error
 
 	if len(g.StartEvents()) == 0 {
@@ -142,24 +117,18 @@ func (g *ProcessGraph) Validate() []error {
 		}
 	}
 
-	tracer.ExitSuccess("ProcessGraph.Validate")
-
 	return errs
 }
 
 // reachableFrom возвращает множество элементов, достижимых через потоки
 // (в обоих направлениях).
 func (g *ProcessGraph) reachableFrom() map[string]bool {
-	tracer.Enter("ProcessGraph.reachableFrom")
-
 	visited := make(map[string]bool)
 
 	for _, flow := range g.Process.Flows {
 		visited[flow.SourceRef] = true
 		visited[flow.TargetRef] = true
 	}
-
-	tracer.ExitSuccess("ProcessGraph.reachableFrom")
 
 	return visited
 }

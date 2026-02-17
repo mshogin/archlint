@@ -7,7 +7,6 @@ import (
 
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/config"
-	"github.com/mshogin/archlint/pkg/tracer"
 )
 
 // ErrContextNotFound контекст не найден в конфигурации.
@@ -25,16 +24,10 @@ func NewEventBuilder(
 	contexts *config.BehavioralConfig,
 	opts BuildOptions,
 ) (*EventBuilder, error) {
-	tracer.Enter("NewEventBuilder")
-
 	builder, err := NewBuilder(a, opts)
 	if err != nil {
-		tracer.ExitError("NewEventBuilder", err)
-
 		return nil, err
 	}
-
-	tracer.ExitSuccess("NewEventBuilder")
 
 	return &EventBuilder{
 		builder:  builder,
@@ -44,8 +37,6 @@ func NewEventBuilder(
 
 // BuildAll строит графы вызовов для всех событий, имеющих маппинг.
 func (e *EventBuilder) BuildAll() (*EventCallGraphSet, error) {
-	tracer.Enter("EventBuilder.BuildAll")
-
 	set := &EventCallGraphSet{
 		Graphs:      make(map[string]CallGraph),
 		GeneratedAt: time.Now(),
@@ -55,19 +46,13 @@ func (e *EventBuilder) BuildAll() (*EventCallGraphSet, error) {
 		e.buildContextEvents(set, ctxName, ctx.Events)
 	}
 
-	tracer.ExitSuccess("EventBuilder.BuildAll")
-
 	return set, nil
 }
 
 // BuildForContext строит графы вызовов для одного контекста.
 func (e *EventBuilder) BuildForContext(ctxName string) (*EventCallGraphSet, error) {
-	tracer.Enter("EventBuilder.BuildForContext")
-
 	ctx, ok := e.contexts.Contexts[ctxName]
 	if !ok {
-		tracer.ExitError("EventBuilder.BuildForContext", ErrContextNotFound)
-
 		return nil, fmt.Errorf("%w: %q", ErrContextNotFound, ctxName)
 	}
 
@@ -78,8 +63,6 @@ func (e *EventBuilder) BuildForContext(ctxName string) (*EventCallGraphSet, erro
 	}
 
 	e.buildContextEvents(set, ctxName, ctx.Events)
-
-	tracer.ExitSuccess("EventBuilder.BuildForContext")
 
 	return set, nil
 }
