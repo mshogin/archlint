@@ -173,6 +173,7 @@ func TestToolsList(t *testing.T) {
 	expectedTools := []string{
 		"analyze_file", "analyze_change", "get_dependencies",
 		"get_architecture", "check_violations", "get_callgraph",
+		"get_file_metrics", "get_degradation_report",
 	}
 
 	if len(result.Tools) != len(expectedTools) {
@@ -398,6 +399,117 @@ func main() {}
 
 	if resp.Error != nil {
 		t.Fatalf("got error: %s", resp.Error.Message)
+	}
+
+	text := extractContentText(t, resp)
+
+	var report ViolationReport
+	if err := json.Unmarshal([]byte(text), &report); err != nil {
+		t.Fatalf("error parsing violation report: %v", err)
+	}
+}
+
+func TestToolsCallGetFileMetrics(t *testing.T) {
+	tmpDir := t.TempDir()
+	goFile := filepath.Join(tmpDir, "main.go")
+
+	if err := os.WriteFile(goFile, []byte(`package main
+
+type App struct {
+	Name string
+}
+
+func NewApp() *App {
+	return &App{}
+}
+
+func main() {}
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	server := createInitializedServer(t, tmpDir)
+
+	id := json.RawMessage(`20`)
+	resp := server.handleMessage(&jsonrpcMessage{
+		JSONRPC: "2.0",
+		ID:      &id,
+		Method:  "tools/call",
+		Params: mustMarshal(map[string]interface{}{
+			"name":      "get_file_metrics",
+			"arguments": map[string]string{"path": goFile},
+		}),
+	})
+
+	if resp == nil {
+		t.Fatal("expected response")
+	}
+
+	if resp.Error != nil {
+		t.Fatalf("got error: %s", resp.Error.Message)
+	}
+
+	text := extractContentText(t, resp)
+
+	var metrics FileMetrics
+	if err := json.Unmarshal([]byte(text), &metrics); err != nil {
+		t.Fatalf("error parsing metrics: %v", err)
+	}
+
+	if metrics.Types != 1 {
+		t.Errorf("expected 1 type, got %d", metrics.Types)
+	}
+
+	if metrics.Functions != 2 {
+		t.Errorf("expected 2 functions (NewApp + main), got %d", metrics.Functions)
+	}
+
+	if metrics.HealthScore <= 0 || metrics.HealthScore > 100 {
+		t.Errorf("expected valid health score, got %d", metrics.HealthScore)
+	}
+}
+
+func TestToolsCallGetDegradationReport(t *testing.T) {
+	tmpDir := t.TempDir()
+	goFile := filepath.Join(tmpDir, "main.go")
+
+	if err := os.WriteFile(goFile, []byte(`package main
+
+func main() {}
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	server := createInitializedServer(t, tmpDir)
+
+	id := json.RawMessage(`21`)
+	resp := server.handleMessage(&jsonrpcMessage{
+		JSONRPC: "2.0",
+		ID:      &id,
+		Method:  "tools/call",
+		Params: mustMarshal(map[string]interface{}{
+			"name":      "get_degradation_report",
+			"arguments": map[string]string{"path": goFile},
+		}),
+	})
+
+	if resp == nil {
+		t.Fatal("expected response")
+	}
+
+	if resp.Error != nil {
+		t.Fatalf("got error: %s", resp.Error.Message)
+	}
+
+	text := extractContentText(t, resp)
+
+	var report DegradationReport
+	if err := json.Unmarshal([]byte(text), &report); err != nil {
+		t.Fatalf("error parsing degradation report: %v", err)
+	}
+
+	if report.Status == "" {
+		t.Error("expected non-empty status in degradation report")
 	}
 }
 
