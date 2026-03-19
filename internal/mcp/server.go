@@ -20,6 +20,7 @@ type Server struct {
 	logger   *log.Logger
 	reader   *bufio.Reader
 	writer   io.Writer
+	watcher  *Watcher
 }
 
 // jsonrpcMessage represents a JSON-RPC 2.0 message.
@@ -94,6 +95,12 @@ func NewServerWithIO(reader io.Reader, writer io.Writer, logger *log.Logger) *Se
 // Run starts the main loop of the MCP server (read stdin, handle, write stdout).
 func (s *Server) Run() error {
 	s.logger.Println("MCP server started")
+
+	defer func() {
+		if s.watcher != nil {
+			s.watcher.Stop()
+		}
+	}()
 
 	for {
 		msg, err := s.readMessage()
@@ -249,6 +256,13 @@ func (s *Server) handleInitialize(msg *jsonrpcMessage) *jsonrpcMessage {
 	} else {
 		stats := s.state.Stats()
 		s.logger.Printf("Initialization complete: %d nodes, %d edges", stats.TotalNodes, stats.TotalEdges)
+
+		// Compute initial metrics baseline for all files.
+		s.state.InitializeMetricsBaseline()
+		s.logger.Println("Metrics baseline computed")
+
+		// Start file watcher.
+		s.startWatcher(rootDir)
 	}
 
 	result := map[string]interface{}{
@@ -258,11 +272,62 @@ func (s *Server) handleInitialize(msg *jsonrpcMessage) *jsonrpcMessage {
 		},
 		"serverInfo": map[string]interface{}{
 			"name":    "archlint",
-			"version": "0.1.0",
+			"version": "0.2.0",
 		},
 	}
 
 	return s.makeResponse(msg.ID, result)
+}
+
+// startWatcher starts the file watcher for the project directory.
+func (s *Server) startWatcher(rootDir string) {
+	handler := func(path string) {
+		s.logger.Printf("File change detected: %s, reparsing...", path)
+
+		report, err := s.state.ReparseFile(path)
+		if err != nil {
+			s.logger.Printf("Reparse error on file change: %v", err)
+
+			return
+		}
+
+		s.logger.Printf("Reparse complete for %s (health: %d -> %d, status: %s)",
+			path, report.HealthBefore, report.HealthAfter, report.Status)
+
+		// If degradation detected, send a notification (best-effort).
+		if report.Status == "degraded" || report.Status == "critical" {
+			s.sendDegradationNotification(report)
+		}
+	}
+
+	watcher, err := NewWatcher(rootDir, handler, s.logger)
+	if err != nil {
+		s.logger.Printf("Warning: could not start file watcher: %v", err)
+
+		return
+	}
+
+	s.watcher = watcher
+	watcher.Start()
+	s.logger.Println("File watcher started")
+}
+
+// sendDegradationNotification sends a server-initiated notification about file degradation.
+func (s *Server) sendDegradationNotification(report *DegradationReport) {
+	params, err := json.Marshal(report)
+	if err != nil {
+		return
+	}
+
+	notification := &jsonrpcMessage{
+		JSONRPC: "2.0",
+		Method:  "notifications/fileChanged",
+		Params:  params,
+	}
+
+	if err := s.writeMessage(notification); err != nil {
+		s.logger.Printf("Error sending degradation notification: %v", err)
+	}
 }
 
 // handleToolsList handles the tools/list request.
@@ -287,9 +352,12 @@ func (s *Server) handleToolsCall(msg *jsonrpcMessage) *jsonrpcMessage {
 
 	s.logger.Printf("Executing tool: %s", params.Name)
 
-	// Re-parse on each tool call to pick up file changes.
-	if err := s.state.Reparse(); err != nil {
-		s.logger.Printf("Reparse error: %v", err)
+	// No per-call Reparse() — the file watcher keeps state fresh.
+	// If no watcher is running (e.g. tests), do a reparse for compatibility.
+	if s.watcher == nil {
+		if err := s.state.Reparse(); err != nil {
+			s.logger.Printf("Reparse error: %v", err)
+		}
 	}
 
 	result, err := s.executor.Execute(params.Name, params.Arguments)

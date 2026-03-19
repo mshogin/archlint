@@ -32,7 +32,7 @@ func toolDefinitions() []ToolDefinition {
 		},
 		{
 			Name:        "analyze_change",
-			Description: "Analyze the architectural impact of a file change: affected nodes, related edges, impact level",
+			Description: "Analyze the architectural impact of a file change: affected nodes, related edges, impact level, degradation report",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
@@ -65,7 +65,7 @@ func toolDefinitions() []ToolDefinition {
 		},
 		{
 			Name:        "check_violations",
-			Description: "Check for architecture violations: circular dependencies, high coupling",
+			Description: "Check for architecture violations: SOLID, god classes, circular dependencies, high coupling, and code smells",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
@@ -83,6 +83,28 @@ func toolDefinitions() []ToolDefinition {
 					"max_depth": {"type": "number", "description": "Maximum depth to traverse (default: 10)"}
 				},
 				"required": ["entry"]
+			}`),
+		},
+		{
+			Name:        "get_file_metrics",
+			Description: "Get rich per-file architecture metrics: coupling, SOLID violations, code smells, health score (0-100)",
+			InputSchema: json.RawMessage(`{
+				"type": "object",
+				"properties": {
+					"path": {"type": "string", "description": "File path to compute metrics for"}
+				},
+				"required": ["path"]
+			}`),
+		},
+		{
+			Name:        "get_degradation_report",
+			Description: "Get degradation report: compare current file health against baseline, detect new/fixed violations",
+			InputSchema: json.RawMessage(`{
+				"type": "object",
+				"properties": {
+					"path": {"type": "string", "description": "File path to check for degradation"}
+				},
+				"required": ["path"]
 			}`),
 		},
 	}
@@ -141,6 +163,7 @@ type ChangeAnalysis struct {
 	RelatedEdges  []DependencySummary `json:"relatedEdges,omitempty"`
 	Impact        string              `json:"impact"`
 	Violations    []Violation         `json:"violations,omitempty"`
+	Degradation   *DegradationReport  `json:"degradation,omitempty"`
 }
 
 // DependencyResult is the result of a dependency query.
@@ -159,10 +182,10 @@ type Violation struct {
 
 // CallGraphNode represents a node in the call graph result.
 type CallGraphNode struct {
-	ID       string   `json:"id"`
-	Name     string   `json:"name"`
-	Depth    int      `json:"depth"`
-	CallsTo  []string `json:"callsTo,omitempty"`
+	ID      string   `json:"id"`
+	Name    string   `json:"name"`
+	Depth   int      `json:"depth"`
+	CallsTo []string `json:"callsTo,omitempty"`
 }
 
 // CallGraphResult is the result of a call graph query.
@@ -197,6 +220,10 @@ func (e *ToolExecutor) Execute(toolName string, args json.RawMessage) (interface
 		return e.checkViolations(args)
 	case "get_callgraph":
 		return e.getCallgraph(args)
+	case "get_file_metrics":
+		return e.getFileMetrics(args)
+	case "get_degradation_report":
+		return e.getDegradationReport(args)
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}
@@ -408,6 +435,9 @@ func (e *ToolExecutor) analyzeChange(args json.RawMessage) (*ChangeAnalysis, err
 
 	result.Violations = detectViolationsForPackage(graph, pkg)
 
+	// Include degradation report.
+	result.Degradation = e.state.GetDegradationDetector().CheckWithoutUpdate(absPath, a, graph)
+
 	return result, nil
 }
 
@@ -503,7 +533,13 @@ func (e *ToolExecutor) getArchitecture(args json.RawMessage) (*model.Graph, erro
 	return filterGraph(graph, params.Package), nil
 }
 
-func (e *ToolExecutor) checkViolations(args json.RawMessage) ([]Violation, error) {
+// ViolationReport is the result of check_violations with rich metrics.
+type ViolationReport struct {
+	Violations  []Violation `json:"violations"`
+	FileMetrics *FileMetrics `json:"fileMetrics,omitempty"`
+}
+
+func (e *ToolExecutor) checkViolations(args json.RawMessage) (*ViolationReport, error) {
 	var params struct {
 		Path string `json:"path"`
 	}
@@ -515,9 +551,11 @@ func (e *ToolExecutor) checkViolations(args json.RawMessage) ([]Violation, error
 	}
 
 	graph := e.state.GetGraph()
+	a := e.state.GetAnalyzer()
+
+	report := &ViolationReport{}
 
 	if params.Path != "" {
-		a := e.state.GetAnalyzer()
 		if a == nil {
 			return nil, fmt.Errorf("analyzer not initialized")
 		}
@@ -536,11 +574,57 @@ func (e *ToolExecutor) checkViolations(args json.RawMessage) ([]Violation, error
 			}
 		}
 
-		return detectViolationsForPackage(graph, target), nil
+		// Classic violations (coupling, cycles).
+		report.Violations = detectViolationsForPackage(graph, target)
+
+		// Rich per-file metrics including SOLID, smells.
+		metrics := ComputeFileMetrics(params.Path, a, graph)
+		report.FileMetrics = metrics
+
+		// Merge metrics-derived violations into the report.
+		report.Violations = append(report.Violations, metrics.SRPViolations...)
+		report.Violations = append(report.Violations, metrics.DIPViolations...)
+		report.Violations = append(report.Violations, metrics.ISPViolations...)
+
+		for _, gc := range metrics.GodClasses {
+			report.Violations = append(report.Violations, Violation{
+				Kind:    "god-class",
+				Message: fmt.Sprintf("God class detected: %s", gc),
+				Target:  gc,
+			})
+		}
+
+		for _, hub := range metrics.HubNodes {
+			report.Violations = append(report.Violations, Violation{
+				Kind:    "hub-node",
+				Message: fmt.Sprintf("Hub node detected (fan-in + fan-out > %d): %s", hubThreshold, hub),
+				Target:  hub,
+			})
+		}
+
+		for _, fe := range metrics.FeatureEnvy {
+			report.Violations = append(report.Violations, Violation{
+				Kind:    "feature-envy",
+				Message: fmt.Sprintf("Feature envy detected: %s calls more methods on other types than its own receiver", fe),
+				Target:  fe,
+			})
+		}
+
+		for _, ss := range metrics.ShotgunSurgery {
+			report.Violations = append(report.Violations, Violation{
+				Kind:    "shotgun-surgery",
+				Message: fmt.Sprintf("Shotgun surgery risk: changes to %s would affect >%d files", ss, shotgunThreshold),
+				Target:  ss,
+			})
+		}
+
+		return report, nil
 	}
 
 	// Check all packages.
-	return detectAllViolations(graph), nil
+	report.Violations = detectAllViolations(graph)
+
+	return report, nil
 }
 
 func (e *ToolExecutor) getCallgraph(args json.RawMessage) (*CallGraphResult, error) {
@@ -623,6 +707,52 @@ func (e *ToolExecutor) getCallgraph(args json.RawMessage) (*CallGraphResult, err
 	}
 
 	return result, nil
+}
+
+func (e *ToolExecutor) getFileMetrics(args json.RawMessage) (*FileMetrics, error) {
+	var params struct {
+		Path string `json:"path"`
+	}
+
+	if err := json.Unmarshal(args, &params); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+
+	if params.Path == "" {
+		return nil, fmt.Errorf("path is required")
+	}
+
+	a := e.state.GetAnalyzer()
+	if a == nil {
+		return nil, fmt.Errorf("analyzer not initialized")
+	}
+
+	graph := e.state.GetGraph()
+
+	return ComputeFileMetrics(params.Path, a, graph), nil
+}
+
+func (e *ToolExecutor) getDegradationReport(args json.RawMessage) (*DegradationReport, error) {
+	var params struct {
+		Path string `json:"path"`
+	}
+
+	if err := json.Unmarshal(args, &params); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+
+	if params.Path == "" {
+		return nil, fmt.Errorf("path is required")
+	}
+
+	a := e.state.GetAnalyzer()
+	if a == nil {
+		return nil, fmt.Errorf("analyzer not initialized")
+	}
+
+	graph := e.state.GetGraph()
+
+	return e.state.GetDegradationDetector().CheckWithoutUpdate(params.Path, a, graph), nil
 }
 
 // getPackageDependencies collects import dependencies for a package.
