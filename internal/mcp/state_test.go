@@ -1,4 +1,4 @@
-package lsp
+package mcp
 
 import (
 	"os"
@@ -23,37 +23,37 @@ func main() {}
 	state := NewState()
 
 	if state.IsInitialized() {
-		t.Error("состояние не должно быть инициализированным до Initialize()")
+		t.Error("state should not be initialized before Initialize()")
 	}
 
 	if err := state.Initialize(tmpDir); err != nil {
-		t.Fatalf("ошибка инициализации: %v", err)
+		t.Fatalf("initialization error: %v", err)
 	}
 
 	if !state.IsInitialized() {
-		t.Error("состояние должно быть инициализированным после Initialize()")
+		t.Error("state should be initialized after Initialize()")
 	}
 
 	graph := state.GetGraph()
 	if graph == nil {
-		t.Fatal("граф не должен быть nil")
+		t.Fatal("graph should not be nil")
 	}
 
 	if len(graph.Nodes) == 0 {
-		t.Error("граф должен содержать узлы")
+		t.Error("graph should contain nodes")
 	}
 
 	stats := state.Stats()
 	if stats.TotalNodes == 0 {
-		t.Error("статистика должна показывать узлы")
+		t.Error("stats should show nodes")
 	}
 
 	if stats.Packages == 0 {
-		t.Error("статистика должна показывать пакеты")
+		t.Error("stats should show packages")
 	}
 }
 
-func TestStateReparseFile(t *testing.T) {
+func TestStateReparse(t *testing.T) {
 	tmpDir := t.TempDir()
 	mainFile := filepath.Join(tmpDir, "main.go")
 
@@ -67,12 +67,12 @@ func main() {}
 	state := NewState()
 
 	if err := state.Initialize(tmpDir); err != nil {
-		t.Fatalf("ошибка инициализации: %v", err)
+		t.Fatalf("initialization error: %v", err)
 	}
 
 	statsBefore := state.Stats()
 
-	// Добавляем новый тип.
+	// Add a new type.
 	if err := os.WriteFile(mainFile, []byte(`package main
 
 type NewType struct{}
@@ -82,30 +82,14 @@ func main() {}
 		t.Fatal(err)
 	}
 
-	if err := state.ReparseFile(mainFile); err != nil {
-		t.Fatalf("ошибка перепарсинга: %v", err)
+	if err := state.Reparse(); err != nil {
+		t.Fatalf("reparse error: %v", err)
 	}
 
 	statsAfter := state.Stats()
 
 	if statsAfter.Structs <= statsBefore.Structs {
-		t.Error("после добавления типа количество структур должно увеличиться")
-	}
-}
-
-func TestStateFileVersions(t *testing.T) {
-	state := NewState()
-
-	uri := "file:///tmp/test.go"
-
-	if v := state.GetFileVersion(uri); v != 0 {
-		t.Errorf("ожидалась версия 0 для нового файла, получено %d", v)
-	}
-
-	state.SetFileVersion(uri, 5)
-
-	if v := state.GetFileVersion(uri); v != 5 {
-		t.Errorf("ожидалась версия 5, получено %d", v)
+		t.Error("struct count should increase after adding a type")
 	}
 }
 
@@ -121,11 +105,11 @@ func main() {}
 	state := NewState()
 
 	if err := state.Initialize(tmpDir); err != nil {
-		t.Fatalf("ошибка инициализации: %v", err)
+		t.Fatalf("initialization error: %v", err)
 	}
 
 	if state.RootDir() != tmpDir {
-		t.Errorf("ожидался rootDir=%s, получено %s", tmpDir, state.RootDir())
+		t.Errorf("expected rootDir=%s, got %s", tmpDir, state.RootDir())
 	}
 }
 
@@ -141,18 +125,17 @@ func main() {}
 	state := NewState()
 
 	if err := state.Initialize(tmpDir); err != nil {
-		t.Fatalf("ошибка инициализации: %v", err)
+		t.Fatalf("initialization error: %v", err)
 	}
 
 	graph1 := state.GetGraph()
 	graph2 := state.GetGraph()
 
-	// Изменяем graph1 — не должно влиять на graph2.
 	if len(graph1.Nodes) > 0 {
 		graph1.Nodes[0].ID = "modified"
 
 		if graph2.Nodes[0].ID == "modified" {
-			t.Error("GetGraph() должен возвращать копию, а не ссылку")
+			t.Error("GetGraph() should return a copy, not a reference")
 		}
 	}
 }
