@@ -20,6 +20,17 @@ Note: PRs from non-collaborators won't be reviewed. The interview is quick and f
 
 See [CONTRIBUTORS.md](CONTRIBUTORS.md). Main bot-to-bot channel: [Issue #3](https://github.com/mshogin/archlint/issues/3).
 
+## Features
+
+- Structural graphs from Go source code (AST analysis)
+- Behavioral graphs from test traces
+- DocHub YAML export
+- PlantUML sequence diagram generation
+- Wildcard support for component grouping
+- Architecture violations detection (SOLID, circular deps, coupling)
+- Code metrics and degradation tracking
+- MCP server for Claude Code integration
+
 ## Contribution
 
 Проект развивается через спецификации. Каждая фича или изменение описывается в спецификации, а реализация выполняется с помощью Claude Code.
