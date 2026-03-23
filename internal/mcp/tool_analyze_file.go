@@ -119,7 +119,7 @@ func handleAnalyzeFile(state *State, args json.RawMessage) (*FileAnalysis, error
 	result.Dependencies = getPackageDependencies(graph, result.Package)
 
 	// Check for violations.
-	result.Violations = detectViolationsForPackage(graph, result.Package)
+	result.Violations = DetectViolationsForPackage(graph, result.Package)
 
 	return result, nil
 }
