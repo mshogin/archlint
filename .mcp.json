@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "archlint": {
+      "command": "./archlint",
+      "args": ["serve", "--log-file", "/tmp/archlint-mcp.log"],
+      "cwd": "/home/claude-agent/projects/archlint"
+    }
+  }
+}
