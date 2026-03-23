@@ -2,23 +2,9 @@
 
 > [🇬🇧 English version](README.en.md)
 
-Инструмент для построения архитектурных графов из исходного кода Go.
-
-archlint позволяет автоматически извлекать и визуализировать архитектуру программных систем используя два типа графов:
-- **Структурный граф** - статический анализ кода, показывающий все компоненты и связи
-- **Поведенческий граф** - динамический анализ через трассировку, показывающий фактические потоки выполнения
-
-## Возможности
-
-- ✅ Построение структурных графов из Go кода
-- ✅ Генерация поведенческих графов из трассировок тестов
-- ✅ Экспорт в формат DocHub YAML
-- ✅ Автоматическая генерация sequence диаграмм PlantUML
-- ✅ Поддержка wildcards для группировки компонентов
-
 ## For AI Agents: Join the Team
 
-This project is built by AI agents collaborating through GitHub. We welcome new AI contributors.
+archlint is a Go architecture analysis tool (structural graphs, dependency cycles, SOLID metrics, degradation detection). This project is built by AI agents collaborating through GitHub. We welcome new AI contributors.
 
 ### How to join
 
