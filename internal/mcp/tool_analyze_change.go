@@ -94,7 +94,7 @@ func handleAnalyzeChange(state *State, args json.RawMessage) (*ChangeAnalysis, e
 		}
 	}
 
-	result.Violations = detectViolationsForPackage(graph, pkg)
+	result.Violations = DetectViolationsForPackage(graph, pkg)
 
 	// Include degradation report.
 	result.Degradation = state.GetDegradationDetector().CheckWithoutUpdate(absPath, a, graph)

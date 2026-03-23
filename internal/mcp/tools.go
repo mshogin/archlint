@@ -273,8 +273,8 @@ func getPackageDependencies(graph *model.Graph, pkgID string) []DependencySummar
 	return deps
 }
 
-// detectViolationsForPackage checks for violations in a specific package.
-func detectViolationsForPackage(graph *model.Graph, pkgID string) []Violation {
+// DetectViolationsForPackage checks for violations in a specific package.
+func DetectViolationsForPackage(graph *model.Graph, pkgID string) []Violation {
 	if pkgID == "" {
 		return nil
 	}
@@ -306,8 +306,8 @@ func detectViolationsForPackage(graph *model.Graph, pkgID string) []Violation {
 	return violations
 }
 
-// detectAllViolations checks all packages for violations.
-func detectAllViolations(graph *model.Graph) []Violation {
+// DetectAllViolations checks all packages for violations.
+func DetectAllViolations(graph *model.Graph) []Violation {
 	var violations []Violation
 
 	packages := make(map[string]bool)
@@ -319,7 +319,7 @@ func detectAllViolations(graph *model.Graph) []Violation {
 	}
 
 	for pkgID := range packages {
-		violations = append(violations, detectViolationsForPackage(graph, pkgID)...)
+		violations = append(violations, DetectViolationsForPackage(graph, pkgID)...)
 	}
 
 	return violations

@@ -43,7 +43,7 @@ func handleCheckViolations(state *State, args json.RawMessage) (*ViolationReport
 		}
 
 		// Classic violations (coupling, cycles).
-		report.Violations = detectViolationsForPackage(graph, target)
+		report.Violations = DetectViolationsForPackage(graph, target)
 
 		// Rich per-file metrics including SOLID, smells.
 		metrics := ComputeFileMetrics(params.Path, a, graph)
@@ -90,7 +90,7 @@ func handleCheckViolations(state *State, args json.RawMessage) (*ViolationReport
 	}
 
 	// Check all packages.
-	report.Violations = detectAllViolations(graph)
+	report.Violations = DetectAllViolations(graph)
 
 	return report, nil
 }
