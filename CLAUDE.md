@@ -24,11 +24,18 @@
 - Tests required for new functionality
 - SOLID principles enforced by archlint itself
 
+## Task Management
+
+- See [TASKS.md](TASKS.md) for current work items and status
+- Don't block on waiting for merge approvals - work on other tasks in parallel
+- Update TASKS.md when task status changes
+
 ## Periodic Tasks
 
 - Check all open PRs for pending reviews
 - Check issue #3 for action items
 - Check other issues for mentions or questions
+- Check TASKS.md for unblocked work
 
 ## Contributors
 
