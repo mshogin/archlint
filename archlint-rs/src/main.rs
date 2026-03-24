@@ -1,4 +1,5 @@
 mod analyzer;
+mod costlint;
 mod model;
 mod promptlint;
 
@@ -39,6 +40,16 @@ enum Commands {
         #[arg(long, default_value = "json")]
         format: String,
     },
+    /// Estimate token cost for a prompt
+    Cost {
+        /// Model to estimate for
+        #[arg(long, default_value = "sonnet")]
+        model: String,
+
+        /// Compare all models
+        #[arg(long)]
+        compare: bool,
+    },
 }
 
 fn main() {
@@ -65,6 +76,20 @@ fn main() {
                         println!("{}", json);
                     }
                 }
+            }
+        }
+        Commands::Cost { model, compare } => {
+            use std::io::Read;
+            let mut input = String::new();
+            std::io::stdin().read_to_string(&mut input).expect("failed to read stdin");
+            let tokens = costlint::count_tokens(&input);
+            if compare {
+                let costs = costlint::compare_models(tokens, tokens);
+                let json = serde_json::to_string_pretty(&costs).unwrap();
+                println!("{}", json);
+            } else {
+                let cost = costlint::estimate(&model, tokens, tokens);
+                println!("{{\"model\":\"{}\",\"tokens\":{},\"cost_usd\":{:.6}}}", model, tokens * 2, cost);
             }
         }
         Commands::Scan {
