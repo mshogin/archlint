@@ -2,6 +2,7 @@ mod analyzer;
 mod costlint;
 mod model;
 mod promptlint;
+mod seclint;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -40,6 +41,12 @@ enum Commands {
         #[arg(long, default_value = "json")]
         format: String,
     },
+    /// Rate content safety (6+/12+/16+/18+)
+    Rate {
+        /// Maximum allowed rating (6, 12, 16, 18)
+        #[arg(long)]
+        max_rating: Option<u8>,
+    },
     /// Estimate token cost for a prompt
     Cost {
         /// Model to estimate for
@@ -75,6 +82,25 @@ fn main() {
                         let json = serde_json::to_string_pretty(&result).unwrap();
                         println!("{}", json);
                     }
+                }
+            }
+        }
+        Commands::Rate { max_rating } => {
+            use std::io::Read;
+            let mut input = String::new();
+            std::io::stdin().read_to_string(&mut input).expect("failed to read stdin");
+            let result = seclint::classify(&input);
+            let json = serde_json::to_string_pretty(&result).unwrap();
+            println!("{}", json);
+            if let Some(max) = max_rating {
+                let threshold = match max {
+                    0..=6 => seclint::Rating::Age6Plus,
+                    7..=12 => seclint::Rating::Age12Plus,
+                    13..=16 => seclint::Rating::Age16Plus,
+                    _ => seclint::Rating::Age18Plus,
+                };
+                if !seclint::is_safe(&input, &threshold) {
+                    std::process::exit(1);
                 }
             }
         }
