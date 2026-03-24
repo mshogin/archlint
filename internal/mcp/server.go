@@ -18,6 +18,7 @@ type Server struct {
 	state    *State
 	executor *ToolExecutor
 	logger   *log.Logger
+	logFile  *os.File
 	reader   *bufio.Reader
 	writer   io.Writer
 	watcher  *Watcher
@@ -51,6 +52,7 @@ const (
 // NewServer creates a new MCP server.
 func NewServer(logFile string) (*Server, error) {
 	var logger *log.Logger
+	var lf *os.File
 
 	if logFile != "" {
 		//nolint:gosec // G304: logFile is provided via CLI flag
@@ -59,6 +61,7 @@ func NewServer(logFile string) (*Server, error) {
 			return nil, fmt.Errorf("error opening log file: %w", err)
 		}
 
+		lf = f
 		logger = log.New(f, "[archlint-mcp] ", log.LstdFlags)
 	} else {
 		logger = log.New(io.Discard, "", 0)
@@ -67,12 +70,21 @@ func NewServer(logFile string) (*Server, error) {
 	state := NewState()
 
 	return &Server{
+		logFile: lf,
 		state:    state,
 		executor: NewToolExecutor(state),
 		logger:   logger,
 		reader:   bufio.NewReader(os.Stdin),
 		writer:   os.Stdout,
 	}, nil
+}
+
+// Close releases resources held by the server.
+func (s *Server) Close() error {
+	if s.logFile != nil {
+		return s.logFile.Close()
+	}
+	return nil
 }
 
 // NewServerWithIO creates an MCP server with custom I/O streams. Used in tests.
