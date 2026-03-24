@@ -1,0 +1,320 @@
+{
+  "violations": [
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type GoAnalyzer depends on concrete type model.Node — consider depending on an interface",
+      "target": "internal/analyzer.GoAnalyzer"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type GoAnalyzer depends on concrete type model.Edge — consider depending on an interface",
+      "target": "internal/analyzer.GoAnalyzer"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type checkResult depends on concrete type mcp.Violation — consider depending on an interface",
+      "target": "internal/cli.checkResult"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type State depends on concrete type analyzer.GoAnalyzer — consider depending on an interface",
+      "target": "internal/mcp.State"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type State depends on concrete type model.Graph — consider depending on an interface",
+      "target": "internal/mcp.State"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type Builder depends on concrete type analyzer.GoAnalyzer — consider depending on an interface",
+      "target": "pkg/callgraph.Builder"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type CallResolver depends on concrete type analyzer.GoAnalyzer — consider depending on an interface",
+      "target": "pkg/callgraph.CallResolver"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type CallWalker depends on concrete type analyzer.GoAnalyzer — consider depending on an interface",
+      "target": "pkg/callgraph.CallWalker"
+    },
+    {
+      "kind": "dip-concrete-dependency",
+      "message": "Type EventBuilder depends on concrete type config.BehavioralConfig — consider depending on an interface",
+      "target": "pkg/callgraph.EventBuilder"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: callgraph/testdata/sample.Service.Process",
+      "target": "callgraph/testdata/sample.Service.Process"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.Analyze",
+      "target": "internal/analyzer.GoAnalyzer.Analyze"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.buildGraph",
+      "target": "internal/analyzer.GoAnalyzer.buildGraph"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.collectCalls",
+      "target": "internal/analyzer.GoAnalyzer.collectCalls"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.extractCallInfo",
+      "target": "internal/analyzer.GoAnalyzer.extractCallInfo"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.getPkgID",
+      "target": "internal/analyzer.GoAnalyzer.getPkgID"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.getTypeName",
+      "target": "internal/analyzer.GoAnalyzer.getTypeName"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.isStdLib",
+      "target": "internal/analyzer.GoAnalyzer.isStdLib"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.parseFile",
+      "target": "internal/analyzer.GoAnalyzer.parseFile"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.parseFuncDecl",
+      "target": "internal/analyzer.GoAnalyzer.parseFuncDecl"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.parseTypeDecl",
+      "target": "internal/analyzer.GoAnalyzer.parseTypeDecl"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.resolveCallTarget",
+      "target": "internal/analyzer.GoAnalyzer.resolveCallTarget"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/analyzer.GoAnalyzer.resolveTypeDependency",
+      "target": "internal/analyzer.GoAnalyzer.resolveTypeDependency"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.DegradationDetector.Check",
+      "target": "internal/mcp.DegradationDetector.Check"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.Run",
+      "target": "internal/mcp.Server.Run"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.handleInitialize",
+      "target": "internal/mcp.Server.handleInitialize"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.handleMessage",
+      "target": "internal/mcp.Server.handleMessage"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.handleToolsCall",
+      "target": "internal/mcp.Server.handleToolsCall"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.readMessage",
+      "target": "internal/mcp.Server.readMessage"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.sendDegradationNotification",
+      "target": "internal/mcp.Server.sendDegradationNotification"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.startWatcher",
+      "target": "internal/mcp.Server.startWatcher"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Server.writeMessage",
+      "target": "internal/mcp.Server.writeMessage"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.State.FileNodeIDs",
+      "target": "internal/mcp.State.FileNodeIDs"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.State.GetGraph",
+      "target": "internal/mcp.State.GetGraph"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.State.Initialize",
+      "target": "internal/mcp.State.Initialize"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.State.InitializeMetricsBaseline",
+      "target": "internal/mcp.State.InitializeMetricsBaseline"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.State.Reparse",
+      "target": "internal/mcp.State.Reparse"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.State.ReparseFile",
+      "target": "internal/mcp.State.ReparseFile"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.State.buildFileNodeIndex",
+      "target": "internal/mcp.State.buildFileNodeIndex"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: internal/mcp.Watcher.run",
+      "target": "internal/mcp.Watcher.run"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/bpmn.ProcessGraph.Validate",
+      "target": "pkg/bpmn.ProcessGraph.Validate"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.Builder.buildGraph",
+      "target": "pkg/callgraph.Builder.buildGraph"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.CallResolver.Resolve",
+      "target": "pkg/callgraph.CallResolver.Resolve"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.CallWalker.walk",
+      "target": "pkg/callgraph.CallWalker.walk"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.EventBuilder.BuildForContext",
+      "target": "pkg/callgraph.EventBuilder.BuildForContext"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.SequenceGenerator.Generate",
+      "target": "pkg/callgraph.SequenceGenerator.Generate"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.SequenceGenerator.writeEdges",
+      "target": "pkg/callgraph.SequenceGenerator.writeEdges"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.SequenceGenerator.writeFlatParticipants",
+      "target": "pkg/callgraph.SequenceGenerator.writeFlatParticipants"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.SequenceGenerator.writeGroupedParticipants",
+      "target": "pkg/callgraph.SequenceGenerator.writeGroupedParticipants"
+    },
+    {
+      "kind": "feature-envy",
+      "message": "Feature envy: pkg/callgraph.YAMLExporter.writeYAML",
+      "target": "pkg/callgraph.YAMLExporter.writeYAML"
+    },
+    {
+      "kind": "god-class",
+      "message": "God class detected: internal/analyzer.GoAnalyzer",
+      "target": "internal/analyzer.GoAnalyzer"
+    },
+    {
+      "kind": "god-class",
+      "message": "God class detected: internal/mcp.FileMetrics",
+      "target": "internal/mcp.FileMetrics"
+    },
+    {
+      "kind": "high-efferent-coupling",
+      "message": "Package internal/cli has 20 dependencies (threshold: 10). Consider decomposition.",
+      "target": "internal/cli"
+    },
+    {
+      "kind": "hub-node",
+      "message": "Hub node detected: internal/mcp.ComputeFileMetrics",
+      "target": "internal/mcp.ComputeFileMetrics"
+    },
+    {
+      "kind": "hub-node",
+      "message": "Hub node detected: internal/mcp.matchesFile",
+      "target": "internal/mcp.matchesFile"
+    },
+    {
+      "kind": "hub-node",
+      "message": "Hub node detected: pkg/bpmn.collectElements",
+      "target": "pkg/bpmn.collectElements"
+    },
+    {
+      "kind": "srp-too-many-fields",
+      "message": "Type packageMetrics has too many fields (16 \u003e 10)",
+      "target": "internal/cli.packageMetrics"
+    },
+    {
+      "kind": "srp-too-many-fields",
+      "message": "Type FileMetrics has too many fields (24 \u003e 10)",
+      "target": "internal/mcp.FileMetrics"
+    },
+    {
+      "kind": "srp-too-many-fields",
+      "message": "Type CallGraph has too many fields (11 \u003e 10)",
+      "target": "pkg/callgraph.CallGraph"
+    },
+    {
+      "kind": "srp-too-many-methods",
+      "message": "Type GoAnalyzer has too many methods (34 \u003e 7)",
+      "target": "internal/analyzer.GoAnalyzer"
+    },
+    {
+      "kind": "srp-too-many-methods",
+      "message": "Type Server has too many methods (12 \u003e 7)",
+      "target": "internal/mcp.Server"
+    },
+    {
+      "kind": "srp-too-many-methods",
+      "message": "Type State has too many methods (13 \u003e 7)",
+      "target": "internal/mcp.State"
+    },
+    {
+      "kind": "srp-too-many-methods",
+      "message": "Type CallWalker has too many methods (8 \u003e 7)",
+      "target": "pkg/callgraph.CallWalker"
+    },
+    {
+      "kind": "srp-too-many-methods",
+      "message": "Type SequenceGenerator has too many methods (10 \u003e 7)",
+      "target": "pkg/callgraph.SequenceGenerator"
+    }
+  ],
+  "total": 63
+}
