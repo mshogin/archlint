@@ -1,5 +1,6 @@
 mod analyzer;
 mod model;
+mod promptlint;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -28,12 +29,44 @@ enum Commands {
         #[arg(long)]
         threshold: Option<usize>,
     },
+    /// Analyze prompt complexity and suggest model routing
+    Prompt {
+        /// Output only model name
+        #[arg(long)]
+        model_only: bool,
+
+        /// Output format: json, brief
+        #[arg(long, default_value = "json")]
+        format: String,
+    },
 }
 
 fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Prompt { model_only, format } => {
+            use std::io::Read;
+            let mut input = String::new();
+            std::io::stdin().read_to_string(&mut input).expect("failed to read stdin");
+            let result = promptlint::analyze(&input);
+            if model_only {
+                println!("{}", result.suggested_model);
+            } else {
+                match format.as_str() {
+                    "brief" => {
+                        println!(
+                            "complexity={} model={} words={} action={}",
+                            result.complexity, result.suggested_model, result.words, result.action
+                        );
+                    }
+                    _ => {
+                        let json = serde_json::to_string_pretty(&result).unwrap();
+                        println!("{}", json);
+                    }
+                }
+            }
+        }
         Commands::Scan {
             dir,
             format,
