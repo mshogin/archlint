@@ -22,6 +22,7 @@ arch/
 tests/output/
 *.yaml
 *.yml
+!.github/workflows/*.yml
 *.puml
 
 # IDE
