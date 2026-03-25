@@ -1,0 +1,111 @@
+name: 'archlint - Architecture Review'
+description: 'Automated architecture analysis for Go and Rust projects. SOLID violations, cycles, fan-out, performance metrics.'
+author: 'mikeshogin'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  directory:
+    description: 'Directory to scan'
+    required: false
+    default: '.'
+  format:
+    description: 'Output format: json, brief'
+    required: false
+    default: 'brief'
+  threshold:
+    description: 'Max violations before failing (0 = no limit)'
+    required: false
+    default: '0'
+  comment:
+    description: 'Post results as PR comment (true/false)'
+    required: false
+    default: 'true'
+
+outputs:
+  components:
+    description: 'Number of components found'
+  violations:
+    description: 'Number of violations found'
+  health_score:
+    description: 'Architecture health score (0-100)'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache archlint build
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.action_path }}/archlint-rs/target
+        key: archlint-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build archlint-rs
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}/archlint-rs
+        cargo build --release 2>/dev/null
+
+    - name: Run architecture scan
+      id: scan
+      shell: bash
+      run: |
+        RESULT=$(${{ github.action_path }}/archlint-rs/target/release/archlint scan ${{ inputs.directory }} --format json 2>/dev/null)
+
+        COMPONENTS=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(m.get('component_count',0))")
+        VIOLATIONS=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(len(m.get('violations',[])))")
+        CYCLES=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(len(m.get('cycles',[])))")
+        MAX_FANOUT=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(m.get('max_fan_out',0))")
+
+        # Health score: 100 - (violations * 5) - (cycles * 10)
+        HEALTH=$((100 - VIOLATIONS * 5 - CYCLES * 10))
+        if [ $HEALTH -lt 0 ]; then HEALTH=0; fi
+
+        echo "components=$COMPONENTS" >> $GITHUB_OUTPUT
+        echo "violations=$VIOLATIONS" >> $GITHUB_OUTPUT
+        echo "health_score=$HEALTH" >> $GITHUB_OUTPUT
+
+        echo "## Architecture Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Components | $COMPONENTS |" >> $GITHUB_STEP_SUMMARY
+        echo "| Violations | $VIOLATIONS |" >> $GITHUB_STEP_SUMMARY
+        echo "| Cycles | $CYCLES |" >> $GITHUB_STEP_SUMMARY
+        echo "| Max fan-out | $MAX_FANOUT |" >> $GITHUB_STEP_SUMMARY
+        echo "| Health score | $HEALTH/100 |" >> $GITHUB_STEP_SUMMARY
+
+        # Fail if threshold exceeded
+        if [ "${{ inputs.threshold }}" != "0" ] && [ "$VIOLATIONS" -gt "${{ inputs.threshold }}" ]; then
+          echo "::error::Architecture violations ($VIOLATIONS) exceed threshold (${{ inputs.threshold }})"
+          exit 1
+        fi
+
+    - name: Comment on PR
+      if: inputs.comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const components = '${{ steps.scan.outputs.components }}';
+          const violations = '${{ steps.scan.outputs.violations }}';
+          const health = '${{ steps.scan.outputs.health_score }}';
+          const body = `## 🏗️ Architecture Review by archlint
+
+          | Metric | Value |
+          |--------|-------|
+          | Components | ${components} |
+          | Violations | ${violations} |
+          | Health Score | ${health}/100 |
+
+          _Powered by [archlint](https://github.com/mshogin/archlint)_`;
+
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: body
+          });
