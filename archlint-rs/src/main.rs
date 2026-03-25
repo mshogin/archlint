@@ -1,5 +1,6 @@
 mod analyzer;
 mod costlint;
+mod diff;
 mod model;
 mod orchestrator;
 mod perflint;
@@ -69,6 +70,19 @@ enum Commands {
         /// Compare all models
         #[arg(long)]
         compare: bool,
+    },
+    /// Compare architecture between two git commits
+    Diff {
+        /// Git range (e.g., HEAD~5..HEAD, main..feature)
+        range: String,
+
+        /// Project directory
+        #[arg(long, default_value = ".")]
+        dir: PathBuf,
+
+        /// Output format: json, text
+        #[arg(long, default_value = "text")]
+        format: String,
     },
     /// Manage Docker-based Claude Code workers
     Worker {
@@ -156,6 +170,28 @@ async fn main() {
                     _ => seclint::Rating::Age18Plus,
                 };
                 if !seclint::is_safe(&input, &threshold) {
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::Diff { range, dir, format } => {
+            let parts: Vec<&str> = range.splitn(2, "..").collect();
+            if parts.len() != 2 {
+                eprintln!("Invalid range format. Use: FROM..TO (e.g., HEAD~5..HEAD)");
+                std::process::exit(1);
+            }
+            match diff::diff(&dir, parts[0], parts[1]) {
+                Ok(d) => {
+                    match format.as_str() {
+                        "json" => {
+                            let json = serde_json::to_string_pretty(&d).unwrap();
+                            println!("{}", json);
+                        }
+                        _ => print!("{}", diff::format_diff(&d)),
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
             }
