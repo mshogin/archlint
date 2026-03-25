@@ -1,6 +1,7 @@
 mod analyzer;
 mod costlint;
 mod model;
+mod orchestrator;
 mod promptlint;
 mod perflint;
 mod seclint;
@@ -68,9 +69,36 @@ enum Commands {
         #[arg(long)]
         compare: bool,
     },
+    /// Manage Docker-based Claude Code workers
+    Worker {
+        #[command(subcommand)]
+        action: WorkerAction,
+    },
 }
 
-fn main() {
+#[derive(Subcommand)]
+enum WorkerAction {
+    /// Create a new worker container
+    Create {
+        /// Model tier: haiku, sonnet, opus
+        #[arg(long, default_value = "sonnet")]
+        model: String,
+
+        /// Project directory to mount into the container
+        #[arg(long, default_value = ".")]
+        project: PathBuf,
+    },
+    /// List all tracked workers
+    List,
+    /// Stop a running worker
+    Stop {
+        /// Worker ID to stop
+        id: String,
+    },
+}
+
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
     match cli.command {
@@ -137,6 +165,51 @@ fn main() {
             } else {
                 let cost = costlint::estimate(&model, tokens, tokens);
                 println!("{{\"model\":\"{}\",\"tokens\":{},\"cost_usd\":{:.6}}}", model, tokens * 2, cost);
+            }
+        }
+        Commands::Worker { action } => {
+            let rt = || async {
+                let mut orch = orchestrator::Orchestrator::new().await.map_err(|e| {
+                    format!("failed to connect to Docker: {}", e)
+                })?;
+                // Discover existing workers from Docker
+                let _ = orch.discover_workers().await;
+
+                match action {
+                    WorkerAction::Create { model, project } => {
+                        let tier: orchestrator::ModelTier = model.parse().map_err(|e: String| e)?;
+                        let project_path = std::fs::canonicalize(&project)
+                            .map_err(|e| format!("invalid project path: {}", e))?;
+                        let project_str = project_path.to_string_lossy().to_string();
+
+                        let worker_id = orch.create_worker(tier, &project_str).await
+                            .map_err(|e| format!("failed to create worker: {}", e))?;
+
+                        orch.start_worker(&worker_id).await?;
+
+                        let worker = orch.list_workers().into_iter()
+                            .find(|w| w.id == worker_id);
+                        if let Some(w) = worker {
+                            let json = serde_json::to_string_pretty(&w).unwrap();
+                            println!("{}", json);
+                        }
+                    }
+                    WorkerAction::List => {
+                        let workers = orch.list_workers();
+                        let json = serde_json::to_string_pretty(&workers).unwrap();
+                        println!("{}", json);
+                    }
+                    WorkerAction::Stop { id } => {
+                        orch.stop_worker(&id).await?;
+                        eprintln!("worker {} stopped", id);
+                    }
+                }
+                Ok::<(), String>(())
+            };
+
+            if let Err(e) = rt().await {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
             }
         }
         Commands::Scan {
