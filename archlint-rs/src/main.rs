@@ -2,6 +2,7 @@ mod analyzer;
 mod costlint;
 mod model;
 mod promptlint;
+mod perflint;
 mod seclint;
 
 use clap::{Parser, Subcommand};
@@ -36,6 +37,16 @@ enum Commands {
         /// Output only model name
         #[arg(long)]
         model_only: bool,
+
+        /// Output format: json, brief
+        #[arg(long, default_value = "json")]
+        format: String,
+    },
+    /// Performance analysis - complexity, nesting, allocation patterns
+    Perf {
+        /// Project directory to scan
+        #[arg(default_value = ".")]
+        dir: PathBuf,
 
         /// Output format: json, brief
         #[arg(long, default_value = "json")]
@@ -82,6 +93,16 @@ fn main() {
                         let json = serde_json::to_string_pretty(&result).unwrap();
                         println!("{}", json);
                     }
+                }
+            }
+        }
+        Commands::Perf { dir, format } => {
+            let report = perflint::analyze(&dir);
+            match format.as_str() {
+                "brief" => print!("{}", perflint::format_report(&report)),
+                _ => {
+                    let json = serde_json::to_string_pretty(&report).unwrap();
+                    println!("{}", json);
                 }
             }
         }
