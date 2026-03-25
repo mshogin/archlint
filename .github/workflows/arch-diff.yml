@@ -1,0 +1,159 @@
+name: Architecture Diff
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  arch-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            archlint-rs/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('archlint-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build archlint-rs
+        run: cd archlint-rs && cargo build --release
+
+      - name: Run architecture diff
+        id: arch-diff
+        run: |
+          # Ensure origin/main is available for comparison
+          git fetch origin main:refs/remotes/origin/main 2>/dev/null || true
+
+          DIFF_OUTPUT=$(./archlint-rs/target/release/archlint diff origin/main..HEAD --dir . --format json 2>&1) || true
+
+          # If archlint diff is not yet implemented, produce empty result
+          if echo "$DIFF_OUTPUT" | jq . >/dev/null 2>&1; then
+            echo "json<<ARCHLINT_EOF" >> "$GITHUB_OUTPUT"
+            echo "$DIFF_OUTPUT" >> "$GITHUB_OUTPUT"
+            echo "ARCHLINT_EOF" >> "$GITHUB_OUTPUT"
+            echo "has_json=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_json=false" >> "$GITHUB_OUTPUT"
+            echo "raw_output<<ARCHLINT_EOF" >> "$GITHUB_OUTPUT"
+            echo "$DIFF_OUTPUT" >> "$GITHUB_OUTPUT"
+            echo "ARCHLINT_EOF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Parse and report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const hasJson = '${{ steps.arch-diff.outputs.has_json }}' === 'true';
+            const isPR = context.eventName === 'pull_request';
+            const sha = isPR ? context.payload.pull_request.head.sha : context.sha;
+
+            let added = 0;
+            let removed = 0;
+            let newViolations = 0;
+            let summary = '';
+
+            if (hasJson) {
+              try {
+                const diff = JSON.parse(`${{ steps.arch-diff.outputs.json }}`);
+
+                added = diff.components_added?.length || diff.added_components || 0;
+                removed = diff.components_removed?.length || diff.removed_components || 0;
+                newViolations = diff.new_violations?.length || diff.violations_added || 0;
+
+                summary = [
+                  `Components: +${added} / -${removed}`,
+                  `New violations: ${newViolations}`,
+                ].join('\n');
+              } catch (e) {
+                summary = 'Failed to parse archlint JSON output: ' + e.message;
+              }
+            } else {
+              const raw = `${{ steps.arch-diff.outputs.raw_output }}`;
+              summary = raw
+                ? 'archlint diff returned non-JSON output:\n```\n' + raw.slice(0, 500) + '\n```'
+                : 'archlint diff produced no output (command may not be implemented yet).';
+            }
+
+            const impactScore = newViolations * 10 + added * 2;
+            const status = newViolations > 0 ? 'warning' : 'clean';
+            const emoji = newViolations > 0 ? '!!' : 'ok';
+
+            const body = [
+              `## Architecture Diff Report [${emoji}]`,
+              '',
+              '| Metric | Value |',
+              '|--------|-------|',
+              `| Components added | ${added} |`,
+              `| Components removed | ${removed} |`,
+              `| New violations | ${newViolations} |`,
+              `| Impact score | ${impactScore} |`,
+              '',
+              summary ? '### Details\n' + summary : '',
+              '',
+              `_Impact score = new_violations * 10 + added_components * 2_`,
+            ].join('\n');
+
+            // Create commit status
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: sha,
+              state: newViolations > 0 ? 'failure' : 'success',
+              description: `Impact: ${impactScore} | Violations: ${newViolations} | Components: +${added}/-${removed}`,
+              context: 'archlint/arch-diff',
+            });
+
+            // Comment on PR if applicable
+            if (isPR) {
+              const prNumber = context.payload.pull_request.number;
+
+              // Find and update existing comment or create new one
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+
+              const botComment = comments.data.find(
+                c => c.body.includes('## Architecture Diff Report')
+              );
+
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: body,
+                });
+              }
+
+              core.info(`PR #${prNumber} commented with arch diff report`);
+            }
+
+            core.info(`Architecture diff complete. Impact score: ${impactScore}`);
