@@ -10,11 +10,11 @@ How all projects connect and work together.
 Code architecture analysis. Structural graphs, SOLID violations, cycle detection.
 Role: QUALITY GATE - ensures code produced by agents meets architecture standards.
 
-### promptlint (github.com/mshogin/promptlint)
+### promptlint (github.com/mikeshogin/promptlint)
 Prompt complexity scoring for model routing. No LLM required.
 Role: ROUTER - analyzes prompts and decides which model (haiku/sonnet/opus) to use.
 
-### costlint (github.com/mshogin/costlint)
+### costlint (github.com/mikeshogin/costlint)
 Token cost analysis and optimization.
 Role: COST OPTIMIZER - tracks spending, runs A/B tests, finds savings.
 
