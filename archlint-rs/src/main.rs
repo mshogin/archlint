@@ -2,9 +2,10 @@ mod analyzer;
 mod costlint;
 mod model;
 mod orchestrator;
-mod promptlint;
 mod perflint;
+mod promptlint;
 mod seclint;
+mod server;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -73,6 +74,12 @@ enum Commands {
     Worker {
         #[command(subcommand)]
         action: WorkerAction,
+    },
+    /// Start HTTP API server
+    Serve {
+        /// Port to listen on
+        #[arg(long, default_value = "8080")]
+        port: u16,
     },
 }
 
@@ -260,6 +267,9 @@ async fn main() {
                     std::process::exit(2);
                 }
             }
+        }
+        Commands::Serve { port } => {
+            server::run(port).await;
         }
     }
 }
