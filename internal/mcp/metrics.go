@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -328,7 +329,7 @@ func computeSRPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 		if methodCount > srpMethodThreshold {
 			m.SRPViolations = append(m.SRPViolations, Violation{
 				Kind:    "srp-too-many-methods",
-				Message: strings.Join([]string{"Type ", t.Name, " has too many methods (", intToStr(methodCount), " > ", intToStr(srpMethodThreshold), ")"}, ""),
+				Message: fmt.Sprintf("Type %s has too many methods (%d > %d)", t.Name, methodCount, srpMethodThreshold),
 				Target:  typeID,
 			})
 		}
@@ -336,7 +337,7 @@ func computeSRPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 		if len(t.Fields) > srpFieldThreshold {
 			m.SRPViolations = append(m.SRPViolations, Violation{
 				Kind:    "srp-too-many-fields",
-				Message: strings.Join([]string{"Type ", t.Name, " has too many fields (", intToStr(len(t.Fields)), " > ", intToStr(srpFieldThreshold), ")"}, ""),
+				Message: fmt.Sprintf("Type %s has too many fields (%d > %d)", t.Name, len(t.Fields), srpFieldThreshold),
 				Target:  typeID,
 			})
 		}
@@ -374,7 +375,7 @@ func computeDIPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 				if resolvedType != "" {
 					m.DIPViolations = append(m.DIPViolations, Violation{
 						Kind:    "dip-concrete-dependency",
-						Message: strings.Join([]string{"Type ", t.Name, " depends on concrete type ", field.TypeName, " — consider depending on an interface"}, ""),
+						Message: fmt.Sprintf("Type %s depends on concrete type %s — consider depending on an interface", t.Name, field.TypeName),
 						Target:  t.Package + "." + t.Name,
 					})
 				}
@@ -405,7 +406,7 @@ func computeISPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 		if methodCount > ispMethodThreshold {
 			m.ISPViolations = append(m.ISPViolations, Violation{
 				Kind:    "isp-fat-interface",
-				Message: strings.Join([]string{"Interface ", t.Name, " has too many methods (", intToStr(methodCount), " > ", intToStr(ispMethodThreshold), ")"}, ""),
+				Message: fmt.Sprintf("Interface %s has too many methods (%d > %d)", t.Name, methodCount, ispMethodThreshold),
 				Target:  typeID,
 			})
 		}
@@ -648,30 +649,4 @@ func computeHealthScore(m *FileMetrics) int {
 	}
 
 	return score
-}
-
-// intToStr converts an int to a string without importing strconv (avoiding circular deps).
-func intToStr(n int) string {
-	if n == 0 {
-		return "0"
-	}
-
-	neg := false
-	if n < 0 {
-		neg = true
-		n = -n
-	}
-
-	var digits []byte
-
-	for n > 0 {
-		digits = append([]byte{byte('0' + n%10)}, digits...)
-		n /= 10
-	}
-
-	if neg {
-		digits = append([]byte{'-'}, digits...)
-	}
-
-	return string(digits)
 }

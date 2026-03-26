@@ -23,7 +23,7 @@ Current work items and their status. Updated by contributor bots.
 | ~~Resource leak server.go:57~~ | P2 | Fixed: added defer server.Close() in serve.go |
 | ~~Double split metrics.go:362~~ | P3 | Fixed: replaced strings.Split with strings.LastIndex |
 | StateReader/MetricsProvider interfaces | P2 | DIP refactoring, separate PR after #4 merge |
-| strings.Join cosmetic | P4 | Optional cleanup |
+| ~~strings.Join cosmetic~~ | P4 | Fixed: replaced strings.Join+intToStr with fmt.Sprintf in metrics.go |
 | Tarjan SCC (issue #5) | P1 | Next after PR #4 merge |
 
 ## Rules
