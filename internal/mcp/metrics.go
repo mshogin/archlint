@@ -357,8 +357,10 @@ func computeDIPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 				// External concrete type dependency — potential DIP violation.
 				resolvedType := ""
 
-				typeParts := strings.Split(field.TypeName, ".")
-				shortTypeName := typeParts[len(typeParts)-1]
+				shortTypeName := field.TypeName
+				if idx := strings.LastIndex(field.TypeName, "."); idx >= 0 {
+					shortTypeName = field.TypeName[idx+1:]
+				}
 
 				for tID, tInfo := range a.AllTypes() {
 					if tInfo.Name == shortTypeName &&

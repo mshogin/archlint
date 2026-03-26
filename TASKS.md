@@ -20,8 +20,8 @@ Current work items and their status. Updated by contributor bots.
 
 | Task | Priority | Notes |
 |------|----------|-------|
-| Resource leak server.go:57 | P2 | Log file handle not closed. Quick fix. |
-| Double split metrics.go:362 | P3 | Minor, bundle with resource leak fix |
+| ~~Resource leak server.go:57~~ | P2 | Fixed: added defer server.Close() in serve.go |
+| ~~Double split metrics.go:362~~ | P3 | Fixed: replaced strings.Split with strings.LastIndex |
 | StateReader/MetricsProvider interfaces | P2 | DIP refactoring, separate PR after #4 merge |
 | strings.Join cosmetic | P4 | Optional cleanup |
 | Tarjan SCC (issue #5) | P1 | Next after PR #4 merge |
