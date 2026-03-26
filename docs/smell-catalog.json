@@ -1,0 +1,82 @@
+[
+  {
+    "id": "circular-dependency",
+    "severity": "error",
+    "threshold": "any cycle in import graph",
+    "principle": "Acyclic Dependencies Principle",
+    "fix_strategy": "introduce interface at cycle boundary, apply dependency inversion",
+    "detected_by": "DetectViolationsForPackage (detectCycles)"
+  },
+  {
+    "id": "high-efferent-coupling",
+    "severity": "warning",
+    "threshold": ">10 import dependencies per package",
+    "principle": "Single Responsibility Principle, Low Coupling",
+    "fix_strategy": "extract facade or mediator, split package into focused sub-packages",
+    "detected_by": "DetectViolationsForPackage"
+  },
+  {
+    "id": "srp-too-many-methods",
+    "severity": "warning",
+    "threshold": ">7 methods on a struct",
+    "principle": "Single Responsibility Principle",
+    "fix_strategy": "extract cohesive method groups into dedicated structs with interfaces",
+    "detected_by": "computeSRPViolations"
+  },
+  {
+    "id": "srp-too-many-fields",
+    "severity": "warning",
+    "threshold": ">10 fields on a struct",
+    "principle": "Single Responsibility Principle",
+    "fix_strategy": "group related fields into embedded structs or value objects",
+    "detected_by": "computeSRPViolations"
+  },
+  {
+    "id": "dip-concrete-dependency",
+    "severity": "warning",
+    "threshold": "any struct field referencing a concrete type from another package",
+    "principle": "Dependency Inversion Principle",
+    "fix_strategy": "replace concrete field type with a locally-defined interface",
+    "detected_by": "computeDIPViolations"
+  },
+  {
+    "id": "isp-fat-interface",
+    "severity": "warning",
+    "threshold": ">5 methods on an interface",
+    "principle": "Interface Segregation Principle",
+    "fix_strategy": "split into smaller role-specific interfaces, compose where all are needed",
+    "detected_by": "computeISPViolations"
+  },
+  {
+    "id": "god-class",
+    "severity": "warning",
+    "threshold": ">15 methods OR >20 fields OR fan-out >10",
+    "principle": "Single Responsibility Principle",
+    "fix_strategy": "extract cohesive subsets into dedicated structs, use composition and delegation",
+    "detected_by": "computeGodClasses"
+  },
+  {
+    "id": "hub-node",
+    "severity": "warning",
+    "threshold": "fan-in + fan-out >15",
+    "principle": "Low Coupling, Separation of Concerns",
+    "fix_strategy": "decompose into smaller functions, introduce abstraction layer",
+    "detected_by": "computeHubNodes"
+  },
+  {
+    "id": "feature-envy",
+    "severity": "warning",
+    "threshold": "external calls > own receiver calls AND external calls >2",
+    "principle": "Information Expert Principle",
+    "fix_strategy": "move method to the type whose data it uses most, or extract a dedicated service",
+    "detected_by": "computeFeatureEnvy"
+  },
+  {
+    "id": "shotgun-surgery",
+    "severity": "warning",
+    "threshold": "struct used directly in >5 distinct files",
+    "principle": "Open/Closed Principle, Low Coupling",
+    "fix_strategy": "introduce interface in front of widely-used type, reduce direct concrete coupling",
+    "detected_by": "computeShotgunSurgery"
+  }
+]
