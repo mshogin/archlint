@@ -52,6 +52,61 @@ specs/
 └── done/         # Completed specs
 ```
 
+## GitHub Action
+
+Use archlint directly in your CI pipeline without any setup:
+
+```yaml
+- name: Architecture Review
+  uses: mshogin/archlint@v1
+  with:
+    directory: '.'
+    format: 'json'
+    threshold: '0'
+```
+
+### Inputs
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `directory` | Directory to scan | `.` |
+| `format` | Output format: `json`, `brief` | `brief` |
+| `threshold` | Max violations before failing (`0` = no limit) | `0` |
+| `comment` | Post results as PR comment (`true`/`false`) | `true` |
+
+### Outputs
+
+| Output | Description |
+|--------|-------------|
+| `components` | Number of components found |
+| `violations` | Number of violations found |
+| `health_score` | Architecture health score (0-100) |
+
+### Full workflow example
+
+```yaml
+name: Architecture Review
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  archlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Architecture Review
+        uses: mshogin/archlint@v1
+        with:
+          directory: '.'
+          threshold: '10'
+          comment: 'true'
+```
+
+The action automatically posts a summary table to the PR and fails the check if the violation threshold is exceeded.
+
 ## Installation
 
 ### From Source
