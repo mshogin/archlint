@@ -45,6 +45,7 @@ func runServe(_ *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("error creating MCP server: %w", err)
 	}
+	defer server.Close()
 
 	if err := server.Run(); err != nil {
 		return fmt.Errorf("MCP server error: %w", err)
