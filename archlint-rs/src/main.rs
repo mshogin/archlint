@@ -90,6 +90,16 @@ enum Commands {
         #[command(subcommand)]
         action: WorkerAction,
     },
+    /// Collect architecture graph from source code (Unix-pipe format)
+    Collect {
+        /// Project directory to analyze
+        #[arg(default_value = ".")]
+        dir: PathBuf,
+
+        /// Output format: json or text
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
     /// Start HTTP API server
     Serve {
         /// Port to listen on
@@ -295,6 +305,37 @@ async fn main() {
                         if let Some(ref metrics) = graph.metrics {
                             if metrics.violations.len() > max_violations {
                                 std::process::exit(1);
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(2);
+                }
+            }
+        }
+        Commands::Collect { dir, format } => {
+            match analyzer::analyze(&dir) {
+                Ok(graph) => {
+                    let export = analyzer::to_graph_export(&graph, &dir);
+                    match format.as_str() {
+                        "json" => {
+                            let json = serde_json::to_string_pretty(&export).unwrap();
+                            println!("{}", json);
+                        }
+                        _ => {
+                            // Text format: human-readable summary
+                            println!("language: {}", export.metadata.language);
+                            println!("root_dir: {}", export.metadata.root_dir);
+                            println!("analyzed_at: {}", export.metadata.analyzed_at);
+                            println!("nodes: {}", export.nodes.len());
+                            println!("edges: {}", export.edges.len());
+                            if let Some(ref m) = export.metrics {
+                                println!("violations: {}", m.violations.len());
+                                println!("cycles: {}", m.cycles.len());
+                                println!("max_fan_out: {}", m.max_fan_out);
+                                println!("max_fan_in: {}", m.max_fan_in);
                             }
                         }
                     }
