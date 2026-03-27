@@ -37,3 +37,4 @@ tests/output/
 Thumbs.db
 .worktrees/
 archlint
+archlint-rs/target/
