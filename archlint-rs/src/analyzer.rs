@@ -76,7 +76,7 @@ pub fn analyze_with_config(dir: &Path, config: &Config) -> Result<ArchGraph, Str
     }
 
     // Calculate metrics using thresholds from config
-    let metrics = calculate_metrics(&graph, &components, config);
+    let metrics = calculate_metrics(&graph, &components, &parsed, config);
 
     Ok(ArchGraph {
         components,
@@ -105,12 +105,20 @@ fn collect_source_files(dir: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
+/// A single trait detected in a Rust source file.
+struct TraitDef {
+    name: String,
+    method_count: usize,
+}
+
 struct ParsedFile {
     module_name: String,
     language: String,
     dependencies: Vec<String>,
     structs: Vec<String>,
     functions: Vec<String>,
+    /// Rust trait definitions (name + method count). Empty for Go files.
+    traits: Vec<TraitDef>,
 }
 
 /// Parse a single source file for dependencies and declarations.
@@ -174,6 +182,7 @@ fn parse_go_file(content: &str, module_name: &str) -> Result<ParsedFile, String>
         dependencies: deps,
         structs,
         functions,
+        traits: Vec::new(),
     })
 }
 
@@ -185,10 +194,22 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
     let re_mod = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?mod\s+(\w+)").unwrap();
     let re_struct = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?struct\s+(\w+)").unwrap();
     let re_fn = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?(?:async\s+)?fn\s+(\w+)").unwrap();
+    // Matches trait definitions: `pub trait Foo {` or `trait Foo {`
+    let re_trait = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?trait\s+(\w+)").unwrap();
+    // Matches trait method signatures (fn inside a trait body, with optional visibility/async).
+    let re_trait_fn = Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+").unwrap();
 
     let mut deps = Vec::new();
     let mut structs = Vec::new();
     let mut functions = Vec::new();
+    let mut traits: Vec<TraitDef> = Vec::new();
+
+    // Simple brace-depth tracker to detect when we are inside a trait body.
+    let mut in_trait = false;
+    let mut current_trait_name = String::new();
+    let mut current_trait_methods: usize = 0;
+    let mut brace_depth: i32 = 0;
+    let mut trait_entry_depth: i32 = 0;
 
     for line in content.lines() {
         let trimmed = line.trim();
@@ -196,6 +217,56 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
         if trimmed.starts_with("//") {
             continue;
         }
+
+        // Track brace depth for trait body detection.
+        let opens = trimmed.chars().filter(|&c| c == '{').count() as i32;
+        let closes = trimmed.chars().filter(|&c| c == '}').count() as i32;
+
+        if in_trait {
+            // Count method signatures inside the trait body.
+            if re_trait_fn.is_match(trimmed) {
+                current_trait_methods += 1;
+            }
+
+            brace_depth += opens - closes;
+
+            if brace_depth <= trait_entry_depth {
+                // Exited trait body.
+                traits.push(TraitDef {
+                    name: current_trait_name.clone(),
+                    method_count: current_trait_methods,
+                });
+                in_trait = false;
+                current_trait_name.clear();
+                current_trait_methods = 0;
+            }
+            continue;
+        }
+
+        // Detect trait definition start.
+        if let Some(cap) = re_trait.captures(trimmed) {
+            let net = opens - closes;
+            if net > 0 {
+                // Trait body spans multiple lines — enter tracking mode.
+                in_trait = true;
+                current_trait_name = cap[1].to_string();
+                current_trait_methods = 0;
+                trait_entry_depth = brace_depth;
+                brace_depth += net;
+            } else {
+                // Trait opens and closes on the same line (e.g. `trait Foo {}`).
+                // Record it with zero methods; no need to enter in_trait mode.
+                traits.push(TraitDef {
+                    name: cap[1].to_string(),
+                    method_count: 0,
+                });
+                brace_depth += net;
+            }
+            continue;
+        }
+
+        // Track depth for non-trait code.
+        brace_depth += opens - closes;
 
         if trimmed.starts_with("use ") || trimmed.starts_with("pub use ") {
             // Internal: crate::, self::, super:: — always count
@@ -227,12 +298,21 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
         }
     }
 
+    // Handle a trait that was never closed (malformed file — still record it).
+    if in_trait && !current_trait_name.is_empty() {
+        traits.push(TraitDef {
+            name: current_trait_name,
+            method_count: current_trait_methods,
+        });
+    }
+
     Ok(ParsedFile {
         module_name: module_name.to_string(),
         language: "rust".to_string(),
         dependencies: deps,
         structs,
         functions,
+        traits,
     })
 }
 
@@ -252,7 +332,7 @@ fn path_to_module(rel_path: &Path, ext: &str) -> String {
     name.to_string()
 }
 
-fn calculate_metrics(graph: &IndexedGraph, components: &[Component], config: &Config) -> Metrics {
+fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[ParsedFile], config: &Config) -> Metrics {
     let mut max_fan_out = 0;
     let mut max_fan_in = 0;
     let mut violations = Vec::new();
@@ -304,6 +384,55 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], config: &Co
     } else {
         Vec::new()
     };
+
+    // ISP: detect traits with too many methods (Rust only).
+    if config.rules.isp.enabled {
+        let isp_threshold = config.isp_threshold();
+        for pf in parsed {
+            if pf.language != "rust" {
+                continue;
+            }
+            if config.rules.isp.exclude.contains(&pf.module_name) {
+                continue;
+            }
+            for t in &pf.traits {
+                if t.method_count > isp_threshold {
+                    violations.push(Violation {
+                        rule: "isp".to_string(),
+                        component: pf.module_name.clone(),
+                        message: format!(
+                            "trait `{}` has {} methods, exceeds ISP threshold of {}",
+                            t.name, t.method_count, isp_threshold
+                        ),
+                        severity: "warning".to_string(),
+                    });
+                }
+            }
+        }
+    }
+
+    // DIP: detect Rust modules that have structs but no trait definitions (missing abstraction layer).
+    if config.rules.dip.enabled {
+        for pf in parsed {
+            if pf.language != "rust" {
+                continue;
+            }
+            if config.rules.dip.exclude.contains(&pf.module_name) {
+                continue;
+            }
+            if pf.structs.len() > 2 && pf.traits.is_empty() {
+                violations.push(Violation {
+                    rule: "dip".to_string(),
+                    component: pf.module_name.clone(),
+                    message: format!(
+                        "module has {} structs but no trait definitions; consider introducing traits to enforce dependency inversion",
+                        pf.structs.len()
+                    ),
+                    severity: "info".to_string(),
+                });
+            }
+        }
+    }
 
     Metrics {
         component_count: components.len(),
@@ -426,5 +555,190 @@ use crate::model;\n\
         let pf = parse_rust_file(code, "mymod", &external).unwrap();
         assert_eq!(pf.dependencies.len(), 1);
         assert_eq!(pf.dependencies[0], "model");
+    }
+
+    #[test]
+    fn test_trait_parsing_single_trait() {
+        let empty = make_deps(&[]);
+        let code = "\
+pub trait Repository {\n\
+    fn find(&self, id: u64) -> Option<Entity>;\n\
+    fn save(&mut self, entity: Entity);\n\
+    fn delete(&mut self, id: u64);\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "mymod", &empty).unwrap();
+        assert_eq!(pf.traits.len(), 1);
+        assert_eq!(pf.traits[0].name, "Repository");
+        assert_eq!(pf.traits[0].method_count, 3);
+    }
+
+    #[test]
+    fn test_trait_parsing_multiple_traits() {
+        let empty = make_deps(&[]);
+        let code = "\
+trait Reader {\n\
+    fn read(&self) -> Vec<u8>;\n\
+}\n\
+\n\
+pub trait Writer {\n\
+    fn write(&mut self, data: &[u8]);\n\
+    fn flush(&mut self);\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "mymod", &empty).unwrap();
+        assert_eq!(pf.traits.len(), 2);
+        let names: Vec<&str> = pf.traits.iter().map(|t| t.name.as_str()).collect();
+        assert!(names.contains(&"Reader"));
+        assert!(names.contains(&"Writer"));
+        let reader = pf.traits.iter().find(|t| t.name == "Reader").unwrap();
+        assert_eq!(reader.method_count, 1);
+        let writer = pf.traits.iter().find(|t| t.name == "Writer").unwrap();
+        assert_eq!(writer.method_count, 2);
+    }
+
+    #[test]
+    fn test_isp_violation_detected() {
+        let empty = make_deps(&[]);
+        // Trait with 6 methods exceeds default threshold of 5.
+        let code = "\
+pub trait GodTrait {\n\
+    fn method_a(&self);\n\
+    fn method_b(&self);\n\
+    fn method_c(&self);\n\
+    fn method_d(&self);\n\
+    fn method_e(&self);\n\
+    fn method_f(&self);\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "mymod", &empty).unwrap();
+        assert_eq!(pf.traits.len(), 1);
+        assert_eq!(pf.traits[0].method_count, 6);
+
+        let config = Config::default(); // ISP threshold = 5
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "mymod".to_string(),
+            title: "mymod".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let isp_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "isp")
+            .collect();
+        assert_eq!(isp_violations.len(), 1);
+        assert!(isp_violations[0].message.contains("GodTrait"));
+        assert_eq!(isp_violations[0].severity, "warning");
+    }
+
+    #[test]
+    fn test_isp_no_violation_within_threshold() {
+        let empty = make_deps(&[]);
+        // Trait with exactly 5 methods should NOT trigger ISP.
+        let code = "\
+pub trait SmallTrait {\n\
+    fn a(&self);\n\
+    fn b(&self);\n\
+    fn c(&self);\n\
+    fn d(&self);\n\
+    fn e(&self);\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "mymod", &empty).unwrap();
+        assert_eq!(pf.traits[0].method_count, 5);
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "mymod".to_string(),
+            title: "mymod".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let isp_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "isp")
+            .collect();
+        assert!(isp_violations.is_empty());
+    }
+
+    #[test]
+    fn test_dip_violation_structs_no_traits() {
+        let empty = make_deps(&[]);
+        // 3 structs, no traits -> DIP violation.
+        let code = "\
+pub struct Worker {}\n\
+pub struct Agent {}\n\
+pub struct Dispatcher {}\n\
+";
+        let pf = parse_rust_file(code, "concrete_module", &empty).unwrap();
+        assert_eq!(pf.structs.len(), 3);
+        assert!(pf.traits.is_empty());
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "concrete_module".to_string(),
+            title: "concrete_module".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let dip_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "dip")
+            .collect();
+        assert_eq!(dip_violations.len(), 1);
+        assert_eq!(dip_violations[0].severity, "info");
+    }
+
+    #[test]
+    fn test_dip_no_violation_when_traits_present() {
+        let empty = make_deps(&[]);
+        // 3 structs + 1 trait -> no DIP violation.
+        let code = "\
+pub trait Bus {}\n\
+pub struct Worker {}\n\
+pub struct Agent {}\n\
+pub struct Dispatcher {}\n\
+";
+        let pf = parse_rust_file(code, "abstracted_module", &empty).unwrap();
+        assert_eq!(pf.structs.len(), 3);
+        assert_eq!(pf.traits.len(), 1);
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "abstracted_module".to_string(),
+            title: "abstracted_module".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let dip_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "dip")
+            .collect();
+        assert!(dip_violations.is_empty());
+    }
+
+    #[test]
+    fn test_dip_no_violation_two_or_fewer_structs() {
+        let empty = make_deps(&[]);
+        // Only 2 structs, no traits -> NOT a DIP violation (threshold is >2).
+        let code = "\
+pub struct Worker {}\n\
+pub struct Agent {}\n\
+";
+        let pf = parse_rust_file(code, "small_module", &empty).unwrap();
+        assert_eq!(pf.structs.len(), 2);
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "small_module".to_string(),
+            title: "small_module".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let dip_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "dip")
+            .collect();
+        assert!(dip_violations.is_empty());
     }
 }
