@@ -53,6 +53,12 @@ pub struct Rules {
     pub fan_in: RuleConfig,
     #[serde(default = "default_cycles")]
     pub cycles: RuleConfig,
+    /// ISP: detect traits with too many methods (default threshold: 5).
+    #[serde(default = "default_isp")]
+    pub isp: RuleConfig,
+    /// DIP: detect modules with structs but no trait definitions.
+    #[serde(default = "default_dip")]
+    pub dip: RuleConfig,
 }
 
 fn default_fan_out() -> RuleConfig {
@@ -82,6 +88,24 @@ fn default_cycles() -> RuleConfig {
     }
 }
 
+fn default_isp() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        threshold: Some(5),
+        exclude: Vec::new(),
+    }
+}
+
+fn default_dip() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        threshold: None,
+        exclude: Vec::new(),
+    }
+}
+
 impl Default for Rules {
     fn default() -> Self {
         Self {
@@ -98,6 +122,18 @@ impl Default for Rules {
                 exclude: Vec::new(),
             },
             cycles: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                threshold: None,
+                exclude: Vec::new(),
+            },
+            isp: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                threshold: Some(5),
+                exclude: Vec::new(),
+            },
+            dip: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
                 threshold: None,
@@ -158,6 +194,11 @@ impl Config {
     /// Fan-in threshold (default 10).
     pub fn fan_in_threshold(&self) -> usize {
         self.rules.fan_in.threshold.unwrap_or(10)
+    }
+
+    /// ISP: maximum number of methods allowed per trait (default 5).
+    pub fn isp_threshold(&self) -> usize {
+        self.rules.isp.threshold.unwrap_or(5)
     }
 }
 
