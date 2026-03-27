@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::model::{ArchGraph, Component, IndexedGraph, Link, Metrics, Violation};
 use rayon::prelude::*;
 use regex::Regex;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
