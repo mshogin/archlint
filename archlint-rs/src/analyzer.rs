@@ -973,4 +973,82 @@ pub struct Agent {}\n\
         let json = serde_json::to_string(&export).expect("should serialize");
         assert!(!json.contains("\"metrics\""));
     }
+
+    // --- Tarjan SCC cycle detection tests ---
+
+    fn build_cycle_graph(edges: &[(&str, &str)]) -> IndexedGraph {
+        let mut g = IndexedGraph::new();
+        for (from, to) in edges {
+            g.add_edge(from, to, "depends");
+        }
+        g
+    }
+
+    fn sorted_cycle(mut v: Vec<String>) -> Vec<String> {
+        v.sort();
+        v
+    }
+
+    /// A -> B -> A  (simple mutual dependency, 2-node cycle)
+    #[test]
+    fn test_detect_cycles_simple_two_node() {
+        let g = build_cycle_graph(&[("a", "b"), ("b", "a")]);
+        let cycles = detect_cycles(&g);
+        assert_eq!(cycles.len(), 1, "expected exactly one SCC");
+        let members = sorted_cycle(cycles[0].clone());
+        assert_eq!(members, vec!["a".to_string(), "b".to_string()]);
+    }
+
+    /// A -> B -> C -> A  (3-node cycle starting from the root)
+    #[test]
+    fn test_detect_cycles_three_node_cycle() {
+        let g = build_cycle_graph(&[("a", "b"), ("b", "c"), ("c", "a")]);
+        let cycles = detect_cycles(&g);
+        assert_eq!(cycles.len(), 1, "expected exactly one SCC");
+        let members = sorted_cycle(cycles[0].clone());
+        assert_eq!(members, vec!["a".to_string(), "b".to_string(), "c".to_string()]);
+    }
+
+    /// A -> B -> C -> B  (cycle that does NOT include the entry node A)
+    /// Simple DFS from A would miss this; Tarjan's SCC must find it.
+    #[test]
+    fn test_detect_cycles_non_root_cycle() {
+        let g = build_cycle_graph(&[("a", "b"), ("b", "c"), ("c", "b")]);
+        let cycles = detect_cycles(&g);
+        assert_eq!(cycles.len(), 1, "expected exactly one SCC (b <-> c)");
+        let members = sorted_cycle(cycles[0].clone());
+        assert_eq!(members, vec!["b".to_string(), "c".to_string()]);
+    }
+
+    /// Acyclic graph: A -> B -> C  (no cycles expected)
+    #[test]
+    fn test_detect_cycles_acyclic_graph() {
+        let g = build_cycle_graph(&[("a", "b"), ("b", "c")]);
+        let cycles = detect_cycles(&g);
+        assert!(cycles.is_empty(), "acyclic graph should have no cycles");
+    }
+
+    /// Multiple independent cycles: A->B->A and C->D->C
+    #[test]
+    fn test_detect_cycles_multiple_independent_cycles() {
+        let g = build_cycle_graph(&[("a", "b"), ("b", "a"), ("c", "d"), ("d", "c")]);
+        let cycles = detect_cycles(&g);
+        assert_eq!(cycles.len(), 2, "expected two independent SCCs");
+
+        let mut all_members: Vec<Vec<String>> = cycles.into_iter().map(sorted_cycle).collect();
+        all_members.sort();
+        assert_eq!(all_members[0], vec!["a".to_string(), "b".to_string()]);
+        assert_eq!(all_members[1], vec!["c".to_string(), "d".to_string()]);
+    }
+
+    /// Single node with self-loop: A -> A
+    #[test]
+    fn test_detect_cycles_self_loop() {
+        let g = build_cycle_graph(&[("a", "a")]);
+        // petgraph tarjan_scc reports self-loops as SCC of size 1 (the node is its own SCC).
+        // Our detect_cycles only reports SCCs with len > 1, so no cycle reported.
+        // This matches the expected behaviour: self-loops are filtered out.
+        let cycles = detect_cycles(&g);
+        assert!(cycles.is_empty(), "self-loop on a single node should not be reported as a cycle by Tarjan SCC (size == 1)");
+    }
 }
