@@ -45,6 +45,15 @@ enum Commands {
         /// Output format: json, brief
         #[arg(long, default_value = "json")]
         format: String,
+
+        /// Append telemetry record to this JSONL file
+        #[arg(long)]
+        log: Option<std::path::PathBuf>,
+    },
+    /// Show telemetry summary from a JSONL log file
+    Telemetry {
+        /// Path to the JSONL telemetry file
+        log: std::path::PathBuf,
     },
     /// Performance analysis - complexity, nesting, allocation patterns
     Perf {
@@ -134,11 +143,18 @@ async fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Prompt { model_only, format } => {
+        Commands::Prompt { model_only, format, log } => {
             use std::io::Read;
             let mut input = String::new();
             std::io::stdin().read_to_string(&mut input).expect("failed to read stdin");
             let result = promptlint::analyze(&input);
+
+            // Append telemetry record if --log is specified
+            if let Some(ref log_path) = log {
+                let record = promptlint::TelemetryRecord::from_analysis(&result);
+                promptlint::log_telemetry(&record, log_path);
+            }
+
             if model_only {
                 println!("{}", result.suggested_model);
             } else {
@@ -153,6 +169,18 @@ async fn main() {
                         let json = serde_json::to_string_pretty(&result).unwrap();
                         println!("{}", json);
                     }
+                }
+            }
+        }
+        Commands::Telemetry { log } => {
+            match promptlint::summarize_telemetry(&log) {
+                Some(summary) => {
+                    let json = serde_json::to_string_pretty(&summary).unwrap();
+                    println!("{}", json);
+                }
+                None => {
+                    eprintln!("Could not read telemetry file: {}", log.display());
+                    std::process::exit(1);
                 }
             }
         }

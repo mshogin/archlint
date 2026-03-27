@@ -196,6 +196,132 @@ fn suggest_model(complexity: &str) -> String {
     }
 }
 
+/// Telemetry record appended to a JSONL log file.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TelemetryRecord {
+    pub ts: u64,
+    pub complexity: String,
+    pub suggested_model: String,
+    pub action: String,
+    pub words: usize,
+    pub domains: Vec<String>,
+    /// Actual model used (filled in by caller; None = not tracked yet).
+    pub actual_model: Option<String>,
+}
+
+impl TelemetryRecord {
+    pub fn from_analysis(analysis: &PromptAnalysis) -> Self {
+        let ts = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+
+        let domains: Vec<String> = analysis.domain.keys().cloned().collect();
+
+        TelemetryRecord {
+            ts,
+            complexity: analysis.complexity.clone(),
+            suggested_model: analysis.suggested_model.clone(),
+            action: analysis.action.clone(),
+            words: analysis.words,
+            domains,
+            actual_model: None,
+        }
+    }
+}
+
+/// Append a telemetry record to `log_path` (JSONL format, one record per line).
+/// Creates the file if it does not exist. Does not panic on I/O errors -
+/// failures are printed to stderr and silently ignored so the main pipeline
+/// is never blocked by telemetry.
+pub fn log_telemetry(record: &TelemetryRecord, log_path: &Path) {
+    let line = match serde_json::to_string(record) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("archlint telemetry: serialization error: {}", e);
+            return;
+        }
+    };
+
+    let mut file = match std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_path)
+    {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("archlint telemetry: could not open {}: {}", log_path.display(), e);
+            return;
+        }
+    };
+
+    if let Err(e) = writeln!(file, "{}", line) {
+        eprintln!("archlint telemetry: write error: {}", e);
+    }
+}
+
+/// Read and summarize telemetry from a JSONL log file.
+/// Returns (total, by_model, by_complexity) counts.
+pub fn summarize_telemetry(log_path: &Path) -> Option<TelemetrySummary> {
+    let content = std::fs::read_to_string(log_path).ok()?;
+
+    let mut total = 0usize;
+    let mut by_model: HashMap<String, usize> = HashMap::new();
+    let mut by_complexity: HashMap<String, usize> = HashMap::new();
+    let mut routing_accuracy: Option<RoutingAccuracy> = None;
+    let mut matched = 0usize;
+    let mut compared = 0usize;
+
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Ok(rec) = serde_json::from_str::<TelemetryRecord>(line) {
+            total += 1;
+            *by_model.entry(rec.suggested_model.clone()).or_insert(0) += 1;
+            *by_complexity.entry(rec.complexity.clone()).or_insert(0) += 1;
+
+            if let Some(actual) = &rec.actual_model {
+                compared += 1;
+                if actual == &rec.suggested_model {
+                    matched += 1;
+                }
+            }
+        }
+    }
+
+    if compared > 0 {
+        routing_accuracy = Some(RoutingAccuracy {
+            compared,
+            matched,
+            accuracy: matched as f64 / compared as f64,
+        });
+    }
+
+    Some(TelemetrySummary {
+        total,
+        by_model,
+        by_complexity,
+        routing_accuracy,
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RoutingAccuracy {
+    pub compared: usize,
+    pub matched: usize,
+    pub accuracy: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TelemetrySummary {
+    pub total: usize,
+    pub by_model: HashMap<String, usize>,
+    pub by_complexity: HashMap<String, usize>,
+    pub routing_accuracy: Option<RoutingAccuracy>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -222,5 +348,53 @@ mod tests {
         assert_eq!(result.complexity, "high");
         assert_eq!(result.suggested_model, "opus");
         assert_eq!(result.action, "refactor");
+    }
+
+    #[test]
+    fn test_telemetry_record_from_analysis() {
+        let analysis = analyze("Fix typo in README");
+        let record = TelemetryRecord::from_analysis(&analysis);
+        assert_eq!(record.complexity, "low");
+        assert_eq!(record.suggested_model, "haiku");
+        assert_eq!(record.action, "fix");
+        assert!(record.actual_model.is_none());
+        assert!(record.ts > 0);
+    }
+
+    #[test]
+    fn test_log_and_summarize_telemetry() {
+        let dir = tempfile::tempdir().unwrap();
+        let log_path = dir.path().join("telemetry.jsonl");
+
+        // Log a haiku record (low complexity)
+        let r1 = TelemetryRecord::from_analysis(&analyze("Fix typo"));
+        log_telemetry(&r1, &log_path);
+
+        // Log an opus record (high complexity architecture)
+        let r2 = TelemetryRecord::from_analysis(
+            &analyze("Design a microservices architecture with CQRS and event sourcing"),
+        );
+        log_telemetry(&r2, &log_path);
+
+        // Log a record with actual_model matching suggestion
+        let mut r3 = TelemetryRecord::from_analysis(&analyze("Fix typo"));
+        r3.actual_model = Some("haiku".to_string());
+        log_telemetry(&r3, &log_path);
+
+        let summary = summarize_telemetry(&log_path).expect("summary should exist");
+        assert_eq!(summary.total, 3);
+        assert!(summary.by_model.contains_key("haiku") || summary.by_model.contains_key("opus"));
+
+        // Routing accuracy should be 100% (1 matched out of 1 compared)
+        let acc = summary.routing_accuracy.expect("accuracy should be computed");
+        assert_eq!(acc.compared, 1);
+        assert_eq!(acc.matched, 1);
+        assert!((acc.accuracy - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_summarize_telemetry_missing_file() {
+        let result = summarize_telemetry(Path::new("/nonexistent/path/telemetry.jsonl"));
+        assert!(result.is_none());
     }
 }
