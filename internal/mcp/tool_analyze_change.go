@@ -7,7 +7,7 @@ import (
 )
 
 // handleAnalyzeChange implements the analyze_change tool.
-func handleAnalyzeChange(state *State, args json.RawMessage) (*ChangeAnalysis, error) {
+func handleAnalyzeChange(state StateReader, args json.RawMessage) (*ChangeAnalysis, error) {
 	var params struct {
 		Path string `json:"path"`
 		Diff string `json:"diff"`

@@ -7,7 +7,7 @@ import (
 )
 
 // handleAnalyzeFile implements the analyze_file tool.
-func handleAnalyzeFile(state *State, args json.RawMessage) (*FileAnalysis, error) {
+func handleAnalyzeFile(state StateReader, args json.RawMessage) (*FileAnalysis, error) {
 	var params struct {
 		Path string `json:"path"`
 	}

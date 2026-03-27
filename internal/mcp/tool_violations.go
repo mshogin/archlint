@@ -7,7 +7,7 @@ import (
 )
 
 // handleCheckViolations implements the check_violations tool.
-func handleCheckViolations(state *State, args json.RawMessage) (*ViolationReport, error) {
+func handleCheckViolations(state StateReader, args json.RawMessage) (*ViolationReport, error) {
 	var params struct {
 		Path string `json:"path"`
 	}

@@ -6,7 +6,7 @@ import (
 )
 
 // handleGetDegradationReport implements the get_degradation_report tool.
-func handleGetDegradationReport(state *State, args json.RawMessage) (*DegradationReport, error) {
+func handleGetDegradationReport(state StateReader, args json.RawMessage) (*DegradationReport, error) {
 	var params struct {
 		Path string `json:"path"`
 	}

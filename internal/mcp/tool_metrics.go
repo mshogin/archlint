@@ -6,7 +6,7 @@ import (
 )
 
 // handleGetFileMetrics implements the get_file_metrics tool.
-func handleGetFileMetrics(state *State, args json.RawMessage) (*FileMetrics, error) {
+func handleGetFileMetrics(state StateReader, args json.RawMessage) (*FileMetrics, error) {
 	var params struct {
 		Path string `json:"path"`
 	}
