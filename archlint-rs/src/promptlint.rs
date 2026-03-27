@@ -1,6 +1,8 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::io::Write;
+use std::path::Path;
 
 /// Result of prompt analysis.
 #[derive(Debug, Serialize, Deserialize)]
