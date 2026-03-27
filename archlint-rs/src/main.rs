@@ -318,24 +318,21 @@ async fn main() {
         Commands::Collect { dir, format } => {
             match analyzer::analyze(&dir) {
                 Ok(graph) => {
-                    let export = analyzer::to_graph_export(&graph, &dir);
                     match format.as_str() {
                         "json" => {
+                            let export = analyzer::to_graph_export(&graph, &dir);
                             let json = serde_json::to_string_pretty(&export).unwrap();
                             println!("{}", json);
                         }
                         _ => {
-                            // Text format: human-readable summary
-                            println!("language: {}", export.metadata.language);
-                            println!("root_dir: {}", export.metadata.root_dir);
-                            println!("analyzed_at: {}", export.metadata.analyzed_at);
-                            println!("nodes: {}", export.nodes.len());
-                            println!("edges: {}", export.edges.len());
-                            if let Some(ref m) = export.metrics {
+                            // YAML format (default): matches Go's architecture.yaml
+                            let yaml = serde_yaml::to_string(&graph).unwrap();
+                            std::fs::write("architecture.yaml", &yaml).unwrap();
+                            println!("Граф сохранен в architecture.yaml");
+                            println!("components: {}", graph.components.len());
+                            println!("links: {}", graph.links.len());
+                            if let Some(ref m) = graph.metrics {
                                 println!("violations: {}", m.violations.len());
-                                println!("cycles: {}", m.cycles.len());
-                                println!("max_fan_out: {}", m.max_fan_out);
-                                println!("max_fan_in: {}", m.max_fan_in);
                             }
                         }
                     }
