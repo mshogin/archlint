@@ -207,11 +207,11 @@ type ViolationReport struct {
 
 // ToolExecutor executes MCP tools using the in-memory state.
 type ToolExecutor struct {
-	state *State
+	state StateReader
 }
 
 // NewToolExecutor creates a new tool executor.
-func NewToolExecutor(state *State) *ToolExecutor {
+func NewToolExecutor(state StateReader) *ToolExecutor {
 	return &ToolExecutor{state: state}
 }
 

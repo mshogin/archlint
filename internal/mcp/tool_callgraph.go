@@ -6,7 +6,7 @@ import (
 )
 
 // handleGetCallgraph implements the get_callgraph tool.
-func handleGetCallgraph(state *State, args json.RawMessage) (*CallGraphResult, error) {
+func handleGetCallgraph(state StateReader, args json.RawMessage) (*CallGraphResult, error) {
 	var params struct {
 		Entry    string `json:"entry"`
 		MaxDepth int    `json:"max_depth"`

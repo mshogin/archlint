@@ -8,7 +8,7 @@ import (
 )
 
 // handleGetArchitecture implements the get_architecture tool.
-func handleGetArchitecture(state *State, args json.RawMessage) (*model.Graph, error) {
+func handleGetArchitecture(state StateReader, args json.RawMessage) (*model.Graph, error) {
 	var params struct {
 		Package string `json:"package"`
 	}

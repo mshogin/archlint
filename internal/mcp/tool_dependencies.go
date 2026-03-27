@@ -7,7 +7,7 @@ import (
 )
 
 // handleGetDependencies implements the get_dependencies tool.
-func handleGetDependencies(state *State, args json.RawMessage) (*DependencyResult, error) {
+func handleGetDependencies(state StateReader, args json.RawMessage) (*DependencyResult, error) {
 	var params struct {
 		Path string `json:"path"`
 	}

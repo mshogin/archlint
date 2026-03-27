@@ -235,6 +235,22 @@ func (s *State) buildFileNodeIndex() {
 	}
 }
 
+// StateReader provides read-only access to the architecture state.
+// Tool handlers depend on this interface instead of *State (DIP).
+type StateReader interface {
+	GetGraph() *model.Graph
+	GetAnalyzer() *analyzer.GoAnalyzer
+	FileNodeIDs(path string) []string
+	GetDegradationDetector() *DegradationDetector
+}
+
+// MetricsProvider computes file metrics and degradation reports.
+// Tool handlers depend on this interface instead of calling functions directly (DIP).
+type MetricsProvider interface {
+	ComputeFileMetrics(filePath string) *FileMetrics
+	GetDegradationReport(filePath string) *DegradationReport
+}
+
 // GraphStats holds graph statistics.
 type GraphStats struct {
 	TotalNodes   int `json:"totalNodes"`
@@ -279,4 +295,18 @@ func (s *State) Stats() GraphStats {
 	}
 
 	return stats
+}
+
+// ComputeFileMetrics implements MetricsProvider: computes full metrics for a single file.
+func (s *State) ComputeFileMetrics(filePath string) *FileMetrics {
+	a := s.GetAnalyzer()
+	graph := s.GetGraph()
+	return ComputeFileMetrics(filePath, a, graph)
+}
+
+// GetDegradationReport implements MetricsProvider: returns degradation report without updating the baseline.
+func (s *State) GetDegradationReport(filePath string) *DegradationReport {
+	a := s.GetAnalyzer()
+	graph := s.GetGraph()
+	return s.degradation.CheckWithoutUpdate(filePath, a, graph)
 }
