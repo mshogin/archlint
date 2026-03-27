@@ -1,4 +1,5 @@
 mod analyzer;
+mod config;
 mod costlint;
 mod diff;
 mod model;
