@@ -2,6 +2,7 @@ mod analyzer;
 mod config;
 mod costlint;
 mod diff;
+mod fix;
 mod model;
 mod orchestrator;
 mod perflint;
@@ -149,6 +150,16 @@ enum Commands {
     EscalationReport {
         /// Path to the JSONL escalation log file
         log: PathBuf,
+    },
+    /// Suggest fixes for architecture violations (suggestion-only, does not modify files)
+    Fix {
+        /// Project directory to scan
+        #[arg(default_value = ".")]
+        dir: PathBuf,
+
+        /// Output format: text, json
+        #[arg(long, default_value = "text")]
+        format: String,
     },
 }
 
@@ -485,6 +496,30 @@ async fn main() {
                 Err(e) => {
                     eprintln!("Could not read escalation log {}: {}", log.display(), e);
                     std::process::exit(1);
+                }
+            }
+        }
+        Commands::Fix { dir, format } => {
+            match analyzer::analyze(&dir) {
+                Ok(graph) => {
+                    let report = fix::suggest_fixes(&graph);
+                    match format.as_str() {
+                        "json" => {
+                            let json = serde_json::to_string_pretty(&report).unwrap();
+                            println!("{}", json);
+                        }
+                        _ => {
+                            print!("{}", fix::format_report(&report));
+                        }
+                    }
+                    // Exit 1 if there are fixable violations (useful in CI)
+                    if report.fixable > 0 {
+                        std::process::exit(1);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(2);
                 }
             }
         }
