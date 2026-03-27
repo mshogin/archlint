@@ -1,5 +1,8 @@
 use crate::config::Config;
-use crate::model::{ArchGraph, Component, IndexedGraph, Link, Metrics, Violation};
+use crate::model::{
+    ArchGraph, Component, GraphEdge, GraphExport, GraphMetadata, GraphMetrics, GraphNode,
+    GraphViolation, IndexedGraph, Link, Metrics, Violation,
+};
 use rayon::prelude::*;
 use regex::Regex;
 use std::collections::HashSet;
@@ -83,6 +86,106 @@ pub fn analyze_with_config(dir: &Path, config: &Config) -> Result<ArchGraph, Str
         links,
         metrics: Some(metrics),
     })
+}
+
+/// Convert an ArchGraph to the standard GraphExport format for Unix-pipe pipeline.
+/// The GraphExport is compatible with Go's model.Graph and can be consumed by Go validators.
+pub fn to_graph_export(graph: &ArchGraph, root_dir: &std::path::Path) -> GraphExport {
+    // Detect the dominant language from components
+    let language = graph
+        .components
+        .iter()
+        .map(|c| c.entity.as_str())
+        .fold(std::collections::HashMap::new(), |mut acc, lang| {
+            *acc.entry(lang).or_insert(0usize) += 1;
+            acc
+        })
+        .into_iter()
+        .max_by_key(|(_, count)| *count)
+        .map(|(lang, _)| lang.to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+
+    let nodes: Vec<GraphNode> = graph
+        .components
+        .iter()
+        .map(|c| {
+            // Extract package and name from the module id (e.g. "src::analyzer" -> package="src", name="analyzer")
+            let parts: Vec<&str> = c.id.rsplitn(2, "::").collect();
+            let (name, package) = if parts.len() == 2 {
+                (parts[0].to_string(), parts[1].to_string())
+            } else {
+                (c.id.clone(), String::new())
+            };
+            GraphNode {
+                id: c.id.clone(),
+                node_type: c.entity.clone(),
+                package,
+                name,
+                file: format!("{}.{}", c.id.replace("::", "/"), if c.entity == "rust" { "rs" } else { "go" }),
+                line: 0,
+            }
+        })
+        .collect();
+
+    let edges: Vec<GraphEdge> = graph
+        .links
+        .iter()
+        .map(|l| GraphEdge {
+            from: l.from.clone(),
+            to: l.to.clone(),
+            edge_type: l.link_type.clone().unwrap_or_else(|| "depends".to_string()),
+        })
+        .collect();
+
+    let metrics = graph.metrics.as_ref().map(|m| GraphMetrics {
+        component_count: m.component_count,
+        link_count: m.link_count,
+        max_fan_out: m.max_fan_out,
+        max_fan_in: m.max_fan_in,
+        cycles: m.cycles.clone(),
+        violations: m
+            .violations
+            .iter()
+            .map(|v| GraphViolation {
+                rule: v.rule.clone(),
+                component: v.component.clone(),
+                message: v.message.clone(),
+                severity: v.severity.clone(),
+            })
+            .collect(),
+    });
+
+    let analyzed_at = {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let secs = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        // Format as RFC3339-like: YYYY-MM-DDTHH:MM:SSZ
+        let s = secs;
+        let days = s / 86400;
+        let time = s % 86400;
+        let h = time / 3600;
+        let m = (time % 3600) / 60;
+        let sec = time % 60;
+        // Days since epoch to date (simplified - approximate)
+        let year = 1970 + days / 365;
+        let day_of_year = days % 365;
+        let month = day_of_year / 30 + 1;
+        let day = day_of_year % 30 + 1;
+        format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z", year, month, day, h, m, sec)
+    };
+
+    GraphExport {
+        nodes,
+        edges,
+        metadata: GraphMetadata {
+            language,
+            root_dir: root_dir.to_string_lossy().to_string(),
+            analyzed_at,
+        },
+        metrics,
+    }
 }
 
 /// Collect all source files (.go, .rs) from directory.
@@ -740,5 +843,134 @@ pub struct Agent {}\n\
             .filter(|v| v.rule == "dip")
             .collect();
         assert!(dip_violations.is_empty());
+    }
+
+    #[test]
+    fn test_to_graph_export_nodes_and_edges() {
+        use crate::model::{ArchGraph, Component, Link, Metrics, Violation};
+        use std::path::Path;
+
+        let graph = ArchGraph {
+            components: vec![
+                Component { id: "src::main".to_string(), title: "src::main".to_string(), entity: "rust".to_string() },
+                Component { id: "src::analyzer".to_string(), title: "src::analyzer".to_string(), entity: "rust".to_string() },
+            ],
+            links: vec![
+                Link { from: "src::main".to_string(), to: "src::analyzer".to_string(), method: None, link_type: Some("depends".to_string()) },
+            ],
+            metrics: Some(Metrics {
+                component_count: 2,
+                link_count: 1,
+                max_fan_out: 1,
+                max_fan_in: 1,
+                cycles: vec![],
+                violations: vec![],
+            }),
+        };
+
+        let export = to_graph_export(&graph, Path::new("/tmp/myproject"));
+
+        assert_eq!(export.nodes.len(), 2);
+        assert_eq!(export.edges.len(), 1);
+        assert_eq!(export.metadata.language, "rust");
+        assert_eq!(export.metadata.root_dir, "/tmp/myproject");
+        assert!(!export.metadata.analyzed_at.is_empty());
+
+        // Check node structure
+        let main_node = export.nodes.iter().find(|n| n.id == "src::main").expect("main node not found");
+        assert_eq!(main_node.node_type, "rust");
+        assert_eq!(main_node.name, "main");
+        assert_eq!(main_node.package, "src");
+
+        // Check edge structure
+        let edge = &export.edges[0];
+        assert_eq!(edge.from, "src::main");
+        assert_eq!(edge.to, "src::analyzer");
+        assert_eq!(edge.edge_type, "depends");
+
+        // Check metrics included
+        let metrics = export.metrics.expect("metrics should be present");
+        assert_eq!(metrics.component_count, 2);
+        assert_eq!(metrics.link_count, 1);
+        assert_eq!(metrics.max_fan_out, 1);
+        assert!(metrics.cycles.is_empty());
+        assert!(metrics.violations.is_empty());
+    }
+
+    #[test]
+    fn test_to_graph_export_json_serializable() {
+        use crate::model::{ArchGraph, Component, Link, Metrics};
+        use std::path::Path;
+
+        let graph = ArchGraph {
+            components: vec![
+                Component { id: "pkg::service".to_string(), title: "pkg::service".to_string(), entity: "rust".to_string() },
+            ],
+            links: vec![],
+            metrics: Some(Metrics {
+                component_count: 1,
+                link_count: 0,
+                max_fan_out: 0,
+                max_fan_in: 0,
+                cycles: vec![],
+                violations: vec![],
+            }),
+        };
+
+        let export = to_graph_export(&graph, Path::new("."));
+        let json = serde_json::to_string_pretty(&export).expect("should serialize to JSON");
+
+        // Verify key fields appear in JSON output
+        assert!(json.contains("\"nodes\""));
+        assert!(json.contains("\"edges\""));
+        assert!(json.contains("\"metadata\""));
+        assert!(json.contains("\"language\""));
+        assert!(json.contains("\"root_dir\""));
+        assert!(json.contains("\"analyzed_at\""));
+        assert!(json.contains("\"metrics\""));
+        assert!(json.contains("\"type\""));
+        assert!(json.contains("\"package\""));
+        assert!(json.contains("\"name\""));
+    }
+
+    #[test]
+    fn test_to_graph_export_language_detection_rust() {
+        use crate::model::{ArchGraph, Component, Metrics};
+        use std::path::Path;
+
+        let graph = ArchGraph {
+            components: vec![
+                Component { id: "a".to_string(), title: "a".to_string(), entity: "rust".to_string() },
+                Component { id: "b".to_string(), title: "b".to_string(), entity: "rust".to_string() },
+                Component { id: "c".to_string(), title: "c".to_string(), entity: "go".to_string() },
+            ],
+            links: vec![],
+            metrics: Some(Metrics { component_count: 3, link_count: 0, max_fan_out: 0, max_fan_in: 0, cycles: vec![], violations: vec![] }),
+        };
+
+        let export = to_graph_export(&graph, Path::new("."));
+        // rust appears twice, go once -> rust wins
+        assert_eq!(export.metadata.language, "rust");
+    }
+
+    #[test]
+    fn test_to_graph_export_no_metrics() {
+        use crate::model::{ArchGraph, Component};
+        use std::path::Path;
+
+        let graph = ArchGraph {
+            components: vec![
+                Component { id: "mod_a".to_string(), title: "mod_a".to_string(), entity: "rust".to_string() },
+            ],
+            links: vec![],
+            metrics: None,
+        };
+
+        let export = to_graph_export(&graph, Path::new("."));
+        assert!(export.metrics.is_none());
+
+        // JSON should still be valid without metrics field
+        let json = serde_json::to_string(&export).expect("should serialize");
+        assert!(!json.contains("\"metrics\""));
     }
 }

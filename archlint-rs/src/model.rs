@@ -50,6 +50,66 @@ pub struct Violation {
     pub severity: String,
 }
 
+/// Standard JSON graph export format compatible with Go's model.Graph.
+/// Used for the Unix-pipe multi-language architecture pipeline.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GraphExport {
+    pub nodes: Vec<GraphNode>,
+    pub edges: Vec<GraphEdge>,
+    pub metadata: GraphMetadata,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metrics: Option<GraphMetrics>,
+}
+
+/// Node in the exported graph (compatible with Go model.Node).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphNode {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub node_type: String,
+    pub package: String,
+    pub name: String,
+    pub file: String,
+    pub line: u32,
+}
+
+/// Edge in the exported graph (compatible with Go model.Edge).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphEdge {
+    pub from: String,
+    pub to: String,
+    #[serde(rename = "type")]
+    pub edge_type: String,
+}
+
+/// Metadata about the graph export.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GraphMetadata {
+    pub language: String,
+    pub root_dir: String,
+    pub analyzed_at: String,
+}
+
+/// Metrics summary included in the exported graph.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GraphMetrics {
+    pub component_count: usize,
+    pub link_count: usize,
+    pub max_fan_out: usize,
+    pub max_fan_in: usize,
+    pub cycles: Vec<Vec<String>>,
+    pub violations: Vec<GraphViolation>,
+}
+
+/// Violation entry in the exported graph metrics.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphViolation {
+    pub rule: String,
+    pub component: String,
+    pub message: String,
+    pub severity: String,
+}
+
 /// Indexed graph for efficient operations.
 pub struct IndexedGraph {
     pub graph: DiGraph<String, String>,
