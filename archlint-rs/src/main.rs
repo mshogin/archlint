@@ -115,6 +115,41 @@ enum Commands {
         #[arg(long, default_value = "8080")]
         port: u16,
     },
+    /// Quality-gate check with escalation cost metadata
+    QualityGate {
+        /// Project directory to scan
+        #[arg(default_value = ".")]
+        dir: PathBuf,
+
+        /// Maximum violations before quality gate fails (default 0 = any violation fails)
+        #[arg(long, default_value = "0")]
+        threshold: usize,
+
+        /// Current model tier (haiku, sonnet, opus) for cost delta calculation
+        #[arg(long, default_value = "haiku")]
+        model: String,
+
+        /// Estimated input tokens for this request (used for cost calculation)
+        #[arg(long, default_value = "1000")]
+        input_tokens: usize,
+
+        /// Estimated output tokens for this request (used for cost calculation)
+        #[arg(long, default_value = "1000")]
+        output_tokens: usize,
+
+        /// Append escalation event to this JSONL file when gate fails
+        #[arg(long)]
+        log: Option<PathBuf>,
+
+        /// Output format: json, brief
+        #[arg(long, default_value = "json")]
+        format: String,
+    },
+    /// Show escalation cost report from a JSONL escalation log
+    EscalationReport {
+        /// Path to the JSONL escalation log file
+        log: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -373,6 +408,85 @@ async fn main() {
         }
         Commands::Serve { port } => {
             server::run(port).await;
+        }
+        Commands::QualityGate {
+            dir,
+            threshold,
+            model,
+            input_tokens,
+            output_tokens,
+            log,
+            format,
+        } => {
+            match analyzer::analyze(&dir) {
+                Ok(graph) => {
+                    let violation_rules: Vec<String> = graph
+                        .metrics
+                        .as_ref()
+                        .map(|m| m.violations.iter().map(|v| v.rule.clone()).collect())
+                        .unwrap_or_default();
+
+                    let meta = costlint::QualityGateEscalationMeta::from_violations(
+                        &violation_rules,
+                        &model,
+                        input_tokens,
+                        output_tokens,
+                    );
+
+                    let gate_failed = violation_rules.len() > threshold;
+
+                    // Log escalation event if gate failed and a log path is given
+                    if gate_failed {
+                        if let Some(ref log_path) = log {
+                            let event = costlint::EscalationEvent::new(
+                                &model,
+                                &meta.escalate_to,
+                                violation_rules.clone(),
+                                input_tokens,
+                                output_tokens,
+                            );
+                            costlint::log_escalation(&event, log_path);
+                        }
+                    }
+
+                    match format.as_str() {
+                        "brief" => {
+                            println!(
+                                "gate={} violations={} escalate_to={} extra_cost=${:.6}",
+                                if meta.gate_passed { "pass" } else { "fail" },
+                                meta.violation_count,
+                                if meta.escalate_to.is_empty() { "none" } else { &meta.escalate_to },
+                                meta.estimated_escalation_cost_usd,
+                            );
+                        }
+                        _ => {
+                            let json = serde_json::to_string_pretty(&meta).unwrap();
+                            println!("{}", json);
+                        }
+                    }
+
+                    if gate_failed {
+                        std::process::exit(1);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(2);
+                }
+            }
+        }
+        Commands::EscalationReport { log } => {
+            match std::fs::read_to_string(&log) {
+                Ok(content) => {
+                    let report = costlint::escalation_report(&content);
+                    let json = serde_json::to_string_pretty(&report).unwrap();
+                    println!("{}", json);
+                }
+                Err(e) => {
+                    eprintln!("Could not read escalation log {}: {}", log.display(), e);
+                    std::process::exit(1);
+                }
+            }
         }
     }
 }
