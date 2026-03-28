@@ -41,15 +41,33 @@ pub fn analyze(dir: &Path) -> Result<ArchGraph, String> {
     analyze_with_config(dir, &config)
 }
 
+/// Load the Go module name from go.mod in the given directory.
+/// Returns empty string if go.mod is not found or cannot be parsed.
+fn load_go_module_name(dir: &Path) -> String {
+    let gomod_path = dir.join("go.mod");
+    let content = match fs::read_to_string(&gomod_path) {
+        Ok(c) => c,
+        Err(_) => return String::new(),
+    };
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix("module ") {
+            return rest.trim().to_string();
+        }
+    }
+    String::new()
+}
+
 /// Analyze a project directory using the provided config.
 pub fn analyze_with_config(dir: &Path, config: &Config) -> Result<ArchGraph, String> {
     let files = collect_source_files(dir);
     let external_deps = load_cargo_external_deps(dir);
+    let go_module_name = load_go_module_name(dir);
 
     // Parse files in parallel using rayon
     let parsed: Vec<ParsedFile> = files
         .par_iter()
-        .filter_map(|path| parse_file(path, dir, &external_deps).ok())
+        .filter_map(|path| parse_file(path, dir, &external_deps, &go_module_name).ok())
         .collect();
 
     // Build graph from parsed files
@@ -225,29 +243,35 @@ struct ParsedFile {
 }
 
 /// Parse a single source file for dependencies and declarations.
-fn parse_file(path: &Path, base_dir: &Path, external_deps: &HashSet<String>) -> Result<ParsedFile, String> {
+fn parse_file(path: &Path, base_dir: &Path, external_deps: &HashSet<String>, go_module_name: &str) -> Result<ParsedFile, String> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let rel_path = path.strip_prefix(base_dir).unwrap_or(path);
     let module_name = path_to_module(rel_path, ext);
 
     match ext {
-        "go" => parse_go_file(&content, &module_name),
+        "go" => parse_go_file(&content, &module_name, go_module_name),
         "rs" => parse_rust_file(&content, &module_name, external_deps),
         _ => Err(format!("unsupported extension: {}", ext)),
     }
 }
 
-fn parse_go_file(content: &str, module_name: &str) -> Result<ParsedFile, String> {
+fn parse_go_file(content: &str, module_name: &str, go_module_prefix: &str) -> Result<ParsedFile, String> {
     let re_import = Regex::new(r#""([^"]+)""#).unwrap();
     let re_struct = Regex::new(r"type\s+(\w+)\s+struct").unwrap();
     let re_func = Regex::new(r"func\s+(?:\([^)]+\)\s+)?(\w+)").unwrap();
-    let re_package = Regex::new(r"^package\s+(\w+)").unwrap();
 
     let mut deps = Vec::new();
     let mut structs = Vec::new();
     let mut functions = Vec::new();
     let mut in_import = false;
+
+    // Build the module prefix to strip: "module/" (e.g. "demo/")
+    let strip_prefix = if go_module_prefix.is_empty() {
+        String::new()
+    } else {
+        format!("{}/", go_module_prefix)
+    };
 
     for line in content.lines() {
         let trimmed = line.trim();
@@ -263,10 +287,19 @@ fn parse_go_file(content: &str, module_name: &str) -> Result<ParsedFile, String>
             }
             if let Some(cap) = re_import.captures(trimmed) {
                 let imp = cap[1].to_string();
-                // Extract last segment as dependency name
-                if let Some(last) = imp.rsplit('/').next() {
-                    deps.push(last.to_string());
+                // Preserve path relative to module root for internal imports.
+                // e.g. "demo/internal/repo" with module "demo" -> "internal/repo"
+                // External imports (not starting with module prefix) are skipped.
+                if !strip_prefix.is_empty() && imp.starts_with(&strip_prefix) {
+                    let relative = imp[strip_prefix.len()..].to_string();
+                    deps.push(relative);
+                } else if strip_prefix.is_empty() {
+                    // No module info: fall back to last segment
+                    if let Some(last) = imp.rsplit('/').next() {
+                        deps.push(last.to_string());
+                    }
                 }
+                // else: external import (different module), skip it
             }
             continue;
         }
@@ -1275,5 +1308,142 @@ pub struct Agent {}\n\
         );
         let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
         assert!(layer_violations.is_empty(), "no layer config -> no layer violations");
+    }
+
+    // ---- Go import path tests ----
+
+    #[test]
+    fn test_go_import_stripped_to_relative_path() {
+        // "demo/internal/repo" with module "demo" -> dep stored as "internal/repo"
+        let code = r#"package handler
+
+import (
+	"demo/internal/repo"
+	"demo/internal/service"
+	"fmt"
+)
+"#;
+        let pf = parse_go_file(code, "internal/handler/users", "demo").unwrap();
+        assert!(
+            pf.dependencies.contains(&"internal/repo".to_string()),
+            "expected internal/repo in deps, got: {:?}", pf.dependencies
+        );
+        assert!(
+            pf.dependencies.contains(&"internal/service".to_string()),
+            "expected internal/service in deps, got: {:?}", pf.dependencies
+        );
+        // External stdlib import "fmt" should NOT be included
+        assert!(
+            !pf.dependencies.contains(&"fmt".to_string()),
+            "external import fmt should not be in deps: {:?}", pf.dependencies
+        );
+    }
+
+    #[test]
+    fn test_go_import_external_modules_skipped() {
+        // Imports from other modules (not the project module) should be skipped
+        let code = r#"package handler
+
+import (
+	"demo/internal/service"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+"#;
+        let pf = parse_go_file(code, "internal/handler/users", "demo").unwrap();
+        assert_eq!(pf.dependencies, vec!["internal/service".to_string()]);
+    }
+
+    #[test]
+    fn test_go_import_no_module_prefix_fallback() {
+        // When no module prefix known, fall back to last segment (old behavior)
+        let code = r#"package handler
+
+import (
+	"demo/internal/repo"
+)
+"#;
+        let pf = parse_go_file(code, "internal/handler/users", "").unwrap();
+        assert!(
+            pf.dependencies.contains(&"repo".to_string()),
+            "without module prefix, should fall back to last segment: {:?}", pf.dependencies
+        );
+    }
+
+    #[test]
+    fn test_go_layer_violation_detected_via_parse() {
+        // End-to-end: parse handler importing repo -> should produce layer violation
+        let handler_code = r#"package handler
+
+import (
+	"demo/internal/repo"
+)
+"#;
+        let handler_pf = parse_go_file(handler_code, "internal/handler/orders", "demo").unwrap();
+        // handler imports "internal/repo" directly, bypassing service layer
+
+        let cfg = build_layer_config();
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        let mut parsed = Vec::new();
+
+        graph.add_node("internal/handler/orders");
+        graph.add_node("internal/repo");
+        components.push(Component {
+            id: "internal/handler/orders".to_string(),
+            title: "internal/handler/orders".to_string(),
+            entity: "go".to_string(),
+        });
+        components.push(Component {
+            id: "internal/repo".to_string(),
+            title: "internal/repo".to_string(),
+            entity: "go".to_string(),
+        });
+
+        // Add the edge from handler to repo (from parsed deps)
+        for dep in &handler_pf.dependencies {
+            graph.add_edge("internal/handler/orders", dep, "depends");
+        }
+
+        parsed.push(handler_pf);
+        parsed.push(ParsedFile {
+            module_name: "internal/repo".to_string(),
+            language: "go".to_string(),
+            dependencies: Vec::new(),
+            structs: Vec::new(),
+            functions: Vec::new(),
+            traits: Vec::new(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &parsed, &cfg);
+        let layer_violations: Vec<_> = metrics.violations.iter().filter(|v| v.rule == "layer").collect();
+        assert_eq!(layer_violations.len(), 1, "handler -> repo should be a violation, got: {:?}", layer_violations);
+        assert!(
+            layer_violations[0].message.contains("handler -> repo"),
+            "unexpected violation message: {}", layer_violations[0].message
+        );
+    }
+
+    #[test]
+    fn test_load_go_module_name() {
+        use tempfile::TempDir;
+        use std::io::Write;
+
+        let dir = TempDir::new().unwrap();
+        let gomod_path = dir.path().join("go.mod");
+        let mut f = std::fs::File::create(&gomod_path).unwrap();
+        f.write_all(b"module demo\n\ngo 1.21\n").unwrap();
+
+        let name = load_go_module_name(dir.path());
+        assert_eq!(name, "demo");
+    }
+
+    #[test]
+    fn test_load_go_module_name_missing_file() {
+        use tempfile::TempDir;
+
+        let dir = TempDir::new().unwrap();
+        let name = load_go_module_name(dir.path());
+        assert_eq!(name, "");
     }
 }
