@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::Path;
 
 /// Configuration for a single rule.
@@ -36,12 +37,33 @@ impl Default for RuleConfig {
     }
 }
 
+/// A single logical layer definition.
+/// `paths` lists path prefixes that belong to this layer (e.g. "internal/handler").
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LayerDef {
+    /// Human-readable name used as key in `allowed_dependencies`.
+    pub name: String,
+    /// Path prefixes (relative to project root) whose files belong to this layer.
+    #[serde(default)]
+    pub paths: Vec<String>,
+}
+
 /// Top-level .archlint.yaml configuration.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Config {
     /// Rules section keyed by rule name.
     #[serde(default)]
     pub rules: Rules,
+
+    /// Optional layer definitions.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub layers: Vec<LayerDef>,
+
+    /// Allowed dependency directions between layers.
+    /// Key: source layer name. Value: list of target layer names that are allowed.
+    /// Any dependency not listed here is a violation.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub allowed_dependencies: HashMap<String, Vec<String>>,
 }
 
 /// All supported rules.
@@ -200,6 +222,30 @@ impl Config {
     pub fn isp_threshold(&self) -> usize {
         self.rules.isp.threshold.unwrap_or(5)
     }
+
+    /// Resolve which layer name the given module path belongs to.
+    /// `module_id` uses `::` as separator (e.g. "internal::handler::users").
+    /// The corresponding file path segment is derived by replacing `::` with `/`.
+    /// Returns `None` if no layer matches.
+    pub fn layer_for_module(&self, module_id: &str) -> Option<&str> {
+        // Convert module id to a path-like string for prefix matching.
+        let as_path = module_id.replace("::", "/");
+        for layer in &self.layers {
+            for prefix in &layer.paths {
+                // Normalize prefix slashes
+                let norm = prefix.trim_end_matches('/');
+                if as_path == norm || as_path.starts_with(&format!("{}/", norm)) {
+                    return Some(&layer.name);
+                }
+            }
+        }
+        None
+    }
+
+    /// Returns true when `layers` and `allowed_dependencies` are both configured.
+    pub fn has_layer_rules(&self) -> bool {
+        !self.layers.is_empty() && !self.allowed_dependencies.is_empty()
+    }
 }
 
 #[cfg(test)]
@@ -325,5 +371,76 @@ rules:
         assert_eq!(cfg.fan_out_threshold(), 5);
         // fan_in not in file -> full default
         assert_eq!(cfg.fan_in_threshold(), 10);
+    }
+
+    #[test]
+    fn test_layer_config_parsed() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+layers:
+  - name: handler
+    paths: ["internal/handler", "src/handler"]
+  - name: service
+    paths: ["internal/service", "src/service"]
+  - name: repo
+    paths: ["internal/repo", "src/repo"]
+  - name: model
+    paths: ["internal/model", "src/model"]
+
+allowed_dependencies:
+  handler: [service, model]
+  service: [repo, model]
+  repo: [model]
+  model: []
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert_eq!(cfg.layers.len(), 4);
+        assert!(cfg.has_layer_rules());
+
+        // Layer name lookup
+        assert_eq!(cfg.layer_for_module("internal::handler::users"), Some("handler"));
+        assert_eq!(cfg.layer_for_module("src::service::orders"), Some("service"));
+        assert_eq!(cfg.layer_for_module("internal::repo::pg"), Some("repo"));
+        assert_eq!(cfg.layer_for_module("internal::model::user"), Some("model"));
+        assert_eq!(cfg.layer_for_module("pkg::utils"), None);
+
+        // Allowed deps
+        let handler_allowed = cfg.allowed_dependencies.get("handler").unwrap();
+        assert!(handler_allowed.contains(&"service".to_string()));
+        assert!(handler_allowed.contains(&"model".to_string()));
+        assert!(!handler_allowed.contains(&"repo".to_string()));
+    }
+
+    #[test]
+    fn test_no_layers_has_layer_rules_false() {
+        let dir = TempDir::new().unwrap();
+        let cfg = Config::load(dir.path());
+        assert!(!cfg.has_layer_rules());
+        assert_eq!(cfg.layer_for_module("internal::handler::foo"), None);
+    }
+
+    #[test]
+    fn test_layer_path_exact_match() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+layers:
+  - name: handler
+    paths: ["internal/handler"]
+allowed_dependencies:
+  handler: []
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        // Exact match (module id == layer path without slashes)
+        assert_eq!(cfg.layer_for_module("internal::handler"), Some("handler"));
+        // Prefix match
+        assert_eq!(cfg.layer_for_module("internal::handler::users"), Some("handler"));
+        // No match for sibling
+        assert_eq!(cfg.layer_for_module("internal::repo"), None);
     }
 }
