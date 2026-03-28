@@ -18,6 +18,7 @@ walkdir = "2"
 regex = "1"
 toml = "0.8"
 axum = "0.8"
+notify = "6"
 
 [dev-dependencies]
 tempfile = "3"
