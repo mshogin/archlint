@@ -9,6 +9,7 @@ mod perflint;
 mod promptlint;
 mod seclint;
 mod server;
+mod watch;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -160,6 +161,16 @@ enum Commands {
         /// Output format: text, json
         #[arg(long, default_value = "text")]
         format: String,
+    },
+    /// Live architecture monitoring - watch for file changes and scan automatically
+    Watch {
+        /// Directory to watch for changes
+        #[arg(default_value = ".")]
+        dir: PathBuf,
+
+        /// Automatically show fix suggestions when violations are detected
+        #[arg(long)]
+        fix: bool,
     },
 }
 
@@ -521,6 +532,12 @@ async fn main() {
                     eprintln!("Error: {}", e);
                     std::process::exit(2);
                 }
+            }
+        }
+        Commands::Watch { dir, fix } => {
+            if let Err(e) = watch::watch(&dir, fix) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
             }
         }
     }
