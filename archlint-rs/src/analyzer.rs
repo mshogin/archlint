@@ -537,6 +537,65 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
         }
     }
 
+    // Layer dependency rule: detect forbidden cross-layer dependencies.
+    if config.has_layer_rules() {
+        for comp in components {
+            let from_layer = match config.layer_for_module(&comp.id) {
+                Some(l) => l,
+                None => continue, // component not in any defined layer - skip
+            };
+
+            // Collect allowed targets for this layer (empty vec means no deps allowed).
+            let allowed: &[String] = config
+                .allowed_dependencies
+                .get(from_layer)
+                .map(|v| v.as_slice())
+                .unwrap_or(&[]);
+
+            // Iterate over all direct dependencies of this component.
+            if let Some(&from_idx) = graph.node_indices.get(&comp.id) {
+                let neighbors: Vec<String> = graph
+                    .graph
+                    .neighbors_directed(from_idx, petgraph::Direction::Outgoing)
+                    .map(|idx| graph.graph[idx].clone())
+                    .collect();
+
+                for dep_id in neighbors {
+                    let to_layer = match config.layer_for_module(&dep_id) {
+                        Some(l) => l,
+                        None => continue, // dep not in any layer - ignore
+                    };
+
+                    // Same layer is always fine.
+                    if to_layer == from_layer {
+                        continue;
+                    }
+
+                    if !allowed.iter().any(|a| a == to_layer) {
+                        let allowed_list = if allowed.is_empty() {
+                            "none".to_string()
+                        } else {
+                            allowed
+                                .iter()
+                                .map(|s| s.as_str())
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        };
+                        violations.push(Violation {
+                            rule: "layer".to_string(),
+                            component: comp.id.clone(),
+                            message: format!(
+                                "VIOLATION: {} -> {} (forbidden, allowed: [{}])",
+                                from_layer, to_layer, allowed_list
+                            ),
+                            severity: "error".to_string(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
     Metrics {
         component_count: components.len(),
         link_count: graph.graph.edge_count(),
@@ -1050,5 +1109,171 @@ pub struct Agent {}\n\
         // This matches the expected behaviour: self-loops are filtered out.
         let cycles = detect_cycles(&g);
         assert!(cycles.is_empty(), "self-loop on a single node should not be reported as a cycle by Tarjan SCC (size == 1)");
+    }
+
+    // ---- layer rule tests ----
+
+    fn build_layer_config() -> Config {
+        use crate::config::LayerDef;
+        use std::collections::HashMap;
+
+        let layers = vec![
+            LayerDef { name: "handler".to_string(), paths: vec!["internal/handler".to_string()] },
+            LayerDef { name: "service".to_string(), paths: vec!["internal/service".to_string()] },
+            LayerDef { name: "repo".to_string(),    paths: vec!["internal/repo".to_string()] },
+            LayerDef { name: "model".to_string(),   paths: vec!["internal/model".to_string()] },
+        ];
+
+        let mut allowed = HashMap::new();
+        allowed.insert("handler".to_string(), vec!["service".to_string(), "model".to_string()]);
+        allowed.insert("service".to_string(), vec!["repo".to_string(), "model".to_string()]);
+        allowed.insert("repo".to_string(),    vec!["model".to_string()]);
+        allowed.insert("model".to_string(),   vec![]);
+
+        let mut cfg = Config::default();
+        cfg.layers = layers;
+        cfg.allowed_dependencies = allowed;
+        cfg
+    }
+
+    /// Helper: build a minimal ArchGraph from (from, to) edges and run calculate_metrics.
+    fn run_metrics_with_config(edges: &[(&str, &str)], config: &Config) -> Vec<Violation> {
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        let mut parsed = Vec::new();
+
+        // Collect unique node ids
+        let mut nodes: Vec<String> = Vec::new();
+        for (f, t) in edges {
+            for id in &[*f, *t] {
+                if !nodes.contains(&id.to_string()) {
+                    nodes.push(id.to_string());
+                }
+            }
+        }
+
+        for id in &nodes {
+            graph.add_node(id);
+            components.push(Component { id: id.clone(), title: id.clone(), entity: "go".to_string() });
+            parsed.push(ParsedFile {
+                module_name: id.clone(),
+                language: "go".to_string(),
+                dependencies: Vec::new(),
+                structs: Vec::new(),
+                functions: Vec::new(),
+                traits: Vec::new(),
+            });
+        }
+        for (f, t) in edges {
+            graph.add_edge(f, t, "depends");
+        }
+
+        let metrics = calculate_metrics(&graph, &components, &parsed, config);
+        metrics.violations
+    }
+
+    #[test]
+    fn test_layer_allowed_dependency_no_violation() {
+        // handler -> service: allowed
+        let cfg = build_layer_config();
+        let violations = run_metrics_with_config(
+            &[("internal/handler/users", "internal/service/users")],
+            &cfg,
+        );
+        let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_violations.is_empty(), "handler -> service should be allowed, got: {:?}", layer_violations);
+    }
+
+    #[test]
+    fn test_layer_forbidden_handler_to_repo() {
+        // handler -> repo: FORBIDDEN (allowed: service, model)
+        let cfg = build_layer_config();
+        let violations = run_metrics_with_config(
+            &[("internal/handler/orders", "internal/repo/orders")],
+            &cfg,
+        );
+        let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert_eq!(layer_violations.len(), 1);
+        assert!(
+            layer_violations[0].message.contains("VIOLATION: handler -> repo"),
+            "unexpected message: {}",
+            layer_violations[0].message
+        );
+        assert!(
+            layer_violations[0].message.contains("allowed: ["),
+            "message should list allowed layers: {}",
+            layer_violations[0].message
+        );
+        assert_eq!(layer_violations[0].severity, "error");
+    }
+
+    #[test]
+    fn test_layer_allowed_service_to_repo() {
+        // service -> repo: allowed
+        let cfg = build_layer_config();
+        let violations = run_metrics_with_config(
+            &[("internal/service/orders", "internal/repo/orders")],
+            &cfg,
+        );
+        let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_violations.is_empty(), "service -> repo should be allowed");
+    }
+
+    #[test]
+    fn test_layer_model_no_deps_allowed() {
+        // model -> service: FORBIDDEN (model allowed deps: none)
+        let cfg = build_layer_config();
+        let violations = run_metrics_with_config(
+            &[("internal/model/user", "internal/service/users")],
+            &cfg,
+        );
+        let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert_eq!(layer_violations.len(), 1);
+        assert!(
+            layer_violations[0].message.contains("VIOLATION: model -> service"),
+            "unexpected message: {}",
+            layer_violations[0].message
+        );
+        assert!(
+            layer_violations[0].message.contains("allowed: [none]"),
+            "should show 'none' when no deps allowed: {}",
+            layer_violations[0].message
+        );
+    }
+
+    #[test]
+    fn test_layer_dep_not_in_any_layer_is_ignored() {
+        // handler -> pkg/utils (not in any layer): should be ignored
+        let cfg = build_layer_config();
+        let violations = run_metrics_with_config(
+            &[("internal/handler/users", "pkg/utils")],
+            &cfg,
+        );
+        let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_violations.is_empty(), "dep to unlayered module should be ignored");
+    }
+
+    #[test]
+    fn test_layer_same_layer_is_allowed() {
+        // handler -> handler: within same layer, always fine
+        let cfg = build_layer_config();
+        let violations = run_metrics_with_config(
+            &[("internal/handler/users", "internal/handler/orders")],
+            &cfg,
+        );
+        let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_violations.is_empty(), "same-layer dep should not be flagged");
+    }
+
+    #[test]
+    fn test_layer_rules_not_checked_when_no_config() {
+        // No layers configured -> no layer violations
+        let cfg = Config::default();
+        let violations = run_metrics_with_config(
+            &[("internal/handler/users", "internal/repo/orders")],
+            &cfg,
+        );
+        let layer_violations: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_violations.is_empty(), "no layer config -> no layer violations");
     }
 }
