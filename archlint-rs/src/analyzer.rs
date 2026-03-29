@@ -990,8 +990,8 @@ pub struct Agent {}\n\
     }
 
     #[test]
-    fn test_to_graph_export_json_serializable() {
-        use crate::model::{ArchGraph, Component, Link, Metrics};
+    fn test_to_graph_export_yaml_serializable() {
+        use crate::model::{ArchGraph, Component, Metrics};
         use std::path::Path;
 
         let graph = ArchGraph {
@@ -1010,19 +1010,19 @@ pub struct Agent {}\n\
         };
 
         let export = to_graph_export(&graph, Path::new("."));
-        let json = serde_json::to_string_pretty(&export).expect("should serialize to JSON");
+        let yaml = serde_yaml::to_string(&export).expect("should serialize to YAML");
 
-        // Verify key fields appear in JSON output
-        assert!(json.contains("\"nodes\""));
-        assert!(json.contains("\"edges\""));
-        assert!(json.contains("\"metadata\""));
-        assert!(json.contains("\"language\""));
-        assert!(json.contains("\"root_dir\""));
-        assert!(json.contains("\"analyzed_at\""));
-        assert!(json.contains("\"metrics\""));
-        assert!(json.contains("\"type\""));
-        assert!(json.contains("\"package\""));
-        assert!(json.contains("\"name\""));
+        // Verify key fields appear in YAML output
+        assert!(yaml.contains("nodes:"));
+        assert!(yaml.contains("edges:"));
+        assert!(yaml.contains("metadata:"));
+        assert!(yaml.contains("language:"));
+        assert!(yaml.contains("root_dir:"));
+        assert!(yaml.contains("analyzed_at:"));
+        assert!(yaml.contains("metrics:"));
+        assert!(yaml.contains("type:"));
+        assert!(yaml.contains("package:"));
+        assert!(yaml.contains("name:"));
     }
 
     #[test]
@@ -1061,9 +1061,9 @@ pub struct Agent {}\n\
         let export = to_graph_export(&graph, Path::new("."));
         assert!(export.metrics.is_none());
 
-        // JSON should still be valid without metrics field
-        let json = serde_json::to_string(&export).expect("should serialize");
-        assert!(!json.contains("\"metrics\""));
+        // YAML should still be valid without metrics field
+        let yaml = serde_yaml::to_string(&export).expect("should serialize");
+        assert!(!yaml.contains("metrics:"));
     }
 
     // --- Tarjan SCC cycle detection tests ---
