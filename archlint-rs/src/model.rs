@@ -48,6 +48,13 @@ pub struct Violation {
     pub component: String,
     pub message: String,
     pub severity: String,
+    /// Metric level: taboo (CI blocker), telemetry (track only), personal (informational).
+    #[serde(default = "default_telemetry")]
+    pub level: String,
+}
+
+fn default_telemetry() -> String {
+    "telemetry".to_string()
 }
 
 /// Standard JSON graph export format compatible with Go's model.Graph.
@@ -108,6 +115,13 @@ pub struct GraphViolation {
     pub component: String,
     pub message: String,
     pub severity: String,
+    /// Metric level: taboo (CI blocker), telemetry (track only), personal (informational).
+    #[serde(default = "default_telemetry_graph")]
+    pub level: String,
+}
+
+fn default_telemetry_graph() -> String {
+    "telemetry".to_string()
 }
 
 /// Per-language analysis report (used in multi-language unified scan).
@@ -119,6 +133,27 @@ pub struct LanguageReport {
     pub health: u32,
     pub violations: Vec<String>,
     pub violation_count: usize,
+    /// Number of taboo-level violations (CI blockers).
+    #[serde(default)]
+    pub taboo_count: usize,
+    /// Number of telemetry-level violations (track only).
+    #[serde(default)]
+    pub telemetry_count: usize,
+    /// Number of personal-level violations (informational).
+    #[serde(default)]
+    pub personal_count: usize,
+    /// Full violation objects with level info.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub violations_detail: Vec<ViolationSummary>,
+}
+
+/// Compact violation summary for scan output.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ViolationSummary {
+    pub rule: String,
+    pub component: String,
+    pub message: String,
+    pub level: String,
 }
 
 /// Unified multi-language scan report.
@@ -131,6 +166,9 @@ pub struct MultiLanguageReport {
     pub total_links: usize,
     pub total_violations: usize,
     pub total_health: u32,
+    /// Number of taboo-level violations across all languages.
+    #[serde(default)]
+    pub total_taboo: usize,
 }
 
 /// Indexed graph for efficient operations.

@@ -379,12 +379,19 @@ async fn main() {
                             println!("{}", yaml);
                         }
                         "brief" => {
+                            // Count by level across all languages
+                            let taboo: usize = report.per_language.iter().map(|r| r.taboo_count).sum();
+                            let telemetry: usize = report.per_language.iter().map(|r| r.telemetry_count).sum();
+                            let personal: usize = report.per_language.iter().map(|r| r.personal_count).sum();
                             println!(
-                                "languages={} components={} links={} violations={} health={}/100",
+                                "languages={} components={} links={} violations={} taboo={} telemetry={} personal={} health={}/100",
                                 report.languages.join(","),
                                 report.total_components,
                                 report.total_links,
                                 report.total_violations,
+                                taboo,
+                                telemetry,
+                                personal,
                                 report.total_health,
                             );
                         }
@@ -404,17 +411,56 @@ async fn main() {
                                 if lang_report.violation_count == 0 {
                                     println!("  Violations: 0");
                                 } else {
-                                    println!("  Violations: {}", lang_report.violation_count);
+                                    println!("  Violations: {} (taboo: {}, telemetry: {}, personal: {})",
+                                        lang_report.violation_count,
+                                        lang_report.taboo_count,
+                                        lang_report.telemetry_count,
+                                        lang_report.personal_count,
+                                    );
+                                    // Show violations grouped by level
+                                    let taboo_viols: Vec<_> = lang_report.violations_detail.iter()
+                                        .filter(|v| v.level == "taboo").collect();
+                                    let telemetry_viols: Vec<_> = lang_report.violations_detail.iter()
+                                        .filter(|v| v.level == "telemetry").collect();
+                                    let personal_viols: Vec<_> = lang_report.violations_detail.iter()
+                                        .filter(|v| v.level == "personal").collect();
+                                    if !taboo_viols.is_empty() {
+                                        println!("  [TABOO - CI BLOCKER]");
+                                        for v in &taboo_viols {
+                                            println!("    [{}] {} - {}", v.rule, v.component, v.message);
+                                        }
+                                    }
+                                    if !telemetry_viols.is_empty() {
+                                        println!("  [TELEMETRY - track only]");
+                                        for v in &telemetry_viols {
+                                            println!("    [{}] {} - {}", v.rule, v.component, v.message);
+                                        }
+                                    }
+                                    if !personal_viols.is_empty() {
+                                        println!("  [PERSONAL - informational]");
+                                        for v in &personal_viols {
+                                            println!("    [{}] {} - {}", v.rule, v.component, v.message);
+                                        }
+                                    }
                                 }
                                 println!();
                             }
                             println!("Total:");
                             println!("  Health: {}/100", report.total_health);
-                            println!("  Violations: {}", report.total_violations);
+                            println!("  Violations: {} (taboo: {}, telemetry: {}, personal: {})",
+                                report.total_violations,
+                                report.total_taboo,
+                                report.per_language.iter().map(|r| r.telemetry_count).sum::<usize>(),
+                                report.per_language.iter().map(|r| r.personal_count).sum::<usize>(),
+                            );
                         }
                     }
 
-                    // Exit code based on threshold
+                    // Exit code: taboo violations always cause exit 1.
+                    // Legacy threshold flag also triggers exit 1 if total violations exceed it.
+                    if report.total_taboo > 0 {
+                        std::process::exit(1);
+                    }
                     if let Some(max_violations) = threshold {
                         if report.total_violations > max_violations {
                             std::process::exit(1);

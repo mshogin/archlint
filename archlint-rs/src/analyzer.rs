@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::model::{
     ArchGraph, Component, GraphEdge, GraphExport, GraphMetadata, GraphMetrics, GraphNode,
     GraphViolation, IndexedGraph, LanguageReport, Link, Metrics, MultiLanguageReport, Violation,
+    ViolationSummary,
 };
 use rayon::prelude::*;
 use regex::Regex;
@@ -82,14 +83,18 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
     if languages.is_empty() {
         // No manifest found - fall back to analyzing all files together
         let graph = analyze_with_config(dir, &config)?;
-        let (components, links, violations, health) = extract_metrics(&graph);
+        let (components, links, violations, health, taboo_count, telemetry_count, personal_count, violations_detail) = extract_metrics(&graph);
         language_reports.push(LanguageReport {
             language: "unknown".to_string(),
             components,
             links,
             health,
+            violation_count: violations.len(),
             violations,
-            violation_count: graph.metrics.as_ref().map(|m| m.violations.len()).unwrap_or(0),
+            taboo_count,
+            telemetry_count,
+            personal_count,
+            violations_detail,
         });
     } else {
         for lang in &languages {
@@ -155,7 +160,7 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
                 metrics: Some(metrics),
             };
 
-            let (_, _, violations, health) = extract_metrics(&arch_graph);
+            let (_, _, violations, health, taboo_count, telemetry_count, personal_count, violations_detail) = extract_metrics(&arch_graph);
 
             total_components += comp_count;
             total_links += link_count;
@@ -166,8 +171,12 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
                 components: comp_count,
                 links: link_count,
                 health,
-                violations,
                 violation_count,
+                violations,
+                taboo_count,
+                telemetry_count,
+                personal_count,
+                violations_detail,
             });
         }
     }
@@ -180,6 +189,8 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
         sum / language_reports.len() as u32
     };
 
+    let total_taboo: usize = language_reports.iter().map(|r| r.taboo_count).sum();
+
     Ok(MultiLanguageReport {
         project: dir.to_string_lossy().to_string(),
         languages: language_reports
@@ -191,11 +202,13 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
         total_links,
         total_violations,
         total_health,
+        total_taboo,
     })
 }
 
 /// Extract summary metrics from an ArchGraph for reporting.
-fn extract_metrics(graph: &ArchGraph) -> (usize, usize, Vec<String>, u32) {
+/// Returns: (components, links, violation_rules, health, taboo_count, telemetry_count, personal_count, violation_details)
+fn extract_metrics(graph: &ArchGraph) -> (usize, usize, Vec<String>, u32, usize, usize, usize, Vec<ViolationSummary>) {
     let components = graph.components.len();
     let links = graph.links.len();
     let violations: Vec<String> = graph
@@ -211,7 +224,31 @@ fn extract_metrics(graph: &ArchGraph) -> (usize, usize, Vec<String>, u32) {
         let penalty = (violation_count * 5).min(100);
         (100 - penalty) as u32
     };
-    (components, links, violations, health)
+    let (taboo_count, telemetry_count, personal_count, details) = graph
+        .metrics
+        .as_ref()
+        .map(|m| {
+            let mut taboo = 0usize;
+            let mut telemetry = 0usize;
+            let mut personal = 0usize;
+            let mut details = Vec::new();
+            for v in &m.violations {
+                match v.level.as_str() {
+                    "taboo" => taboo += 1,
+                    "personal" => personal += 1,
+                    _ => telemetry += 1,
+                }
+                details.push(ViolationSummary {
+                    rule: v.rule.clone(),
+                    component: v.component.clone(),
+                    message: v.message.clone(),
+                    level: v.level.clone(),
+                });
+            }
+            (taboo, telemetry, personal, details)
+        })
+        .unwrap_or((0, 0, 0, Vec::new()));
+    (components, links, violations, health, taboo_count, telemetry_count, personal_count, details)
 }
 
 /// Analyze a project directory and return architecture graph.
@@ -357,6 +394,7 @@ pub fn to_graph_export(graph: &ArchGraph, root_dir: &std::path::Path) -> GraphEx
                 component: v.component.clone(),
                 message: v.message.clone(),
                 severity: v.severity.clone(),
+                level: v.level.clone(),
             })
             .collect(),
     });
@@ -691,6 +729,7 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
                 component: comp.id.clone(),
                 message: format!("fan-out {} exceeds limit {}", fo, fan_out_threshold),
                 severity: "warning".to_string(),
+                level: config.rules.fan_out.level.as_str().to_string(),
             });
         }
 
@@ -704,6 +743,7 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
                 component: comp.id.clone(),
                 message: format!("fan-in {} exceeds limit {}", fi, fan_in_threshold),
                 severity: "info".to_string(),
+                level: config.rules.fan_in.level.as_str().to_string(),
             });
         }
     }
@@ -735,6 +775,7 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
                             t.name, t.method_count, isp_threshold
                         ),
                         severity: "warning".to_string(),
+                        level: config.rules.isp.level.as_str().to_string(),
                     });
                 }
             }
@@ -759,6 +800,7 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
                         pf.structs.len()
                     ),
                     severity: "info".to_string(),
+                    level: config.rules.dip.level.as_str().to_string(),
                 });
             }
         }
@@ -816,6 +858,7 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
                                 from_layer, to_layer, allowed_list
                             ),
                             severity: "error".to_string(),
+                            level: "telemetry".to_string(), // layer violations use default level
                         });
                     }
                 }

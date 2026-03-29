@@ -2,6 +2,35 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
+/// Metric level for a rule - controls exit code and output presentation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum Level {
+    /// Blocks CI: exit code 1, shown in RED.
+    Taboo,
+    /// Track only: exit code 0, shown in YELLOW.
+    #[default]
+    Telemetry,
+    /// Informational: exit code 0, shown in default color.
+    Personal,
+}
+
+impl Level {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Level::Taboo => "taboo",
+            Level::Telemetry => "telemetry",
+            Level::Personal => "personal",
+        }
+    }
+}
+
+impl std::fmt::Display for Level {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
 /// Configuration for a single rule.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleConfig {
@@ -12,6 +41,10 @@ pub struct RuleConfig {
     /// Whether a violation causes a non-zero exit code (default: false).
     #[serde(default)]
     pub error_on_violation: bool,
+
+    /// Metric level: taboo (CI blocker), telemetry (track only), personal (informational).
+    #[serde(default)]
+    pub level: Level,
 
     /// Numeric threshold for this rule (e.g. max fan-out).
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -31,6 +64,7 @@ impl Default for RuleConfig {
         Self {
             enabled: true,
             error_on_violation: false,
+            level: Level::Telemetry,
             threshold: None,
             exclude: Vec::new(),
         }
@@ -87,6 +121,7 @@ fn default_fan_out() -> RuleConfig {
     RuleConfig {
         enabled: true,
         error_on_violation: false,
+        level: Level::Telemetry,
         threshold: Some(5),
         exclude: Vec::new(),
     }
@@ -96,6 +131,7 @@ fn default_fan_in() -> RuleConfig {
     RuleConfig {
         enabled: true,
         error_on_violation: false,
+        level: Level::Telemetry,
         threshold: Some(10),
         exclude: Vec::new(),
     }
@@ -105,6 +141,7 @@ fn default_cycles() -> RuleConfig {
     RuleConfig {
         enabled: true,
         error_on_violation: false,
+        level: Level::Telemetry,
         threshold: None,
         exclude: Vec::new(),
     }
@@ -114,6 +151,7 @@ fn default_isp() -> RuleConfig {
     RuleConfig {
         enabled: true,
         error_on_violation: false,
+        level: Level::Telemetry,
         threshold: Some(5),
         exclude: Vec::new(),
     }
@@ -123,6 +161,7 @@ fn default_dip() -> RuleConfig {
     RuleConfig {
         enabled: true,
         error_on_violation: false,
+        level: Level::Telemetry,
         threshold: None,
         exclude: Vec::new(),
     }
@@ -134,30 +173,35 @@ impl Default for Rules {
             fan_out: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
+                level: Level::Telemetry,
                 threshold: Some(5),
                 exclude: Vec::new(),
             },
             fan_in: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
+                level: Level::Telemetry,
                 threshold: Some(10),
                 exclude: Vec::new(),
             },
             cycles: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
+                level: Level::Telemetry,
                 threshold: None,
                 exclude: Vec::new(),
             },
             isp: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
+                level: Level::Telemetry,
                 threshold: Some(5),
                 exclude: Vec::new(),
             },
             dip: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
+                level: Level::Telemetry,
                 threshold: None,
                 exclude: Vec::new(),
             },
