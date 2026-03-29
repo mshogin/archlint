@@ -107,6 +107,70 @@ jobs:
 
 The action automatically posts a summary table to the PR and fails the check if the violation threshold is exceeded.
 
+## Quick Start
+
+```bash
+go install github.com/mshogin/archlint/cmd/archlint@latest
+archlint scan .
+archlint collect .
+```
+
+## Configuration
+
+archlint can be configured via `.archlint.yaml` in your project root.
+
+```yaml
+rules:
+  fan_out:
+    enabled: true
+    threshold: 5
+    exclude: []
+  fan_in:
+    enabled: true
+    threshold: 10
+  cycles:
+    enabled: true
+  isp:
+    enabled: true
+    threshold: 5
+  dip:
+    enabled: true
+
+layers:
+  - name: handler
+    paths: ["internal/handler", "src/handler"]
+  - name: service
+    paths: ["internal/service", "src/service"]
+  - name: repo
+    paths: ["internal/repo", "src/repo"]
+
+allowed_dependencies:
+  handler: [service, model]
+  service: [repo, model]
+  repo: [model]
+```
+
+### Rules
+
+| Rule | Description | Default threshold |
+|------|-------------|-------------------|
+| `fan_out` | Max outgoing dependencies per component | 5 |
+| `fan_in` | Max incoming dependencies per component | 10 |
+| `cycles` | Detect circular dependencies | - |
+| `isp` | Interface Segregation: max methods per interface | 5 |
+| `dip` | Dependency Inversion: detect concrete deps | - |
+
+### Layers
+
+Define architectural layers with their source paths. archlint maps each package to a layer and enforces the `allowed_dependencies` rules.
+
+- `name` - layer identifier used in `allowed_dependencies`
+- `paths` - list of path prefixes that belong to this layer
+
+### allowed_dependencies
+
+Specifies which layers each layer is allowed to depend on. Dependencies not listed here are reported as violations.
+
 ## Installation
 
 ### From Source
