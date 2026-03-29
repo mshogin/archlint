@@ -17,28 +17,28 @@ var (
 
 // GraphExport is the standard YAML graph format produced by archlint-rs scan --format yaml.
 // It is part of the Unix-pipe multi-language architecture pipeline.
+// Field names match archlint-rs ArchGraph: components/links (not nodes/edges).
 type GraphExport struct {
-	Nodes    []GraphExportNode   `yaml:"nodes"    json:"nodes"`
-	Edges    []GraphExportEdge   `yaml:"edges"    json:"edges"`
-	Metadata GraphExportMetadata `yaml:"metadata" json:"metadata"`
-	Metrics  *GraphExportMetrics `yaml:"metrics,omitempty" json:"metrics,omitempty"`
+	Components []GraphExportNode   `yaml:"components" json:"components"`
+	Links      []GraphExportEdge   `yaml:"links"      json:"links"`
+	Metadata   GraphExportMetadata `yaml:"metadata"   json:"metadata"`
+	Metrics    *GraphExportMetrics `yaml:"metrics,omitempty" json:"metrics,omitempty"`
 }
 
-// GraphExportNode represents a component node in the exported graph.
+// GraphExportNode represents a component in the exported graph.
+// Fields match archlint-rs Component: id, title, entity.
 type GraphExportNode struct {
-	ID      string `yaml:"id"      json:"id"`
-	Type    string `yaml:"type"    json:"type"`
-	Package string `yaml:"package" json:"package"`
-	Name    string `yaml:"name"    json:"name"`
-	File    string `yaml:"file"    json:"file"`
-	Line    int    `yaml:"line"    json:"line"`
+	ID     string `yaml:"id"     json:"id"`
+	Title  string `yaml:"title"  json:"title"`
+	Entity string `yaml:"entity" json:"entity"`
 }
 
-// GraphExportEdge represents a dependency edge in the exported graph.
+// GraphExportEdge represents a dependency link in the exported graph.
+// Fields match archlint-rs Link: from, to, link_type.
 type GraphExportEdge struct {
-	From string `yaml:"from" json:"from"`
-	To   string `yaml:"to"   json:"to"`
-	Type string `yaml:"type" json:"type"`
+	From     string `yaml:"from"      json:"from"`
+	To       string `yaml:"to"        json:"to"`
+	LinkType string `yaml:"link_type" json:"link_type"`
 }
 
 // GraphExportMetadata contains information about the graph export.
@@ -120,8 +120,8 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		fmt.Printf("language:   %s\n", export.Metadata.Language)
 		fmt.Printf("root_dir:   %s\n", export.Metadata.RootDir)
 		fmt.Printf("analyzed_at: %s\n", export.Metadata.AnalyzedAt)
-		fmt.Printf("nodes:      %d\n", len(graph.Nodes))
-		fmt.Printf("edges:      %d\n", len(graph.Edges))
+		fmt.Printf("components: %d\n", len(graph.Nodes))
+		fmt.Printf("links:      %d\n", len(graph.Edges))
 		if export.Metrics != nil {
 			fmt.Printf("violations: %d\n", len(export.Metrics.Violations))
 			fmt.Printf("cycles:     %d\n", len(export.Metrics.Cycles))
@@ -136,21 +136,21 @@ func runValidate(cmd *cobra.Command, args []string) error {
 
 // exportToModelGraph converts a GraphExport to the internal model.Graph.
 func exportToModelGraph(export *GraphExport) *model.Graph {
-	nodes := make([]model.Node, 0, len(export.Nodes))
-	for _, n := range export.Nodes {
+	nodes := make([]model.Node, 0, len(export.Components))
+	for _, n := range export.Components {
 		nodes = append(nodes, model.Node{
 			ID:     n.ID,
-			Title:  n.Name,
-			Entity: n.Type,
+			Title:  n.Title,
+			Entity: n.Entity,
 		})
 	}
 
-	edges := make([]model.Edge, 0, len(export.Edges))
-	for _, e := range export.Edges {
+	edges := make([]model.Edge, 0, len(export.Links))
+	for _, e := range export.Links {
 		edges = append(edges, model.Edge{
 			From: e.From,
 			To:   e.To,
-			Type: e.Type,
+			Type: e.LinkType,
 		})
 	}
 
