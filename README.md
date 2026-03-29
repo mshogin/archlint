@@ -329,7 +329,7 @@ archlint-rs watch . --fix   # auto-suggest fixes on violations
 ### Generate badge
 
 ```bash
-archlint-rs badge . -o badge.svg
+archlint-rs badge . --output badge.svg
 # Embed in README: ![Architecture Health](badge.svg)
 ```
 
