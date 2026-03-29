@@ -1,0 +1,33 @@
+# Dockerfile.scanner - isolated scan environment for archlint scan-by-issue bot.
+#
+# This image is used by the bot to run scans in isolation.
+# The container has no network access (--network=none) during the scan phase.
+# Git clone happens BEFORE dropping network access.
+#
+# Build:
+#   docker build -f Dockerfile.scanner -t archlint-scanner .
+#
+# Usage (bot handles this automatically):
+#   docker run --rm --network=none archlint-scanner scan /repo
+
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /build
+COPY . .
+RUN go build -o /archlint ./cmd/archlint
+
+# Runtime stage: minimal image with git and the archlint binary.
+FROM alpine:3.20
+
+RUN apk add --no-cache git ca-certificates
+
+COPY --from=builder /archlint /usr/local/bin/archlint
+
+# Non-root user for safety.
+RUN adduser -D -u 1000 scanner
+USER scanner
+
+WORKDIR /workspace
+
+ENTRYPOINT ["archlint"]
+CMD ["--help"]
