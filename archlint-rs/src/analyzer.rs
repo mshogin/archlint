@@ -1693,8 +1693,10 @@ import (
 
     #[test]
     fn test_analyze_multi_language_empty_dir() {
-        use tempfile::TempDir;
-        let dir = TempDir::new().unwrap();
+        let dir = tempfile::Builder::new()
+            .prefix("archlint_test_")
+            .tempdir()
+            .unwrap();
         // No manifest files, no source files
         let report = analyze_multi_language(dir.path()).unwrap();
         assert_eq!(report.total_violations, 0);
@@ -1703,8 +1705,10 @@ import (
 
     #[test]
     fn test_analyze_multi_language_rust_only() {
-        use tempfile::TempDir;
-        let dir = TempDir::new().unwrap();
+        let dir = tempfile::Builder::new()
+            .prefix("archlint_test_")
+            .tempdir()
+            .unwrap();
         std::fs::write(
             dir.path().join("Cargo.toml"),
             "[package]\nname = \"myapp\"\nversion = \"0.1.0\"\n",
@@ -1723,8 +1727,10 @@ import (
 
     #[test]
     fn test_analyze_multi_language_total_health_single_lang() {
-        use tempfile::TempDir;
-        let dir = TempDir::new().unwrap();
+        let dir = tempfile::Builder::new()
+            .prefix("archlint_test_")
+            .tempdir()
+            .unwrap();
         std::fs::write(
             dir.path().join("Cargo.toml"),
             "[package]\nname = \"myapp\"\nversion = \"0.1.0\"\n",
@@ -1747,8 +1753,10 @@ import (
 
     #[test]
     fn test_multi_language_report_structure() {
-        use tempfile::TempDir;
-        let dir = TempDir::new().unwrap();
+        let dir = tempfile::Builder::new()
+            .prefix("archlint_test_")
+            .tempdir()
+            .unwrap();
         std::fs::write(dir.path().join("go.mod"), "module myapp\n\ngo 1.21\n").unwrap();
         let src_dir = dir.path().join("internal").join("pkg");
         std::fs::create_dir_all(&src_dir).unwrap();
