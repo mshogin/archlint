@@ -416,6 +416,7 @@ mod tests {
             component: "src::main".to_string(),
             message: "fan-out 8 exceeds limit 5".to_string(),
             severity: "warning".to_string(),
+            level: "telemetry".to_string(),
         };
         let links = vec![
             Link { from: "src::main".to_string(), to: "src::analyzer".to_string(), method: None, link_type: None },
@@ -440,6 +441,7 @@ mod tests {
             component: "src::model".to_string(),
             message: "fan-in 12 exceeds limit 10".to_string(),
             severity: "info".to_string(),
+            level: "telemetry".to_string(),
         };
         let graph = make_graph(vec![v], Vec::new(), Vec::new());
         let report = suggest_fixes(&graph);
@@ -457,6 +459,7 @@ mod tests {
             component: "src::server".to_string(),
             message: "trait `Handler` has 9 methods, exceeds ISP threshold of 5".to_string(),
             severity: "warning".to_string(),
+            level: "telemetry".to_string(),
         };
         let graph = make_graph(vec![v], Vec::new(), Vec::new());
         let report = suggest_fixes(&graph);
@@ -476,6 +479,7 @@ mod tests {
             component: "src::storage".to_string(),
             message: "module has 4 structs but no trait definitions; consider introducing traits".to_string(),
             severity: "info".to_string(),
+            level: "telemetry".to_string(),
         };
         let graph = make_graph(vec![v], Vec::new(), Vec::new());
         let report = suggest_fixes(&graph);
@@ -582,6 +586,7 @@ mod tests {
             component: "src::foo".to_string(),
             message: "something weird".to_string(),
             severity: "warning".to_string(),
+            level: "telemetry".to_string(),
         };
         let outgoing = std::collections::HashMap::new();
         let result = suggest_for_violation(&v, &outgoing, &[]);
