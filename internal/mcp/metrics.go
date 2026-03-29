@@ -3,6 +3,7 @@ package mcp
 import (
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/mshogin/archlint/internal/analyzer"
@@ -623,6 +624,11 @@ func dfsMaxDepth(node string, adj map[string][]string, visited map[string]bool, 
 	visited[node] = false
 
 	return maxD
+}
+
+// intToStr converts an integer to its decimal string representation.
+func intToStr(n int) string {
+	return strconv.Itoa(n)
 }
 
 func computeHealthScore(m *FileMetrics) int {
