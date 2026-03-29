@@ -708,6 +708,61 @@ async fn main() {
                         println!();
                     }
 
+                    // Entropy and conditional entropy (#83, #84)
+                    println!("Entropy metrics:");
+                    println!("  Shannon entropy:     {:.4}", report.entropy);
+                    println!("  Conditional entropy: {:.4}", report.conditional_entropy);
+                    println!();
+
+                    // PageRank (#85)
+                    if !report.pagerank.is_empty() {
+                        let mut pr_sorted: Vec<(&String, &f64)> = report.pagerank.iter().collect();
+                        pr_sorted.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap_or(std::cmp::Ordering::Equal));
+                        println!("PageRank (top 5):");
+                        for (tool, score) in pr_sorted.iter().take(5) {
+                            println!("  {:20} {:.4}", tool, score);
+                        }
+                        println!();
+                    }
+
+                    // Bottlenecks / betweenness centrality (#87)
+                    if !report.bottlenecks.is_empty() {
+                        println!("Bottlenecks (betweenness centrality):");
+                        for (tool, score) in report.bottlenecks.iter().take(5) {
+                            println!("  {:20} {:.4}", tool, score);
+                        }
+                        println!();
+                    }
+
+                    // Session phases (#88)
+                    if !report.phases.is_empty() {
+                        println!("Session phases:");
+                        for (i, phase) in report.phases.iter().enumerate() {
+                            println!(
+                                "  Phase {}: [{}-{}] dominant={}",
+                                i + 1,
+                                phase.start_idx,
+                                phase.end_idx,
+                                phase.dominant_tool
+                            );
+                        }
+                        println!();
+                    }
+
+                    // Transition matrix (#82) - only with --patterns flag
+                    if patterns && !report.transition_matrix.is_empty() {
+                        println!("Transition matrix (P(B|A), top 10):");
+                        let mut tm: Vec<(&(String, String), &f64)> =
+                            report.transition_matrix.iter().collect();
+                        tm.sort_by(|a, b| {
+                            b.1.partial_cmp(a.1).unwrap_or(std::cmp::Ordering::Equal)
+                        });
+                        for ((from, to), prob) in tm.iter().take(10) {
+                            println!("  {:20} -> {:20} {:.3}", from, to, prob);
+                        }
+                        println!();
+                    }
+
                     if patterns {
                         if !report.bigrams.is_empty() {
                             println!("Top bigrams:");
