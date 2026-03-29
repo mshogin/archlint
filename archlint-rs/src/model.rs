@@ -110,6 +110,29 @@ pub struct GraphViolation {
     pub severity: String,
 }
 
+/// Per-language analysis report (used in multi-language unified scan).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LanguageReport {
+    pub language: String,
+    pub components: usize,
+    pub links: usize,
+    pub health: u32,
+    pub violations: Vec<String>,
+    pub violation_count: usize,
+}
+
+/// Unified multi-language scan report.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MultiLanguageReport {
+    pub project: String,
+    pub languages: Vec<String>,
+    pub per_language: Vec<LanguageReport>,
+    pub total_components: usize,
+    pub total_links: usize,
+    pub total_violations: usize,
+    pub total_health: u32,
+}
+
 /// Indexed graph for efficient operations.
 pub struct IndexedGraph {
     pub graph: DiGraph<String, String>,

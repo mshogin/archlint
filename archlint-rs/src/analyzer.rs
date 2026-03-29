@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::model::{
     ArchGraph, Component, GraphEdge, GraphExport, GraphMetadata, GraphMetrics, GraphNode,
-    GraphViolation, IndexedGraph, Link, Metrics, Violation,
+    GraphViolation, IndexedGraph, LanguageReport, Link, Metrics, MultiLanguageReport, Violation,
 };
 use rayon::prelude::*;
 use regex::Regex;
@@ -32,6 +32,186 @@ fn load_cargo_external_deps(dir: &Path) -> HashSet<String> {
         }
     }
     deps
+}
+
+/// Detected language in a project.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Language {
+    Go,
+    Rust,
+}
+
+impl Language {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Language::Go => "Go",
+            Language::Rust => "Rust",
+        }
+    }
+}
+
+/// Detect languages present in a project directory by checking for manifest files.
+/// Returns a list of detected languages (may be empty if none found).
+pub fn detect_languages(dir: &Path) -> Vec<Language> {
+    let mut langs = Vec::new();
+    if dir.join("go.mod").exists() {
+        langs.push(Language::Go);
+    }
+    if dir.join("Cargo.toml").exists() {
+        langs.push(Language::Rust);
+    }
+    langs
+}
+
+/// Analyze a project for multiple languages and return a per-language report with totals.
+/// This is the unified launcher that auto-detects languages and runs isolated per-language analysis.
+pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String> {
+    let languages = detect_languages(dir);
+    let config = Config::load(dir);
+
+    // Collect all source files once
+    let all_files = collect_source_files(dir);
+    let external_deps = load_cargo_external_deps(dir);
+    let go_module_name = load_go_module_name(dir);
+
+    let mut language_reports: Vec<LanguageReport> = Vec::new();
+    let mut total_violations = 0usize;
+    let mut total_components = 0usize;
+    let mut total_links = 0usize;
+
+    if languages.is_empty() {
+        // No manifest found - fall back to analyzing all files together
+        let graph = analyze_with_config(dir, &config)?;
+        let (components, links, violations, health) = extract_metrics(&graph);
+        language_reports.push(LanguageReport {
+            language: "unknown".to_string(),
+            components,
+            links,
+            health,
+            violations,
+            violation_count: graph.metrics.as_ref().map(|m| m.violations.len()).unwrap_or(0),
+        });
+    } else {
+        for lang in &languages {
+            // Filter files for this language
+            let lang_files: Vec<PathBuf> = match lang {
+                Language::Go => all_files.iter().filter(|p| {
+                    p.extension().and_then(|e| e.to_str()) == Some("go")
+                }).cloned().collect(),
+                Language::Rust => all_files.iter().filter(|p| {
+                    p.extension().and_then(|e| e.to_str()) == Some("rs")
+                }).cloned().collect(),
+            };
+
+            if lang_files.is_empty() {
+                continue;
+            }
+
+            // Parse files for this language
+            let parsed: Vec<ParsedFile> = lang_files
+                .par_iter()
+                .filter_map(|path| {
+                    match parse_file(path, dir, &external_deps, &go_module_name) {
+                        Ok(pf) => Some(pf),
+                        Err(e) => {
+                            eprintln!("[archlint] parse_file error for {:?}: {}", path, e);
+                            None
+                        }
+                    }
+                })
+                .collect();
+
+            // Build graph from parsed files
+            let mut graph = IndexedGraph::new();
+            let mut components = Vec::new();
+            let mut links = Vec::new();
+
+            for pf in &parsed {
+                graph.add_node(&pf.module_name);
+                components.push(Component {
+                    id: pf.module_name.clone(),
+                    title: pf.module_name.clone(),
+                    entity: pf.language.clone(),
+                });
+                for dep in &pf.dependencies {
+                    graph.add_edge(&pf.module_name, dep, "depends");
+                    links.push(Link {
+                        from: pf.module_name.clone(),
+                        to: dep.clone(),
+                        method: None,
+                        link_type: Some("depends".to_string()),
+                    });
+                }
+            }
+
+            let metrics = calculate_metrics(&graph, &components, &parsed, &config);
+            let violation_count = metrics.violations.len();
+            let comp_count = metrics.component_count;
+            let link_count = metrics.link_count;
+
+            let arch_graph = ArchGraph {
+                components,
+                links,
+                metrics: Some(metrics),
+            };
+
+            let (_, _, violations, health) = extract_metrics(&arch_graph);
+
+            total_components += comp_count;
+            total_links += link_count;
+            total_violations += violation_count;
+
+            language_reports.push(LanguageReport {
+                language: lang.name().to_string(),
+                components: comp_count,
+                links: link_count,
+                health,
+                violations,
+                violation_count,
+            });
+        }
+    }
+
+    // Calculate total health score as average of per-language scores
+    let total_health = if language_reports.is_empty() {
+        100u32
+    } else {
+        let sum: u32 = language_reports.iter().map(|r| r.health).sum();
+        sum / language_reports.len() as u32
+    };
+
+    Ok(MultiLanguageReport {
+        project: dir.to_string_lossy().to_string(),
+        languages: language_reports
+            .iter()
+            .map(|r| r.language.clone())
+            .collect(),
+        per_language: language_reports,
+        total_components,
+        total_links,
+        total_violations,
+        total_health,
+    })
+}
+
+/// Extract summary metrics from an ArchGraph for reporting.
+fn extract_metrics(graph: &ArchGraph) -> (usize, usize, Vec<String>, u32) {
+    let components = graph.components.len();
+    let links = graph.links.len();
+    let violations: Vec<String> = graph
+        .metrics
+        .as_ref()
+        .map(|m| m.violations.iter().map(|v| v.rule.clone()).collect())
+        .unwrap_or_default();
+    let violation_count = violations.len();
+    // Health score: 100 minus penalty per violation (capped at 0)
+    let health = if violation_count == 0 {
+        100u32
+    } else {
+        let penalty = (violation_count * 5).min(100);
+        (100 - penalty) as u32
+    };
+    (components, links, violations, health)
 }
 
 /// Analyze a project directory and return architecture graph.
@@ -1459,5 +1639,125 @@ import (
         let dir = TempDir::new().unwrap();
         let name = load_go_module_name(dir.path());
         assert_eq!(name, "");
+    }
+
+    // Tests for language detection and multi-language analysis
+
+    #[test]
+    fn test_detect_languages_empty_dir() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        let langs = detect_languages(dir.path());
+        assert!(langs.is_empty(), "empty dir should have no languages");
+    }
+
+    #[test]
+    fn test_detect_languages_go_only() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        std::fs::write(dir.path().join("go.mod"), "module myapp\n\ngo 1.21\n").unwrap();
+        let langs = detect_languages(dir.path());
+        assert_eq!(langs.len(), 1);
+        assert_eq!(langs[0], Language::Go);
+    }
+
+    #[test]
+    fn test_detect_languages_rust_only() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname = \"myapp\"\nversion = \"0.1.0\"\n",
+        )
+        .unwrap();
+        let langs = detect_languages(dir.path());
+        assert_eq!(langs.len(), 1);
+        assert_eq!(langs[0], Language::Rust);
+    }
+
+    #[test]
+    fn test_detect_languages_both() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        std::fs::write(dir.path().join("go.mod"), "module myapp\n\ngo 1.21\n").unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname = \"myapp\"\nversion = \"0.1.0\"\n",
+        )
+        .unwrap();
+        let langs = detect_languages(dir.path());
+        assert_eq!(langs.len(), 2);
+        assert!(langs.contains(&Language::Go));
+        assert!(langs.contains(&Language::Rust));
+    }
+
+    #[test]
+    fn test_analyze_multi_language_empty_dir() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        // No manifest files, no source files
+        let report = analyze_multi_language(dir.path()).unwrap();
+        assert_eq!(report.total_violations, 0);
+        assert_eq!(report.total_health, 100);
+    }
+
+    #[test]
+    fn test_analyze_multi_language_rust_only() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname = \"myapp\"\nversion = \"0.1.0\"\n",
+        )
+        .unwrap();
+        // Create a minimal Rust source file
+        let src_dir = dir.path().join("src");
+        std::fs::create_dir_all(&src_dir).unwrap();
+        std::fs::write(src_dir.join("lib.rs"), "pub fn hello() {}\n").unwrap();
+
+        let report = analyze_multi_language(dir.path()).unwrap();
+        assert!(report.languages.contains(&"Rust".to_string()));
+        assert!(!report.languages.contains(&"Go".to_string()));
+        assert!(report.per_language.iter().any(|r| r.language == "Rust"));
+    }
+
+    #[test]
+    fn test_analyze_multi_language_total_health_single_lang() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname = \"myapp\"\nversion = \"0.1.0\"\n",
+        )
+        .unwrap();
+        let src_dir = dir.path().join("src");
+        std::fs::create_dir_all(&src_dir).unwrap();
+        std::fs::write(src_dir.join("lib.rs"), "pub fn hello() {}\n").unwrap();
+
+        let report = analyze_multi_language(dir.path()).unwrap();
+        // Total health should equal per-language health when only one language
+        assert_eq!(report.total_health, report.per_language[0].health);
+    }
+
+    #[test]
+    fn test_language_name() {
+        assert_eq!(Language::Go.name(), "Go");
+        assert_eq!(Language::Rust.name(), "Rust");
+    }
+
+    #[test]
+    fn test_multi_language_report_structure() {
+        use tempfile::TempDir;
+        let dir = TempDir::new().unwrap();
+        std::fs::write(dir.path().join("go.mod"), "module myapp\n\ngo 1.21\n").unwrap();
+        let src_dir = dir.path().join("internal").join("pkg");
+        std::fs::create_dir_all(&src_dir).unwrap();
+        std::fs::write(src_dir.join("service.go"), "package pkg\n\nfunc New() {}\n").unwrap();
+
+        let report = analyze_multi_language(dir.path()).unwrap();
+        assert!(!report.project.is_empty());
+        assert!(report.languages.contains(&"Go".to_string()));
+        assert_eq!(report.per_language.len(), 1);
+        assert_eq!(report.per_language[0].language, "Go");
     }
 }

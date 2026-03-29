@@ -367,41 +367,57 @@ async fn main() {
             format,
             threshold,
         } => {
-            match analyzer::analyze(&dir) {
-                Ok(graph) => {
+            match analyzer::analyze_multi_language(&dir) {
+                Ok(report) => {
                     match format.as_str() {
                         "json" => {
-                            let json = serde_json::to_string_pretty(&graph).unwrap();
+                            let json = serde_json::to_string_pretty(&report).unwrap();
                             println!("{}", json);
                         }
                         "yaml" => {
-                            let yaml = serde_yaml::to_string(&graph).unwrap();
+                            let yaml = serde_yaml::to_string(&report).unwrap();
                             println!("{}", yaml);
                         }
                         "brief" => {
-                            if let Some(ref metrics) = graph.metrics {
-                                println!(
-                                    "components={} links={} cycles={} violations={} max_fan_out={}",
-                                    metrics.component_count,
-                                    metrics.link_count,
-                                    metrics.cycles.len(),
-                                    metrics.violations.len(),
-                                    metrics.max_fan_out,
-                                );
-                            }
+                            println!(
+                                "languages={} components={} links={} violations={} health={}/100",
+                                report.languages.join(","),
+                                report.total_components,
+                                report.total_links,
+                                report.total_violations,
+                                report.total_health,
+                            );
                         }
                         _ => {
-                            eprintln!("Unknown format: {}", format);
-                            std::process::exit(1);
+                            // Default human-readable output
+                            println!("Project: {}", report.project);
+                            if report.languages.is_empty() {
+                                println!("Languages: none detected");
+                            } else {
+                                println!("Languages: {}", report.languages.join(", "));
+                            }
+                            println!();
+                            for lang_report in &report.per_language {
+                                println!("{} (architecture-{}.yaml):", lang_report.language, lang_report.language.to_lowercase());
+                                println!("  Components: {}, Links: {}", lang_report.components, lang_report.links);
+                                println!("  Health: {}/100", lang_report.health);
+                                if lang_report.violation_count == 0 {
+                                    println!("  Violations: 0");
+                                } else {
+                                    println!("  Violations: {}", lang_report.violation_count);
+                                }
+                                println!();
+                            }
+                            println!("Total:");
+                            println!("  Health: {}/100", report.total_health);
+                            println!("  Violations: {}", report.total_violations);
                         }
                     }
 
                     // Exit code based on threshold
                     if let Some(max_violations) = threshold {
-                        if let Some(ref metrics) = graph.metrics {
-                            if metrics.violations.len() > max_violations {
-                                std::process::exit(1);
-                            }
+                        if report.total_violations > max_violations {
+                            std::process::exit(1);
                         }
                     }
                 }
