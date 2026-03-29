@@ -1,0 +1,204 @@
+# archlint Behavior Graph
+# Key scenarios traced as call chains through the Go codebase.
+# Generated: 2026-03-26
+
+scenarios:
+
+  # ----------------------------------------------------------------
+  # Scenario 1: scan workflow (quality gate)
+  # ----------------------------------------------------------------
+  - name: scan
+    description: >
+      CLI scan command analyzes a Go directory for architecture violations
+      and exits with 0 (pass), 1 (violations > threshold), or 2 (error).
+    entry: cmd/archlint/main.go -> cobra.Command.Execute
+    chain:
+      - step: runScan(cmd, args)
+        file: internal/cli/scan.go
+      - step: analyzer.NewGoAnalyzer()
+        file: internal/analyzer/go.go
+      - step: GoAnalyzer.Analyze(dir)
+        file: internal/analyzer/go.go
+        calls:
+          - filepath.Walk -> parseFile(path)
+          - parseFile -> parseTypeDecl / parseFuncDecl
+          - buildGraph -> buildPackageNodes / buildTypeNodes / buildFunctionNodes / buildMethodNodes
+          - buildGraph -> buildImportEdges / buildFunctionCallEdges / buildMethodCallEdges / buildTypeDependencyEdges
+        returns: "*model.Graph"
+      - step: mcp.DetectAllViolations(graph)
+        file: internal/mcp/state.go (via tool_violations.go)
+        returns: "[]mcp.Violation"
+      - step: mcp.ComputeAllFileMetrics(a, graph)
+        file: internal/mcp/metrics.go
+        calls:
+          - collectAllFiles(a)
+          - ComputeFileMetrics(filePath, a, graph) per file
+          - computeSRPViolations / computeDIPViolations / computeISPViolations
+          - computeGodClasses / computeHubNodes / computeFeatureEnvy / computeShotgunSurgery
+          - computeHealthScore(m)
+        returns: "map[string]*FileMetrics"
+      - step: sort violations by kind+target
+      - step: output text or JSON to stdout
+      - step: os.Exit(1) if violations > threshold
+
+  # ----------------------------------------------------------------
+  # Scenario 2: collect workflow
+  # ----------------------------------------------------------------
+  - name: collect
+    description: >
+      CLI collect command analyzes source code and saves an architecture
+      graph as a YAML file for later use by validate or other tools.
+    entry: cmd/archlint/main.go -> cobra.Command.Execute
+    chain:
+      - step: runCollect(cmd, args)
+        file: internal/cli/collect.go
+      - step: analyzeCode(codeDir)
+        file: internal/cli/collect.go
+        calls:
+          - analyzer.NewGoAnalyzer()
+          - GoAnalyzer.Analyze(dir) -> *model.Graph
+      - step: printStats(graph) -> stdout
+      - step: saveGraph(graph)
+        file: internal/cli/collect.go
+        calls:
+          - os.OpenFile(outputFile)
+          - yaml.NewEncoder.Encode(graph)
+        output: architecture.yaml (model.Graph with yaml:"components"/"links")
+
+  # ----------------------------------------------------------------
+  # Scenario 3: validate workflow (Unix-pipe multi-language pipeline)
+  # ----------------------------------------------------------------
+  - name: validate
+    description: >
+      CLI validate reads a YAML graph produced by archlint-rs (or collect)
+      and prints summary stats. Designed for Unix pipe: archlint-rs scan | archlint validate.
+    entry: cmd/archlint/main.go -> cobra.Command.Execute
+    chain:
+      - step: runValidate(cmd, args)
+        file: internal/cli/validate.go
+      - step: os.ReadFile(graphFile) or readAllStdin()
+        note: supports "-" for stdin
+      - step: yaml.Unmarshal(data, &GraphExport)
+        type: GraphExport (components/links/metadata/metrics)
+      - step: exportToModelGraph(&export) -> *model.Graph
+      - step: output text or JSON to stdout
+        fields: language, root_dir, analyzed_at, components count, links count
+
+  # ----------------------------------------------------------------
+  # Scenario 4: self-scan workflow
+  # ----------------------------------------------------------------
+  - name: self-scan
+    description: >
+      CLI self-scan runs archlint on its own source code and displays
+      a health dashboard with components, violations, and health score.
+    entry: cmd/archlint/main.go -> cobra.Command.Execute
+    chain:
+      - step: runSelfScan(cmd, args)
+        file: internal/cli/selfscan.go
+      - step: findModuleRoot(cwd) -> source root dir
+      - step: analyzer.NewGoAnalyzer()
+      - step: GoAnalyzer.Analyze(root) -> *model.Graph
+      - step: mcp.DetectAllViolations(graph)
+      - step: mcp.ComputeAllFileMetrics(a, graph)
+      - step: computeHealthScore across all files
+      - step: healthLabel(score) -> "GOOD" / "FAIR" / "POOR" / "CRITICAL"
+      - step: output dashboard (text or markdown)
+        sections: Components, Quality (violations, fan-out, cycles), Health score
+
+  # ----------------------------------------------------------------
+  # Scenario 5: bot workflow (GitHub issue-driven scan)
+  # ----------------------------------------------------------------
+  - name: bot
+    description: >
+      Bot polls GitHub issues with "scan: owner/repo" titles, runs archlint
+      on the target repo, posts results as a comment, and closes the issue.
+    entry: cmd/archlint/main.go -> bot CLI command -> Bot.Run(ctx)
+    chain:
+      - step: Bot.Run(ctx)
+        file: internal/bot/bot.go
+        calls:
+          - time.NewTicker(pollInterval)
+          - Bot.poll(ctx) on tick
+      - step: Bot.poll(ctx)
+        file: internal/bot/bot.go
+        calls:
+          - GitHubClient.ListOpenIssues(ctx, owner, repo)
+          - isScanIssue(title) filter
+          - Bot.process(ctx, issue) for each matching issue
+      - step: Bot.process(ctx, issue)
+        file: internal/bot/bot.go
+        calls:
+          - ParseScanTarget(title) -> owner, repo
+          - Scanner.Scan(ctx, "https://github.com/owner/repo")
+          - FormatResultComment / FormatErrorComment
+          - GitHubClient.PostComment(ctx, ...)
+          - GitHubClient.CloseIssue(ctx, ...)
+      - step: LocalScanner.Scan(ctx, repoURL)
+        file: internal/bot/scanner.go
+        calls:
+          - gitClone(ctx, repoURL, tmpDir) -> git clone --depth=1
+          - runInProcessAnalysis(cloneDir)
+            calls:
+              - analyzer.NewGoAnalyzer()
+              - GoAnalyzer.Analyze(dir)
+              - mcp.DetectAllViolations(graph)
+              - mcp.ComputeAllFileMetrics(a, graph)
+          - HealthScoreFor(violations) -> 0-100 score
+        returns: "*ScanResult{TotalViolations, Categories, TopViolations, HealthScore}"
+
+  # ----------------------------------------------------------------
+  # Scenario 6: MCP server workflow
+  # ----------------------------------------------------------------
+  - name: mcp-server
+    description: >
+      MCP server exposes archlint analysis as JSON-RPC tools for IDE integration.
+      Maintains a lazy-initialized state with the parsed graph.
+    entry: cmd/archlint/main.go -> serve CLI command -> Server.Serve(stdin, stdout)
+    chain:
+      - step: Server.Serve(r, w)
+        file: internal/mcp/server.go
+        calls:
+          - ReadMessage(r) -> JSON-RPC request loop
+          - dispatch(method, params)
+      - step: tools/call dispatch
+        methods:
+          - analyze_file -> handleAnalyzeFile -> State.Reparse(filePath)
+          - analyze_change -> handleAnalyzeChange
+          - get_architecture -> handleGetArchitecture -> State.GetGraph()
+          - check_violations -> handleCheckViolations -> mcp.DetectAllViolations
+          - get_file_metrics -> handleGetFileMetrics -> mcp.ComputeFileMetrics
+          - get_degradation_report -> handleGetDegradationReport -> DegradationDetector
+          - get_dependencies -> handleGetDependencies
+          - get_callgraph -> handleGetCallgraph -> callgraph.NewBuilder.Build
+      - step: State.Initialize(rootDir)
+        file: internal/mcp/state.go
+        calls:
+          - analyzer.NewGoAnalyzer()
+          - GoAnalyzer.Analyze(rootDir) -> lazy on first tool call
+
+  # ----------------------------------------------------------------
+  # Scenario 7: full-cycle (callgraph + BPMN) workflow
+  # ----------------------------------------------------------------
+  - name: full-cycle-callgraph
+    description: >
+      Full cycle: collect architecture graph, build static call graph via AST analysis,
+      generate PlantUML sequence diagram, export YAML.
+    entry: tests/fullcycle_test.go::TestFullCycle
+    chain:
+      - step: analyzer.NewGoAnalyzer()
+      - step: GoAnalyzer.Analyze(sampleDir) -> *model.Graph
+      - step: callgraph.NewBuilder(goAnalyzer, BuildOptions) -> *Builder
+        file: pkg/callgraph/builder.go
+        options: MaxDepth, ResolveInterfaces, TrackGoroutines
+      - step: Builder.Build(entryPoint) -> *CallGraph
+        file: pkg/callgraph/builder.go
+        calls:
+          - find entry function/method in GoAnalyzer
+          - BFS/DFS traversal following calls up to MaxDepth
+          - detect goroutines (IsGoroutine), deferred calls (IsDeferred)
+          - interface resolution (FindImplementations)
+        returns: "*CallGraph{Nodes, Edges, Stats, ActualDepth}"
+      - step: callgraph.NewSequenceGenerator(SequenceOptions).Generate(cg) -> PlantUML string
+        file: pkg/callgraph/sequence.go
+      - step: callgraph.NewYAMLExporter().ExportCallGraph(cg, path)
+        file: pkg/callgraph/export.go
