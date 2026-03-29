@@ -2003,4 +2003,111 @@ import (
         assert_eq!(report.per_language.len(), 1);
         assert_eq!(report.per_language[0].language, "Go");
     }
+
+    // ---- entry point detection tests ----
+
+    fn make_arch_graph(components: Vec<(&str, &str)>, links: Vec<(&str, &str)>) -> ArchGraph {
+        let comps = components
+            .into_iter()
+            .map(|(id, lang)| crate::model::Component {
+                id: id.to_string(),
+                title: id.to_string(),
+                entity: lang.to_string(),
+            })
+            .collect();
+        let ls = links
+            .into_iter()
+            .map(|(from, to)| crate::model::Link {
+                from: from.to_string(),
+                to: to.to_string(),
+                method: None,
+                link_type: Some("depends".to_string()),
+            })
+            .collect();
+        ArchGraph { components: comps, links: ls, metrics: None }
+    }
+
+    #[test]
+    fn test_detect_entry_points_topology_basic() {
+        // Graph: main -> service -> repo
+        // main: fan_in=0, fan_out=1 -> entry point
+        // service: fan_in=1, fan_out=1 -> not entry point
+        // repo: fan_in=1, fan_out=0 -> not entry point (leaf)
+        let graph = make_arch_graph(
+            vec![("main", "rust"), ("service", "rust"), ("repo", "rust")],
+            vec![("main", "service"), ("service", "repo")],
+        );
+        let dir = tempfile::Builder::new().prefix("ep_test").tempdir().unwrap();
+        let entries = detect_entry_points(&graph, dir.path());
+        assert_eq!(entries, vec!["main"]);
+    }
+
+    #[test]
+    fn test_detect_entry_points_isolated_node_excluded() {
+        // A node with no edges at all (fan_in=0 AND fan_out=0) should NOT be an entry point.
+        let graph = make_arch_graph(
+            vec![("main", "rust"), ("isolated", "rust")],
+            vec![("main", "isolated")],
+        );
+        let dir = tempfile::Builder::new().prefix("ep_test").tempdir().unwrap();
+        let entries = detect_entry_points(&graph, dir.path());
+        // Only "main" qualifies (fan_in=0, fan_out=1)
+        assert_eq!(entries, vec!["main"]);
+    }
+
+    #[test]
+    fn test_detect_entry_points_multiple_roots() {
+        // Two independent entry points: a -> b and x -> y
+        let graph = make_arch_graph(
+            vec![("a", "rust"), ("b", "rust"), ("x", "rust"), ("y", "rust")],
+            vec![("a", "b"), ("x", "y")],
+        );
+        let dir = tempfile::Builder::new().prefix("ep_test").tempdir().unwrap();
+        let mut entries = detect_entry_points(&graph, dir.path());
+        entries.sort();
+        assert_eq!(entries, vec!["a", "x"]);
+    }
+
+    #[test]
+    fn test_detect_entry_points_cargo_bin() {
+        // Cargo.toml with explicit [[bin]] path should add entry point hint.
+        let dir = tempfile::Builder::new().prefix("ep_cargo").tempdir().unwrap();
+        let cargo_content = r#"
+[package]
+name = "myapp"
+version = "0.1.0"
+
+[[bin]]
+name = "server"
+path = "src/server/main.rs"
+"#;
+        std::fs::write(dir.path().join("Cargo.toml"), cargo_content).unwrap();
+
+        // Empty graph - only file-based hints
+        let graph = make_arch_graph(vec![], vec![]);
+        let entries = detect_entry_points(&graph, dir.path());
+        assert!(entries.contains(&"src::server::main".to_string()),
+            "expected src::server::main in {:?}", entries);
+    }
+
+    #[test]
+    fn test_detect_entry_points_go_cmd_mains() {
+        // Go project with cmd/server/main.go
+        let dir = tempfile::Builder::new().prefix("ep_go").tempdir().unwrap();
+        let cmd_dir = dir.path().join("cmd").join("server");
+        std::fs::create_dir_all(&cmd_dir).unwrap();
+        std::fs::write(cmd_dir.join("main.go"), "package main\n\nfunc main() {}\n").unwrap();
+
+        let graph = make_arch_graph(vec![], vec![]);
+        let entries = detect_entry_points(&graph, dir.path());
+        assert!(entries.contains(&"cmd::server".to_string()),
+            "expected cmd::server in {:?}", entries);
+    }
+
+    #[test]
+    fn test_bin_path_to_component_id() {
+        assert_eq!(bin_path_to_component_id("src/main"), "src::main");
+        assert_eq!(bin_path_to_component_id("cmd/server"), "cmd::server");
+        assert_eq!(bin_path_to_component_id("src/server/main"), "src::server::main");
+    }
 }
