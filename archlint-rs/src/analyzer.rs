@@ -250,6 +250,7 @@ struct ParsedFile {
     language: String,
     dependencies: Vec<String>,
     structs: Vec<String>,
+    #[allow(dead_code)]
     functions: Vec<String>,
     /// Rust trait definitions (name + method count). Empty for Go files.
     traits: Vec<TraitDef>,
@@ -952,7 +953,7 @@ pub struct Agent {}\n\
 
     #[test]
     fn test_to_graph_export_nodes_and_edges() {
-        use crate::model::{ArchGraph, Component, Link, Metrics, Violation};
+        use crate::model::{ArchGraph, Component, Link, Metrics};
         use std::path::Path;
 
         let graph = ArchGraph {

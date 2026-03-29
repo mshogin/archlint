@@ -298,6 +298,7 @@ impl Orchestrator {
     }
 
     /// Get the status of a worker by querying Docker
+    #[allow(dead_code)]
     pub async fn worker_status(&self, worker_id: &str) -> Result<WorkerStatus, String> {
         let worker = self
             .workers
@@ -337,6 +338,7 @@ impl Orchestrator {
     }
 
     /// Remove a stopped worker and its container
+    #[allow(dead_code)]
     pub async fn remove_worker(&mut self, worker_id: &str) -> Result<(), String> {
         let worker = self
             .workers

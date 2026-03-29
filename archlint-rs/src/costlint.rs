@@ -222,6 +222,7 @@ impl QualityGateEscalationMeta {
 /// Model pricing (USD per 1M tokens).
 #[derive(Debug, Clone)]
 pub struct ModelPricing {
+    #[allow(dead_code)]
     pub name: String,
     pub input_per_m: f64,
     pub output_per_m: f64,
@@ -275,6 +276,7 @@ pub fn count_tokens(text: &str) -> usize {
 }
 
 /// Cost report from telemetry records.
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CostReport {
     pub total_requests: usize,
@@ -286,6 +288,7 @@ pub struct CostReport {
     pub by_model: HashMap<String, ModelStats>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ModelStats {
     pub requests: usize,
@@ -295,6 +298,7 @@ pub struct ModelStats {
 }
 
 /// Telemetry record.
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct TelemetryRecord {
     pub routed_to: Option<String>,
@@ -303,12 +307,14 @@ pub struct TelemetryRecord {
     pub analysis: Option<AnalysisData>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct AnalysisData {
     pub words: Option<usize>,
 }
 
 /// Generate cost report from JSONL telemetry file content.
+#[allow(dead_code)]
 pub fn generate_report(content: &str) -> CostReport {
     let mut report = CostReport {
         total_requests: 0,
@@ -381,6 +387,7 @@ pub fn generate_report(content: &str) -> CostReport {
 }
 
 /// Format report as human-readable string.
+#[allow(dead_code)]
 pub fn format_report(r: &CostReport) -> String {
     let mut s = format!("Cost Report:\n  Total requests: {}\n  Total tokens: {} (in: {} / out: {})\n\n  By model:\n",
         r.total_requests,
