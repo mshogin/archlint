@@ -1,6 +1,5 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use rayon::prelude::*;
@@ -99,7 +98,7 @@ fn analyze_file(path: &Path, base_dir: &Path) -> Result<FileResult, String> {
     // Count decision points: if, else if, for, while, match/switch, case, &&, ||
     let decision_re = Regex::new(r"\b(if|else if|elif|for|while|switch|match|case)\b|&&|\|\|").unwrap();
     let total_decisions = decision_re.find_iter(&content).count();
-    let avg_complexity = if result.function_count > 0 {
+    let _avg_complexity = if result.function_count > 0 {
         total_decisions / result.function_count
     } else {
         0
@@ -175,7 +174,7 @@ fn analyze_file(path: &Path, base_dir: &Path) -> Result<FileResult, String> {
     // Allocation in loops
     let alloc_in_loop_re = Regex::new(r"(for|while|loop)\s*.*\{[^}]*\b(append|make|new|vec!|Vec::new|push)\b").unwrap();
     for (i, line) in content.lines().enumerate() {
-        if let Some(m) = alloc_in_loop_re.find(line) {
+        if let Some(_m) = alloc_in_loop_re.find(line) {
             result.issues.push(PerfIssue {
                 file: rel_path.clone(),
                 line: i + 1,
