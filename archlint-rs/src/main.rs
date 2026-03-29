@@ -31,8 +31,8 @@ enum Commands {
         #[arg(default_value = ".")]
         dir: PathBuf,
 
-        /// Output format: json, yaml, brief
-        #[arg(long, default_value = "json")]
+        /// Output format: yaml, json, brief
+        #[arg(long, default_value = "yaml")]
         format: String,
 
         /// Maximum violations before exit code 1

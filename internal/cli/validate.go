@@ -7,6 +7,7 @@ import (
 
 	"github.com/mshogin/archlint/internal/model"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -14,74 +15,74 @@ var (
 	validateFormat    string
 )
 
-// GraphExport is the standard JSON graph format produced by archlint-rs collect --format json.
+// GraphExport is the standard YAML graph format produced by archlint-rs scan --format yaml.
 // It is part of the Unix-pipe multi-language architecture pipeline.
 type GraphExport struct {
-	Nodes    []GraphExportNode    `json:"nodes"`
-	Edges    []GraphExportEdge    `json:"edges"`
-	Metadata GraphExportMetadata  `json:"metadata"`
-	Metrics  *GraphExportMetrics  `json:"metrics,omitempty"`
+	Nodes    []GraphExportNode   `yaml:"nodes"    json:"nodes"`
+	Edges    []GraphExportEdge   `yaml:"edges"    json:"edges"`
+	Metadata GraphExportMetadata `yaml:"metadata" json:"metadata"`
+	Metrics  *GraphExportMetrics `yaml:"metrics,omitempty" json:"metrics,omitempty"`
 }
 
 // GraphExportNode represents a component node in the exported graph.
 type GraphExportNode struct {
-	ID       string `json:"id"`
-	Type     string `json:"type"`
-	Package  string `json:"package"`
-	Name     string `json:"name"`
-	File     string `json:"file"`
-	Line     int    `json:"line"`
+	ID      string `yaml:"id"      json:"id"`
+	Type    string `yaml:"type"    json:"type"`
+	Package string `yaml:"package" json:"package"`
+	Name    string `yaml:"name"    json:"name"`
+	File    string `yaml:"file"    json:"file"`
+	Line    int    `yaml:"line"    json:"line"`
 }
 
 // GraphExportEdge represents a dependency edge in the exported graph.
 type GraphExportEdge struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-	Type string `json:"type"`
+	From string `yaml:"from" json:"from"`
+	To   string `yaml:"to"   json:"to"`
+	Type string `yaml:"type" json:"type"`
 }
 
 // GraphExportMetadata contains information about the graph export.
 type GraphExportMetadata struct {
-	Language   string `json:"language"`
-	RootDir    string `json:"root_dir"`
-	AnalyzedAt string `json:"analyzed_at"`
+	Language   string `yaml:"language"    json:"language"`
+	RootDir    string `yaml:"root_dir"    json:"root_dir"`
+	AnalyzedAt string `yaml:"analyzed_at" json:"analyzed_at"`
 }
 
 // GraphExportMetrics contains architecture metrics from the graph export.
 type GraphExportMetrics struct {
-	ComponentCount int                    `json:"component_count"`
-	LinkCount      int                    `json:"link_count"`
-	MaxFanOut      int                    `json:"max_fan_out"`
-	MaxFanIn       int                    `json:"max_fan_in"`
-	Cycles         [][]string             `json:"cycles"`
-	Violations     []GraphExportViolation `json:"violations"`
+	ComponentCount int                    `yaml:"component_count" json:"component_count"`
+	LinkCount      int                    `yaml:"link_count"      json:"link_count"`
+	MaxFanOut      int                    `yaml:"max_fan_out"     json:"max_fan_out"`
+	MaxFanIn       int                    `yaml:"max_fan_in"      json:"max_fan_in"`
+	Cycles         [][]string             `yaml:"cycles"          json:"cycles"`
+	Violations     []GraphExportViolation `yaml:"violations"      json:"violations"`
 }
 
 // GraphExportViolation is a violation entry in the exported graph metrics.
 type GraphExportViolation struct {
-	Rule      string `json:"rule"`
-	Component string `json:"component"`
-	Message   string `json:"message"`
-	Severity  string `json:"severity"`
+	Rule      string `yaml:"rule"      json:"rule"`
+	Component string `yaml:"component" json:"component"`
+	Message   string `yaml:"message"   json:"message"`
+	Severity  string `yaml:"severity"  json:"severity"`
 }
 
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "Validate architecture graph from JSON input (Unix-pipe pipeline)",
-	Long: `Read a JSON graph produced by archlint-rs collect --format json and validate it.
+	Short: "Validate architecture graph from YAML input (Unix-pipe pipeline)",
+	Long: `Read a YAML graph produced by archlint-rs scan --format yaml and validate it.
 
 This command is part of the Unix-pipe multi-language architecture pipeline:
-  archlint-rs collect . --format json | archlint validate --graph -
+  archlint-rs scan . --format yaml | archlint validate --graph -
 
 Examples:
-  archlint validate --graph graph.json
-  archlint validate --graph graph.json --format json
-  archlint-rs collect . --format json | archlint validate --graph -`,
+  archlint validate --graph graph.yaml
+  archlint validate --graph graph.yaml --format yaml
+  archlint-rs scan . --format yaml | archlint validate --graph -`,
 	RunE: runValidate,
 }
 
 func init() {
-	validateCmd.Flags().StringVar(&validateGraphFile, "graph", "", "Path to JSON graph file (use - for stdin)")
+	validateCmd.Flags().StringVar(&validateGraphFile, "graph", "", "Path to YAML graph file (use - for stdin)")
 	validateCmd.Flags().StringVar(&validateFormat, "format", "text", "Output format: text or json")
 	_ = validateCmd.MarkFlagRequired("graph")
 	rootCmd.AddCommand(validateCmd)
@@ -103,8 +104,8 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	}
 
 	var export GraphExport
-	if err := json.Unmarshal(data, &export); err != nil {
-		return fmt.Errorf("failed to parse graph JSON: %w", err)
+	if err := yaml.Unmarshal(data, &export); err != nil {
+		return fmt.Errorf("failed to parse graph YAML: %w", err)
 	}
 
 	// Convert GraphExport to model.Graph for validation
