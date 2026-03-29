@@ -487,4 +487,47 @@ allowed_dependencies:
         // No match for sibling
         assert_eq!(cfg.layer_for_module("internal::repo"), None);
     }
+
+    #[test]
+    fn test_default_level_is_telemetry() {
+        let dir = TempDir::new().unwrap();
+        let cfg = Config::load(dir.path());
+        assert_eq!(cfg.rules.fan_out.level, Level::Telemetry);
+        assert_eq!(cfg.rules.fan_in.level, Level::Telemetry);
+        assert_eq!(cfg.rules.cycles.level, Level::Telemetry);
+        assert_eq!(cfg.rules.isp.level, Level::Telemetry);
+        assert_eq!(cfg.rules.dip.level, Level::Telemetry);
+    }
+
+    #[test]
+    fn test_level_parsed_from_config() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+rules:
+  fan_out:
+    threshold: 5
+    level: taboo
+  cycles:
+    level: personal
+  isp:
+    threshold: 5
+    level: telemetry
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert_eq!(cfg.rules.fan_out.level, Level::Taboo);
+        assert_eq!(cfg.rules.cycles.level, Level::Personal);
+        assert_eq!(cfg.rules.isp.level, Level::Telemetry);
+        // fan_in not specified -> default telemetry
+        assert_eq!(cfg.rules.fan_in.level, Level::Telemetry);
+    }
+
+    #[test]
+    fn test_level_as_str() {
+        assert_eq!(Level::Taboo.as_str(), "taboo");
+        assert_eq!(Level::Telemetry.as_str(), "telemetry");
+        assert_eq!(Level::Personal.as_str(), "personal");
+    }
 }

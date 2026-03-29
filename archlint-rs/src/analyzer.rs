@@ -1547,6 +1547,56 @@ pub struct Agent {}\n\
         assert!(layer_violations.is_empty(), "no layer config -> no layer violations");
     }
 
+    // ---- Level propagation tests ----
+
+    #[test]
+    fn test_fan_out_violation_carries_level() {
+        use crate::config::Level;
+        let mut cfg = Config::default();
+        cfg.rules.fan_out.threshold = Some(2);
+        cfg.rules.fan_out.level = Level::Taboo;
+
+        // Build a node with fan-out of 3
+        let violations = run_metrics_with_config(
+            &[("a", "b"), ("a", "c"), ("a", "d")],
+            &cfg,
+        );
+        let fo_violations: Vec<_> = violations.iter().filter(|v| v.rule == "fan_out").collect();
+        assert_eq!(fo_violations.len(), 1);
+        assert_eq!(fo_violations[0].level, "taboo");
+    }
+
+    #[test]
+    fn test_fan_out_violation_default_level_is_telemetry() {
+        let mut cfg = Config::default();
+        cfg.rules.fan_out.threshold = Some(2);
+        // level is default (Telemetry)
+
+        let violations = run_metrics_with_config(
+            &[("a", "b"), ("a", "c"), ("a", "d")],
+            &cfg,
+        );
+        let fo_violations: Vec<_> = violations.iter().filter(|v| v.rule == "fan_out").collect();
+        assert_eq!(fo_violations.len(), 1);
+        assert_eq!(fo_violations[0].level, "telemetry");
+    }
+
+    #[test]
+    fn test_fan_out_personal_level() {
+        use crate::config::Level;
+        let mut cfg = Config::default();
+        cfg.rules.fan_out.threshold = Some(2);
+        cfg.rules.fan_out.level = Level::Personal;
+
+        let violations = run_metrics_with_config(
+            &[("a", "b"), ("a", "c"), ("a", "d")],
+            &cfg,
+        );
+        let fo_violations: Vec<_> = violations.iter().filter(|v| v.rule == "fan_out").collect();
+        assert_eq!(fo_violations.len(), 1);
+        assert_eq!(fo_violations[0].level, "personal");
+    }
+
     // ---- Go import path tests ----
 
     #[test]
