@@ -423,8 +423,9 @@ async fn main() {
                         _ => {
                             // YAML format (default): matches Go's architecture.yaml
                             let yaml = serde_yaml::to_string(&graph).unwrap();
-                            std::fs::write("architecture.yaml", &yaml).unwrap();
-                            println!("Граф сохранен в architecture.yaml");
+                            let output_path = dir.join("architecture.yaml");
+                            std::fs::write(&output_path, &yaml).unwrap();
+                            println!("Граф сохранен в {}", output_path.display());
                             println!("components: {}", graph.components.len());
                             println!("links: {}", graph.links.len());
                             if let Some(ref m) = graph.metrics {
