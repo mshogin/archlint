@@ -145,6 +145,9 @@ pub struct LanguageReport {
     /// Full violation objects with level info.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub violations_detail: Vec<ViolationSummary>,
+    /// Detected entry points (fan_in=0, fan_out>0 or manifest-declared binaries).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub entry_points: Vec<String>,
 }
 
 /// Compact violation summary for scan output.

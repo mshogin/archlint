@@ -383,8 +383,16 @@ async fn main() {
                             let taboo: usize = report.per_language.iter().map(|r| r.taboo_count).sum();
                             let telemetry: usize = report.per_language.iter().map(|r| r.telemetry_count).sum();
                             let personal: usize = report.per_language.iter().map(|r| r.personal_count).sum();
+                            let all_entries: Vec<String> = report.per_language.iter()
+                                .flat_map(|r| r.entry_points.iter().cloned())
+                                .collect();
+                            let entry_points_str = if all_entries.is_empty() {
+                                String::new()
+                            } else {
+                                format!(" entry_points={}", all_entries.join(","))
+                            };
                             println!(
-                                "languages={} components={} links={} violations={} taboo={} telemetry={} personal={} health={}/100",
+                                "languages={} components={} links={} violations={} taboo={} telemetry={} personal={} health={}/100{}",
                                 report.languages.join(","),
                                 report.total_components,
                                 report.total_links,
@@ -393,6 +401,7 @@ async fn main() {
                                 telemetry,
                                 personal,
                                 report.total_health,
+                                entry_points_str,
                             );
                         }
                         _ => {
@@ -408,6 +417,9 @@ async fn main() {
                                 println!("{} (architecture-{}.yaml):", lang_report.language, lang_report.language.to_lowercase());
                                 println!("  Components: {}, Links: {}", lang_report.components, lang_report.links);
                                 println!("  Health: {}/100", lang_report.health);
+                                if !lang_report.entry_points.is_empty() {
+                                    println!("  Entry points: {}", lang_report.entry_points.join(", "));
+                                }
                                 if lang_report.violation_count == 0 {
                                     println!("  Violations: 0");
                                 } else {
