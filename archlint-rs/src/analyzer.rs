@@ -67,7 +67,15 @@ pub fn analyze_with_config(dir: &Path, config: &Config) -> Result<ArchGraph, Str
     // Parse files in parallel using rayon
     let parsed: Vec<ParsedFile> = files
         .par_iter()
-        .filter_map(|path| parse_file(path, dir, &external_deps, &go_module_name).ok())
+        .filter_map(|path| {
+            match parse_file(path, dir, &external_deps, &go_module_name) {
+                Ok(pf) => Some(pf),
+                Err(e) => {
+                    eprintln!("[archlint] parse_file error for {:?}: {}", path, e);
+                    None
+                }
+            }
+        })
         .collect();
 
     // Build graph from parsed files
@@ -215,7 +223,12 @@ fn collect_source_files(dir: &Path) -> Vec<PathBuf> {
             let path = e.path();
             !path.components().any(|c| {
                 let s = c.as_os_str().to_string_lossy();
-                s.starts_with('.') || s == "vendor" || s == "target" || s == "node_modules"
+                // Skip hidden directories (e.g. .git, .cargo) but NOT "." (current dir)
+                // which appears as the first component when WalkDir is given a relative path.
+                (s.starts_with('.') && s.len() > 1)
+                    || s == "vendor"
+                    || s == "target"
+                    || s == "node_modules"
             })
         })
         .filter(|e| {
