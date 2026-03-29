@@ -84,6 +84,7 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
         // No manifest found - fall back to analyzing all files together
         let graph = analyze_with_config(dir, &config)?;
         let (components, links, violations, health, taboo_count, telemetry_count, personal_count, violations_detail) = extract_metrics(&graph);
+        let entry_points = detect_entry_points(&graph, dir);
         language_reports.push(LanguageReport {
             language: "unknown".to_string(),
             components,
@@ -95,6 +96,7 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
             telemetry_count,
             personal_count,
             violations_detail,
+            entry_points,
         });
     } else {
         for lang in &languages {
@@ -161,6 +163,7 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
             };
 
             let (_, _, violations, health, taboo_count, telemetry_count, personal_count, violations_detail) = extract_metrics(&arch_graph);
+            let entry_points = detect_entry_points(&arch_graph, dir);
 
             total_components += comp_count;
             total_links += link_count;
@@ -177,6 +180,7 @@ pub fn analyze_multi_language(dir: &Path) -> Result<MultiLanguageReport, String>
                 telemetry_count,
                 personal_count,
                 violations_detail,
+                entry_points,
             });
         }
     }
@@ -884,6 +888,106 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
         cycles,
         violations,
     }
+}
+
+/// Detect entry points from the architecture graph using topology + file-based hints.
+///
+/// An entry point is a component with fan_in=0 (no internal callers) AND fan_out>0
+/// (calls at least one other component). Additionally, for Rust projects Cargo.toml
+/// [[bin]] entries are included; for Go projects cmd/**/main.go paths are included.
+pub fn detect_entry_points(graph: &ArchGraph, dir: &Path) -> Vec<String> {
+    use std::collections::HashSet;
+
+    // Build an IndexedGraph to compute fan_in / fan_out efficiently.
+    let mut ig = IndexedGraph::new();
+    for comp in &graph.components {
+        ig.add_node(&comp.id);
+    }
+    for link in &graph.links {
+        ig.add_edge(&link.from, &link.to, "depends");
+    }
+
+    let mut entries: HashSet<String> = HashSet::new();
+
+    // Topology-based: fan_in=0 AND fan_out>0.
+    for comp in &graph.components {
+        if ig.fan_in(&comp.id) == 0 && ig.fan_out(&comp.id) > 0 {
+            entries.insert(comp.id.clone());
+        }
+    }
+
+    // File-based hints: Cargo.toml [[bin]] paths.
+    let cargo_bins = detect_cargo_bin_entries(dir);
+    for bin_path in cargo_bins {
+        // Convert path hint to a component ID (e.g. "src/main" -> "src::main").
+        let id = bin_path_to_component_id(&bin_path);
+        entries.insert(id);
+    }
+
+    // File-based hints: Go cmd/**/main.go.
+    let go_mains = detect_go_cmd_mains(dir);
+    for main_path in go_mains {
+        let id = bin_path_to_component_id(&main_path);
+        entries.insert(id);
+    }
+
+    let mut result: Vec<String> = entries.into_iter().collect();
+    result.sort();
+    result
+}
+
+/// Read [[bin]] entries from Cargo.toml and return their `path` fields (without extension).
+/// Falls back to "src/main" if Cargo.toml has a [[bin]] with no path (implicit default).
+fn detect_cargo_bin_entries(dir: &Path) -> Vec<String> {
+    let cargo_path = dir.join("Cargo.toml");
+    let content = match fs::read_to_string(&cargo_path) {
+        Ok(c) => c,
+        Err(_) => return Vec::new(),
+    };
+    let doc: toml::Value = match toml::from_str(&content) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+    let mut paths = Vec::new();
+    if let Some(bins) = doc.get("bin").and_then(|v| v.as_array()) {
+        for bin in bins {
+            if let Some(path) = bin.get("path").and_then(|p| p.as_str()) {
+                // Strip extension: "src/main.rs" -> "src/main"
+                let stripped = path.trim_end_matches(".rs");
+                paths.push(stripped.to_string());
+            } else {
+                // No explicit path -> Cargo default: src/main.rs
+                paths.push("src/main".to_string());
+            }
+        }
+    }
+    paths
+}
+
+/// Find Go cmd/ main packages by looking for cmd/**/main.go files.
+/// Returns paths relative to the project root, without extension (e.g. "cmd/server").
+fn detect_go_cmd_mains(dir: &Path) -> Vec<String> {
+    let cmd_dir = dir.join("cmd");
+    if !cmd_dir.exists() {
+        return Vec::new();
+    }
+    WalkDir::new(&cmd_dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_name() == "main.go")
+        .filter_map(|e| {
+            // Get the parent directory of main.go relative to project root.
+            let parent = e.path().parent()?;
+            let rel = parent.strip_prefix(dir).ok()?;
+            Some(rel.to_string_lossy().replace('\\', "/"))
+        })
+        .collect()
+}
+
+/// Convert a file path hint (e.g. "src/main" or "cmd/server") to a component ID
+/// as used internally (e.g. "src::main" or "cmd::server").
+fn bin_path_to_component_id(path: &str) -> String {
+    path.replace('/', "::")
 }
 
 fn detect_cycles(graph: &IndexedGraph) -> Vec<Vec<String>> {
