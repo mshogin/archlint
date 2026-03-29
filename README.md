@@ -18,8 +18,9 @@ archlint scan .
 # Build structural graph
 archlint collect . -o architecture.yaml
 
-# Validate cross-language pipeline (Rust -> Go)
-archlint-rs scan . --format yaml | archlint validate --graph -
+# Cross-pipeline validation (Rust -> Go)
+archlint-rs collect /my/rust/project/ -o graph.yaml
+archlint validate --graph graph.yaml
 ```
 
 Output from `archlint scan .`:
@@ -109,18 +110,36 @@ per_language:
     violations: 9
 ```
 
-### Cross-Language Pipeline (Rust scan -> Go validate)
+### Cross-Language Pipeline (collect -> validate)
 
-Unix-pipe workflow for validating Rust projects with Go rules:
+Validate architecture from one language using another language's rules engine:
+
+**Correct approach: use `collect` to generate flat graph**
 
 ```bash
-# Scan Rust project, validate with Go rules engine
-archlint-rs scan ./my-rust-project --format yaml | archlint validate --graph -
+# Collect Rust project into flat architecture graph
+archlint-rs collect ./my-rust-project -o graph.yaml
 
-# Save intermediate graph
-archlint-rs scan . --format yaml > graph.yaml
+# Validate with Go rules engine
+archlint validate --graph graph.yaml
+
+# Combined with formatting
+archlint-rs collect . -o graph.yaml
 archlint validate --graph graph.yaml --format json
 ```
+
+**Why not `scan --format yaml`?**
+
+- `scan` produces a per-language summary (health scores, violations report)
+- `validate` requires a flat architecture graph with all components and dependencies
+- Using `scan` output with `validate` will fail or produce incorrect results
+
+**Output formats:**
+
+| Command | Output | Use case |
+|---------|--------|----------|
+| `collect` | Flat architecture.yaml | Input for `validate`, cross-pipeline |
+| `scan --format yaml` | Per-language health report | CI/humans, not for `validate` |
 
 ### GitHub Action (in Marketplace)
 
