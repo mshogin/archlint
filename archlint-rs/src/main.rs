@@ -10,6 +10,7 @@ mod perflint;
 mod promptlint;
 mod seclint;
 mod server;
+mod session;
 mod watch;
 
 use clap::{Parser, Subcommand};
@@ -182,6 +183,23 @@ enum Commands {
         /// Output file path (use "-" or omit for stdout)
         #[arg(long)]
         output: Option<PathBuf>,
+    },
+    /// Analyze a Claude Code session JSONL file for workflow patterns
+    Session {
+        /// Path to the JSONL session file
+        file: PathBuf,
+
+        /// Detect and show workflow patterns
+        #[arg(long)]
+        patterns: bool,
+
+        /// Output architecture graph as YAML (components = tool types, links = sequential calls)
+        #[arg(long)]
+        graph: bool,
+
+        /// Output format: json, text
+        #[arg(long, default_value = "text")]
+        format: String,
     },
 }
 
@@ -624,6 +642,89 @@ async fn main() {
             if let Err(e) = watch::watch(&dir, fix) {
                 eprintln!("Error: {}", e);
                 std::process::exit(1);
+            }
+        }
+        Commands::Session { file, patterns, graph, format } => {
+            let content = match std::fs::read_to_string(&file) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("Error reading {}: {}", file.display(), e);
+                    std::process::exit(1);
+                }
+            };
+
+            if graph {
+                let arch = session::to_arch_graph(&content);
+                let yaml = serde_yaml::to_string(&arch).unwrap();
+                println!("{}", yaml);
+                return;
+            }
+
+            let report = session::analyze(&content);
+
+            match format.as_str() {
+                "json" => {
+                    let json = serde_json::to_string_pretty(&report).unwrap();
+                    println!("{}", json);
+                }
+                _ => {
+                    // Text format
+                    println!("Session analysis: {}", file.display());
+                    println!("  Total tool calls: {}", report.total_tool_calls);
+                    println!();
+
+                    if !report.tool_frequencies.is_empty() {
+                        println!("Tool frequencies:");
+                        for f in &report.tool_frequencies {
+                            println!("  {:20} {}", f.tool, f.count);
+                        }
+                        println!();
+                    }
+
+                    if patterns || !report.patterns.is_empty() {
+                        println!("Detected patterns:");
+                        if report.patterns.is_empty() {
+                            println!("  (none)");
+                        } else {
+                            for p in &report.patterns {
+                                println!(
+                                    "  [{}] {} (x{}) - {}",
+                                    p.name,
+                                    p.sequence.join("->"),
+                                    p.occurrences,
+                                    p.description
+                                );
+                            }
+                        }
+                        println!();
+                    }
+
+                    if !report.flags.is_empty() {
+                        println!("Flags:");
+                        for f in &report.flags {
+                            let tool_str = f.tool.as_deref().map(|t| format!(" ({})", t)).unwrap_or_default();
+                            println!("  [{}]{} {}", f.kind, tool_str, f.detail);
+                        }
+                        println!();
+                    }
+
+                    if patterns {
+                        if !report.bigrams.is_empty() {
+                            println!("Top bigrams:");
+                            for b in report.bigrams.iter().take(5) {
+                                println!("  {} x{}", b.sequence.join("->"), b.count);
+                            }
+                            println!();
+                        }
+                        if !report.trigrams.is_empty() {
+                            println!("Top trigrams:");
+                            for t in report.trigrams.iter().take(5) {
+                                println!("  {} x{}", t.sequence.join("->"), t.count);
+                            }
+                            println!();
+                        }
+                    }
+                }
             }
         }
         Commands::Badge { dir, output } => {
