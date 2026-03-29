@@ -214,7 +214,7 @@ Go CLI invokes Python validators via subprocess. With `-p` (parallel) flag, grou
 Validators are configured via `.archlint.yaml`:
 
 ```yaml
-validators:
+rules:
   dag_check:
     enabled: true
     error_on_violation: true
@@ -222,7 +222,7 @@ validators:
       - "external/*"
       - "generated/*"
 
-  max_fan_out:
+  fan_out:
     threshold: 5
     error_on_violation: false
 
