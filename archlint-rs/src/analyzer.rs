@@ -639,10 +639,20 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
         if trimmed.starts_with("use ") || trimmed.starts_with("pub use ") {
             // Internal: crate::, self::, super:: — always count
             if re_use_internal.is_match(trimmed) {
-                // Extract the module name after the prefix
+                // Extract the module name after the prefix and resolve to a qualified ID
+                // so it matches component IDs (e.g. "src::analyzer").
+                // For `use crate::X` in module `src::foo`, the dep is `src::X`.
                 let re_internal_name = Regex::new(r"^(?:pub\s+)?use\s+(?:crate|self|super)::(\w+)").unwrap();
                 if let Some(cap) = re_internal_name.captures(trimmed) {
-                    deps.push(cap[1].to_string());
+                    let short_name = cap[1].to_string();
+                    // Determine crate root: first segment of module_name (e.g. "src" from "src::analyzer")
+                    let crate_root = module_name.split("::").next().unwrap_or("");
+                    let qualified = if crate_root.is_empty() {
+                        short_name
+                    } else {
+                        format!("{}::{}", crate_root, short_name)
+                    };
+                    deps.push(qualified);
                 }
             } else if let Some(cap) = re_use_external.captures(trimmed) {
                 let crate_name = &cap[1];
@@ -919,8 +929,8 @@ use super::utils;\n\
         assert!(!pf.dependencies.contains(&"serde".to_string()), "serde should be filtered");
         assert!(!pf.dependencies.contains(&"anyhow".to_string()), "anyhow should be filtered");
         assert!(!pf.dependencies.contains(&"tracing".to_string()), "tracing should be filtered");
-        assert!(pf.dependencies.contains(&"model".to_string()), "crate::model should be kept");
-        assert!(pf.dependencies.contains(&"utils".to_string()), "super::utils should be kept");
+        assert!(pf.dependencies.contains(&"mymod::model".to_string()), "crate::model should be kept as qualified");
+        assert!(pf.dependencies.contains(&"mymod::utils".to_string()), "super::utils should be kept as qualified");
     }
 
     #[test]
@@ -936,7 +946,7 @@ use crate::config;\n\
         assert!(!pf.dependencies.contains(&"std".to_string()), "std should be filtered");
         assert!(!pf.dependencies.contains(&"core".to_string()), "core should be filtered");
         assert!(!pf.dependencies.contains(&"alloc".to_string()), "alloc should be filtered");
-        assert!(pf.dependencies.contains(&"config".to_string()), "crate::config should be kept");
+        assert!(pf.dependencies.contains(&"mymod::config".to_string()), "crate::config should be kept as qualified");
     }
 
     #[test]
@@ -949,10 +959,10 @@ use self::helper;\n\
 use super::parent;\n\
 ";
         let pf = parse_rust_file(code, "mymod", &external).unwrap();
-        assert!(pf.dependencies.contains(&"analyzer".to_string()));
-        assert!(pf.dependencies.contains(&"model".to_string()));
-        assert!(pf.dependencies.contains(&"helper".to_string()));
-        assert!(pf.dependencies.contains(&"parent".to_string()));
+        assert!(pf.dependencies.contains(&"mymod::analyzer".to_string()));
+        assert!(pf.dependencies.contains(&"mymod::model".to_string()));
+        assert!(pf.dependencies.contains(&"mymod::helper".to_string()));
+        assert!(pf.dependencies.contains(&"mymod::parent".to_string()));
     }
 
     #[test]
@@ -986,7 +996,35 @@ use crate::model;\n\
 ";
         let pf = parse_rust_file(code, "mymod", &external).unwrap();
         assert_eq!(pf.dependencies.len(), 1);
-        assert_eq!(pf.dependencies[0], "model");
+        assert_eq!(pf.dependencies[0], "mymod::model");
+    }
+
+    #[test]
+    fn test_fan_in_metric_nonzero() {
+        // Regression test for: fan_in always 0 because link "to" used short names
+        // but components used qualified IDs.
+        // Two modules: src::main depends on src::lib. fan_in(src::lib) should be 1.
+        let external = make_deps(&[]);
+        let main_code = "use crate::lib;\n";
+        let lib_code = "";
+        let pf_main = parse_rust_file(main_code, "src::main", &external).unwrap();
+        let pf_lib = parse_rust_file(lib_code, "src::lib", &external).unwrap();
+
+        let mut graph = IndexedGraph::new();
+        let components = vec![
+            crate::model::Component { id: "src::main".to_string(), title: "src::main".to_string(), entity: "rust".to_string() },
+            crate::model::Component { id: "src::lib".to_string(), title: "src::lib".to_string(), entity: "rust".to_string() },
+        ];
+        for pf in &[&pf_main, &pf_lib] {
+            graph.add_node(&pf.module_name);
+            for dep in &pf.dependencies {
+                graph.add_edge(&pf.module_name, dep, "depends");
+            }
+        }
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf_main, pf_lib], &config);
+        assert_eq!(metrics.max_fan_in, 1, "src::lib should have fan_in=1 from src::main");
+        assert_eq!(metrics.max_fan_out, 1, "src::main should have fan_out=1");
     }
 
     #[test]
