@@ -9,6 +9,11 @@ use std::collections::HashMap;
 pub struct SessionMessage {
     pub role: Option<String>,
     pub content: Option<serde_json::Value>,
+    // Claude Code wraps the message under a "message" key
+    pub message: Option<Box<SessionMessage>>,
+    // Top-level type field ("assistant" | "user" | ...)
+    #[serde(rename = "type")]
+    pub msg_type: Option<String>,
 }
 
 // --- Output types ---
@@ -71,24 +76,8 @@ pub struct TrigramFrequency {
 
 // --- Parsing ---
 
-/// Parse a single JSONL line and extract tool_use names.
-fn extract_tool_uses(line: &str) -> Vec<String> {
-    let msg: SessionMessage = match serde_json::from_str(line) {
-        Ok(m) => m,
-        Err(_) => return vec![],
-    };
-
-    // Only assistant messages carry tool_use blocks.
-    let role = msg.role.as_deref().unwrap_or("");
-    if role != "assistant" {
-        return vec![];
-    }
-
-    let content = match &msg.content {
-        Some(c) => c,
-        None => return vec![],
-    };
-
+/// Extract tool_use names from a content array (serde_json::Value::Array).
+fn extract_names_from_content(content: &serde_json::Value) -> Vec<String> {
     let mut names = Vec::new();
     match content {
         serde_json::Value::Array(items) => {
@@ -100,13 +89,50 @@ fn extract_tool_uses(line: &str) -> Vec<String> {
                 }
             }
         }
-        serde_json::Value::String(text) => {
-            // Some formats embed content as a plain string - no tool_use here.
-            let _ = text;
+        serde_json::Value::String(_) => {
+            // Plain string content carries no tool_use blocks.
         }
         _ => {}
     }
     names
+}
+
+/// Parse a single JSONL line and extract tool_use names.
+///
+/// Supports two formats:
+/// 1. Claude Code format: `{"type":"assistant","message":{"role":"assistant","content":[...]},...}`
+/// 2. Generic format:     `{"role":"assistant","content":[...]}`
+fn extract_tool_uses(line: &str) -> Vec<String> {
+    let msg: SessionMessage = match serde_json::from_str(line) {
+        Ok(m) => m,
+        Err(_) => return vec![],
+    };
+
+    // --- Claude Code format: top-level "type" + nested "message" ---
+    if let Some(inner) = &msg.message {
+        // Accept only assistant messages.
+        let role = inner.role.as_deref().unwrap_or("");
+        let top_type = msg.msg_type.as_deref().unwrap_or("");
+        if role != "assistant" && top_type != "assistant" {
+            return vec![];
+        }
+        if let Some(content) = &inner.content {
+            return extract_names_from_content(content);
+        }
+        return vec![];
+    }
+
+    // --- Generic format: top-level "role" + "content" ---
+    let role = msg.role.as_deref().unwrap_or("");
+    let top_type = msg.msg_type.as_deref().unwrap_or("");
+    if role != "assistant" && top_type != "assistant" {
+        return vec![];
+    }
+
+    match &msg.content {
+        Some(content) => extract_names_from_content(content),
+        None => vec![],
+    }
 }
 
 /// Parse a JSONL session and return the ordered list of tool calls.
@@ -373,6 +399,14 @@ mod tests {
         )
     }
 
+    /// Claude Code JSONL format: top-level "type" + nested "message".
+    fn make_claude_code_line(tool: &str) -> String {
+        format!(
+            r#"{{"parentUuid":"abc","isSidechain":false,"type":"assistant","uuid":"xyz","timestamp":"2026-01-01T00:00:00Z","message":{{"model":"claude-sonnet-4-5","type":"message","role":"assistant","content":[{{"type":"tool_use","id":"tu_1","name":"{}","input":{{}}}}]}}}}"#,
+            tool
+        )
+    }
+
     #[test]
     fn test_parse_empty() {
         let calls = parse_tool_chain("");
@@ -494,5 +528,64 @@ mod tests {
         let report = analyze(&session);
         let flagged = report.flags.iter().any(|f| f.kind == "consecutive_loop");
         assert!(flagged, "consecutive_loop flag should be set");
+    }
+
+    // --- Claude Code format tests ---
+
+    #[test]
+    fn test_claude_code_format_single_tool() {
+        let line = make_claude_code_line("Read");
+        let calls = parse_tool_chain(&line);
+        assert_eq!(calls.len(), 1);
+        assert_eq!(calls[0].tool, "Read");
+    }
+
+    #[test]
+    fn test_claude_code_format_multiple_lines() {
+        let session = [
+            make_claude_code_line("Read"),
+            make_claude_code_line("Edit"),
+            make_claude_code_line("Bash"),
+        ]
+        .join("\n");
+        let calls = parse_tool_chain(&session);
+        assert_eq!(calls.len(), 3);
+        assert_eq!(calls[0].tool, "Read");
+        assert_eq!(calls[1].tool, "Edit");
+        assert_eq!(calls[2].tool, "Bash");
+    }
+
+    #[test]
+    fn test_claude_code_format_non_assistant_ignored() {
+        // A user message in Claude Code format should be ignored.
+        let user_line = r#"{"type":"user","uuid":"x","message":{"role":"user","content":[{"type":"tool_result","content":"ok"}]}}"#;
+        let calls = parse_tool_chain(user_line);
+        assert!(calls.is_empty());
+    }
+
+    #[test]
+    fn test_mixed_formats_parsed_together() {
+        // Generic format line followed by Claude Code format line.
+        let generic = make_tool_use_line("Glob");
+        let cc = make_claude_code_line("Grep");
+        let session = format!("{}\n{}", generic, cc);
+        let calls = parse_tool_chain(&session);
+        assert_eq!(calls.len(), 2);
+        assert_eq!(calls[0].tool, "Glob");
+        assert_eq!(calls[1].tool, "Grep");
+    }
+
+    #[test]
+    fn test_claude_code_format_pattern_detected() {
+        let session = [
+            make_claude_code_line("Read"),
+            make_claude_code_line("Grep"),
+            make_claude_code_line("Edit"),
+        ]
+        .join("\n");
+        let report = analyze(&session);
+        assert_eq!(report.total_tool_calls, 3);
+        let found = report.patterns.iter().any(|p| p.name == "refactoring");
+        assert!(found, "refactoring pattern should be detected in Claude Code format");
     }
 }
