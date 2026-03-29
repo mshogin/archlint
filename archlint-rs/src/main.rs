@@ -1,4 +1,5 @@
 mod analyzer;
+mod badge;
 mod config;
 mod costlint;
 mod diff;
@@ -171,6 +172,16 @@ enum Commands {
         /// Automatically show fix suggestions when violations are detected
         #[arg(long)]
         fix: bool,
+    },
+    /// Generate a health badge SVG for a project directory
+    Badge {
+        /// Project directory to analyze
+        #[arg(default_value = ".")]
+        dir: PathBuf,
+
+        /// Output file path (use "-" or omit for stdout)
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
 }
 
@@ -538,6 +549,36 @@ async fn main() {
             if let Err(e) = watch::watch(&dir, fix) {
                 eprintln!("Error: {}", e);
                 std::process::exit(1);
+            }
+        }
+        Commands::Badge { dir, output } => {
+            match analyzer::analyze(&dir) {
+                Ok(graph) => {
+                    let violation_count = graph
+                        .metrics
+                        .as_ref()
+                        .map(|m| m.violations.len())
+                        .unwrap_or(0);
+                    let score = badge::score_from_violations(violation_count);
+                    let svg = badge::generate_badge(score);
+
+                    match output {
+                        Some(ref path) if path.to_str() != Some("-") => {
+                            if let Err(e) = std::fs::write(path, &svg) {
+                                eprintln!("Error writing badge to {}: {}", path.display(), e);
+                                std::process::exit(1);
+                            }
+                            eprintln!("Badge written to {} (score: {}/100, violations: {})", path.display(), score, violation_count);
+                        }
+                        _ => {
+                            print!("{}", svg);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(2);
+                }
             }
         }
     }
