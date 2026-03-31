@@ -150,23 +150,51 @@ fn analyze_file(path: &Path, base_dir: &Path) -> Result<FileResult, String> {
     }
 
     // Nesting depth analysis
+    // Only count actual loop constructs (for/while/loop) as nesting depth,
+    // not control flow (if/match). This avoids false positives on deeply
+    // nested if/match chains which don't have O(n^k) complexity implications.
+    let loop_nesting_re = Regex::new(r"^\s*(for|while|loop)\b").unwrap();
     let mut max_nesting: usize = 0;
-    let mut current_nesting: usize = 0;
+    // Track nesting using brace depth relative to each loop start
+    let mut loop_brace_stack: Vec<i32> = Vec::new(); // brace_depth when loop opened
+    let mut brace_depth_nesting: i32 = 0;
+    let deep_nesting_threshold = 8; // Raised from 5 to reduce noise
+    let mut last_deep_nesting_file: Option<(String, usize)> = None; // dedup per file
     for (i, line) in content.lines().enumerate() {
-        let open = line.chars().filter(|&c| c == '{').count();
-        let close = line.chars().filter(|&c| c == '}').count();
-        current_nesting = current_nesting.saturating_add(open).saturating_sub(close);
+        let open = line.chars().filter(|&c| c == '{').count() as i32;
+        let close = line.chars().filter(|&c| c == '}').count() as i32;
+
+        // Check if this line starts a loop (before counting braces for this line)
+        if loop_nesting_re.is_match(line) {
+            loop_brace_stack.push(brace_depth_nesting);
+        }
+
+        brace_depth_nesting += open - close;
+
+        // Pop loops whose opening brace depth is now above current depth
+        loop_brace_stack.retain(|&open_depth| brace_depth_nesting > open_depth);
+        let current_nesting = loop_brace_stack.len();
+
         if current_nesting > max_nesting {
             max_nesting = current_nesting;
         }
-        if current_nesting > 5 {
-            result.issues.push(PerfIssue {
-                file: rel_path.clone(),
-                line: i + 1,
-                kind: "deep_nesting".to_string(),
-                message: format!("nesting depth {} exceeds limit 5", current_nesting),
-                severity: "warning".to_string(),
-            });
+
+        if brace_depth_nesting as usize > deep_nesting_threshold {
+            // Dedup: only one warning per file (avoid 714 warnings per file)
+            let should_warn = match &last_deep_nesting_file {
+                None => true,
+                Some((f, _)) => f != &rel_path,
+            };
+            if should_warn {
+                last_deep_nesting_file = Some((rel_path.clone(), i + 1));
+                result.issues.push(PerfIssue {
+                    file: rel_path.clone(),
+                    line: i + 1,
+                    kind: "deep_nesting".to_string(),
+                    message: format!("nesting depth {} exceeds limit {}", brace_depth_nesting, deep_nesting_threshold),
+                    severity: "warning".to_string(),
+                });
+            }
         }
     }
     result.max_nesting = max_nesting;
@@ -186,25 +214,35 @@ fn analyze_file(path: &Path, base_dir: &Path) -> Result<FileResult, String> {
     }
 
     // Nested loops (O(n^2))
-    let loop_re = Regex::new(r"^\s*(for|while|loop)\b").unwrap();
-    let mut loop_depth = 0;
+    // Only for/while/loop constructs contribute to nested loop depth.
+    // if/match are branching, not iteration - they don't create O(n^k) complexity.
+    let loop_kw_re = Regex::new(r"^\s*(for|while|loop)\b").unwrap();
+    // Stack of brace depths at which each loop was opened
+    let mut nested_loop_brace_stack: Vec<i32> = Vec::new();
+    let mut nested_brace_depth: i32 = 0;
     for (i, line) in content.lines().enumerate() {
-        if loop_re.is_match(line) {
-            loop_depth += 1;
-            if loop_depth >= 2 {
+        let open = line.chars().filter(|&c| c == '{').count() as i32;
+        let close = line.chars().filter(|&c| c == '}').count() as i32;
+
+        // If this line opens a loop, push current depth before counting this line's braces
+        if loop_kw_re.is_match(line) {
+            nested_loop_brace_stack.push(nested_brace_depth);
+            let depth = nested_loop_brace_stack.len();
+            if depth >= 2 {
                 result.issues.push(PerfIssue {
                     file: rel_path.clone(),
                     line: i + 1,
                     kind: "nested_loop".to_string(),
-                    message: format!("nested loop depth {} - O(n^{}) complexity", loop_depth, loop_depth),
+                    message: format!("nested loop depth {} - O(n^{}) complexity", depth, depth),
                     severity: "warning".to_string(),
                 });
             }
         }
-        if line.contains('}') && loop_depth > 0 {
-            // Simplified: any closing brace might end a loop
-            // For accurate analysis, need proper AST parsing
-        }
+
+        nested_brace_depth += open - close;
+
+        // Pop any loops whose scope has ended (brace depth has returned to opening level)
+        nested_loop_brace_stack.retain(|&open_depth| nested_brace_depth > open_depth);
     }
 
     Ok(result)
@@ -239,6 +277,114 @@ mod tests {
         let report = analyze(&dir);
         assert!(report.files_scanned > 0);
         assert_eq!(report.max_cyclomatic_complexity, 1);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_nested_if_not_counted_as_loop() {
+        // Deeply nested if/match should NOT produce nested_loop warnings
+        let dir = std::env::temp_dir().join("perftest_if");
+        let _ = fs::create_dir_all(&dir);
+        let code = r#"
+fn agent_handler(x: i32) -> i32 {
+    if x > 0 {
+        if x > 10 {
+            if x > 100 {
+                match x {
+                    1 => {
+                        if x > 5 {
+                            if x > 50 {
+                                return 1;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    0
+}
+"#;
+        fs::write(dir.join("agent.rs"), code).unwrap();
+        let report = analyze(&dir);
+        let nested_loop_issues: Vec<_> = report.issues.iter()
+            .filter(|i| i.kind == "nested_loop")
+            .collect();
+        assert!(
+            nested_loop_issues.is_empty(),
+            "nested if/match should not produce nested_loop warnings, got: {:?}",
+            nested_loop_issues
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_real_nested_loops_detected() {
+        // Actual nested for loops SHOULD produce nested_loop warnings
+        let dir = std::env::temp_dir().join("perftest_loops");
+        let _ = fs::create_dir_all(&dir);
+        let code = r#"
+fn matrix_mul(a: &[Vec<i32>], b: &[Vec<i32>]) -> Vec<Vec<i32>> {
+    let n = a.len();
+    let mut result = vec![vec![0; n]; n];
+    for i in 0..n {
+        for j in 0..n {
+            for k in 0..n {
+                result[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+    result
+}
+"#;
+        fs::write(dir.join("matrix.rs"), code).unwrap();
+        let report = analyze(&dir);
+        let nested_loop_issues: Vec<_> = report.issues.iter()
+            .filter(|i| i.kind == "nested_loop")
+            .collect();
+        assert!(
+            !nested_loop_issues.is_empty(),
+            "nested for loops should produce nested_loop warnings"
+        );
+        // Should detect O(n^2) and O(n^3)
+        let max_depth = nested_loop_issues.iter()
+            .map(|i| {
+                i.message.split("depth ").nth(1)
+                    .and_then(|s| s.split(' ').next())
+                    .and_then(|s| s.parse::<usize>().ok())
+                    .unwrap_or(0)
+            })
+            .max()
+            .unwrap_or(0);
+        assert!(max_depth >= 3, "should detect O(n^3) nesting, got depth {}", max_depth);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_deep_nesting_dedup() {
+        // deep_nesting should produce at most 1 warning per file (dedup)
+        let dir = std::env::temp_dir().join("perftest_dedup");
+        let _ = fs::create_dir_all(&dir);
+        // Create deeply nested code that would previously produce hundreds of warnings
+        let mut code = String::from("fn deep() {\n");
+        for _ in 0..15 {
+            code.push_str("    if true {\n");
+        }
+        for _ in 0..15 {
+            code.push_str("    }\n");
+        }
+        code.push_str("}\n");
+        fs::write(dir.join("deep.rs"), &code).unwrap();
+        let report = analyze(&dir);
+        let deep_nesting_issues: Vec<_> = report.issues.iter()
+            .filter(|i| i.kind == "deep_nesting")
+            .collect();
+        assert!(
+            deep_nesting_issues.len() <= 1,
+            "deep_nesting should be deduped to at most 1 warning per file, got {}",
+            deep_nesting_issues.len()
+        );
         let _ = fs::remove_dir_all(&dir);
     }
 }
