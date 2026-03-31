@@ -268,16 +268,25 @@ impl Config {
     }
 
     /// Resolve which layer name the given module path belongs to.
-    /// `module_id` uses `::` as separator (e.g. "internal::handler::users").
-    /// The corresponding file path segment is derived by replacing `::` with `/`.
+    ///
+    /// `module_id` uses `::` as separator (e.g. "src::bus", "internal::handler::users").
+    /// Config `paths` may use either `/` (e.g. "src/bus") or `::` (e.g. "src::bus").
+    ///
+    /// Both separators are normalised to `/` before matching so that flat `src/`
+    /// structures (where each file is its own module — "src::bus", "src::agent")
+    /// are matched correctly against config entries like "src/bus" or "src/agent".
+    ///
     /// Returns `None` if no layer matches.
     pub fn layer_for_module(&self, module_id: &str) -> Option<&str> {
-        // Convert module id to a path-like string for prefix matching.
+        // Normalise module id: replace `::` separator with `/`.
         let as_path = module_id.replace("::", "/");
         for layer in &self.layers {
             for prefix in &layer.paths {
-                // Normalize prefix slashes
-                let norm = prefix.trim_end_matches('/');
+                // Normalise config prefix: replace `::` with `/` and strip trailing `/`.
+                let norm = prefix.replace("::", "/");
+                let norm = norm.trim_end_matches('/');
+                // Exact match (flat module — "src/bus" == "src/bus") or
+                // prefix match (nested module — "src/handler/users".starts_with("src/handler/")).
                 if as_path == norm || as_path.starts_with(&format!("{}/", norm)) {
                     return Some(&layer.name);
                 }
@@ -529,5 +538,78 @@ rules:
         assert_eq!(Level::Taboo.as_str(), "taboo");
         assert_eq!(Level::Telemetry.as_str(), "telemetry");
         assert_eq!(Level::Personal.as_str(), "personal");
+    }
+
+    /// Flat src/ structure: each file is a top-level module (e.g. src/bus.rs -> src::bus).
+    /// Config paths use slash notation ("src/bus"). Verify that layer_for_module matches
+    /// flat modules correctly via exact match and does not accidentally match siblings.
+    #[test]
+    fn test_layer_flat_src_modules_slash_paths() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+layers:
+  - name: domain
+    paths: ["src/message", "src/context"]
+  - name: infra
+    paths: ["src/bus", "src/agent", "src/config"]
+  - name: app
+    paths: ["src/worker"]
+
+allowed_dependencies:
+  domain: []
+  infra: [domain]
+  app: [domain, infra]
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert_eq!(cfg.layers.len(), 3);
+        assert!(cfg.has_layer_rules());
+
+        // Flat modules resolve to the correct layer.
+        assert_eq!(cfg.layer_for_module("src::message"), Some("domain"));
+        assert_eq!(cfg.layer_for_module("src::context"), Some("domain"));
+        assert_eq!(cfg.layer_for_module("src::bus"),     Some("infra"));
+        assert_eq!(cfg.layer_for_module("src::agent"),   Some("infra"));
+        assert_eq!(cfg.layer_for_module("src::config"),  Some("infra"));
+        assert_eq!(cfg.layer_for_module("src::worker"),  Some("app"));
+
+        // Module not listed in any layer returns None.
+        assert_eq!(cfg.layer_for_module("src::unknown"), None);
+
+        // Allowed-dependency map is correct.
+        let domain_allowed = cfg.allowed_dependencies.get("domain").unwrap();
+        assert!(domain_allowed.is_empty(), "domain must not depend on anything");
+
+        let infra_allowed = cfg.allowed_dependencies.get("infra").unwrap();
+        assert!(infra_allowed.contains(&"domain".to_string()));
+    }
+
+    /// Config paths that use `::` notation (e.g. "src::bus") should also be normalised
+    /// and match module ids written with either separator.
+    #[test]
+    fn test_layer_flat_src_modules_colonsep_paths() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+layers:
+  - name: domain
+    paths: ["src::message", "src::context"]
+  - name: infra
+    paths: ["src::bus"]
+
+allowed_dependencies:
+  domain: []
+  infra: [domain]
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        // Config paths written with `::` must still match module ids.
+        assert_eq!(cfg.layer_for_module("src::message"), Some("domain"));
+        assert_eq!(cfg.layer_for_module("src::context"), Some("domain"));
+        assert_eq!(cfg.layer_for_module("src::bus"),     Some("infra"));
+        assert_eq!(cfg.layer_for_module("src::other"),   None);
     }
 }

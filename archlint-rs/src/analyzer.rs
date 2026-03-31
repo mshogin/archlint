@@ -2221,4 +2221,144 @@ path = "src/server/main.rs"
         assert_eq!(bin_path_to_component_id("cmd/server"), "cmd::server");
         assert_eq!(bin_path_to_component_id("src/server/main"), "src::server::main");
     }
+
+    /// Regression test for issue #97: layer enforcement for flat src/ modules.
+    ///
+    /// A flat Rust project has modules like `src::context`, `src::config` — each a
+    /// top-level file under `src/`. Config paths are individual names ("src/context",
+    /// "src/config"). The layer checker must match these flat module IDs correctly and
+    /// report violations when a domain module imports an infra module.
+    #[test]
+    fn test_layer_violation_flat_src_modules() {
+        use crate::config::{Config, LayerDef};
+        use std::collections::HashMap;
+
+        // src::context (domain) imports src::config (infra) -> violation.
+        // src::worker (app) imports src::context (domain) -> allowed.
+        let empty = make_deps(&[]);
+
+        let pf_context = parse_rust_file(
+            "use crate::config;\n",
+            "src::context",
+            &empty,
+        ).unwrap();
+        let pf_config = parse_rust_file(
+            "",
+            "src::config",
+            &empty,
+        ).unwrap();
+        let pf_worker = parse_rust_file(
+            "use crate::context;\n",
+            "src::worker",
+            &empty,
+        ).unwrap();
+
+        let mut graph = IndexedGraph::new();
+        let components = vec![
+            crate::model::Component { id: "src::context".to_string(), title: "src::context".to_string(), entity: "rust".to_string() },
+            crate::model::Component { id: "src::config".to_string(),  title: "src::config".to_string(),  entity: "rust".to_string() },
+            crate::model::Component { id: "src::worker".to_string(),  title: "src::worker".to_string(),  entity: "rust".to_string() },
+        ];
+        for pf in &[&pf_context, &pf_config, &pf_worker] {
+            graph.add_node(&pf.module_name);
+            for dep in &pf.dependencies {
+                graph.add_edge(&pf.module_name, dep, "depends");
+            }
+        }
+
+        let mut allowed = HashMap::new();
+        allowed.insert("domain".to_string(), vec![]);
+        allowed.insert("infra".to_string(),  vec!["domain".to_string()]);
+        allowed.insert("app".to_string(),    vec!["domain".to_string(), "infra".to_string()]);
+
+        let config = Config {
+            layers: vec![
+                LayerDef { name: "domain".to_string(), paths: vec!["src/context".to_string(), "src/message".to_string()] },
+                LayerDef { name: "infra".to_string(),  paths: vec!["src/config".to_string(), "src/bus".to_string()] },
+                LayerDef { name: "app".to_string(),    paths: vec!["src/worker".to_string()] },
+            ],
+            allowed_dependencies: allowed,
+            ..Config::default()
+        };
+
+        let metrics = calculate_metrics(
+            &graph,
+            &components,
+            &[pf_context, pf_config, pf_worker],
+            &config,
+        );
+
+        let layer_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "layer")
+            .collect();
+
+        // src::context (domain) -> src::config (infra): forbidden (domain allows nothing).
+        assert_eq!(layer_violations.len(), 1,
+            "expected exactly 1 layer violation, got: {:?}", layer_violations);
+        assert_eq!(layer_violations[0].component, "src::context");
+        assert!(layer_violations[0].message.contains("domain"),
+            "violation message should name source layer: {}", layer_violations[0].message);
+        assert!(layer_violations[0].message.contains("infra"),
+            "violation message should name target layer: {}", layer_violations[0].message);
+    }
+
+    /// Verify that allowed cross-layer dependencies do NOT produce violations.
+    #[test]
+    fn test_layer_no_violation_when_allowed() {
+        use crate::config::{Config, LayerDef};
+        use std::collections::HashMap;
+
+        // src::worker (app) imports src::context (domain): allowed by app: [domain, infra].
+        let empty = make_deps(&[]);
+
+        let pf_worker = parse_rust_file(
+            "use crate::context;\n",
+            "src::worker",
+            &empty,
+        ).unwrap();
+        let pf_context = parse_rust_file(
+            "",
+            "src::context",
+            &empty,
+        ).unwrap();
+
+        let mut graph = IndexedGraph::new();
+        let components = vec![
+            crate::model::Component { id: "src::worker".to_string(),  title: "src::worker".to_string(),  entity: "rust".to_string() },
+            crate::model::Component { id: "src::context".to_string(), title: "src::context".to_string(), entity: "rust".to_string() },
+        ];
+        for pf in &[&pf_worker, &pf_context] {
+            graph.add_node(&pf.module_name);
+            for dep in &pf.dependencies {
+                graph.add_edge(&pf.module_name, dep, "depends");
+            }
+        }
+
+        let mut allowed = HashMap::new();
+        allowed.insert("domain".to_string(), vec![]);
+        allowed.insert("app".to_string(), vec!["domain".to_string()]);
+
+        let config = Config {
+            layers: vec![
+                LayerDef { name: "domain".to_string(), paths: vec!["src/context".to_string()] },
+                LayerDef { name: "app".to_string(),    paths: vec!["src/worker".to_string()] },
+            ],
+            allowed_dependencies: allowed,
+            ..Config::default()
+        };
+
+        let metrics = calculate_metrics(
+            &graph,
+            &components,
+            &[pf_worker, pf_context],
+            &config,
+        );
+
+        let layer_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "layer")
+            .collect();
+
+        assert!(layer_violations.is_empty(),
+            "expected no layer violations for allowed dependency, got: {:?}", layer_violations);
+    }
 }
