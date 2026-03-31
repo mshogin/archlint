@@ -1689,6 +1689,117 @@ pub struct Agent {}\n\
         assert!(layer_violations.is_empty(), "no layer config -> no layer violations");
     }
 
+    // ---- Clean Architecture (domain/ports/infra) layer tests ----
+
+    fn build_clean_arch_config() -> Config {
+        use crate::config::LayerDef;
+        use std::collections::HashMap;
+
+        let layers = vec![
+            LayerDef { name: "domain".to_string(), paths: vec!["src/domain".to_string()] },
+            LayerDef { name: "ports".to_string(),  paths: vec!["src/ports".to_string()] },
+            LayerDef { name: "infra".to_string(),  paths: vec!["src/infra".to_string()] },
+        ];
+
+        let mut allowed = HashMap::new();
+        allowed.insert("domain".to_string(), vec![]);
+        allowed.insert("ports".to_string(),  vec!["domain".to_string()]);
+        allowed.insert("infra".to_string(),  vec!["domain".to_string(), "ports".to_string()]);
+
+        let mut cfg = Config::default();
+        cfg.layers = layers;
+        cfg.allowed_dependencies = allowed;
+        cfg
+    }
+
+    #[test]
+    fn test_clean_arch_infra_to_domain_allowed() {
+        // infra -> domain: allowed
+        let cfg = build_clean_arch_config();
+        let violations = run_metrics_with_config(
+            &[("src/infra/user_repo", "src/domain/user")],
+            &cfg,
+        );
+        let layer_v: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_v.is_empty(), "infra -> domain should be allowed, got: {:?}", layer_v);
+    }
+
+    #[test]
+    fn test_clean_arch_infra_to_ports_allowed() {
+        // infra -> ports: allowed
+        let cfg = build_clean_arch_config();
+        let violations = run_metrics_with_config(
+            &[("src/infra/user_repo", "src/ports/user_service")],
+            &cfg,
+        );
+        let layer_v: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_v.is_empty(), "infra -> ports should be allowed, got: {:?}", layer_v);
+    }
+
+    #[test]
+    fn test_clean_arch_ports_to_domain_allowed() {
+        // ports -> domain: allowed
+        let cfg = build_clean_arch_config();
+        let violations = run_metrics_with_config(
+            &[("src/ports/user_service", "src/domain/user")],
+            &cfg,
+        );
+        let layer_v: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_v.is_empty(), "ports -> domain should be allowed, got: {:?}", layer_v);
+    }
+
+    #[test]
+    fn test_clean_arch_domain_no_deps_allowed() {
+        // domain -> ports: FORBIDDEN (domain allowed: none)
+        let cfg = build_clean_arch_config();
+        let violations = run_metrics_with_config(
+            &[("src/domain/user", "src/ports/user_service")],
+            &cfg,
+        );
+        let layer_v: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert_eq!(layer_v.len(), 1);
+        assert!(layer_v[0].message.contains("VIOLATION: domain -> ports"), "unexpected: {}", layer_v[0].message);
+        assert!(layer_v[0].message.contains("allowed: [none]"), "unexpected: {}", layer_v[0].message);
+    }
+
+    #[test]
+    fn test_clean_arch_domain_to_infra_forbidden() {
+        // domain -> infra: FORBIDDEN
+        let cfg = build_clean_arch_config();
+        let violations = run_metrics_with_config(
+            &[("src/domain/user", "src/infra/user_repo")],
+            &cfg,
+        );
+        let layer_v: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert_eq!(layer_v.len(), 1);
+        assert!(layer_v[0].message.contains("VIOLATION: domain -> infra"), "unexpected: {}", layer_v[0].message);
+    }
+
+    #[test]
+    fn test_clean_arch_ports_to_infra_forbidden() {
+        // ports -> infra: FORBIDDEN (ports allowed: [domain] only)
+        let cfg = build_clean_arch_config();
+        let violations = run_metrics_with_config(
+            &[("src/ports/user_service", "src/infra/user_repo")],
+            &cfg,
+        );
+        let layer_v: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert_eq!(layer_v.len(), 1);
+        assert!(layer_v[0].message.contains("VIOLATION: ports -> infra"), "unexpected: {}", layer_v[0].message);
+    }
+
+    #[test]
+    fn test_clean_arch_same_layer_always_allowed() {
+        // infra/a -> infra/b: within same layer, always fine
+        let cfg = build_clean_arch_config();
+        let violations = run_metrics_with_config(
+            &[("src/infra/user_repo", "src/infra/db_conn")],
+            &cfg,
+        );
+        let layer_v: Vec<_> = violations.iter().filter(|v| v.rule == "layer").collect();
+        assert!(layer_v.is_empty(), "same-layer dep should not be flagged, got: {:?}", layer_v);
+    }
+
     // ---- Level propagation tests ----
 
     #[test]
