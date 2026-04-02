@@ -1,5 +1,6 @@
 mod analyzer;
 mod badge;
+mod language_analyzer;
 mod config;
 mod costlint;
 mod diagram;
