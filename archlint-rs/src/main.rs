@@ -7,6 +7,7 @@ mod diff;
 mod fix;
 mod migrate;
 mod model;
+mod nightly;
 mod onboard;
 mod orchestrator;
 mod perflint;
@@ -221,6 +222,24 @@ enum Commands {
         /// Print the generated config without writing it to disk
         #[arg(long)]
         dry_run: bool,
+    },
+    /// Nightly scan: clone popular open-source projects and generate an architecture health report
+    Nightly {
+        /// Comma-separated list of GitHub repos to scan (owner/repo). Overrides built-in list.
+        #[arg(long)]
+        repos: Option<String>,
+
+        /// Output file path for the markdown report (default: stdout)
+        #[arg(long)]
+        output: Option<PathBuf>,
+
+        /// Show only the worst N projects (sorted by health score ascending)
+        #[arg(long)]
+        top: Option<usize>,
+
+        /// Print progress to stderr during scan
+        #[arg(long)]
+        verbose: bool,
     },
     /// Analyze a Claude Code session JSONL file for workflow patterns
     Session {
@@ -838,6 +857,16 @@ async fn main() {
                         }
                     }
                 }
+            }
+        }
+        Commands::Nightly { repos, output, top, verbose } => {
+            let repo_list = match repos {
+                Some(ref r) => nightly::parse_repos(r),
+                None => nightly::default_repos(),
+            };
+            if let Err(e) = nightly::run_nightly(repo_list, output.as_deref(), top, verbose) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
             }
         }
         Commands::Init { dir, dry_run } => {
