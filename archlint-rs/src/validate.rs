@@ -5,9 +5,8 @@
 //! outputs results in the same format as the scan command.
 
 use crate::config::Config;
-use crate::model::{ArchGraph, Component, IndexedGraph, Link, Metrics, Violation};
+use crate::model::{Component, IndexedGraph, Link, Metrics, Violation};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 // ---------------------------------------------------------------------------
 // YAML import format (matches Go's GraphExport / validate.go)
@@ -24,9 +23,10 @@ pub struct YamlGraph {
     /// Optional metadata block (may be absent in hand-crafted files).
     #[serde(default)]
     pub metadata: Option<YamlMetadata>,
-    /// Optional pre-computed metrics (will be recomputed during validation).
+    /// Optional pre-computed metrics (ignored - will be recomputed during validation).
     #[serde(default)]
-    pub metrics: Option<serde_json::Value>,
+    #[allow(dead_code)]
+    pub metrics: Option<serde_yaml::Value>,
 }
 
 /// A component node in the YAML graph.

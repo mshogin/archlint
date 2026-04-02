@@ -371,3 +371,203 @@ fn test_80_validate_yaml_graph() {
         stdout
     );
 }
+
+// ---------------------------------------------------------------------------
+// #56 VALIDATE subcommand
+// ---------------------------------------------------------------------------
+
+/// #56 - VALIDATE: run `archlint validate --graph <file>` against a hand-crafted
+/// architecture.yaml and verify components/violations/health appear in output.
+#[test]
+fn test_56_validate_subcommand_text() {
+    let dir = tempfile::Builder::new()
+        .prefix("archlint_validate_")
+        .tempdir()
+        .expect("failed to create temp dir");
+
+    // Hand-crafted architecture.yaml with one fan-out violation (handler -> 6 deps)
+    let yaml = r#"
+components:
+  - id: handler
+    entity: go
+  - id: svc1
+    entity: go
+  - id: svc2
+    entity: go
+  - id: svc3
+    entity: go
+  - id: svc4
+    entity: go
+  - id: svc5
+    entity: go
+  - id: svc6
+    entity: go
+links:
+  - from: handler
+    to: svc1
+  - from: handler
+    to: svc2
+  - from: handler
+    to: svc3
+  - from: handler
+    to: svc4
+  - from: handler
+    to: svc5
+  - from: handler
+    to: svc6
+metadata:
+  language: Go
+  root_dir: /test
+"#;
+
+    let graph_path = dir.path().join("architecture.yaml");
+    fs::write(&graph_path, yaml).expect("write architecture.yaml");
+
+    let bin = binary();
+    let output = Command::new(&bin)
+        .args(["validate", "--graph", graph_path.to_str().unwrap()])
+        .output()
+        .expect("failed to run archlint validate");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let combined = format!("{}{}", stdout, String::from_utf8_lossy(&output.stderr));
+
+    assert!(
+        combined.contains("components:"),
+        "expected 'components:' in output, got:\n{}",
+        combined
+    );
+    assert!(
+        combined.contains("links:"),
+        "expected 'links:' in output, got:\n{}",
+        combined
+    );
+    assert!(
+        combined.contains("violations:"),
+        "expected 'violations:' in output, got:\n{}",
+        combined
+    );
+    assert!(
+        combined.contains("health:"),
+        "expected 'health:' in output, got:\n{}",
+        combined
+    );
+    // fan-out violation should fire (handler has 6 deps, default threshold = 5)
+    assert!(
+        combined.contains("fan_out"),
+        "expected fan_out violation in output, got:\n{}",
+        combined
+    );
+}
+
+/// #56 - VALIDATE: JSON format output is valid JSON with expected fields.
+#[test]
+fn test_56_validate_subcommand_json() {
+    let dir = tempfile::Builder::new()
+        .prefix("archlint_validate_json_")
+        .tempdir()
+        .expect("failed to create temp dir");
+
+    let yaml = r#"
+components:
+  - id: a
+    entity: go
+  - id: b
+    entity: go
+links:
+  - from: a
+    to: b
+"#;
+
+    let graph_path = dir.path().join("arch.yaml");
+    fs::write(&graph_path, yaml).expect("write arch.yaml");
+
+    let bin = binary();
+    let output = Command::new(&bin)
+        .args(["validate", "--graph", graph_path.to_str().unwrap(), "--format", "json"])
+        .output()
+        .expect("failed to run archlint validate --format json");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "expected exit 0 for valid graph, got:\n{}", stdout);
+
+    let json: serde_json::Value = serde_json::from_str(&stdout)
+        .expect(&format!("expected valid JSON output, got:\n{}", stdout));
+
+    assert_eq!(json["components"].as_u64().unwrap_or(0), 2);
+    assert_eq!(json["links"].as_u64().unwrap_or(0), 1);
+    assert_eq!(json["violation_count"].as_u64().unwrap_or(99), 0);
+    assert_eq!(json["health"].as_u64().unwrap_or(0), 100);
+}
+
+/// #56 - VALIDATE: cycle detection works via validate subcommand.
+#[test]
+fn test_56_validate_cycle_detection() {
+    let dir = tempfile::Builder::new()
+        .prefix("archlint_validate_cycle_")
+        .tempdir()
+        .expect("failed to create temp dir");
+
+    // a -> b -> c -> a forms a cycle
+    let yaml = r#"
+components:
+  - id: a
+    entity: go
+  - id: b
+    entity: go
+  - id: c
+    entity: go
+links:
+  - from: a
+    to: b
+  - from: b
+    to: c
+  - from: c
+    to: a
+"#;
+
+    let graph_path = dir.path().join("cycle.yaml");
+    fs::write(&graph_path, yaml).expect("write cycle.yaml");
+
+    let bin = binary();
+    let output = Command::new(&bin)
+        .args(["validate", "--graph", graph_path.to_str().unwrap(), "--format", "json"])
+        .output()
+        .expect("failed to run archlint validate");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout)
+        .expect(&format!("expected valid JSON, got:\n{}", stdout));
+
+    let cycles = json["cycles"].as_array().map(|a| a.len()).unwrap_or(0);
+    assert!(cycles > 0, "expected cycles to be detected, got:\n{}", stdout);
+}
+
+/// #56 - VALIDATE: reading from architecture.yaml produced by `collect` round-trips correctly.
+#[test]
+fn test_56_validate_collect_roundtrip() {
+    let project = make_go_project();
+    let bin = binary();
+
+    // First collect to produce architecture.yaml
+    Command::new(&bin)
+        .args(["collect", project.path().to_str().unwrap()])
+        .output()
+        .expect("collect step failed");
+
+    let yaml_path = project.path().join("architecture.yaml");
+    assert!(yaml_path.exists(), "architecture.yaml should exist after collect");
+
+    // Now validate the produced YAML
+    let output = Command::new(&bin)
+        .args(["validate", "--graph", yaml_path.to_str().unwrap(), "--format", "json"])
+        .output()
+        .expect("failed to run archlint validate on collected graph");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout)
+        .expect(&format!("expected valid JSON from validate, got:\n{}", stdout));
+
+    let components = json["components"].as_u64().unwrap_or(0);
+    assert!(components > 0, "expected components > 0 in validated collected graph");
+}
