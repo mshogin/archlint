@@ -45,6 +45,7 @@ pub struct ParsedFile {
 // ---------------------------------------------------------------------------
 
 /// Pluggable language analysis interface.
+#[allow(dead_code)]
 pub trait LanguageAnalyzer: Send + Sync {
     /// Returns true when the given project directory contains this language.
     /// Typically checks for a manifest file (Cargo.toml, go.mod, …).
@@ -87,6 +88,7 @@ pub fn path_to_module(rel_path: &Path, ext: &str) -> String {
 // ---------------------------------------------------------------------------
 
 /// Rust-language analyzer.  Detects projects by the presence of Cargo.toml.
+#[allow(dead_code)]
 pub struct RustAnalyzer;
 
 impl LanguageAnalyzer for RustAnalyzer {
@@ -300,6 +302,7 @@ pub fn is_external_crate(name: &str, cargo_deps: &HashSet<String>) -> bool {
 // ---------------------------------------------------------------------------
 
 /// Go-language analyzer.  Detects projects by the presence of go.mod.
+#[allow(dead_code)]
 pub struct GoAnalyzer;
 
 impl LanguageAnalyzer for GoAnalyzer {
@@ -402,12 +405,14 @@ pub fn parse_go_content(
 // ---------------------------------------------------------------------------
 
 /// Return all built-in language analyzers.
+#[allow(dead_code)]
 pub fn all_analyzers() -> Vec<Box<dyn LanguageAnalyzer>> {
     vec![Box::new(RustAnalyzer), Box::new(GoAnalyzer)]
 }
 
 /// Pick the analyzer that handles the given file extension.
 /// Returns `None` if no registered analyzer supports the extension.
+#[allow(dead_code)]
 pub fn analyzer_for_extension(ext: &str) -> Option<Box<dyn LanguageAnalyzer>> {
     for a in all_analyzers() {
         if a.file_extensions().contains(&ext) {
