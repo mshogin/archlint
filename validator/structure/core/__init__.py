@@ -65,4 +65,5 @@ CORE_VALIDATORS = [
     validate_orphan_nodes,
     validate_strongly_connected_components,
     validate_graph_depth,
+    validate_component_distance,
 ]

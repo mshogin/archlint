@@ -379,7 +379,9 @@ def validate_ramsey_analysis(
             if n >= R_rs:
                 # По теореме Рамсея, есть либо клика размера r, либо независимое множество размера s
                 max_clique = max(len(c) for c in nx.find_cliques(undirected))
-                max_independent = nx.graph_clique_number(nx.complement(undirected))
+                complement_graph = nx.complement(undirected)
+                cliques_in_complement = list(nx.find_cliques(complement_graph)) if len(complement_graph.nodes) > 0 else []
+                max_independent = max((len(c) for c in cliques_in_complement), default=0)
 
                 ramsey_implications.append({
                     'R(r,s)': f'R({r},{s})={R_rs}',
