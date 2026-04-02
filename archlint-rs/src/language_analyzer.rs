@@ -26,6 +26,25 @@ pub struct TraitDef {
     pub method_count: usize,
 }
 
+/// Go struct with method and field counts (for god-class detection).
+pub struct GoStructDef {
+    pub name: String,
+    pub method_count: usize,
+    pub field_count: usize,
+}
+
+/// Go method with call information (for feature-envy detection).
+pub struct GoMethodDef {
+    /// The method name (e.g. "MyMethod").
+    pub name: String,
+    /// The receiver type (e.g. "MyStruct"). Empty for free functions.
+    pub receiver: String,
+    /// Number of calls to methods on the same receiver type (own calls).
+    pub own_calls: usize,
+    /// Number of calls to methods on other receiver types (foreign calls).
+    pub other_calls: usize,
+}
+
 /// Parsed representation of a single source file.
 pub struct ParsedFile {
     pub module_name: String,
@@ -38,6 +57,10 @@ pub struct ParsedFile {
     pub traits: Vec<TraitDef>,
     /// True when at least one struct in this file has a service-like impl block.
     pub has_service_structs: bool,
+    /// Go struct definitions with method/field counts. Empty for Rust files.
+    pub go_structs: Vec<GoStructDef>,
+    /// Go method definitions with call counts for feature-envy detection. Empty for Rust files.
+    pub go_methods: Vec<GoMethodDef>,
 }
 
 // ---------------------------------------------------------------------------
@@ -289,6 +312,8 @@ pub fn parse_rust_content(
         functions,
         traits,
         has_service_structs,
+        go_structs: Vec::new(),
+        go_methods: Vec::new(),
     })
 }
 
@@ -335,14 +360,49 @@ pub fn parse_go_content(
     go_module_prefix: &str,
 ) -> Result<ParsedFile, String> {
     let re_import = Regex::new(r#""([^"]+)""#).unwrap();
-    let re_struct = Regex::new(r"type\s+(\w+)\s+struct").unwrap();
-    let re_interface = Regex::new(r"type\s+(\w+)\s+interface").unwrap();
-    let re_func = Regex::new(r"func\s+(?:\([^)]+\)\s+)?(\w+)").unwrap();
+    let re_struct = Regex::new(r"^type\s+(\w+)\s+struct\b").unwrap();
+    let re_interface = Regex::new(r"^type\s+(\w+)\s+interface\b").unwrap();
+    // Method: func (recvVar *ReceiverType) MethodName(...) - captures both receiver var and type
+    let re_method = Regex::new(r"^func\s+\(\s*(\w+)\s+\*?(\w+)\s*\)\s+(\w+)\s*\(").unwrap();
+    // Free function (no receiver): func FuncName(...)
+    let re_func = Regex::new(r"^func\s+(\w+)\s*\(").unwrap();
+    // Method call: receiver.Method( pattern in code - captures receiver name
+    let re_method_call = Regex::new(r"\b(\w+)\.\w+\s*\(").unwrap();
+    // Struct field lines inside a struct body (lines that start with a word char = field name).
+    // Applied to trimmed content (leading whitespace already stripped).
+    let re_struct_field = Regex::new(r"^(\w+)\s+\S").unwrap();
 
     let mut deps = Vec::new();
     let mut structs = Vec::new();
     let mut functions = Vec::new();
     let mut in_import = false;
+
+    // State for tracking struct body (to count fields).
+    let mut in_struct = false;
+    let mut current_struct_name = String::new();
+    let mut current_struct_fields = 0usize;
+    let mut brace_depth: i32 = 0;
+    let mut struct_entry_depth: i32 = 0;
+
+    // Maps struct name -> method count (populated by scanning func declarations).
+    let mut struct_method_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    // Maps struct name -> field count (populated while parsing struct bodies).
+    let mut struct_field_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+
+    // For feature-envy: track each method's receiver and call patterns.
+    // We collect (method_name, receiver, own_calls, other_calls).
+    let mut go_methods_raw: Vec<GoMethodDef> = Vec::new();
+
+    // Current method context for tracking calls within a method body.
+    let mut in_method = false;
+    let mut current_method_name = String::new();
+    // current_method_receiver_type: the type name (e.g. "Server") - stored in GoMethodDef.receiver
+    let mut current_method_receiver_type = String::new();
+    // current_method_receiver_var: the variable name (e.g. "s") - used to detect own calls
+    let mut current_method_receiver_var = String::new();
+    let mut current_method_own_calls = 0usize;
+    let mut current_method_other_calls = 0usize;
+    let mut method_entry_depth: i32 = 0;
 
     let strip_prefix = if go_module_prefix.is_empty() {
         String::new()
@@ -353,7 +413,13 @@ pub fn parse_go_content(
     for line in content.lines() {
         let trimmed = line.trim();
 
-        if trimmed.starts_with("import (") {
+        // Skip comments.
+        if trimmed.starts_with("//") {
+            continue;
+        }
+
+        // Handle import blocks.
+        if trimmed.starts_with("import (") || trimmed == "import (" {
             in_import = true;
             continue;
         }
@@ -377,17 +443,151 @@ pub fn parse_go_content(
             continue;
         }
 
-        if let Some(cap) = re_struct.captures(trimmed) {
-            structs.push(cap[1].to_string());
+        let opens = trimmed.chars().filter(|&c| c == '{').count() as i32;
+        let closes = trimmed.chars().filter(|&c| c == '}').count() as i32;
+
+        // Finish method body if we return to entry depth.
+        if in_method {
+            // Count method calls in this line.
+            for cap in re_method_call.captures_iter(trimmed) {
+                let recv = cap[1].to_string();
+                // Own call: the receiver variable matches the method's receiver variable
+                // (e.g. "s" in "func (s *Server) Method()").
+                if recv == current_method_receiver_var {
+                    current_method_own_calls += 1;
+                } else {
+                    current_method_other_calls += 1;
+                }
+            }
+            brace_depth += opens - closes;
+            if brace_depth <= method_entry_depth {
+                // Method body ended - record it.
+                go_methods_raw.push(GoMethodDef {
+                    name: current_method_name.clone(),
+                    receiver: current_method_receiver_type.clone(),
+                    own_calls: current_method_own_calls,
+                    other_calls: current_method_other_calls,
+                });
+                in_method = false;
+                current_method_name.clear();
+                current_method_receiver_type.clear();
+                current_method_receiver_var.clear();
+                current_method_own_calls = 0;
+                current_method_other_calls = 0;
+            }
+            continue;
         }
-        // Also capture interface types as structs (for component detection)
+
+        // Track struct body for field counting.
+        if in_struct {
+            brace_depth += opens - closes;
+            if brace_depth <= struct_entry_depth {
+                // Struct body ended.
+                struct_field_counts.insert(current_struct_name.clone(), current_struct_fields);
+                in_struct = false;
+                current_struct_name.clear();
+                current_struct_fields = 0;
+            } else if opens == 0 && !trimmed.is_empty() && trimmed != "{" && trimmed != "}" {
+                // Count field lines: non-empty lines inside struct body at depth+1.
+                // Skip closing braces and embedded struct starts.
+                if re_struct_field.is_match(trimmed) && !trimmed.contains("struct {") && !trimmed.contains("interface {") {
+                    current_struct_fields += 1;
+                }
+            }
+            continue;
+        }
+
+        // Detect struct type definition.
+        if let Some(cap) = re_struct.captures(trimmed) {
+            let struct_name = cap[1].to_string();
+            structs.push(struct_name.clone());
+            if opens > closes {
+                // Struct body starts on this line.
+                in_struct = true;
+                current_struct_name = struct_name;
+                current_struct_fields = 0;
+                struct_entry_depth = brace_depth;
+                brace_depth += opens - closes;
+            } else {
+                // Empty struct on one line.
+                struct_field_counts.insert(struct_name, 0);
+                brace_depth += opens - closes;
+            }
+            continue;
+        }
+
+        // Also capture interface types as structs (for component detection).
         if let Some(cap) = re_interface.captures(trimmed) {
             structs.push(cap[1].to_string());
+            brace_depth += opens - closes;
+            continue;
         }
+
+        // Detect method (has receiver).
+        if let Some(cap) = re_method.captures(trimmed) {
+            let receiver_var = cap[1].to_string();   // e.g. "s" from "func (s *Server)"
+            let receiver_type = cap[2].to_string();  // e.g. "Server"
+            let method_name = cap[3].to_string();    // e.g. "Run"
+            functions.push(method_name.clone());
+            // Increment method count for this receiver type.
+            *struct_method_counts.entry(receiver_type.clone()).or_insert(0) += 1;
+            if opens > closes {
+                // Method body starts on this line.
+                in_method = true;
+                current_method_name = method_name;
+                current_method_receiver_type = receiver_type;
+                current_method_receiver_var = receiver_var;
+                current_method_own_calls = 0;
+                current_method_other_calls = 0;
+                method_entry_depth = brace_depth;
+                brace_depth += opens - closes;
+            } else {
+                // Method signature without body (e.g. interface method or one-liner).
+                brace_depth += opens - closes;
+            }
+            continue;
+        }
+
+        // Detect free function (no receiver).
         if let Some(cap) = re_func.captures(trimmed) {
             functions.push(cap[1].to_string());
+            brace_depth += opens - closes;
+            continue;
         }
+
+        brace_depth += opens - closes;
     }
+
+    // If we ended inside a struct (malformed input), save what we have.
+    if in_struct && !current_struct_name.is_empty() {
+        struct_field_counts.insert(current_struct_name.clone(), current_struct_fields);
+    }
+
+    // If we ended inside a method body (malformed input), save what we have.
+    if in_method && !current_method_name.is_empty() {
+        go_methods_raw.push(GoMethodDef {
+            name: current_method_name,
+            receiver: current_method_receiver_type,
+            own_calls: current_method_own_calls,
+            other_calls: current_method_other_calls,
+        });
+    }
+
+    // Build GoStructDef list combining method counts and field counts.
+    let go_structs: Vec<GoStructDef> = structs
+        .iter()
+        .filter(|_s| {
+            // Only include actual structs (not interfaces which were also added to structs).
+            // We distinguish by checking if they were added via re_struct (they'll have entries
+            // in struct_method_counts or struct_field_counts, or simply appear in struct list).
+            true
+        })
+        .map(|s| GoStructDef {
+            name: s.clone(),
+            method_count: struct_method_counts.get(s).copied().unwrap_or(0),
+            field_count: struct_field_counts.get(s).copied().unwrap_or(0),
+        })
+        .collect();
 
     Ok(ParsedFile {
         module_name: module_name.to_string(),
@@ -397,6 +597,8 @@ pub fn parse_go_content(
         functions,
         traits: Vec::new(), // Go has interfaces, tracked via structs above
         has_service_structs: false, // Go files not analyzed for DIP heuristic
+        go_structs,
+        go_methods: go_methods_raw,
     })
 }
 
@@ -679,5 +881,145 @@ func (s *Server) Run() error { return nil }\n";
     fn path_to_module_go() {
         use std::path::Path;
         assert_eq!(path_to_module(Path::new("cmd/server/main.go"), "go"), "cmd::server::main");
+    }
+
+    // ------------------------------------------------------------------
+    // Go god-class detection tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn go_struct_method_count_tracked() {
+        let code = "\
+type Handler struct {}\n\
+func (h *Handler) Get() {}\n\
+func (h *Handler) Post() {}\n\
+func (h *Handler) Put() {}\n\
+";
+        let pf = parse_go_content(code, "mymod", "").unwrap();
+        let handler = pf.go_structs.iter().find(|s| s.name == "Handler");
+        assert!(handler.is_some(), "Handler struct should be tracked in go_structs");
+        assert_eq!(handler.unwrap().method_count, 3, "Handler should have 3 methods");
+    }
+
+    #[test]
+    fn go_struct_field_count_tracked() {
+        let code = "\
+type Config struct {\n\
+    Host     string\n\
+    Port     int\n\
+    Timeout  int\n\
+    MaxConns int\n\
+}\n\
+";
+        let pf = parse_go_content(code, "mymod", "").unwrap();
+        let cfg = pf.go_structs.iter().find(|s| s.name == "Config");
+        assert!(cfg.is_some(), "Config struct should be tracked");
+        assert_eq!(cfg.unwrap().field_count, 4, "Config should have 4 fields");
+    }
+
+    #[test]
+    fn go_struct_no_methods_has_zero_method_count() {
+        let code = "\
+type Point struct {\n\
+    X float64\n\
+    Y float64\n\
+}\n\
+";
+        let pf = parse_go_content(code, "mymod", "").unwrap();
+        let point = pf.go_structs.iter().find(|s| s.name == "Point");
+        assert!(point.is_some(), "Point should be in go_structs");
+        assert_eq!(point.unwrap().method_count, 0);
+        assert_eq!(point.unwrap().field_count, 2);
+    }
+
+    #[test]
+    fn go_multiple_structs_tracked_independently() {
+        let code = "\
+type A struct { x int }\n\
+type B struct { y int\n z int }\n\
+func (a *A) MethodA1() {}\n\
+func (a *A) MethodA2() {}\n\
+func (b *B) MethodB1() {}\n\
+";
+        let pf = parse_go_content(code, "mymod", "").unwrap();
+        let a = pf.go_structs.iter().find(|s| s.name == "A").unwrap();
+        let b = pf.go_structs.iter().find(|s| s.name == "B").unwrap();
+        assert_eq!(a.method_count, 2, "A should have 2 methods");
+        assert_eq!(b.method_count, 1, "B should have 1 method");
+    }
+
+    // ------------------------------------------------------------------
+    // Go feature-envy detection tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn go_method_own_calls_counted() {
+        // Method calls methods on the same receiver type.
+        // "s.helper()" where receiver is *Server -> own call.
+        let code = "\
+type Server struct{}\n\
+func (s *Server) Process() {\n\
+    s.validate()\n\
+    s.execute()\n\
+}\n\
+func (s *Server) validate() {}\n\
+func (s *Server) execute() {}\n\
+";
+        let pf = parse_go_content(code, "mymod", "").unwrap();
+        let process = pf.go_methods.iter().find(|m| m.name == "Process");
+        assert!(process.is_some(), "Process method should be tracked");
+        let p = process.unwrap();
+        assert_eq!(p.receiver, "Server");
+        // s.validate() and s.execute() -> own calls (receiver matches)
+        assert!(p.own_calls >= 2, "Process should have at least 2 own calls, got {}", p.own_calls);
+    }
+
+    #[test]
+    fn go_method_foreign_calls_counted() {
+        // Method calls methods on different types -> foreign calls.
+        let code = "\
+type OrderService struct{}\n\
+func (o *OrderService) CreateOrder() {\n\
+    db.Save()\n\
+    cache.Set()\n\
+    logger.Log()\n\
+}\n\
+";
+        let pf = parse_go_content(code, "mymod", "").unwrap();
+        let create = pf.go_methods.iter().find(|m| m.name == "CreateOrder");
+        assert!(create.is_some(), "CreateOrder should be tracked");
+        let c = create.unwrap();
+        // db.Save(), cache.Set(), logger.Log() -> foreign calls
+        assert!(c.other_calls >= 3, "CreateOrder should have at least 3 foreign calls, got {}", c.other_calls);
+    }
+
+    #[test]
+    fn go_method_envy_when_more_foreign_than_own() {
+        // A method with more foreign calls than own calls.
+        let code = "\
+type Processor struct{}\n\
+func (p *Processor) Process() {\n\
+    external.DoA()\n\
+    external.DoB()\n\
+    external.DoC()\n\
+    external.DoD()\n\
+    p.init()\n\
+}\n\
+func (p *Processor) init() {}\n\
+";
+        let pf = parse_go_content(code, "mymod", "").unwrap();
+        let process = pf.go_methods.iter().find(|m| m.name == "Process");
+        assert!(process.is_some());
+        let p = process.unwrap();
+        assert!(p.other_calls > p.own_calls,
+            "Should have more foreign calls ({}) than own calls ({})", p.other_calls, p.own_calls);
+    }
+
+    #[test]
+    fn go_methods_empty_for_rust_files() {
+        let code = "pub struct Foo {}\nimpl Foo { fn bar(&self) {} }\n";
+        let pf = parse_rust_content(code, "mymod", &no_deps()).unwrap();
+        assert!(pf.go_methods.is_empty(), "Rust files should have empty go_methods");
+        assert!(pf.go_structs.is_empty(), "Rust files should have empty go_structs");
     }
 }

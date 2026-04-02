@@ -115,6 +115,26 @@ pub struct Rules {
     /// DIP: detect modules with structs but no trait definitions.
     #[serde(default = "default_dip")]
     pub dip: RuleConfig,
+    /// God-class: detect Go structs with too many methods/fields (default threshold: 20 methods, 15 fields).
+    #[serde(default = "default_god_class")]
+    pub god_class: RuleConfig,
+    /// Feature-envy: detect Go methods that use more of another type than their own (default threshold: 3 foreign calls).
+    #[serde(default = "default_feature_envy")]
+    pub feature_envy: RuleConfig,
+    /// SRP: detect structs/modules with too many methods (Single Responsibility Principle).
+    /// Works for both Go and Rust. threshold: max methods per struct/module (default: 10).
+    #[serde(default = "default_srp")]
+    pub srp: RuleConfig,
+    /// Shotgun Surgery: detect modules with high afferent coupling (blast radius).
+    /// A change in this module forces changes in many others.
+    /// threshold: max number of modules that depend on this one (default: 10).
+    #[serde(default = "default_shotgun")]
+    pub shotgun_surgery: RuleConfig,
+    /// Coupling instability: detect modules with dangerously high instability Ce/(Ca+Ce).
+    /// threshold is integer 0-100 representing percentage, default 80 means instability > 0.80.
+    /// Only fires when the module has at least 2 dependents (Ca) to avoid noise on leaf modules.
+    #[serde(default = "default_coupling")]
+    pub coupling: RuleConfig,
 }
 
 fn default_fan_out() -> RuleConfig {
@@ -167,6 +187,59 @@ fn default_dip() -> RuleConfig {
     }
 }
 
+fn default_god_class() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        level: Level::Telemetry,
+        // threshold here is the method count limit; field limit is threshold * 3/4 (see analyzer)
+        threshold: Some(20),
+        exclude: Vec::new(),
+    }
+}
+
+fn default_feature_envy() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        level: Level::Telemetry,
+        // minimum number of foreign calls to trigger feature-envy
+        threshold: Some(3),
+        exclude: Vec::new(),
+    }
+}
+
+fn default_srp() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        level: Level::Telemetry,
+        threshold: Some(10),
+        exclude: Vec::new(),
+    }
+}
+
+fn default_shotgun() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        level: Level::Telemetry,
+        threshold: Some(10),
+        exclude: Vec::new(),
+    }
+}
+
+fn default_coupling() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        level: Level::Personal,
+        // 80 = instability > 0.80 threshold (as integer percentage)
+        threshold: Some(80),
+        exclude: Vec::new(),
+    }
+}
+
 impl Default for Rules {
     fn default() -> Self {
         Self {
@@ -203,6 +276,41 @@ impl Default for Rules {
                 error_on_violation: false,
                 level: Level::Telemetry,
                 threshold: None,
+                exclude: Vec::new(),
+            },
+            god_class: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                level: Level::Telemetry,
+                threshold: Some(20),
+                exclude: Vec::new(),
+            },
+            feature_envy: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                level: Level::Telemetry,
+                threshold: Some(3),
+                exclude: Vec::new(),
+            },
+            srp: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                level: Level::Telemetry,
+                threshold: Some(10),
+                exclude: Vec::new(),
+            },
+            shotgun_surgery: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                level: Level::Telemetry,
+                threshold: Some(10),
+                exclude: Vec::new(),
+            },
+            coupling: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                level: Level::Personal,
+                threshold: Some(80),
                 exclude: Vec::new(),
             },
         }
@@ -265,6 +373,39 @@ impl Config {
     /// ISP: maximum number of methods allowed per trait (default 5).
     pub fn isp_threshold(&self) -> usize {
         self.rules.isp.threshold.unwrap_or(5)
+    }
+
+    /// God-class: maximum number of methods allowed per Go struct (default 20).
+    pub fn god_class_method_threshold(&self) -> usize {
+        self.rules.god_class.threshold.unwrap_or(20)
+    }
+
+    /// God-class: maximum number of fields allowed per Go struct (default 15).
+    pub fn god_class_field_threshold(&self) -> usize {
+        // Field threshold is 3/4 of method threshold, minimum 15.
+        let m = self.god_class_method_threshold();
+        (m * 3 / 4).max(15)
+    }
+
+    /// Feature-envy: minimum foreign call count to flag a method (default 3).
+    pub fn feature_envy_threshold(&self) -> usize {
+        self.rules.feature_envy.threshold.unwrap_or(3)
+    }
+
+    /// SRP: max methods per struct/module (default 10).
+    pub fn srp_method_threshold(&self) -> usize {
+        self.rules.srp.threshold.unwrap_or(10)
+    }
+
+    /// Shotgun Surgery: max number of dependents before triggering (default 10).
+    pub fn shotgun_threshold(&self) -> usize {
+        self.rules.shotgun_surgery.threshold.unwrap_or(10)
+    }
+
+    /// Coupling instability threshold as fraction (threshold/100).
+    /// Default: 0.80 (modules more unstable than 80% are flagged).
+    pub fn coupling_instability_threshold(&self) -> f64 {
+        self.rules.coupling.threshold.unwrap_or(80) as f64 / 100.0
     }
 
     /// Resolve which layer name the given module path belongs to.
