@@ -1765,11 +1765,11 @@ def validate_persistence_landscape(
                 'k': k + 1,
                 'max': round(max(landscape), 4),
                 'mean': round(np.mean(landscape), 4),
-                'integral': round(np.trapz(landscape, t_values), 4)
+                'integral': round(np.trapezoid(landscape, t_values), 4)
             })
 
         # Норма ландшафта (L² норма первого)
-        l2_norm = np.sqrt(np.trapz(np.array(landscapes[0])**2, t_values))
+        l2_norm = np.sqrt(np.trapezoid(np.array(landscapes[0])**2, t_values))
 
         return {
             'name': 'persistence_landscape',

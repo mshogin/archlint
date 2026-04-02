@@ -64,17 +64,63 @@ def get_structure_validators(group: Optional[str] = None) -> List:
             validate_betweenness_centrality,
             validate_pagerank,
             validate_modularity,
+            validate_abstractness,
+            validate_distance_from_main_sequence,
             validate_clustering_coefficient,
+            validate_edge_density,
+            validate_articulation_points,
+            validate_bridge_edges,
+            validate_graph_diameter,
+            validate_avg_path_length,
+            validate_closeness_centrality,
+            validate_eigenvector_centrality,
+            validate_k_core_decomposition,
+            validate_graph_cliques,
+            validate_degree_distribution,
+            validate_dependency_entropy,
+            validate_gini_coefficient,
+            validate_zscore_outliers,
+            validate_algebraic_connectivity,
+            validate_spectral_radius,
+            validate_cohesion_lcom4,
             validate_change_propagation,
             validate_blast_radius,
+            validate_hotspot_detection,
+            validate_deprecated_usage,
+            validate_stability_violations,
+            validate_circular_dependency_depth,
+            validate_component_complexity,
         )
         validators.extend([
             validate_betweenness_centrality,
             validate_pagerank,
             validate_modularity,
+            validate_abstractness,
+            validate_distance_from_main_sequence,
             validate_clustering_coefficient,
+            validate_edge_density,
+            validate_articulation_points,
+            validate_bridge_edges,
+            validate_graph_diameter,
+            validate_avg_path_length,
+            validate_closeness_centrality,
+            validate_eigenvector_centrality,
+            validate_k_core_decomposition,
+            validate_graph_cliques,
+            validate_degree_distribution,
+            validate_dependency_entropy,
+            validate_gini_coefficient,
+            validate_zscore_outliers,
+            validate_algebraic_connectivity,
+            validate_spectral_radius,
+            validate_cohesion_lcom4,
             validate_change_propagation,
             validate_blast_radius,
+            validate_hotspot_detection,
+            validate_deprecated_usage,
+            validate_stability_violations,
+            validate_circular_dependency_depth,
+            validate_component_complexity,
         ])
 
     if group is None or group == 'research':
@@ -96,10 +142,14 @@ def get_structure_validators(group: Optional[str] = None) -> List:
                 probability_metrics, mathematical_analysis_metrics,
                 integral_calculus_metrics, set_theory_metrics,
             ]
+            seen_ids = set(id(v) for v in validators)
+            seen_names = set(v.__name__ for v in validators)
             for mod in research_modules:
                 for name, func in inspect.getmembers(mod, inspect.isfunction):
-                    if name.startswith('validate_'):
+                    if name.startswith('validate_') and id(func) not in seen_ids and name not in seen_names:
                         validators.append(func)
+                        seen_ids.add(id(func))
+                        seen_names.add(name)
         except ImportError as e:
             import sys
             print(f"Warning: research validators not available: {e}", file=sys.stderr)
