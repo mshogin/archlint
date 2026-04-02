@@ -476,6 +476,10 @@ struct ParsedFile {
     functions: Vec<String>,
     /// Rust trait definitions (name + method count). Empty for Go files.
     traits: Vec<TraitDef>,
+    /// True when at least one struct in this file has a service-like impl block
+    /// (contains &mut self methods, async methods, or Result return types).
+    /// Used by the DIP heuristic to distinguish services from pure data types.
+    has_service_structs: bool,
 }
 
 /// Parse a single source file for dependencies and declarations.
@@ -555,6 +559,7 @@ fn parse_go_file(content: &str, module_name: &str, go_module_prefix: &str) -> Re
         structs,
         functions,
         traits: Vec::new(),
+        has_service_structs: false, // Go files are not analyzed for DIP heuristic
     })
 }
 
@@ -570,6 +575,8 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
     let re_trait = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?trait\s+(\w+)").unwrap();
     // Matches trait method signatures (fn inside a trait body, with optional visibility/async).
     let re_trait_fn = Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+").unwrap();
+    // Matches any `impl` block start (covers both `impl Foo {` and `impl Trait for Foo {`).
+    let re_impl = Regex::new(r"^impl\b").unwrap();
 
     let mut deps = Vec::new();
     let mut structs = Vec::new();
@@ -583,6 +590,15 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
     let mut brace_depth: i32 = 0;
     let mut trait_entry_depth: i32 = 0;
 
+    // Service struct heuristic: scan impl blocks for service-like patterns.
+    // A module is considered to have service structs if any impl block contains:
+    //   - `&mut self` methods (stateful mutation)
+    //   - `async fn` methods (async I/O / concurrency)
+    //   - methods returning `-> Result<` (fallible operations, typically I/O)
+    let mut in_impl = false;
+    let mut impl_entry_depth: i32 = 0;
+    let mut has_service_structs = false;
+
     for line in content.lines() {
         let trimmed = line.trim();
 
@@ -593,6 +609,28 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
         // Track brace depth for trait body detection.
         let opens = trimmed.chars().filter(|&c| c == '{').count() as i32;
         let closes = trimmed.chars().filter(|&c| c == '}').count() as i32;
+
+        if in_impl {
+            // Inside an impl block: look for service-like method signatures.
+            // &mut self -> stateful mutation (service behavior)
+            // async fn  -> async I/O or concurrency (service behavior)
+            // -> Result< -> fallible operation, typically I/O (service behavior)
+            if trimmed.contains("&mut self")
+                || trimmed.starts_with("async fn")
+                || trimmed.contains("-> Result<")
+                || trimmed.contains("-> anyhow::Result")
+            {
+                has_service_structs = true;
+            }
+
+            brace_depth += opens - closes;
+
+            if brace_depth <= impl_entry_depth {
+                // Exited impl body.
+                in_impl = false;
+            }
+            continue;
+        }
 
         if in_trait {
             // Count method signatures inside the trait body.
@@ -611,6 +649,28 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
                 in_trait = false;
                 current_trait_name.clear();
                 current_trait_methods = 0;
+            }
+            continue;
+        }
+
+        // Detect impl block start (before trait detection to avoid confusion).
+        if re_impl.is_match(trimmed) {
+            let net = opens - closes;
+            if net > 0 {
+                in_impl = true;
+                impl_entry_depth = brace_depth;
+                brace_depth += net;
+            }
+            // If net == 0, the impl body is on a single line - scan inline for service patterns.
+            if trimmed.contains("&mut self")
+                || trimmed.contains("async fn")
+                || trimmed.contains("-> Result<")
+                || trimmed.contains("-> anyhow::Result")
+            {
+                has_service_structs = true;
+            }
+            if net <= 0 {
+                brace_depth += net;
             }
             continue;
         }
@@ -695,6 +755,7 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
         structs,
         functions,
         traits,
+        has_service_structs,
     })
 }
 
@@ -797,6 +858,10 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
     }
 
     // DIP: detect Rust modules that have structs but no trait definitions (missing abstraction layer).
+    // Heuristic: distinguish service structs (have &mut self / async fn / Result returns) from
+    // pure data types (only pub fields, derive macros, no side-effect methods).
+    // - Service without traits -> configured level (telemetry by default) - fix recommended
+    // - Data type without traits -> personal level (informational only) - not a DIP issue
     if config.rules.dip.enabled {
         for pf in parsed {
             if pf.language != "rust" {
@@ -806,15 +871,32 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
                 continue;
             }
             if pf.structs.len() > 2 && pf.traits.is_empty() {
+                let (message, level) = if pf.has_service_structs {
+                    // Service structs without traits: real DIP concern, use configured level.
+                    (
+                        format!(
+                            "module has {} structs but no trait definitions; consider introducing traits to enforce dependency inversion",
+                            pf.structs.len()
+                        ),
+                        config.rules.dip.level.as_str().to_string(),
+                    )
+                } else {
+                    // Pure data types (no service patterns detected): downgrade to personal
+                    // (informational only, not a DIP concern).
+                    (
+                        format!(
+                            "module has {} structs but no trait definitions; structs appear to be data types (no &mut self / async / Result methods detected)",
+                            pf.structs.len()
+                        ),
+                        "personal".to_string(),
+                    )
+                };
                 violations.push(Violation {
                     rule: "dip".to_string(),
                     component: pf.module_name.clone(),
-                    message: format!(
-                        "module has {} structs but no trait definitions; consider introducing traits to enforce dependency inversion",
-                        pf.structs.len()
-                    ),
+                    message,
                     severity: "info".to_string(),
-                    level: config.rules.dip.level.as_str().to_string(),
+                    level,
                 });
             }
         }
@@ -1238,7 +1320,8 @@ pub trait SmallTrait {\n\
     #[test]
     fn test_dip_violation_structs_no_traits() {
         let empty = make_deps(&[]);
-        // 3 structs, no traits -> DIP violation.
+        // 3 plain structs, no traits, no impl blocks -> notice at "personal" level
+        // (data types are not real DIP violations).
         let code = "\
 pub struct Worker {}\n\
 pub struct Agent {}\n\
@@ -1247,6 +1330,7 @@ pub struct Dispatcher {}\n\
         let pf = parse_rust_file(code, "concrete_module", &empty).unwrap();
         assert_eq!(pf.structs.len(), 3);
         assert!(pf.traits.is_empty());
+        assert!(!pf.has_service_structs, "empty structs should NOT be classified as services");
 
         let config = Config::default();
         let graph = IndexedGraph::new();
@@ -1261,6 +1345,134 @@ pub struct Dispatcher {}\n\
             .collect();
         assert_eq!(dip_violations.len(), 1);
         assert_eq!(dip_violations[0].severity, "info");
+        // Data types -> downgraded to personal (informational only)
+        assert_eq!(dip_violations[0].level, "personal");
+    }
+
+    #[test]
+    fn test_dip_service_structs_get_configured_level() {
+        let empty = make_deps(&[]);
+        // 3 structs with service-like impl blocks (&mut self) -> DIP violation at configured level.
+        let code = "\
+pub struct Worker {}\n\
+pub struct Agent {}\n\
+pub struct Dispatcher {}\n\
+impl Worker {\n\
+    pub fn run(&mut self) {}\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "service_module", &empty).unwrap();
+        assert_eq!(pf.structs.len(), 3);
+        assert!(pf.traits.is_empty());
+        assert!(pf.has_service_structs, "impl with &mut self should be classified as service");
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "service_module".to_string(),
+            title: "service_module".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let dip_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "dip")
+            .collect();
+        assert_eq!(dip_violations.len(), 1);
+        assert_eq!(dip_violations[0].severity, "info");
+        // Service structs without traits -> use configured level (telemetry by default)
+        assert_eq!(dip_violations[0].level, "telemetry");
+    }
+
+    #[test]
+    fn test_dip_async_fn_detected_as_service() {
+        let empty = make_deps(&[]);
+        // async fn in impl block -> service
+        let code = "\
+pub struct Fetcher {}\n\
+pub struct Cache {}\n\
+pub struct Processor {}\n\
+impl Fetcher {\n\
+    pub async fn fetch(&self) -> Vec<u8> { vec![] }\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "async_module", &empty).unwrap();
+        assert!(pf.has_service_structs, "async fn should be classified as service");
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "async_module".to_string(),
+            title: "async_module".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let dip_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "dip")
+            .collect();
+        assert_eq!(dip_violations.len(), 1);
+        assert_eq!(dip_violations[0].level, "telemetry");
+    }
+
+    #[test]
+    fn test_dip_result_return_detected_as_service() {
+        let empty = make_deps(&[]);
+        // -> Result< in impl block -> service
+        let code = "\
+pub struct Repo {}\n\
+pub struct Pool {}\n\
+pub struct Conn {}\n\
+impl Repo {\n\
+    pub fn query(&self) -> Result<Vec<String>, String> { Ok(vec![]) }\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "repo_module", &empty).unwrap();
+        assert!(pf.has_service_structs, "-> Result< should be classified as service");
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "repo_module".to_string(),
+            title: "repo_module".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let dip_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "dip")
+            .collect();
+        assert_eq!(dip_violations.len(), 1);
+        assert_eq!(dip_violations[0].level, "telemetry");
+    }
+
+    #[test]
+    fn test_dip_readonly_impl_not_service() {
+        let empty = make_deps(&[]);
+        // impl with only &self (read-only) methods -> still data type, personal level
+        let code = "\
+pub struct Config {}\n\
+pub struct Settings {}\n\
+pub struct Options {}\n\
+impl Config {\n\
+    pub fn name(&self) -> &str { \"\" }\n\
+    pub fn value(&self) -> u32 { 0 }\n\
+}\n\
+";
+        let pf = parse_rust_file(code, "config_module", &empty).unwrap();
+        assert!(!pf.has_service_structs, "read-only &self methods should NOT be classified as service");
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "config_module".to_string(),
+            title: "config_module".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let dip_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "dip")
+            .collect();
+        assert_eq!(dip_violations.len(), 1);
+        // Data type with read-only impl -> personal (informational)
+        assert_eq!(dip_violations[0].level, "personal");
     }
 
     #[test]
@@ -1574,6 +1786,7 @@ pub struct Agent {}\n\
                 structs: Vec::new(),
                 functions: Vec::new(),
                 traits: Vec::new(),
+                has_service_structs: false,
             });
         }
         for (f, t) in edges {
@@ -1953,6 +2166,7 @@ import (
             structs: Vec::new(),
             functions: Vec::new(),
             traits: Vec::new(),
+            has_service_structs: false,
         });
 
         let metrics = calculate_metrics(&graph, &components, &parsed, &cfg);
