@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/mshogin/archlint/internal/analyzer"
+	"github.com/mshogin/archlint/internal/archlintcfg"
 	"github.com/mshogin/archlint/internal/mcp"
 	"github.com/spf13/cobra"
 )
 
 var (
-	scanFormat    string
-	scanThreshold int
+	scanFormat     string
+	scanThreshold  int
+	scanConfigFile string
 )
 
 var scanCmd = &cobra.Command{
@@ -21,6 +24,10 @@ var scanCmd = &cobra.Command{
 	Short: "Scan for architecture violations (quality gate)",
 	Long: `Analyze Go source code and report architecture violations.
 Supports quality gate mode: exits with code 1 if violations exceed threshold.
+
+Reads .archlint.yaml from the scanned directory (or --config path) to configure
+rule thresholds, exclusions, and layer dependency rules. Falls back to built-in
+defaults when no config file is found.
 
 Exit codes:
   0 - passed (violations <= threshold)
@@ -31,7 +38,8 @@ Examples:
   archlint scan .
   archlint scan . --format json
   archlint scan . --format json --threshold 5
-  archlint scan ./internal --threshold 0`,
+  archlint scan ./internal --threshold 0
+  archlint scan . --config /path/to/.archlint.yaml`,
 	Args: cobra.ExactArgs(1),
 	RunE: runScan,
 }
@@ -39,16 +47,18 @@ Examples:
 func init() {
 	scanCmd.Flags().StringVar(&scanFormat, "format", "text", "Output format: text or json")
 	scanCmd.Flags().IntVar(&scanThreshold, "threshold", -1, "Max violations before failing gate (-1 = any violation fails)")
+	scanCmd.Flags().StringVar(&scanConfigFile, "config", "", "Path to .archlint.yaml config file (default: <directory>/.archlint.yaml)")
 	rootCmd.AddCommand(scanCmd)
 }
 
 // scanGateResult is the JSON output for the scan command.
 type scanGateResult struct {
-	Passed     bool               `json:"passed"`
-	Violations int                `json:"violations"`
-	Threshold  int                `json:"threshold"`
-	Categories map[string]int     `json:"categories"`
-	Details    []mcp.Violation    `json:"details"`
+	Passed     bool            `json:"passed"`
+	Violations int             `json:"violations"`
+	Threshold  int             `json:"threshold"`
+	Categories map[string]int  `json:"categories"`
+	Details    []mcp.Violation `json:"details"`
+	ConfigFile string          `json:"config_file,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -59,6 +69,24 @@ func runScan(cmd *cobra.Command, args []string) error {
 		os.Exit(2)
 	}
 
+	// Load .archlint.yaml config.
+	var cfg archlintcfg.Config
+	var configFile string
+	if scanConfigFile != "" {
+		cfg = archlintcfg.LoadFile(scanConfigFile)
+		configFile = scanConfigFile
+	} else {
+		absDir, err := filepath.Abs(codeDir)
+		if err != nil {
+			absDir = codeDir
+		}
+		cfg = archlintcfg.Load(absDir)
+		candidate := filepath.Join(absDir, ".archlint.yaml")
+		if _, err := os.Stat(candidate); err == nil {
+			configFile = candidate
+		}
+	}
+
 	a := analyzer.NewGoAnalyzer()
 
 	graph, err := a.Analyze(codeDir)
@@ -67,16 +95,23 @@ func runScan(cmd *cobra.Command, args []string) error {
 		os.Exit(2)
 	}
 
-	// Structural violations (coupling, cycles).
-	violations := mcp.DetectAllViolations(graph)
+	// Structural violations (coupling, cycles) — config-aware.
+	violations := mcp.DetectAllViolationsWithConfig(graph, &cfg)
 
 	// Per-file SOLID and smell violations.
 	allMetrics := mcp.ComputeAllFileMetrics(a, graph)
 
 	for _, m := range allMetrics {
+		// DIP violations — respect config enabled flag.
+		if cfg.Rules.DIP.Enabled {
+			violations = append(violations, m.DIPViolations...)
+		}
+		// ISP violations — respect config enabled flag.
+		if cfg.Rules.ISP.Enabled {
+			violations = append(violations, m.ISPViolations...)
+		}
+		// SRP violations are always added (no dedicated rule key in config yet).
 		violations = append(violations, m.SRPViolations...)
-		violations = append(violations, m.DIPViolations...)
-		violations = append(violations, m.ISPViolations...)
 
 		for _, gc := range m.GodClasses {
 			violations = append(violations, mcp.Violation{
@@ -142,6 +177,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			Threshold:  threshold,
 			Categories: categories,
 			Details:    violations,
+			ConfigFile: configFile,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -150,6 +186,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 			os.Exit(2)
 		}
 	case "text":
+		if configFile != "" {
+			fmt.Printf("config: %s\n", configFile)
+		}
 		if total == 0 {
 			fmt.Printf("PASSED: No violations found (threshold: %d)\n", threshold)
 		} else {
@@ -160,7 +199,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Printf("%s: %d violations found (threshold: %d)\n\n", status, total, threshold)
 
 			for _, v := range violations {
-				fmt.Printf("[%s] %s\n", v.Kind, v.Message)
+				level := mcp.ViolationLevel(v, &cfg)
+				prefix := mcp.LevelPrefix(level)
+				fmt.Printf("%s [%s] %s\n", prefix, v.Kind, v.Message)
 				if v.Target != "" {
 					fmt.Printf("  target: %s\n", v.Target)
 				}
