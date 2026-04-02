@@ -728,6 +728,204 @@ pub fn to_arch_graph(jsonl: &str) -> ArchGraph {
     }
 }
 
+// --- #89 Session comparison ---
+
+/// Metrics summary for a single session, used in comparison.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SessionMetrics {
+    pub file: String,
+    pub total_tool_calls: usize,
+    pub unique_tools: usize,
+    pub entropy: f64,
+    pub conditional_entropy: f64,
+    /// Retry/error estimate: count of consecutive same-tool pairs (proxy for retries).
+    pub retry_count: usize,
+    /// Total repetition flags (tool called >5 times).
+    pub repetition_flags: usize,
+}
+
+/// A single anomaly detected during comparison.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComparisonAnomaly {
+    pub kind: String,
+    pub detail: String,
+}
+
+/// Full session comparison report.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ComparisonReport {
+    pub sessions: Vec<SessionMetrics>,
+    pub anomalies: Vec<ComparisonAnomaly>,
+    /// Index (0-based) of the most efficient session (fewest tool calls).
+    pub most_efficient: usize,
+}
+
+/// Extract retry count from tool calls: consecutive same-tool pairs indicate retries.
+fn count_retries(calls: &[ToolCall]) -> usize {
+    let mut count = 0usize;
+    for window in calls.windows(2) {
+        if window[0].tool == window[1].tool {
+            count += 1;
+        }
+    }
+    count
+}
+
+/// Compute per-session metrics from a JSONL string.
+fn session_metrics(file: &str, jsonl: &str) -> SessionMetrics {
+    let calls = parse_tool_chain(jsonl);
+    let tool_freq = count_tools(&calls);
+    let entropy = compute_entropy(&tool_freq);
+    let conditional_entropy = compute_conditional_entropy(&calls);
+    let retry_count = count_retries(&calls);
+    let repetition_flags = tool_freq.iter().filter(|f| f.count > 5).count();
+    SessionMetrics {
+        file: file.to_string(),
+        total_tool_calls: calls.len(),
+        unique_tools: tool_freq.len(),
+        entropy,
+        conditional_entropy,
+        retry_count,
+        repetition_flags,
+    }
+}
+
+/// Compare multiple sessions and detect waste patterns.
+pub fn compare_sessions(files: &[(&str, &str)]) -> ComparisonReport {
+    let sessions: Vec<SessionMetrics> = files
+        .iter()
+        .map(|(name, content)| session_metrics(name, content))
+        .collect();
+
+    let mut anomalies = Vec::new();
+
+    // Find most efficient session (fewest tool calls).
+    let most_efficient = sessions
+        .iter()
+        .enumerate()
+        .min_by_key(|(_, s)| s.total_tool_calls)
+        .map(|(i, _)| i)
+        .unwrap_or(0);
+
+    // Detect anomalies across all pairs.
+    for i in 0..sessions.len() {
+        for j in (i + 1)..sessions.len() {
+            let a = &sessions[i];
+            let b = &sessions[j];
+
+            // Anomaly: >2x token/tool call difference for similar task.
+            let min_calls = a.total_tool_calls.min(b.total_tool_calls);
+            let max_calls = a.total_tool_calls.max(b.total_tool_calls);
+            if min_calls > 0 && max_calls > min_calls * 2 {
+                let (heavier, lighter) = if a.total_tool_calls > b.total_tool_calls {
+                    (&a.file, &b.file)
+                } else {
+                    (&b.file, &a.file)
+                };
+                anomalies.push(ComparisonAnomaly {
+                    kind: "token_waste".to_string(),
+                    detail: format!(
+                        "{} used {}x more tool calls than {} ({} vs {})",
+                        heavier,
+                        max_calls / min_calls,
+                        lighter,
+                        max_calls,
+                        min_calls,
+                    ),
+                });
+            }
+
+            // Anomaly: high entropy difference (one session is significantly more random).
+            let entropy_diff = (a.entropy - b.entropy).abs();
+            if entropy_diff > 1.0 {
+                let (chaotic, orderly) = if a.entropy > b.entropy {
+                    (&a.file, &b.file)
+                } else {
+                    (&b.file, &a.file)
+                };
+                anomalies.push(ComparisonAnomaly {
+                    kind: "entropy_divergence".to_string(),
+                    detail: format!(
+                        "{} is significantly more chaotic than {} (entropy diff {:.2})",
+                        chaotic, orderly, entropy_diff
+                    ),
+                });
+            }
+        }
+
+        // Anomaly: high retry count in any session.
+        if sessions[i].retry_count > 3 {
+            anomalies.push(ComparisonAnomaly {
+                kind: "high_retries".to_string(),
+                detail: format!(
+                    "{} has {} consecutive same-tool pairs (potential retries/loops)",
+                    sessions[i].file, sessions[i].retry_count
+                ),
+            });
+        }
+
+        // Anomaly: repetition flags present.
+        if sessions[i].repetition_flags > 0 {
+            anomalies.push(ComparisonAnomaly {
+                kind: "tool_repetition".to_string(),
+                detail: format!(
+                    "{} has {} tool(s) called >5 times (unnecessary repetition)",
+                    sessions[i].file, sessions[i].repetition_flags
+                ),
+            });
+        }
+    }
+
+    ComparisonReport {
+        sessions,
+        anomalies,
+        most_efficient,
+    }
+}
+
+/// Format a ComparisonReport as a markdown table.
+pub fn format_comparison(report: &ComparisonReport) -> String {
+    let mut out = String::new();
+
+    out.push_str("## Session Comparison\n\n");
+
+    // Header row.
+    out.push_str("| Session | Tool Calls | Unique Tools | Entropy | Cond. Entropy | Retries | Rep. Flags |\n");
+    out.push_str("|---------|-----------|--------------|---------|---------------|---------|------------|\n");
+
+    for (i, s) in report.sessions.iter().enumerate() {
+        let marker = if i == report.most_efficient { " (*)" } else { "" };
+        out.push_str(&format!(
+            "| {}{} | {} | {} | {:.4} | {:.4} | {} | {} |\n",
+            s.file,
+            marker,
+            s.total_tool_calls,
+            s.unique_tools,
+            s.entropy,
+            s.conditional_entropy,
+            s.retry_count,
+            s.repetition_flags,
+        ));
+    }
+
+    out.push('\n');
+    out.push_str(&format!(
+        "Most efficient: {} (fewest tool calls)\n",
+        report.sessions[report.most_efficient].file
+    ));
+
+    if report.anomalies.is_empty() {
+        out.push_str("\nNo anomalies detected.\n");
+    } else {
+        out.push_str("\n## Anomalies\n\n");
+        for a in &report.anomalies {
+            out.push_str(&format!("- [{}] {}\n", a.kind, a.detail));
+        }
+    }
+
+    out
+}
+
 // --- Tests ---
 
 #[cfg(test)]
@@ -1218,5 +1416,107 @@ mod tests {
         assert!(!report.pagerank.is_empty(), "pagerank should be populated");
         assert!(!report.bottlenecks.is_empty(), "bottlenecks should be populated");
         assert!(!report.phases.is_empty(), "phases should be populated");
+    }
+
+    // --- #89 Session comparison tests ---
+
+    #[test]
+    fn test_compare_two_sessions_most_efficient() {
+        // session_a uses fewer tool calls than session_b
+        let session_a: String = (0..3).map(|_| make_tool_use_line("Read")).collect::<Vec<_>>().join("\n");
+        let session_b: String = (0..9).map(|_| make_tool_use_line("Bash")).collect::<Vec<_>>().join("\n");
+        let report = compare_sessions(&[("a.jsonl", &session_a), ("b.jsonl", &session_b)]);
+        assert_eq!(report.most_efficient, 0, "session_a (fewer calls) should be most efficient");
+    }
+
+    #[test]
+    fn test_compare_token_waste_anomaly() {
+        // session_b uses >2x more tool calls
+        let session_a: String = (0..3).map(|_| make_tool_use_line("Read")).collect::<Vec<_>>().join("\n");
+        let session_b: String = (0..9).map(|_| make_tool_use_line("Bash")).collect::<Vec<_>>().join("\n");
+        let report = compare_sessions(&[("a.jsonl", &session_a), ("b.jsonl", &session_b)]);
+        let has_token_waste = report.anomalies.iter().any(|a| a.kind == "token_waste");
+        assert!(has_token_waste, "token_waste anomaly expected when one session uses >2x calls");
+    }
+
+    #[test]
+    fn test_compare_no_anomaly_similar_sessions() {
+        // Both sessions have similar call counts; no token_waste anomaly.
+        let session_a: String = (0..4)
+            .map(|i| if i % 2 == 0 { make_tool_use_line("Read") } else { make_tool_use_line("Edit") })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let session_b: String = (0..5)
+            .map(|i| if i % 2 == 0 { make_tool_use_line("Read") } else { make_tool_use_line("Edit") })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let report = compare_sessions(&[("a.jsonl", &session_a), ("b.jsonl", &session_b)]);
+        let has_token_waste = report.anomalies.iter().any(|a| a.kind == "token_waste");
+        assert!(!has_token_waste, "no token_waste expected for similar call counts");
+    }
+
+    #[test]
+    fn test_compare_high_retries_anomaly() {
+        // 5 consecutive same-tool calls in session_a => retry anomaly
+        let session_a: String = (0..5).map(|_| make_tool_use_line("Bash")).collect::<Vec<_>>().join("\n");
+        let session_b: String = [make_tool_use_line("Read"), make_tool_use_line("Edit")].join("\n");
+        let report = compare_sessions(&[("a.jsonl", &session_a), ("b.jsonl", &session_b)]);
+        let has_retries = report.anomalies.iter().any(|a| a.kind == "high_retries");
+        assert!(has_retries, "high_retries anomaly expected for many consecutive same-tool calls");
+    }
+
+    #[test]
+    fn test_compare_repetition_flag_anomaly() {
+        // session_a calls Bash 7 times => repetition_flags > 0
+        let session_a: String = (0..7).map(|_| make_tool_use_line("Bash")).collect::<Vec<_>>().join("\n");
+        let session_b: String = [make_tool_use_line("Read"), make_tool_use_line("Edit")].join("\n");
+        let report = compare_sessions(&[("a.jsonl", &session_a), ("b.jsonl", &session_b)]);
+        let has_rep = report.anomalies.iter().any(|a| a.kind == "tool_repetition");
+        assert!(has_rep, "tool_repetition anomaly expected when a tool is called >5 times");
+    }
+
+    #[test]
+    fn test_compare_entropy_divergence_anomaly() {
+        // session_a: all same tool (entropy=0), session_b: many different tools (high entropy)
+        let session_a: String = (0..5).map(|_| make_tool_use_line("Read")).collect::<Vec<_>>().join("\n");
+        let many_tools = ["Read", "Edit", "Bash", "Glob", "Grep", "Write", "LS", "Cat"];
+        let session_b: String = many_tools.iter().map(|t| make_tool_use_line(t)).collect::<Vec<_>>().join("\n");
+        let report = compare_sessions(&[("a.jsonl", &session_a), ("b.jsonl", &session_b)]);
+        let has_entropy = report.anomalies.iter().any(|a| a.kind == "entropy_divergence");
+        assert!(has_entropy, "entropy_divergence anomaly expected for very different entropy values");
+    }
+
+    #[test]
+    fn test_compare_three_sessions() {
+        let session_a: String = (0..2).map(|_| make_tool_use_line("Read")).collect::<Vec<_>>().join("\n");
+        let session_b: String = (0..5).map(|_| make_tool_use_line("Edit")).collect::<Vec<_>>().join("\n");
+        let session_c: String = (0..10).map(|_| make_tool_use_line("Bash")).collect::<Vec<_>>().join("\n");
+        let report = compare_sessions(&[
+            ("a.jsonl", &session_a),
+            ("b.jsonl", &session_b),
+            ("c.jsonl", &session_c),
+        ]);
+        assert_eq!(report.sessions.len(), 3);
+        assert_eq!(report.most_efficient, 0, "session_a (2 calls) should be most efficient");
+    }
+
+    #[test]
+    fn test_compare_format_contains_table_header() {
+        let session_a: String = [make_tool_use_line("Read"), make_tool_use_line("Edit")].join("\n");
+        let session_b: String = [make_tool_use_line("Bash")].join("\n");
+        let report = compare_sessions(&[("a.jsonl", &session_a), ("b.jsonl", &session_b)]);
+        let md = format_comparison(&report);
+        assert!(md.contains("| Session |"), "markdown table header expected");
+        assert!(md.contains("Most efficient:"), "efficiency summary expected");
+    }
+
+    #[test]
+    fn test_compare_empty_sessions() {
+        let report = compare_sessions(&[("a.jsonl", ""), ("b.jsonl", "")]);
+        assert_eq!(report.sessions[0].total_tool_calls, 0);
+        assert_eq!(report.sessions[1].total_tool_calls, 0);
+        // Both empty: no token_waste anomaly expected (min_calls = 0, guarded by min > 0 check)
+        let has_token_waste = report.anomalies.iter().any(|a| a.kind == "token_waste");
+        assert!(!has_token_waste, "no token_waste for empty sessions");
     }
 }

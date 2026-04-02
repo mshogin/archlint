@@ -259,6 +259,16 @@ enum Commands {
         #[arg(long, default_value = "text")]
         format: String,
     },
+    /// Compare two or more Claude Code session JSONL files to detect waste patterns
+    Compare {
+        /// Paths to two or more JSONL session files
+        #[arg(required = true, num_args = 2..)]
+        files: Vec<PathBuf>,
+
+        /// Output format: markdown, json
+        #[arg(long, default_value = "markdown")]
+        format: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -857,6 +867,38 @@ async fn main() {
                             println!();
                         }
                     }
+                }
+            }
+        }
+        Commands::Compare { files, format } => {
+            // Read all files.
+            let mut sessions: Vec<(String, String)> = Vec::new();
+            for path in &files {
+                match std::fs::read_to_string(path) {
+                    Ok(content) => {
+                        sessions.push((path.display().to_string(), content));
+                    }
+                    Err(e) => {
+                        eprintln!("Error reading {}: {}", path.display(), e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+
+            let pairs: Vec<(&str, &str)> = sessions
+                .iter()
+                .map(|(name, content)| (name.as_str(), content.as_str()))
+                .collect();
+
+            let report = session::compare_sessions(&pairs);
+
+            match format.as_str() {
+                "json" => {
+                    let json = serde_json::to_string_pretty(&report).unwrap();
+                    println!("{}", json);
+                }
+                _ => {
+                    print!("{}", session::format_comparison(&report));
                 }
             }
         }
