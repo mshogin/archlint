@@ -58,8 +58,8 @@ def get_structure_validators(group: Optional[str] = None) -> List:
         from validator.structure.quality import QUALITY_VALIDATORS
         validators.extend(QUALITY_VALIDATORS)
 
-    # Advanced and research are opt-in only
-    if group == 'advanced':
+    # Advanced and research are opt-in only (or included when group=None for full run)
+    if group is None or group == 'advanced':
         from validator.structure.advanced import (
             validate_betweenness_centrality,
             validate_pagerank,
@@ -76,6 +76,33 @@ def get_structure_validators(group: Optional[str] = None) -> List:
             validate_change_propagation,
             validate_blast_radius,
         ])
+
+    if group is None or group == 'research':
+        try:
+            import inspect
+            from validator.structure.research import (
+                topology_metrics, information_theory_metrics, linear_algebra_metrics,
+                advanced_graph_metrics, advanced_topology_metrics,
+                category_theory_metrics, game_theory_metrics, combinatorics_metrics,
+                optimization_metrics, automata_theory_metrics, number_theory_metrics,
+                probability_metrics, mathematical_analysis_metrics,
+                integral_calculus_metrics, set_theory_metrics,
+            )
+            research_modules = [
+                topology_metrics, information_theory_metrics, linear_algebra_metrics,
+                advanced_graph_metrics, advanced_topology_metrics,
+                category_theory_metrics, game_theory_metrics, combinatorics_metrics,
+                optimization_metrics, automata_theory_metrics, number_theory_metrics,
+                probability_metrics, mathematical_analysis_metrics,
+                integral_calculus_metrics, set_theory_metrics,
+            ]
+            for mod in research_modules:
+                for name, func in inspect.getmembers(mod, inspect.isfunction):
+                    if name.startswith('validate_'):
+                        validators.append(func)
+        except ImportError as e:
+            import sys
+            print(f"Warning: research validators not available: {e}", file=sys.stderr)
 
     return validators
 
