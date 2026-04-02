@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/mshogin/archlint/internal/archlintcfg"
 	"github.com/mshogin/archlint/internal/mcp"
@@ -16,6 +19,8 @@ var (
 	validateGraphFile  string
 	validateFormat     string
 	validateConfigFile string
+	validateGroup      string
+	validatePython     bool
 )
 
 // GraphExport is the standard YAML graph format produced by archlint-rs scan --format yaml.
@@ -70,42 +75,277 @@ type GraphExportViolation struct {
 }
 
 var validateCmd = &cobra.Command{
-	Use:   "validate",
-	Short: "Validate architecture graph from YAML input (Unix-pipe pipeline)",
-	Long: `Read a YAML graph produced by archlint-rs scan --format yaml and validate it.
+	Use:   "validate [directory|architecture.yaml]",
+	Short: "Validate architecture: collect graph and run 229 metrics via Python validator",
+	Long: `Validate architecture graph using the Python validator with 229 metrics.
 
-This command is part of the Unix-pipe multi-language architecture pipeline:
-  archlint-rs scan . --format yaml | archlint validate --graph -
+If input is a directory, first runs archlint collect to generate architecture.yaml,
+then runs the Python validator on it.
 
-Config file (.archlint.yaml) is loaded from the current directory by default.
-Use --config to specify an explicit path.
+If input is a .yaml file, runs the Python validator directly on it.
+
+Without --python flag, runs the built-in Go rule engine only.
+
+Validator groups (--group):
+  core         - DAG, cycles, fan-out, coupling, hub nodes
+  solid        - SOLID principles (SRP, OCP, LSP, ISP, DIP)
+  patterns     - Design smells (god class, shotgun surgery, ...)
+  architecture - Clean architecture, domain isolation, ports & adapters
+  quality      - Security, observability, testability
+  advanced     - Graph centrality, pagerank, modularity (opt-in)
+  research     - 142 math metrics: topology, spectral, information theory (opt-in)
 
 Examples:
-  archlint validate --graph graph.yaml
-  archlint validate --graph graph.yaml --format yaml
-  archlint validate --graph graph.yaml --config /path/to/.archlint.yaml
-  archlint-rs scan . --format yaml | archlint validate --graph -`,
+  archlint validate .
+  archlint validate architecture.yaml
+  archlint validate . --python --group solid
+  archlint validate architecture.yaml --python --group research
+  archlint validate . --python --format json
+  archlint-rs collect . && archlint validate architecture.yaml --python`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runValidate,
 }
 
 func init() {
-	validateCmd.Flags().StringVar(&validateGraphFile, "graph", "", "Path to YAML graph file (use - for stdin)")
-	validateCmd.Flags().StringVar(&validateFormat, "format", "text", "Output format: text or json")
+	validateCmd.Flags().StringVar(&validateGraphFile, "graph", "", "Path to YAML graph file (use - for stdin); legacy flag, prefer positional arg")
+	validateCmd.Flags().StringVar(&validateFormat, "format", "text", "Output format: text, json, or yaml")
 	validateCmd.Flags().StringVar(&validateConfigFile, "config", "", "Path to .archlint.yaml config file (default: ./.archlint.yaml)")
-	_ = validateCmd.MarkFlagRequired("graph")
+	validateCmd.Flags().StringVar(&validateGroup, "group", "", "Validator group: core, solid, patterns, architecture, quality, advanced, research")
+	validateCmd.Flags().BoolVar(&validatePython, "python", false, "Run Python validator (229 metrics) instead of built-in Go engine")
 	rootCmd.AddCommand(validateCmd)
 }
 
 func runValidate(cmd *cobra.Command, args []string) error {
-	// Read graph JSON from file or stdin
+	// Resolve input: positional arg, --graph flag, or current dir
+	input := "."
+	if len(args) > 0 {
+		input = args[0]
+	} else if validateGraphFile != "" {
+		input = validateGraphFile
+	}
+
+	// Determine if input is a directory (needs collect first) or a yaml file
+	isDir := false
+	if input != "-" {
+		info, err := os.Stat(input)
+		if err == nil && info.IsDir() {
+			isDir = true
+		}
+	}
+
+	// If directory: collect architecture.yaml first
+	archFile := input
+	if isDir {
+		archFile = filepath.Join(input, "architecture.yaml")
+		if err := runCollectForValidate(input, archFile); err != nil {
+			return err
+		}
+	}
+
+	// Route to Python validator or built-in Go engine
+	if validatePython {
+		return runPythonValidator(archFile)
+	}
+
+	return runGoValidator(archFile)
+}
+
+// runCollectForValidate runs `archlint collect <dir> -o <outfile>`.
+func runCollectForValidate(dir, outFile string) error {
+	fmt.Fprintf(os.Stderr, "Collecting architecture graph: %s -> %s\n", dir, outFile)
+
+	// Use the Go collect logic directly by calling the collect command's logic
+	// We invoke os.Executable-relative binary to avoid circular dependency
+	exe, err := os.Executable()
+	if err != nil {
+		exe = "archlint"
+	}
+
+	//nolint:gosec // G204: exe and dir come from validated user input
+	cmd := exec.Command(exe, "collect", dir, "-o", outFile)
+	cmd.Stdout = os.Stderr // collect prints status to stderr-equivalent
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("collect failed: %w", err)
+	}
+	return nil
+}
+
+// findPythonValidatorDir returns the path to the validator/ package.
+// Search order: ARCHLINT_VALIDATOR_PATH env, dir relative to binary, cwd.
+func findPythonValidatorDir() (string, error) {
+	if p := os.Getenv("ARCHLINT_VALIDATOR_PATH"); p != "" {
+		return p, nil
+	}
+
+	// Try relative to binary
+	exe, _ := os.Executable()
+	if exe != "" {
+		candidate := filepath.Join(filepath.Dir(exe), "validator")
+		if _, err := os.Stat(candidate); err == nil {
+			return filepath.Dir(candidate), nil
+		}
+		// One level up (binary in bin/)
+		candidate = filepath.Join(filepath.Dir(exe), "..", "validator")
+		if _, err := os.Stat(candidate); err == nil {
+			return filepath.Dir(candidate), nil
+		}
+	}
+
+	// Try cwd
+	cwd, _ := os.Getwd()
+	candidate := filepath.Join(cwd, "validator")
+	if _, err := os.Stat(candidate); err == nil {
+		return cwd, nil
+	}
+
+	return "", fmt.Errorf("validator/ package not found; set ARCHLINT_VALIDATOR_PATH or run from repo root")
+}
+
+// runPythonValidator runs `python3 -m validator validate <file> --structure-only -f yaml`
+// and prints results grouped by taxonomy.
+func runPythonValidator(archFile string) error {
+	workDir, err := findPythonValidatorDir()
+	if err != nil {
+		return err
+	}
+
+	pyArgs := []string{"-m", "validator", "validate", archFile, "--structure-only", "-f", "yaml"}
+	if validateGroup != "" {
+		pyArgs = append(pyArgs, "-g", validateGroup)
+	}
+	if validateFormat == "json" {
+		// override format
+		for i, a := range pyArgs {
+			if a == "yaml" && i > 0 && pyArgs[i-1] == "-f" {
+				pyArgs[i] = "json"
+			}
+		}
+	}
+
+	//nolint:gosec // G204: archFile is validated user input
+	pyCmd := exec.Command("python3", pyArgs...)
+	pyCmd.Dir = workDir
+	pyCmd.Stderr = os.Stderr
+
+	out, err := pyCmd.Output()
+	if err != nil {
+		// exit code 1 = FAILED, 2 = ERROR - still print output
+		exitErr, ok := err.(*exec.ExitError)
+		if !ok || (exitErr.ExitCode() != 1 && exitErr.ExitCode() != 2) {
+			return fmt.Errorf("python3 validator failed: %w", err)
+		}
+		// print output even on failure
+		if len(out) > 0 {
+			printPythonResults(out, validateFormat)
+		}
+		os.Exit(exitErr.ExitCode())
+	}
+
+	printPythonResults(out, validateFormat)
+	return nil
+}
+
+// printPythonResults formats and prints Python validator output.
+func printPythonResults(data []byte, format string) {
+	if format == "json" || format == "yaml" {
+		os.Stdout.Write(data)
+		return
+	}
+
+	// Parse YAML and display grouped text summary
+	var results map[string]interface{}
+	if err := yaml.Unmarshal(data, &results); err != nil {
+		// Fall back to raw output
+		os.Stdout.Write(data)
+		return
+	}
+
+	// Print header
+	status, _ := results["status"].(string)
+	fmt.Printf("status: %s\n", status)
+
+	if summary, ok := results["summary"].(map[string]interface{}); ok {
+		fmt.Printf("total:    %v checks\n", summary["total_checks"])
+		fmt.Printf("passed:   %v\n", summary["passed"])
+		fmt.Printf("failed:   %v\n", summary["failed"])
+		fmt.Printf("warnings: %v\n", summary["warnings"])
+		fmt.Printf("errors:   %v\n", summary["errors"])
+	}
+
+	if graph, ok := results["graph"].(map[string]interface{}); ok {
+		fmt.Printf("nodes:    %v\n", graph["nodes"])
+		fmt.Printf("edges:    %v\n", graph["edges"])
+	}
+
+	// Print failed/warning checks
+	checks, ok := results["checks"].([]interface{})
+	if !ok || len(checks) == 0 {
+		return
+	}
+
+	var failed, warnings []map[string]interface{}
+	for _, c := range checks {
+		check, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		switch check["status"] {
+		case "FAILED":
+			failed = append(failed, check)
+		case "WARNING":
+			warnings = append(warnings, check)
+		}
+	}
+
+	if len(failed) > 0 {
+		fmt.Printf("\nFAILED (%d):\n", len(failed))
+		for _, c := range failed {
+			printCheck(c)
+		}
+	}
+	if len(warnings) > 0 {
+		fmt.Printf("\nWARNINGS (%d):\n", len(warnings))
+		for _, c := range warnings {
+			printCheck(c)
+		}
+	}
+
+	if validateGroup == "" && len(failed)+len(warnings) > 5 {
+		fmt.Printf("\nTip: use --group to focus on a specific area (core, solid, patterns, architecture, quality)\n")
+	}
+}
+
+func printCheck(c map[string]interface{}) {
+	name, _ := c["name"].(string)
+	msg, _ := c["message"].(string)
+	if msg == "" {
+		msg, _ = c["error"].(string)
+	}
+	if msg != "" {
+		fmt.Printf("  [%s] %s\n", name, msg)
+	} else {
+		fmt.Printf("  [%s]\n", name)
+	}
+	if details, ok := c["details"].(string); ok && details != "" {
+		for _, line := range strings.Split(details, "\n") {
+			if line != "" {
+				fmt.Printf("    %s\n", line)
+			}
+		}
+	}
+}
+
+// runGoValidator is the original built-in Go validation engine.
+func runGoValidator(archFile string) error {
 	var data []byte
 	var err error
 
-	if validateGraphFile == "-" {
+	if archFile == "-" {
 		data, err = readAllStdin()
 	} else {
-		//nolint:gosec // G304: validateGraphFile is a user-provided CLI argument
-		data, err = os.ReadFile(validateGraphFile)
+		//nolint:gosec // G304: archFile is a user-provided CLI argument
+		data, err = os.ReadFile(archFile)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to read graph: %w", err)
@@ -123,7 +363,6 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		cfg = archlintcfg.LoadFile(validateConfigFile)
 		configFile = validateConfigFile
 	} else {
-		// Default: look in current working directory.
 		cwd, err := os.Getwd()
 		if err != nil {
 			cwd = "."
@@ -182,7 +421,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 			}
 		}
 	default:
-		return fmt.Errorf("unknown format: %s (use text or json)", validateFormat)
+		return fmt.Errorf("unknown format: %s (use text, json, or yaml)", validateFormat)
 	}
 
 	return nil
