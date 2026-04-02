@@ -171,11 +171,19 @@ func runCollectForValidate(dir, outFile string) error {
 	return nil
 }
 
-// findPythonValidatorDir returns the path to the validator/ package.
-// Search order: ARCHLINT_VALIDATOR_PATH env, dir relative to binary, cwd.
+// findPythonValidatorDir returns the path to use as working directory for the validator.
+// When the package is installed (pip install -e), python3 -m validator works from anywhere
+// and no special working directory is needed (returns "").
+// Falls back to source tree locations for development without pip install.
 func findPythonValidatorDir() (string, error) {
 	if p := os.Getenv("ARCHLINT_VALIDATOR_PATH"); p != "" {
 		return p, nil
+	}
+
+	// Check if installed as a package (preferred: works from anywhere)
+	checkCmd := exec.Command("python3", "-c", "import validator")
+	if checkCmd.Run() == nil {
+		return "", nil // installed, no workDir needed
 	}
 
 	// Try relative to binary
@@ -199,7 +207,7 @@ func findPythonValidatorDir() (string, error) {
 		return cwd, nil
 	}
 
-	return "", fmt.Errorf("validator/ package not found; set ARCHLINT_VALIDATOR_PATH or run from repo root")
+	return "", fmt.Errorf("validator package not found; install with: pip install -e <archlint-repo> or set ARCHLINT_VALIDATOR_PATH")
 }
 
 // runPythonValidator runs `python3 -m validator validate <file> --structure-only -f yaml`
