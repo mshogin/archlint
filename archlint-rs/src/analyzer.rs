@@ -1,11 +1,13 @@
 use crate::config::Config;
+use crate::language_analyzer::{parse_go_content, parse_rust_content, path_to_module, ParsedFile};
+#[cfg(test)]
+use crate::language_analyzer::is_external_crate;
 use crate::model::{
     ArchGraph, Component, GraphEdge, GraphExport, GraphMetadata, GraphMetrics, GraphNode,
     GraphViolation, IndexedGraph, LanguageReport, Link, Metrics, MultiLanguageReport, Violation,
     ViolationSummary,
 };
 use rayon::prelude::*;
-use regex::Regex;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -461,318 +463,32 @@ fn collect_source_files(dir: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
-/// A single trait detected in a Rust source file.
-struct TraitDef {
-    name: String,
-    method_count: usize,
-}
-
-struct ParsedFile {
-    module_name: String,
-    language: String,
-    dependencies: Vec<String>,
-    structs: Vec<String>,
-    #[allow(dead_code)]
-    functions: Vec<String>,
-    /// Rust trait definitions (name + method count). Empty for Go files.
-    traits: Vec<TraitDef>,
-    /// True when at least one struct in this file has a service-like impl block
-    /// (contains &mut self methods, async methods, or Result return types).
-    /// Used by the DIP heuristic to distinguish services from pure data types.
-    has_service_structs: bool,
-}
-
 /// Parse a single source file for dependencies and declarations.
+/// Dispatches to the appropriate LanguageAnalyzer based on file extension.
 fn parse_file(path: &Path, base_dir: &Path, external_deps: &HashSet<String>, go_module_name: &str) -> Result<ParsedFile, String> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-    let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let rel_path = path.strip_prefix(base_dir).unwrap_or(path);
     let module_name = path_to_module(rel_path, ext);
 
     match ext {
-        "go" => parse_go_file(&content, &module_name, go_module_name),
-        "rs" => parse_rust_file(&content, &module_name, external_deps),
+        "go" => parse_go_file(&{
+            fs::read_to_string(path).map_err(|e| e.to_string())?
+        }, &module_name, go_module_name),
+        "rs" => parse_rust_file(&{
+            fs::read_to_string(path).map_err(|e| e.to_string())?
+        }, &module_name, external_deps),
         _ => Err(format!("unsupported extension: {}", ext)),
     }
 }
 
+/// Thin wrapper: delegates to language_analyzer::parse_go_content.
 fn parse_go_file(content: &str, module_name: &str, go_module_prefix: &str) -> Result<ParsedFile, String> {
-    let re_import = Regex::new(r#""([^"]+)""#).unwrap();
-    let re_struct = Regex::new(r"type\s+(\w+)\s+struct").unwrap();
-    let re_func = Regex::new(r"func\s+(?:\([^)]+\)\s+)?(\w+)").unwrap();
-
-    let mut deps = Vec::new();
-    let mut structs = Vec::new();
-    let mut functions = Vec::new();
-    let mut in_import = false;
-
-    // Build the module prefix to strip: "module/" (e.g. "demo/")
-    let strip_prefix = if go_module_prefix.is_empty() {
-        String::new()
-    } else {
-        format!("{}/", go_module_prefix)
-    };
-
-    for line in content.lines() {
-        let trimmed = line.trim();
-
-        if trimmed.starts_with("import (") {
-            in_import = true;
-            continue;
-        }
-        if in_import {
-            if trimmed == ")" {
-                in_import = false;
-                continue;
-            }
-            if let Some(cap) = re_import.captures(trimmed) {
-                let imp = cap[1].to_string();
-                // Preserve path relative to module root for internal imports.
-                // e.g. "demo/internal/repo" with module "demo" -> "internal/repo"
-                // External imports (not starting with module prefix) are skipped.
-                if !strip_prefix.is_empty() && imp.starts_with(&strip_prefix) {
-                    let relative = imp[strip_prefix.len()..].to_string();
-                    deps.push(relative);
-                } else if strip_prefix.is_empty() {
-                    // No module info: fall back to last segment
-                    if let Some(last) = imp.rsplit('/').next() {
-                        deps.push(last.to_string());
-                    }
-                }
-                // else: external import (different module), skip it
-            }
-            continue;
-        }
-
-        if let Some(cap) = re_struct.captures(trimmed) {
-            structs.push(cap[1].to_string());
-        }
-        if let Some(cap) = re_func.captures(trimmed) {
-            functions.push(cap[1].to_string());
-        }
-    }
-
-    Ok(ParsedFile {
-        module_name: module_name.to_string(),
-        language: "go".to_string(),
-        dependencies: deps,
-        structs,
-        functions,
-        traits: Vec::new(),
-        has_service_structs: false, // Go files are not analyzed for DIP heuristic
-    })
+    parse_go_content(content, module_name, go_module_prefix)
 }
 
+/// Thin wrapper: delegates to language_analyzer::parse_rust_content.
 fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<String>) -> Result<ParsedFile, String> {
-    // Matches: use crate::foo, use self::foo, use super::foo -> internal (crate-local)
-    let re_use_internal = Regex::new(r"^(?:pub\s+)?use\s+(crate|self|super)::").unwrap();
-    // Matches: use foo::... -> captures foo as the crate root
-    let re_use_external = Regex::new(r"^(?:pub\s+)?use\s+(\w+)").unwrap();
-    let re_mod = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?mod\s+(\w+)").unwrap();
-    let re_struct = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?struct\s+(\w+)").unwrap();
-    let re_fn = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?(?:async\s+)?fn\s+(\w+)").unwrap();
-    // Matches trait definitions: `pub trait Foo {` or `trait Foo {`
-    let re_trait = Regex::new(r"^(?:pub(?:\(crate\))?\s+)?trait\s+(\w+)").unwrap();
-    // Matches trait method signatures (fn inside a trait body, with optional visibility/async).
-    let re_trait_fn = Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+").unwrap();
-    // Matches any `impl` block start (covers both `impl Foo {` and `impl Trait for Foo {`).
-    let re_impl = Regex::new(r"^impl\b").unwrap();
-
-    let mut deps = Vec::new();
-    let mut structs = Vec::new();
-    let mut functions = Vec::new();
-    let mut traits: Vec<TraitDef> = Vec::new();
-
-    // Simple brace-depth tracker to detect when we are inside a trait body.
-    let mut in_trait = false;
-    let mut current_trait_name = String::new();
-    let mut current_trait_methods: usize = 0;
-    let mut brace_depth: i32 = 0;
-    let mut trait_entry_depth: i32 = 0;
-
-    // Service struct heuristic: scan impl blocks for service-like patterns.
-    // A module is considered to have service structs if any impl block contains:
-    //   - `&mut self` methods (stateful mutation)
-    //   - `async fn` methods (async I/O / concurrency)
-    //   - methods returning `-> Result<` (fallible operations, typically I/O)
-    let mut in_impl = false;
-    let mut impl_entry_depth: i32 = 0;
-    let mut has_service_structs = false;
-
-    for line in content.lines() {
-        let trimmed = line.trim();
-
-        if trimmed.starts_with("//") {
-            continue;
-        }
-
-        // Track brace depth for trait body detection.
-        let opens = trimmed.chars().filter(|&c| c == '{').count() as i32;
-        let closes = trimmed.chars().filter(|&c| c == '}').count() as i32;
-
-        if in_impl {
-            // Inside an impl block: look for service-like method signatures.
-            // &mut self -> stateful mutation (service behavior)
-            // async fn  -> async I/O or concurrency (service behavior)
-            // -> Result< -> fallible operation, typically I/O (service behavior)
-            if trimmed.contains("&mut self")
-                || trimmed.contains("async fn")
-                || trimmed.contains("-> Result<")
-                || trimmed.contains("-> anyhow::Result")
-            {
-                has_service_structs = true;
-            }
-
-            brace_depth += opens - closes;
-
-            if brace_depth <= impl_entry_depth {
-                // Exited impl body.
-                in_impl = false;
-            }
-            continue;
-        }
-
-        if in_trait {
-            // Count method signatures inside the trait body.
-            if re_trait_fn.is_match(trimmed) {
-                current_trait_methods += 1;
-            }
-
-            brace_depth += opens - closes;
-
-            if brace_depth <= trait_entry_depth {
-                // Exited trait body.
-                traits.push(TraitDef {
-                    name: current_trait_name.clone(),
-                    method_count: current_trait_methods,
-                });
-                in_trait = false;
-                current_trait_name.clear();
-                current_trait_methods = 0;
-            }
-            continue;
-        }
-
-        // Detect impl block start (before trait detection to avoid confusion).
-        if re_impl.is_match(trimmed) {
-            let net = opens - closes;
-            if net > 0 {
-                in_impl = true;
-                impl_entry_depth = brace_depth;
-                brace_depth += net;
-            }
-            // If net == 0, the impl body is on a single line - scan inline for service patterns.
-            if trimmed.contains("&mut self")
-                || trimmed.contains("async fn")
-                || trimmed.contains("-> Result<")
-                || trimmed.contains("-> anyhow::Result")
-            {
-                has_service_structs = true;
-            }
-            if net <= 0 {
-                brace_depth += net;
-            }
-            continue;
-        }
-
-        // Detect trait definition start.
-        if let Some(cap) = re_trait.captures(trimmed) {
-            let net = opens - closes;
-            if net > 0 {
-                // Trait body spans multiple lines — enter tracking mode.
-                in_trait = true;
-                current_trait_name = cap[1].to_string();
-                current_trait_methods = 0;
-                trait_entry_depth = brace_depth;
-                brace_depth += net;
-            } else {
-                // Trait opens and closes on the same line (e.g. `trait Foo {}`).
-                // Record it with zero methods; no need to enter in_trait mode.
-                traits.push(TraitDef {
-                    name: cap[1].to_string(),
-                    method_count: 0,
-                });
-                brace_depth += net;
-            }
-            continue;
-        }
-
-        // Track depth for non-trait code.
-        brace_depth += opens - closes;
-
-        if trimmed.starts_with("use ") || trimmed.starts_with("pub use ") {
-            // Internal: crate::, self::, super:: — always count
-            if re_use_internal.is_match(trimmed) {
-                // Extract the module name after the prefix and resolve to a qualified ID
-                // so it matches component IDs (e.g. "src::analyzer").
-                // For `use crate::X` in module `src::foo`, the dep is `src::X`.
-                let re_internal_name = Regex::new(r"^(?:pub\s+)?use\s+(?:crate|self|super)::(\w+)").unwrap();
-                if let Some(cap) = re_internal_name.captures(trimmed) {
-                    let short_name = cap[1].to_string();
-                    // Determine crate root: first segment of module_name (e.g. "src" from "src::analyzer")
-                    let crate_root = module_name.split("::").next().unwrap_or("");
-                    let qualified = if crate_root.is_empty() {
-                        short_name
-                    } else {
-                        format!("{}::{}", crate_root, short_name)
-                    };
-                    deps.push(qualified);
-                }
-            } else if let Some(cap) = re_use_external.captures(trimmed) {
-                let crate_name = &cap[1];
-                // Skip std, core, alloc (language built-ins)
-                // Skip anything listed in Cargo.toml as an external dependency
-                if !is_external_crate(crate_name, external_deps) {
-                    deps.push(crate_name.to_string());
-                }
-            }
-            continue;
-        }
-
-        if let Some(cap) = re_mod.captures(trimmed) {
-            deps.push(cap[1].to_string());
-        }
-        if let Some(cap) = re_struct.captures(trimmed) {
-            structs.push(cap[1].to_string());
-        }
-        if let Some(cap) = re_fn.captures(trimmed) {
-            functions.push(cap[1].to_string());
-        }
-    }
-
-    // Handle a trait that was never closed (malformed file — still record it).
-    if in_trait && !current_trait_name.is_empty() {
-        traits.push(TraitDef {
-            name: current_trait_name,
-            method_count: current_trait_methods,
-        });
-    }
-
-    Ok(ParsedFile {
-        module_name: module_name.to_string(),
-        language: "rust".to_string(),
-        dependencies: deps,
-        structs,
-        functions,
-        traits,
-        has_service_structs,
-    })
-}
-
-/// Returns true if the given crate name should be excluded from metrics.
-/// External crates are: std, core, alloc (built-ins) and anything in Cargo.toml dependencies.
-fn is_external_crate(name: &str, cargo_deps: &HashSet<String>) -> bool {
-    matches!(name, "std" | "core" | "alloc") || cargo_deps.contains(name)
-}
-
-fn path_to_module(rel_path: &Path, ext: &str) -> String {
-    let s = rel_path.to_string_lossy();
-    let name = s.trim_end_matches(&format!(".{}", ext));
-    let name = name.replace('/', "::");
-    let name = name.replace('\\', "::");
-    // Remove mod suffix for Rust
-    let name = name.trim_end_matches("::mod");
-    name.to_string()
+    parse_rust_content(content, module_name, external_deps)
 }
 
 fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[ParsedFile], config: &Config) -> Metrics {
