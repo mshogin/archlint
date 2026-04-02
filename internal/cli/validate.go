@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mshogin/archlint/internal/archlintcfg"
+	"github.com/mshogin/archlint/internal/mcp"
 	"github.com/mshogin/archlint/internal/model"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	validateGraphFile string
-	validateFormat    string
+	validateGraphFile  string
+	validateFormat     string
+	validateConfigFile string
 )
 
 // GraphExport is the standard YAML graph format produced by archlint-rs scan --format yaml.
@@ -74,9 +77,13 @@ var validateCmd = &cobra.Command{
 This command is part of the Unix-pipe multi-language architecture pipeline:
   archlint-rs scan . --format yaml | archlint validate --graph -
 
+Config file (.archlint.yaml) is loaded from the current directory by default.
+Use --config to specify an explicit path.
+
 Examples:
   archlint validate --graph graph.yaml
   archlint validate --graph graph.yaml --format yaml
+  archlint validate --graph graph.yaml --config /path/to/.archlint.yaml
   archlint-rs scan . --format yaml | archlint validate --graph -`,
 	RunE: runValidate,
 }
@@ -84,6 +91,7 @@ Examples:
 func init() {
 	validateCmd.Flags().StringVar(&validateGraphFile, "graph", "", "Path to YAML graph file (use - for stdin)")
 	validateCmd.Flags().StringVar(&validateFormat, "format", "text", "Output format: text or json")
+	validateCmd.Flags().StringVar(&validateConfigFile, "config", "", "Path to .archlint.yaml config file (default: ./.archlint.yaml)")
 	_ = validateCmd.MarkFlagRequired("graph")
 	rootCmd.AddCommand(validateCmd)
 }
@@ -108,15 +116,50 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to parse graph YAML: %w", err)
 	}
 
+	// Load .archlint.yaml config.
+	var cfg archlintcfg.Config
+	var configFile string
+	if validateConfigFile != "" {
+		cfg = archlintcfg.LoadFile(validateConfigFile)
+		configFile = validateConfigFile
+	} else {
+		// Default: look in current working directory.
+		cwd, err := os.Getwd()
+		if err != nil {
+			cwd = "."
+		}
+		cfg = archlintcfg.Load(cwd)
+		candidate := cwd + "/.archlint.yaml"
+		if _, err := os.Stat(candidate); err == nil {
+			configFile = candidate
+		}
+	}
+
 	// Convert GraphExport to model.Graph for validation
 	graph := exportToModelGraph(&export)
 
+	// Run config-aware violation checks on the imported graph.
+	configViolations := mcp.DetectAllViolationsWithConfig(graph, &cfg)
+
 	switch validateFormat {
 	case "json":
+		type validateResult struct {
+			Graph      *model.Graph    `json:"graph"`
+			Violations []mcp.Violation `json:"violations,omitempty"`
+			ConfigFile string          `json:"config_file,omitempty"`
+		}
+		result := validateResult{
+			Graph:      graph,
+			Violations: configViolations,
+			ConfigFile: configFile,
+		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(graph)
+		return enc.Encode(result)
 	case "text":
+		if configFile != "" {
+			fmt.Printf("config:     %s\n", configFile)
+		}
 		fmt.Printf("language:   %s\n", export.Metadata.Language)
 		fmt.Printf("root_dir:   %s\n", export.Metadata.RootDir)
 		fmt.Printf("analyzed_at: %s\n", export.Metadata.AnalyzedAt)
@@ -126,6 +169,17 @@ func runValidate(cmd *cobra.Command, args []string) error {
 			fmt.Printf("violations: %d\n", len(export.Metrics.Violations))
 			fmt.Printf("cycles:     %d\n", len(export.Metrics.Cycles))
 			fmt.Printf("max_fan_out: %d\n", export.Metrics.MaxFanOut)
+		}
+		if len(configViolations) > 0 {
+			fmt.Printf("\nconfig violations (%d):\n", len(configViolations))
+			for _, v := range configViolations {
+				level := mcp.ViolationLevel(v, &cfg)
+				prefix := mcp.LevelPrefix(level)
+				fmt.Printf("  %s [%s] %s\n", prefix, v.Kind, v.Message)
+				if v.Target != "" {
+					fmt.Printf("    target: %s\n", v.Target)
+				}
+			}
 		}
 	default:
 		return fmt.Errorf("unknown format: %s (use text or json)", validateFormat)
