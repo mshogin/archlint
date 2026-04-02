@@ -1803,4 +1803,105 @@ mod tests {
         let has_token_waste = report.anomalies.iter().any(|a| a.kind == "token_waste");
         assert!(!has_token_waste, "no token_waste for empty sessions");
     }
+
+    // --- #90 optimize_sessions tests ---
+
+    #[test]
+    fn test_optimize_recommends_fewer_calls() {
+        // Session A: 2 tool calls.  Session B: 6 tool calls.
+        // Expected: recommended = 0 (session A).
+        let session_a: String = [make_tool_use_line("Read"), make_tool_use_line("Edit")].join("\n");
+        let session_b: String = (0..6).map(|_| make_tool_use_line("Bash")).collect::<Vec<_>>().join("\n");
+
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        assert_eq!(report.recommended, 0, "Session A has fewer calls and should be recommended");
+        assert!(report.efficiency_gain_pct > 0.0, "efficiency gain should be positive");
+    }
+
+    #[test]
+    fn test_optimize_recommends_session_b_when_fewer_calls() {
+        // Session A: 8 tool calls.  Session B: 2 tool calls.
+        // Expected: recommended = 1 (session B).
+        let session_a: String = (0..8).map(|_| make_tool_use_line("Read")).collect::<Vec<_>>().join("\n");
+        let session_b: String = [make_tool_use_line("Glob"), make_tool_use_line("Edit")].join("\n");
+
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        assert_eq!(report.recommended, 1, "Session B has fewer calls and should be recommended");
+    }
+
+    #[test]
+    fn test_optimize_detects_redundant_reads() {
+        // Session A: 6 Read calls -> should trigger redundant_reads.
+        let session_a: String = (0..6).map(|_| make_tool_use_line("Read")).collect::<Vec<_>>().join("\n");
+        let session_b: String = [make_tool_use_line("Glob"), make_tool_use_line("Read")].join("\n");
+
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        let has_redundant = report.recommendations.iter().any(|r| r.kind == "redundant_reads");
+        assert!(has_redundant, "redundant_reads recommendation expected for 6 Read calls");
+    }
+
+    #[test]
+    fn test_optimize_detects_retry_loop_bash() {
+        // Session A: 7 Bash calls -> should trigger retry_loop recommendation.
+        let session_a: String = (0..7).map(|_| make_tool_use_line("Bash")).collect::<Vec<_>>().join("\n");
+        let session_b: String = [make_tool_use_line("Bash"), make_tool_use_line("Edit")].join("\n");
+
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        let has_retry = report.recommendations.iter().any(|r| r.kind == "retry_loop");
+        assert!(has_retry, "retry_loop recommendation expected for 7 Bash calls");
+    }
+
+    #[test]
+    fn test_optimize_detects_back_and_forth() {
+        // Session A: Read->Edit->Read->Edit->Read->Edit->Read = multiple back-and-forth cycles.
+        let session_a_tools = ["Read", "Edit", "Read", "Edit", "Read", "Edit", "Read"];
+        let session_a: String = session_a_tools.iter().map(|t| make_tool_use_line(t)).collect::<Vec<_>>().join("\n");
+        let session_b: String = [make_tool_use_line("Read"), make_tool_use_line("Edit")].join("\n");
+
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        let has_rer = report.recommendations.iter().any(|r| r.kind == "back_and_forth");
+        assert!(has_rer, "back_and_forth recommendation expected for Read->Edit->Read cycles");
+    }
+
+    #[test]
+    fn test_optimize_detects_token_efficiency() {
+        // Session A: 10 calls. Session B: 2 calls. Expect a token_efficiency cross-session rec.
+        let session_a: String = (0..10).map(|_| make_tool_use_line("Read")).collect::<Vec<_>>().join("\n");
+        let session_b: String = [make_tool_use_line("Glob"), make_tool_use_line("Edit")].join("\n");
+
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        let has_efficiency = report.recommendations.iter().any(|r| r.kind == "token_efficiency");
+        assert!(has_efficiency, "token_efficiency recommendation expected when one session uses far fewer calls");
+    }
+
+    #[test]
+    fn test_optimize_equal_sessions_tie_break_retries() {
+        // Both sessions: same number of tool calls, but session A has fewer retries (same tools).
+        let session_a: String = [make_tool_use_line("Read"), make_tool_use_line("Edit")].join("\n");
+        let session_b: String = [make_tool_use_line("Bash"), make_tool_use_line("Bash")].join("\n");
+        // session_a has 0 retries (Read then Edit). session_b has 1 retry (Bash->Bash).
+        // Tie in total_tool_calls=2, but session A has fewer retries.
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        assert_eq!(report.recommended, 0, "Session A should win tie-break due to fewer retries");
+    }
+
+    #[test]
+    fn test_optimize_format_markdown_contains_headers() {
+        let session_a: String = [make_tool_use_line("Read"), make_tool_use_line("Edit")].join("\n");
+        let session_b: String = [make_tool_use_line("Bash")].join("\n");
+        let report = optimize_sessions("a.jsonl", &session_a, "b.jsonl", &session_b);
+        let md = format_optimize_report(&report);
+        assert!(md.contains("## Skill Optimization Report"), "markdown header expected");
+        assert!(md.contains("### Session Comparison"), "session comparison section expected");
+        assert!(md.contains("**Recommended approach:**"), "recommendation summary expected");
+    }
+
+    #[test]
+    fn test_optimize_empty_sessions() {
+        let report = optimize_sessions("a.jsonl", "", "b.jsonl", "");
+        assert_eq!(report.session_a.total_tool_calls, 0);
+        assert_eq!(report.session_b.total_tool_calls, 0);
+        // Both empty: efficiency gain = 0 (no calls to compare).
+        assert_eq!(report.efficiency_gain_pct, 0.0);
+    }
 }
