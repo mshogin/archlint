@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "archlint-validator"
+version = "0.1.0"
+description = "archlint Python validator - 229 architecture metrics"
+readme = "VALIDATION.en.md"
+requires-python = ">=3.9"
+dependencies = [
+    "networkx>=3.0",
+    "pyyaml>=6.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+]
+
+[project.scripts]
+archlint-validate = "validator.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["validator*"]
