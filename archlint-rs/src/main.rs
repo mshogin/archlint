@@ -5,6 +5,7 @@ mod costlint;
 mod diagram;
 mod diff;
 mod fix;
+mod migrate;
 mod model;
 mod orchestrator;
 mod perflint;
@@ -40,6 +41,10 @@ enum Commands {
         /// Maximum violations before exit code 1
         #[arg(long)]
         threshold: Option<usize>,
+
+        /// Show what config migration would do without writing changes
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Analyze prompt complexity and suggest model routing
     Prompt {
@@ -395,7 +400,27 @@ async fn main() {
             dir,
             format,
             threshold,
+            dry_run,
         } => {
+            // Auto-migrate .archlint.yaml if old schema is detected.
+            let config_path = dir.join(".archlint.yaml");
+            if config_path.exists() {
+                match migrate::migrate(&config_path, dry_run) {
+                    Ok(migrate::MigrateResult::UpToDate) => {}
+                    Ok(migrate::MigrateResult::DryRun(summary)) => {
+                        eprintln!("[archlint] dry-run: config migration would apply: {}", summary);
+                        eprintln!("[archlint] dry-run: run without --dry-run to apply changes.");
+                    }
+                    Ok(migrate::MigrateResult::Migrated { backup, summary }) => {
+                        eprintln!("[archlint] config migrated: {}", summary);
+                        eprintln!("[archlint] backup saved to: {}", backup);
+                    }
+                    Err(e) => {
+                        eprintln!("[archlint] warning: config migration failed: {}", e);
+                    }
+                }
+            }
+
             match analyzer::analyze_multi_language(&dir) {
                 Ok(report) => {
                     match format.as_str() {
