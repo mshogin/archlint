@@ -2,6 +2,7 @@ mod analyzer;
 mod badge;
 mod config;
 mod costlint;
+mod diagram;
 mod diff;
 mod fix;
 mod model;
@@ -173,6 +174,16 @@ enum Commands {
         /// Automatically show fix suggestions when violations are detected
         #[arg(long)]
         fix: bool,
+    },
+    /// Generate an architecture diagram from scan results
+    Diagram {
+        /// Project directory to scan
+        #[arg(default_value = ".")]
+        dir: PathBuf,
+
+        /// Output format: mermaid, d2
+        #[arg(long, default_value = "mermaid")]
+        format: String,
     },
     /// Generate a health badge SVG for a project directory
     Badge {
@@ -779,6 +790,21 @@ async fn main() {
                             println!();
                         }
                     }
+                }
+            }
+        }
+        Commands::Diagram { dir, format } => {
+            match analyzer::analyze(&dir) {
+                Ok(graph) => {
+                    let output = match format.as_str() {
+                        "d2" => diagram::generate_d2(&graph),
+                        _ => diagram::generate_mermaid(&graph),
+                    };
+                    print!("{}", output);
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(2);
                 }
             }
         }
