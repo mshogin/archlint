@@ -292,24 +292,42 @@ fn test_78_badge_svg_output() {
 // #79 ONBOARD - not implemented
 // ---------------------------------------------------------------------------
 
-/// #79 - ONBOARD: command does not exist in the current binary.
-/// Skipped with a TODO until the feature is implemented.
+/// #79 - INIT (onboard): adaptive onboarding generates .archlint.yaml
 #[test]
 fn test_79_onboard_not_implemented() {
-    // TODO: implement archlint onboard command, then write a functional test here.
-    // The command should guide a new user through setting up archlint for a project.
     let bin = binary();
+    let tmp = tempfile::TempDir::new().unwrap();
+
+    // Create a minimal Go project layout
+    let cmd_dir = tmp.path().join("cmd");
+    let handler_dir = tmp.path().join("internal").join("handler");
+    std::fs::create_dir_all(&cmd_dir).unwrap();
+    std::fs::create_dir_all(&handler_dir).unwrap();
+    std::fs::write(tmp.path().join("go.mod"), "module example.com/myapp\ngo 1.21\n").unwrap();
+    std::fs::write(cmd_dir.join("main.go"), "package main\nfunc main() {}\n").unwrap();
 
     let output = Command::new(&bin)
-        .arg("onboard")
+        .arg("init")
+        .arg("--dry-run")
+        .arg(tmp.path())
         .output()
-        .expect("failed to run archlint onboard");
+        .expect("failed to run archlint init");
 
-    // Currently expected to fail because the subcommand does not exist.
-    // When onboard is implemented this assertion should change to success checks.
+    let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
-        !output.status.success(),
-        "onboard command is not yet implemented; expected non-zero exit"
+        output.status.success(),
+        "archlint init should succeed; stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(stdout.contains("archlint init"), "summary should be printed");
+    assert!(stdout.contains("Go"), "should detect Go language");
+    assert!(stdout.contains("rules:"), "generated YAML should contain rules section");
+    assert!(stdout.contains("fan_out:"), "generated YAML should contain fan_out rule");
+
+    // Verify no file was written (dry-run)
+    assert!(
+        !tmp.path().join(".archlint.yaml").exists(),
+        ".archlint.yaml must NOT be written in dry-run mode"
     );
 }
 

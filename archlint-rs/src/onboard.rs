@@ -855,8 +855,9 @@ mod tests {
     #[test]
     fn test_layout_monorepo() {
         let dir = TempDir::new().unwrap();
-        mk(&dir, "services/auth/go.mod");
-        mk(&dir, "services/users/go.mod");
+        // Direct subdirectories each have their own manifest - that's a monorepo
+        mk(&dir, "auth/go.mod");
+        mk(&dir, "users/go.mod");
         let langs = detect_languages(dir.path());
         let layout = detect_layout(dir.path(), &langs);
         assert_eq!(layout, Layout::Monorepo);

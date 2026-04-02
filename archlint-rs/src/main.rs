@@ -7,6 +7,7 @@ mod diff;
 mod fix;
 mod migrate;
 mod model;
+mod onboard;
 mod orchestrator;
 mod perflint;
 mod promptlint;
@@ -210,6 +211,16 @@ enum Commands {
         /// Output file path (use "-" or omit for stdout)
         #[arg(long)]
         output: Option<PathBuf>,
+    },
+    /// Adaptive onboarding: detect project structure and generate .archlint.yaml
+    Init {
+        /// Project directory to scan (default: current directory)
+        #[arg(default_value = ".")]
+        dir: PathBuf,
+
+        /// Print the generated config without writing it to disk
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Analyze a Claude Code session JSONL file for workflow patterns
     Session {
@@ -825,6 +836,37 @@ async fn main() {
                             }
                             println!();
                         }
+                    }
+                }
+            }
+        }
+        Commands::Init { dir, dry_run } => {
+            let result = onboard::onboard(&dir);
+
+            // Print summary
+            print!("{}", result.summary);
+
+            if dry_run {
+                println!("--- .archlint.yaml (dry-run, not written) ---");
+                print!("{}", result.config_yaml);
+            } else {
+                let config_path = dir.join(".archlint.yaml");
+                if config_path.exists() {
+                    eprintln!(
+                        "[archlint] .archlint.yaml already exists. Use --dry-run to preview without overwriting."
+                    );
+                    eprintln!(
+                        "[archlint] Delete or rename the existing file to re-run init."
+                    );
+                    std::process::exit(1);
+                }
+                match onboard::write_config(&dir, &result.config_yaml) {
+                    Ok(path) => {
+                        println!("Written: {}", path.display());
+                    }
+                    Err(e) => {
+                        eprintln!("Error: {}", e);
+                        std::process::exit(1);
                     }
                 }
             }
