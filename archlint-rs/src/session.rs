@@ -926,6 +926,290 @@ pub fn format_comparison(report: &ComparisonReport) -> String {
     out
 }
 
+// --- #90 Skill optimization ---
+
+/// A single optimization recommendation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OptimizationRecommendation {
+    /// Short category label: "redundant_reads", "retry_loop", "token_efficiency", etc.
+    pub kind: String,
+    /// Human-readable actionable recommendation.
+    pub message: String,
+    /// Which session(s) this applies to (0-indexed label, e.g. "session_a", "session_b").
+    pub session: String,
+}
+
+/// Full optimization report comparing two sessions.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OptimizeReport {
+    pub session_a: SessionMetrics,
+    pub session_b: SessionMetrics,
+    /// Index (0 or 1) of the recommended session to follow.
+    pub recommended: usize,
+    /// Token efficiency: percentage fewer tool calls in the recommended session vs the other.
+    pub efficiency_gain_pct: f64,
+    pub recommendations: Vec<OptimizationRecommendation>,
+}
+
+/// Count consecutive same-tool pairs per tool (proxy for retry loops per tool).
+fn retry_loops_per_tool(calls: &[ToolCall]) -> HashMap<String, usize> {
+    let mut counts: HashMap<String, usize> = HashMap::new();
+    for window in calls.windows(2) {
+        if window[0].tool == window[1].tool {
+            *counts.entry(window[0].tool.clone()).or_insert(0) += 1;
+        }
+    }
+    counts
+}
+
+/// Count read->edit->read triples (back-and-forth verification).
+fn count_read_edit_read(calls: &[ToolCall]) -> usize {
+    let mut count = 0usize;
+    for window in calls.windows(3) {
+        if window[0].tool == "Read" && window[1].tool == "Edit" && window[2].tool == "Read" {
+            count += 1;
+        }
+    }
+    count
+}
+
+/// Detect redundant tool calls: same tool called with potentially same args in close proximity.
+/// We approximate this as: any tool called 3+ times consecutively or 5+ times overall.
+fn redundant_tool_calls(tool_freq: &[ToolFrequency]) -> Vec<(String, usize)> {
+    tool_freq
+        .iter()
+        .filter(|f| f.count >= 5)
+        .map(|f| (f.tool.clone(), f.count))
+        .collect()
+}
+
+/// Analyze a single session for inefficiency patterns and return findings.
+fn analyze_inefficiencies(label: &str, calls: &[ToolCall], tool_freq: &[ToolFrequency]) -> Vec<OptimizationRecommendation> {
+    let mut recs = Vec::new();
+
+    // Redundant reads: Read called >= 5 times
+    for (tool, count) in redundant_tool_calls(tool_freq) {
+        if tool == "Read" {
+            recs.push(OptimizationRecommendation {
+                kind: "redundant_reads".to_string(),
+                message: format!(
+                    "{} called Read {} times - consider caching file contents or reading once and reusing",
+                    label, count
+                ),
+                session: label.to_string(),
+            });
+        } else if tool == "Bash" {
+            recs.push(OptimizationRecommendation {
+                kind: "retry_loop".to_string(),
+                message: format!(
+                    "{} called Bash {} times - check command correctness before running to reduce retry loops",
+                    label, count
+                ),
+                session: label.to_string(),
+            });
+        } else {
+            recs.push(OptimizationRecommendation {
+                kind: "tool_overuse".to_string(),
+                message: format!(
+                    "{} called {} {} times - review if all calls are necessary",
+                    label, tool, count
+                ),
+                session: label.to_string(),
+            });
+        }
+    }
+
+    // Back-and-forth: read->edit->read pattern
+    let rer_count = count_read_edit_read(calls);
+    if rer_count >= 2 {
+        recs.push(OptimizationRecommendation {
+            kind: "back_and_forth".to_string(),
+            message: format!(
+                "{} has {} Read->Edit->Read cycles - batch edits before re-reading to reduce back-and-forth",
+                label, rer_count
+            ),
+            session: label.to_string(),
+        });
+    }
+
+    // Retry loops per tool
+    let retries = retry_loops_per_tool(calls);
+    for (tool, count) in &retries {
+        if *count >= 3 {
+            recs.push(OptimizationRecommendation {
+                kind: "retry_loop".to_string(),
+                message: format!(
+                    "{} has {} consecutive {} calls - validate inputs before each call to avoid retry loops",
+                    label, count, tool
+                ),
+                session: label.to_string(),
+            });
+        }
+    }
+
+    recs
+}
+
+/// Compare two sessions for skill optimization and return actionable recommendations.
+///
+/// `file_a` / `jsonl_a` = first session (approach A)
+/// `file_b` / `jsonl_b` = second session (approach B)
+pub fn optimize_sessions(file_a: &str, jsonl_a: &str, file_b: &str, jsonl_b: &str) -> OptimizeReport {
+    let calls_a = parse_tool_chain(jsonl_a);
+    let calls_b = parse_tool_chain(jsonl_b);
+
+    let freq_a = count_tools(&calls_a);
+    let freq_b = count_tools(&calls_b);
+
+    let entropy_a = compute_entropy(&freq_a);
+    let entropy_b = compute_entropy(&freq_b);
+    let cond_entropy_a = compute_conditional_entropy(&calls_a);
+    let cond_entropy_b = compute_conditional_entropy(&calls_b);
+
+    let retry_a = count_retries(&calls_a);
+    let retry_b = count_retries(&calls_b);
+    let rep_a = freq_a.iter().filter(|f| f.count > 5).count();
+    let rep_b = freq_b.iter().filter(|f| f.count > 5).count();
+
+    let metrics_a = SessionMetrics {
+        file: file_a.to_string(),
+        total_tool_calls: calls_a.len(),
+        unique_tools: freq_a.len(),
+        entropy: entropy_a,
+        conditional_entropy: cond_entropy_a,
+        retry_count: retry_a,
+        repetition_flags: rep_a,
+    };
+
+    let metrics_b = SessionMetrics {
+        file: file_b.to_string(),
+        total_tool_calls: calls_b.len(),
+        unique_tools: freq_b.len(),
+        entropy: entropy_b,
+        conditional_entropy: cond_entropy_b,
+        retry_count: retry_b,
+        repetition_flags: rep_b,
+    };
+
+    // Determine recommended session: fewer tool calls wins; tie-break by fewer retries.
+    let recommended = if metrics_a.total_tool_calls < metrics_b.total_tool_calls {
+        0
+    } else if metrics_b.total_tool_calls < metrics_a.total_tool_calls {
+        1
+    } else if metrics_a.retry_count <= metrics_b.retry_count {
+        0
+    } else {
+        1
+    };
+
+    // Efficiency gain as percentage fewer tool calls.
+    let (winner_calls, loser_calls) = if recommended == 0 {
+        (metrics_a.total_tool_calls, metrics_b.total_tool_calls)
+    } else {
+        (metrics_b.total_tool_calls, metrics_a.total_tool_calls)
+    };
+    let efficiency_gain_pct = if loser_calls > 0 {
+        (loser_calls.saturating_sub(winner_calls)) as f64 / loser_calls as f64 * 100.0
+    } else {
+        0.0
+    };
+
+    let mut recommendations = Vec::new();
+
+    // Per-session inefficiency analysis.
+    recommendations.extend(analyze_inefficiencies("Session A", &calls_a, &freq_a));
+    recommendations.extend(analyze_inefficiencies("Session B", &calls_b, &freq_b));
+
+    // Cross-session comparison recommendations.
+    let total_a = metrics_a.total_tool_calls;
+    let total_b = metrics_b.total_tool_calls;
+    if total_a > 0 && total_b > 0 {
+        let (heavier_label, lighter_label, heavy, light) = if total_a > total_b {
+            ("Session A", "Session B", total_a, total_b)
+        } else if total_b > total_a {
+            ("Session B", "Session A", total_b, total_a)
+        } else {
+            // Equal - no cross-session recommendation needed
+            ("", "", 0, 0)
+        };
+
+        if heavy > 0 && light > 0 {
+            let pct = (heavy - light) as f64 / heavy as f64 * 100.0;
+            recommendations.push(OptimizationRecommendation {
+                kind: "token_efficiency".to_string(),
+                message: format!(
+                    "{} used {:.0}% fewer tool calls than {} ({} vs {}) - follow {}'s approach for this task",
+                    lighter_label, pct, heavier_label, light, heavy, lighter_label
+                ),
+                session: "cross_session".to_string(),
+            });
+        }
+    }
+
+    // Entropy divergence: if one session is significantly more chaotic, note it.
+    let entropy_diff = (entropy_a - entropy_b).abs();
+    if entropy_diff > 1.0 {
+        let (chaotic, orderly) = if entropy_a > entropy_b {
+            ("Session A", "Session B")
+        } else {
+            ("Session B", "Session A")
+        };
+        recommendations.push(OptimizationRecommendation {
+            kind: "workflow_chaos".to_string(),
+            message: format!(
+                "{} tool usage is significantly more diverse than {} (entropy diff {:.2}) - consider a more focused tool sequence like {}",
+                chaotic, orderly, entropy_diff, orderly
+            ),
+            session: "cross_session".to_string(),
+        });
+    }
+
+    OptimizeReport {
+        session_a: metrics_a,
+        session_b: metrics_b,
+        recommended,
+        efficiency_gain_pct,
+        recommendations,
+    }
+}
+
+/// Format an OptimizeReport as a markdown report.
+pub fn format_optimize_report(report: &OptimizeReport) -> String {
+    let mut out = String::new();
+
+    out.push_str("## Skill Optimization Report\n\n");
+
+    // Summary table
+    out.push_str("### Session Comparison\n\n");
+    out.push_str("| Metric | Session A | Session B |\n");
+    out.push_str("|--------|-----------|----------|\n");
+    out.push_str(&format!("| File | {} | {} |\n", report.session_a.file, report.session_b.file));
+    out.push_str(&format!("| Tool calls | {} | {} |\n", report.session_a.total_tool_calls, report.session_b.total_tool_calls));
+    out.push_str(&format!("| Unique tools | {} | {} |\n", report.session_a.unique_tools, report.session_b.unique_tools));
+    out.push_str(&format!("| Entropy | {:.4} | {:.4} |\n", report.session_a.entropy, report.session_b.entropy));
+    out.push_str(&format!("| Retries | {} | {} |\n", report.session_a.retry_count, report.session_b.retry_count));
+    out.push_str(&format!("| Repetition flags | {} | {} |\n", report.session_a.repetition_flags, report.session_b.repetition_flags));
+
+    out.push('\n');
+
+    let recommended_label = if report.recommended == 0 { "Session A" } else { "Session B" };
+    out.push_str(&format!(
+        "**Recommended approach:** {} ({:.1}% more efficient)\n\n",
+        recommended_label, report.efficiency_gain_pct
+    ));
+
+    if report.recommendations.is_empty() {
+        out.push_str("No optimization opportunities found. Both sessions look efficient.\n");
+    } else {
+        out.push_str("### Optimization Opportunities\n\n");
+        for rec in &report.recommendations {
+            out.push_str(&format!("- **[{}]** {}\n", rec.kind, rec.message));
+        }
+    }
+
+    out
+}
+
 // --- Tests ---
 
 #[cfg(test)]

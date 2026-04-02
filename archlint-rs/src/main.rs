@@ -269,6 +269,18 @@ enum Commands {
         #[arg(long, default_value = "markdown")]
         format: String,
     },
+    /// Optimize a skill/task: run it twice with different approaches and compare behavior graphs
+    Optimize {
+        /// First session JSONL file (approach A)
+        session_a: PathBuf,
+
+        /// Second session JSONL file (approach B)
+        session_b: PathBuf,
+
+        /// Output format: markdown, json
+        #[arg(long, default_value = "markdown")]
+        format: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -899,6 +911,39 @@ async fn main() {
                 }
                 _ => {
                     print!("{}", session::format_comparison(&report));
+                }
+            }
+        }
+        Commands::Optimize { session_a, session_b, format } => {
+            let content_a = match std::fs::read_to_string(&session_a) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("Error reading {}: {}", session_a.display(), e);
+                    std::process::exit(1);
+                }
+            };
+            let content_b = match std::fs::read_to_string(&session_b) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("Error reading {}: {}", session_b.display(), e);
+                    std::process::exit(1);
+                }
+            };
+
+            let report = session::optimize_sessions(
+                &session_a.display().to_string(),
+                &content_a,
+                &session_b.display().to_string(),
+                &content_b,
+            );
+
+            match format.as_str() {
+                "json" => {
+                    let json = serde_json::to_string_pretty(&report).unwrap();
+                    println!("{}", json);
+                }
+                _ => {
+                    print!("{}", session::format_optimize_report(&report));
                 }
             }
         }
