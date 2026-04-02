@@ -13,6 +13,7 @@ mod promptlint;
 mod seclint;
 mod server;
 mod session;
+mod validate;
 mod watch;
 
 use clap::{Parser, Subcommand};
@@ -179,6 +180,16 @@ enum Commands {
         /// Automatically show fix suggestions when violations are detected
         #[arg(long)]
         fix: bool,
+    },
+    /// Validate an external architecture.yaml graph file (fan-out, fan-in, cycles, layer violations)
+    Validate {
+        /// Path to the YAML graph file (use - for stdin)
+        #[arg(long)]
+        graph: String,
+
+        /// Output format: text, json, yaml
+        #[arg(long, default_value = "text")]
+        format: String,
     },
     /// Generate an architecture diagram from scan results
     Diagram {
@@ -815,6 +826,52 @@ async fn main() {
                             println!();
                         }
                     }
+                }
+            }
+        }
+        Commands::Validate { graph, format } => {
+            // Read YAML from file or stdin
+            let yaml = if graph == "-" {
+                use std::io::Read;
+                let mut buf = String::new();
+                std::io::stdin().read_to_string(&mut buf).expect("failed to read stdin");
+                buf
+            } else {
+                std::fs::read_to_string(&graph).unwrap_or_else(|e| {
+                    eprintln!("Error reading {}: {}", graph, e);
+                    std::process::exit(1);
+                })
+            };
+
+            // Load config from current directory (if .archlint.yaml exists)
+            let config = config::Config::load(&std::path::PathBuf::from("."));
+
+            match validate::validate_from_str(&yaml, &graph, &config) {
+                Ok(report) => {
+                    let has_taboo = report.violations.iter().any(|v| v.level == "taboo");
+
+                    match format.as_str() {
+                        "json" => {
+                            let json = serde_json::to_string_pretty(&report).unwrap();
+                            println!("{}", json);
+                        }
+                        "yaml" => {
+                            let yaml_out = serde_yaml::to_string(&report).unwrap();
+                            print!("{}", yaml_out);
+                        }
+                        _ => {
+                            // text (default)
+                            print!("{}", validate::format_text(&report));
+                        }
+                    }
+
+                    if has_taboo {
+                        std::process::exit(1);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(2);
                 }
             }
         }
