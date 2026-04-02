@@ -616,7 +616,7 @@ fn parse_rust_file(content: &str, module_name: &str, external_deps: &HashSet<Str
             // async fn  -> async I/O or concurrency (service behavior)
             // -> Result< -> fallible operation, typically I/O (service behavior)
             if trimmed.contains("&mut self")
-                || trimmed.starts_with("async fn")
+                || trimmed.contains("async fn")
                 || trimmed.contains("-> Result<")
                 || trimmed.contains("-> anyhow::Result")
             {
