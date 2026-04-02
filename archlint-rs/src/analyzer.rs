@@ -618,6 +618,175 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
         }
     }
 
+    // God-class: detect Go structs with too many methods or fields.
+    if config.rules.god_class.enabled {
+        let method_threshold = config.god_class_method_threshold();
+        let field_threshold = config.god_class_field_threshold();
+        for pf in parsed {
+            if pf.language != "go" {
+                continue;
+            }
+            if config.rules.god_class.exclude.contains(&pf.module_name) {
+                continue;
+            }
+            for gs in &pf.go_structs {
+                let method_exceeded = gs.method_count > method_threshold;
+                let field_exceeded = gs.field_count > field_threshold;
+                if method_exceeded || field_exceeded {
+                    let reason = match (method_exceeded, field_exceeded) {
+                        (true, true) => format!(
+                            "struct `{}` has {} methods (>{}) and {} fields (>{})",
+                            gs.name, gs.method_count, method_threshold,
+                            gs.field_count, field_threshold
+                        ),
+                        (true, false) => format!(
+                            "struct `{}` has {} methods, exceeds god-class threshold of {}",
+                            gs.name, gs.method_count, method_threshold
+                        ),
+                        (false, true) => format!(
+                            "struct `{}` has {} fields, exceeds god-class field threshold of {}",
+                            gs.name, gs.field_count, field_threshold
+                        ),
+                        _ => unreachable!(),
+                    };
+                    violations.push(Violation {
+                        rule: "god_class".to_string(),
+                        component: format!("{}::{}", pf.module_name, gs.name),
+                        message: reason,
+                        severity: "warning".to_string(),
+                        level: config.rules.god_class.level.as_str().to_string(),
+                    });
+                }
+            }
+        }
+    }
+
+    // Feature-envy: detect Go methods that use more of a foreign type than their own.
+    if config.rules.feature_envy.enabled {
+        let envy_threshold = config.feature_envy_threshold();
+        for pf in parsed {
+            if pf.language != "go" {
+                continue;
+            }
+            if config.rules.feature_envy.exclude.contains(&pf.module_name) {
+                continue;
+            }
+            for gm in &pf.go_methods {
+                // Feature envy: foreign calls > own calls AND foreign calls >= threshold.
+                if gm.other_calls > gm.own_calls && gm.other_calls >= envy_threshold {
+                    violations.push(Violation {
+                        rule: "feature_envy".to_string(),
+                        component: format!("{}::{}.{}", pf.module_name, gm.receiver, gm.name),
+                        message: format!(
+                            "method `{}.{}` makes {} calls to foreign types vs {} to its own type (feature envy)",
+                            gm.receiver, gm.name, gm.other_calls, gm.own_calls
+                        ),
+                        severity: "warning".to_string(),
+                        level: config.rules.feature_envy.level.as_str().to_string(),
+                    });
+                }
+            }
+        }
+    }
+
+    // SRP: detect structs/modules with too many methods (Single Responsibility Principle).
+    // Works for both Go (via go_structs) and Rust (via function count heuristic).
+    if config.rules.srp.enabled {
+        let srp_threshold = config.srp_method_threshold();
+        for pf in parsed {
+            if config.rules.srp.exclude.contains(&pf.module_name) {
+                continue;
+            }
+            if pf.language == "go" {
+                // Go: check per-struct method count.
+                for gs in &pf.go_structs {
+                    if gs.method_count > srp_threshold {
+                        violations.push(Violation {
+                            rule: "srp".to_string(),
+                            component: format!("{}::{}", pf.module_name, gs.name),
+                            message: format!(
+                                "struct `{}` has {} methods, exceeds SRP threshold of {} (too many responsibilities)",
+                                gs.name, gs.method_count, srp_threshold
+                            ),
+                            severity: "warning".to_string(),
+                            level: config.rules.srp.level.as_str().to_string(),
+                        });
+                    }
+                }
+            } else if pf.language == "rust" {
+                // Rust: a service module with many functions likely mixes responsibilities.
+                // Use total function count as heuristic; only fire for service modules.
+                if pf.has_service_structs && pf.functions.len() > srp_threshold {
+                    violations.push(Violation {
+                        rule: "srp".to_string(),
+                        component: pf.module_name.clone(),
+                        message: format!(
+                            "module has {} functions/methods, exceeds SRP threshold of {} (consider splitting responsibilities)",
+                            pf.functions.len(), srp_threshold
+                        ),
+                        severity: "warning".to_string(),
+                        level: config.rules.srp.level.as_str().to_string(),
+                    });
+                }
+            }
+        }
+    }
+
+    // Shotgun Surgery: detect modules with high afferent coupling (blast radius).
+    // A module that many others depend on is a "blast radius" hazard: changing it
+    // forces cascading changes throughout the codebase.
+    if config.rules.shotgun_surgery.enabled {
+        let shotgun_threshold = config.shotgun_threshold();
+        for comp in components {
+            if config.rules.shotgun_surgery.exclude.contains(&comp.id) {
+                continue;
+            }
+            let ca = graph.fan_in(&comp.id); // afferent coupling
+            if ca > shotgun_threshold {
+                violations.push(Violation {
+                    rule: "shotgun_surgery".to_string(),
+                    component: comp.id.clone(),
+                    message: format!(
+                        "module has {} dependents (afferent coupling Ca={}), blast radius exceeds threshold of {}; a change here will cascade to {} modules",
+                        ca, ca, shotgun_threshold, ca
+                    ),
+                    severity: "warning".to_string(),
+                    level: config.rules.shotgun_surgery.level.as_str().to_string(),
+                });
+            }
+        }
+    }
+
+    // Coupling instability: flag modules with high instability = Ce / (Ca + Ce).
+    // Only flag when Ca >= 2 to avoid noise on leaf modules.
+    if config.rules.coupling.enabled {
+        let instability_threshold = config.coupling_instability_threshold();
+        for comp in components {
+            if config.rules.coupling.exclude.contains(&comp.id) {
+                continue;
+            }
+            let ca = graph.fan_in(&comp.id) as f64;
+            let ce = graph.fan_out(&comp.id) as f64;
+            let total = ca + ce;
+            if total < 1.0 || ca < 2.0 {
+                continue;
+            }
+            let instability = ce / total;
+            if instability > instability_threshold {
+                violations.push(Violation {
+                    rule: "coupling".to_string(),
+                    component: comp.id.clone(),
+                    message: format!(
+                        "module instability {:.2} (Ce={}, Ca={}) exceeds threshold {:.2}; consider reducing efferent coupling or increasing abstraction",
+                        instability, ce as usize, ca as usize, instability_threshold
+                    ),
+                    severity: "info".to_string(),
+                    level: config.rules.coupling.level.as_str().to_string(),
+                });
+            }
+        }
+    }
+
     // Layer dependency rule: detect forbidden cross-layer dependencies.
     if config.has_layer_rules() {
         for comp in components {
@@ -1503,6 +1672,8 @@ pub struct Agent {}\n\
                 functions: Vec::new(),
                 traits: Vec::new(),
                 has_service_structs: false,
+                go_structs: Vec::new(),
+                go_methods: Vec::new(),
             });
         }
         for (f, t) in edges {
@@ -1883,6 +2054,8 @@ import (
             functions: Vec::new(),
             traits: Vec::new(),
             has_service_structs: false,
+            go_structs: Vec::new(),
+            go_methods: Vec::new(),
         });
 
         let metrics = calculate_metrics(&graph, &components, &parsed, &cfg);
@@ -2290,5 +2463,568 @@ path = "src/server/main.rs"
 
         assert!(layer_violations.is_empty(),
             "expected no layer violations for allowed dependency, got: {:?}", layer_violations);
+    }
+
+    // ------------------------------------------------------------------
+    // God-class detection tests (Go)
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_god_class_detected_by_method_count() {
+        use crate::language_analyzer::{GoStructDef, GoMethodDef};
+        // Build a ParsedFile with a struct exceeding method threshold (20).
+        let mut pf = parse_go_file("", "internal/service", "myapp").unwrap();
+        pf.go_structs = vec![GoStructDef {
+            name: "GodService".to_string(),
+            method_count: 25,
+            field_count: 5,
+        }];
+        pf.go_methods = Vec::new();
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "internal/service".to_string(),
+            title: "internal/service".to_string(),
+            entity: "go".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let god_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "god_class")
+            .collect();
+        assert_eq!(god_violations.len(), 1, "should detect 1 god-class violation, got: {:?}", god_violations);
+        assert!(god_violations[0].component.contains("GodService"),
+            "violation component should name the struct: {}", god_violations[0].component);
+        assert!(god_violations[0].message.contains("25"),
+            "violation message should mention method count: {}", god_violations[0].message);
+    }
+
+    #[test]
+    fn test_god_class_detected_by_field_count() {
+        use crate::language_analyzer::{GoStructDef, GoMethodDef};
+        // Build a ParsedFile with a struct exceeding field threshold (15).
+        let mut pf = parse_go_file("", "internal/model", "myapp").unwrap();
+        pf.go_structs = vec![GoStructDef {
+            name: "FatStruct".to_string(),
+            method_count: 2,
+            field_count: 20,
+        }];
+        pf.go_methods = Vec::new();
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "internal/model".to_string(),
+            title: "internal/model".to_string(),
+            entity: "go".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let god_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "god_class")
+            .collect();
+        assert_eq!(god_violations.len(), 1, "should detect 1 god-class violation for too many fields");
+        assert!(god_violations[0].message.contains("20"),
+            "violation message should mention field count: {}", god_violations[0].message);
+    }
+
+    #[test]
+    fn test_god_class_not_triggered_below_thresholds() {
+        use crate::language_analyzer::{GoStructDef, GoMethodDef};
+        let mut pf = parse_go_file("", "internal/handler", "myapp").unwrap();
+        pf.go_structs = vec![GoStructDef {
+            name: "NormalHandler".to_string(),
+            method_count: 10,
+            field_count: 8,
+        }];
+        pf.go_methods = Vec::new();
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "internal/handler".to_string(),
+            title: "internal/handler".to_string(),
+            entity: "go".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let god_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "god_class")
+            .collect();
+        assert!(god_violations.is_empty(), "should not trigger for normal-sized struct, got: {:?}", god_violations);
+    }
+
+    #[test]
+    fn test_god_class_not_triggered_for_rust_files() {
+        use crate::language_analyzer::{GoStructDef, GoMethodDef};
+        // Rust file with go_structs populated (shouldn't happen normally, but test the guard).
+        let mut pf = parse_rust_file("", "src::service", &make_deps(&[])).unwrap();
+        // Manually set language to rust (it already is), go_structs empty.
+        assert_eq!(pf.language, "rust");
+        assert!(pf.go_structs.is_empty());
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "src::service".to_string(),
+            title: "src::service".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let god_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "god_class")
+            .collect();
+        assert!(god_violations.is_empty(), "god-class should not fire for Rust files");
+    }
+
+    // ------------------------------------------------------------------
+    // Feature-envy detection tests (Go)
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_feature_envy_detected() {
+        use crate::language_analyzer::{GoStructDef, GoMethodDef};
+        // Method with 5 foreign calls and 1 own call -> feature envy.
+        let mut pf = parse_go_file("", "internal/service", "myapp").unwrap();
+        pf.go_structs = Vec::new();
+        pf.go_methods = vec![GoMethodDef {
+            name: "Process".to_string(),
+            receiver: "OrderService".to_string(),
+            own_calls: 1,
+            other_calls: 5,
+        }];
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "internal/service".to_string(),
+            title: "internal/service".to_string(),
+            entity: "go".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let fe_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "feature_envy")
+            .collect();
+        assert_eq!(fe_violations.len(), 1, "should detect feature-envy violation, got: {:?}", fe_violations);
+        assert!(fe_violations[0].component.contains("Process"),
+            "violation should name the method: {}", fe_violations[0].component);
+        assert!(fe_violations[0].message.contains("5"),
+            "violation message should mention foreign call count: {}", fe_violations[0].message);
+    }
+
+    #[test]
+    fn test_feature_envy_not_triggered_when_own_calls_dominate() {
+        use crate::language_analyzer::{GoStructDef, GoMethodDef};
+        // Method with more own calls than foreign -> no envy.
+        let mut pf = parse_go_file("", "internal/service", "myapp").unwrap();
+        pf.go_structs = Vec::new();
+        pf.go_methods = vec![GoMethodDef {
+            name: "Handle".to_string(),
+            receiver: "Server".to_string(),
+            own_calls: 5,
+            other_calls: 2,
+        }];
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "internal/service".to_string(),
+            title: "internal/service".to_string(),
+            entity: "go".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let fe_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "feature_envy")
+            .collect();
+        assert!(fe_violations.is_empty(), "should not trigger when own calls dominate: {:?}", fe_violations);
+    }
+
+    #[test]
+    fn test_feature_envy_not_triggered_below_threshold() {
+        use crate::language_analyzer::{GoStructDef, GoMethodDef};
+        // Method with 2 foreign calls (below threshold of 3) -> no envy.
+        let mut pf = parse_go_file("", "internal/handler", "myapp").unwrap();
+        pf.go_structs = Vec::new();
+        pf.go_methods = vec![GoMethodDef {
+            name: "Do".to_string(),
+            receiver: "Handler".to_string(),
+            own_calls: 0,
+            other_calls: 2,
+        }];
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "internal/handler".to_string(),
+            title: "internal/handler".to_string(),
+            entity: "go".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let fe_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "feature_envy")
+            .collect();
+        assert!(fe_violations.is_empty(), "should not trigger when below threshold: {:?}", fe_violations);
+    }
+
+    #[test]
+    fn test_feature_envy_not_triggered_for_rust_files() {
+        // Rust ParsedFile with empty go_methods should not produce feature-envy violations.
+        let pf = parse_rust_file(
+            "pub struct Foo {}\nimpl Foo { fn bar(&self) {} }",
+            "src::foo",
+            &make_deps(&[]),
+        ).unwrap();
+        assert!(pf.go_methods.is_empty());
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "src::foo".to_string(),
+            title: "src::foo".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let fe_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "feature_envy")
+            .collect();
+        assert!(fe_violations.is_empty(), "feature-envy should not fire for Rust files");
+    }
+
+    #[test]
+    fn test_god_class_and_feature_envy_end_to_end_via_parse() {
+        // Parse actual Go code that should trigger god-class detection.
+        let mut methods = String::new();
+        for i in 0..22 {
+            methods.push_str(&format!("func (s *BigService) Method{}() {{}}\n", i));
+        }
+        let code = format!("package service\n\ntype BigService struct {{\n    field1 string\n}}\n\n{}", methods);
+        let pf = parse_go_file(&code, "internal/service", "myapp").unwrap();
+
+        assert!(!pf.go_structs.is_empty(), "should have parsed go_structs");
+        let big = pf.go_structs.iter().find(|s| s.name == "BigService");
+        assert!(big.is_some(), "BigService should be in go_structs");
+        assert_eq!(big.unwrap().method_count, 22, "BigService should have 22 methods");
+
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "internal/service".to_string(),
+            title: "internal/service".to_string(),
+            entity: "go".to_string(),
+        }];
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+
+        let god_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "god_class")
+            .collect();
+        assert!(!god_violations.is_empty(),
+            "should detect god-class via end-to-end parse: {:?}", metrics.violations);
+    }
+
+
+    // ------------------------------------------------------------------
+    // SRP tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_srp_violation_go_struct_too_many_methods() {
+        use crate::language_analyzer::{parse_go_content, GoStructDef};
+
+        // Build a ParsedFile that simulates a Go struct with 12 methods.
+        let mut pf = parse_go_content("", "mymod", "").unwrap();
+        pf.go_structs = vec![GoStructDef {
+            name: "BigService".to_string(),
+            method_count: 12,
+            field_count: 3,
+        }];
+
+        let config = Config::default(); // SRP threshold = 10
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "mymod".to_string(),
+            title: "mymod".to_string(),
+            entity: "go".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let srp_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "srp")
+            .collect();
+        assert_eq!(srp_violations.len(), 1, "expected 1 SRP violation, got: {:?}", srp_violations);
+        assert!(srp_violations[0].message.contains("BigService"));
+        assert!(srp_violations[0].message.contains("12"));
+        assert_eq!(srp_violations[0].severity, "warning");
+    }
+
+    #[test]
+    fn test_srp_no_violation_within_threshold() {
+        use crate::language_analyzer::{parse_go_content, GoStructDef};
+
+        let mut pf = parse_go_content("", "mymod", "").unwrap();
+        pf.go_structs = vec![GoStructDef {
+            name: "SmallService".to_string(),
+            method_count: 8, // below default threshold of 10
+            field_count: 2,
+        }];
+
+        let config = Config::default();
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "mymod".to_string(),
+            title: "mymod".to_string(),
+            entity: "go".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let srp_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "srp")
+            .collect();
+        assert!(srp_violations.is_empty(), "expected no SRP violations, got: {:?}", srp_violations);
+    }
+
+    #[test]
+    fn test_srp_rust_module_too_many_functions() {
+        let empty = make_deps(&[]);
+        // Rust module with >10 functions and a service struct -> SRP violation.
+        let code = "pub struct Svc {}\nimpl Svc { pub fn run(&mut self) {} }\npub fn f1() {}\npub fn f2() {}\npub fn f3() {}\npub fn f4() {}\npub fn f5() {}\npub fn f6() {}\npub fn f7() {}\npub fn f8() {}\npub fn f9() {}\npub fn f10() {}\npub fn f11() {}\n";
+        let pf = parse_rust_file(code, "bigmod", &empty).unwrap();
+        assert!(pf.has_service_structs);
+        assert!(pf.functions.len() > 10, "expected >10 functions, got {}", pf.functions.len());
+
+        let config = Config::default(); // SRP threshold = 10
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "bigmod".to_string(),
+            title: "bigmod".to_string(),
+            entity: "rust".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let srp_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "srp")
+            .collect();
+        assert_eq!(srp_violations.len(), 1, "expected 1 SRP violation, got: {:?}", srp_violations);
+        assert_eq!(srp_violations[0].component, "bigmod", "component should be module name");
+        assert!(srp_violations[0].message.contains("functions/methods"), "message should mention functions: {}", srp_violations[0].message);
+    }
+
+    #[test]
+    fn test_srp_disabled_produces_no_violations() {
+        use crate::language_analyzer::{parse_go_content, GoStructDef};
+
+        let mut pf = parse_go_content("", "mymod", "").unwrap();
+        pf.go_structs = vec![GoStructDef {
+            name: "BigService".to_string(),
+            method_count: 20,
+            field_count: 5,
+        }];
+
+        let mut config = Config::default();
+        config.rules.srp.enabled = false;
+        let graph = IndexedGraph::new();
+        let components = vec![crate::model::Component {
+            id: "mymod".to_string(),
+            title: "mymod".to_string(),
+            entity: "go".to_string(),
+        }];
+        let metrics = calculate_metrics(&graph, &components, &[pf], &config);
+        let srp_violations: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "srp")
+            .collect();
+        assert!(srp_violations.is_empty());
+    }
+
+    // ------------------------------------------------------------------
+    // Shotgun Surgery tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_shotgun_surgery_detected() {
+        let empty = make_deps(&[]);
+
+        let mut graph = IndexedGraph::new();
+        let mut components = vec![];
+        let mut parsed = vec![];
+
+        graph.add_node("shared");
+        components.push(crate::model::Component {
+            id: "shared".to_string(), title: "shared".to_string(), entity: "rust".to_string(),
+        });
+        parsed.push(parse_rust_file("", "shared", &empty).unwrap());
+
+        // 12 consumers depend on "shared" (above default threshold of 10).
+        for i in 1..=12usize {
+            let mod_name = format!("consumer{}", i);
+            graph.add_node(&mod_name);
+            graph.add_edge(&mod_name, "shared", "depends");
+            components.push(crate::model::Component {
+                id: mod_name.clone(), title: mod_name.clone(), entity: "rust".to_string(),
+            });
+            parsed.push(parse_rust_file("", &mod_name, &empty).unwrap());
+        }
+
+        let config = Config::default(); // shotgun_surgery threshold = 10
+        let metrics = calculate_metrics(&graph, &components, &parsed, &config);
+        let shotgun: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "shotgun_surgery")
+            .collect();
+        assert_eq!(shotgun.len(), 1, "expected 1 shotgun surgery violation, got: {:?}", shotgun);
+        assert_eq!(shotgun[0].component, "shared");
+        assert!(shotgun[0].message.contains("12"), "expected 12 in message: {}", shotgun[0].message);
+    }
+
+    #[test]
+    fn test_shotgun_surgery_no_violation_below_threshold() {
+        let empty = make_deps(&[]);
+        let mut graph = IndexedGraph::new();
+        let mut components = vec![];
+        let mut parsed = vec![];
+
+        graph.add_node("shared");
+        components.push(crate::model::Component {
+            id: "shared".to_string(), title: "shared".to_string(), entity: "rust".to_string(),
+        });
+        parsed.push(parse_rust_file("", "shared", &empty).unwrap());
+
+        // 8 consumers (below default threshold of 10).
+        for i in 1..=8usize {
+            let mod_name = format!("consumer{}", i);
+            graph.add_node(&mod_name);
+            graph.add_edge(&mod_name, "shared", "depends");
+            components.push(crate::model::Component {
+                id: mod_name.clone(), title: mod_name.clone(), entity: "rust".to_string(),
+            });
+            parsed.push(parse_rust_file("", &mod_name, &empty).unwrap());
+        }
+
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &parsed, &config);
+        let shotgun: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "shotgun_surgery")
+            .collect();
+        assert!(shotgun.is_empty(), "expected no shotgun violations, got: {:?}", shotgun);
+    }
+
+    // ------------------------------------------------------------------
+    // Coupling instability tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_coupling_instability_detected() {
+        // "unstable" depends on 9 modules; 2 depend on it.
+        // instability = 9/(9+2) = 0.818 > 0.80 threshold -> violation.
+        let empty = make_deps(&[]);
+        let mut graph = IndexedGraph::new();
+        let mut components = vec![];
+        let mut parsed = vec![];
+
+        graph.add_node("unstable");
+        components.push(crate::model::Component {
+            id: "unstable".to_string(), title: "unstable".to_string(), entity: "rust".to_string(),
+        });
+        parsed.push(parse_rust_file("", "unstable", &empty).unwrap());
+
+        for i in 1..=9usize {
+            let dep = format!("dep{}", i);
+            graph.add_node(&dep);
+            graph.add_edge("unstable", &dep, "depends");
+            components.push(crate::model::Component {
+                id: dep.clone(), title: dep.clone(), entity: "rust".to_string(),
+            });
+            parsed.push(parse_rust_file("", &dep, &empty).unwrap());
+        }
+
+        for i in 1..=2usize {
+            let caller = format!("caller{}", i);
+            graph.add_node(&caller);
+            graph.add_edge(&caller, "unstable", "depends");
+            components.push(crate::model::Component {
+                id: caller.clone(), title: caller.clone(), entity: "rust".to_string(),
+            });
+            parsed.push(parse_rust_file("", &caller, &empty).unwrap());
+        }
+
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &parsed, &config);
+        let coupling: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "coupling" && v.component == "unstable")
+            .collect();
+        assert_eq!(coupling.len(), 1, "expected coupling violation, got: {:?}", coupling);
+        assert!(coupling[0].message.contains("0.8"), "expected instability ~0.82 in: {}", coupling[0].message);
+    }
+
+    #[test]
+    fn test_coupling_no_violation_stable_module() {
+        // Stable module: 5 depend on it, it depends on 1.
+        // instability = 1/(1+5) = 0.167 < 0.80 -> no violation.
+        let empty = make_deps(&[]);
+        let mut graph = IndexedGraph::new();
+        let mut components = vec![];
+        let mut parsed = vec![];
+
+        graph.add_node("stable");
+        components.push(crate::model::Component {
+            id: "stable".to_string(), title: "stable".to_string(), entity: "rust".to_string(),
+        });
+        parsed.push(parse_rust_file("", "stable", &empty).unwrap());
+
+        for i in 1..=5usize {
+            let caller = format!("caller{}", i);
+            graph.add_node(&caller);
+            graph.add_edge(&caller, "stable", "depends");
+            components.push(crate::model::Component {
+                id: caller.clone(), title: caller.clone(), entity: "rust".to_string(),
+            });
+            parsed.push(parse_rust_file("", &caller, &empty).unwrap());
+        }
+
+        graph.add_node("dep1");
+        graph.add_edge("stable", "dep1", "depends");
+        components.push(crate::model::Component {
+            id: "dep1".to_string(), title: "dep1".to_string(), entity: "rust".to_string(),
+        });
+        parsed.push(parse_rust_file("", "dep1", &empty).unwrap());
+
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &parsed, &config);
+        let coupling: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "coupling" && v.component == "stable")
+            .collect();
+        assert!(coupling.is_empty(), "stable module should not trigger coupling: {:?}", coupling);
+    }
+
+    #[test]
+    fn test_coupling_skips_leaf_nodes() {
+        // Leaf module (no callers): Ca=0 so coupling check should be skipped.
+        let empty = make_deps(&[]);
+        let mut graph = IndexedGraph::new();
+        let mut components = vec![];
+        let mut parsed = vec![];
+
+        graph.add_node("leaf");
+        components.push(crate::model::Component {
+            id: "leaf".to_string(), title: "leaf".to_string(), entity: "rust".to_string(),
+        });
+        parsed.push(parse_rust_file("", "leaf", &empty).unwrap());
+
+        for i in 1..=10usize {
+            let dep = format!("dep{}", i);
+            graph.add_node(&dep);
+            graph.add_edge("leaf", &dep, "depends");
+            components.push(crate::model::Component {
+                id: dep.clone(), title: dep.clone(), entity: "rust".to_string(),
+            });
+            parsed.push(parse_rust_file("", &dep, &empty).unwrap());
+        }
+
+        let config = Config::default();
+        let metrics = calculate_metrics(&graph, &components, &parsed, &config);
+        let coupling: Vec<&Violation> = metrics.violations.iter()
+            .filter(|v| v.rule == "coupling" && v.component == "leaf")
+            .collect();
+        assert!(coupling.is_empty(), "leaf node should not trigger coupling violation: {:?}", coupling);
     }
 }
