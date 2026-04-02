@@ -270,6 +270,23 @@ def main():
         if args.format == 'json':
             output = json.dumps(results, indent=2, ensure_ascii=False)
         else:
+            # Convert numpy types to native Python for YAML serialization
+            def convert_numpy(obj):
+                import numpy as np
+                if isinstance(obj, dict):
+                    return {k: convert_numpy(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_numpy(i) for i in obj]
+                elif isinstance(obj, (np.integer,)):
+                    return int(obj)
+                elif isinstance(obj, (np.floating,)):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                elif isinstance(obj, (np.bool_,)):
+                    return bool(obj)
+                return obj
+            results = convert_numpy(results)
             output = yaml.dump(results, allow_unicode=True, default_flow_style=False)
 
         if args.output:
