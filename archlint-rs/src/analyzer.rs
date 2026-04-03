@@ -144,6 +144,10 @@ pub fn analyze_multi_language_strict(dir: &Path, strict: bool) -> Result<MultiLa
             let mut components = Vec::new();
             let mut links = Vec::new();
 
+            // Track which vendor group names we have already added as components,
+            // to avoid duplicates when multiple modules import the same vendor.
+            let mut vendor_components_added: HashSet<String> = HashSet::new();
+
             for pf in &parsed {
                 graph.add_node(&pf.module_name);
                 components.push(Component {
@@ -151,11 +155,38 @@ pub fn analyze_multi_language_strict(dir: &Path, strict: bool) -> Result<MultiLa
                     title: pf.module_name.clone(),
                     entity: pf.language.clone(),
                 });
+                // Track which vendor groups this module already links to, so we
+                // emit at most one edge per (module, vendor_group) pair.
+                let mut linked_vendors: HashSet<String> = HashSet::new();
                 for dep in &pf.dependencies {
-                    graph.add_edge(&pf.module_name, dep, "depends");
+                    // Resolve the dependency to a vendor group if configured.
+                    let effective_dep: String = if let Some(group) = config.resolve_vendor(dep) {
+                        group.to_string()
+                    } else {
+                        dep.clone()
+                    };
+
+                    // If vendor group: deduplicate edges and add a synthetic component.
+                    if effective_dep != *dep {
+                        if linked_vendors.contains(&effective_dep) {
+                            continue; // already emitted an edge to this vendor group
+                        }
+                        linked_vendors.insert(effective_dep.clone());
+                        if !vendor_components_added.contains(&effective_dep) {
+                            vendor_components_added.insert(effective_dep.clone());
+                            graph.add_node(&effective_dep);
+                            components.push(Component {
+                                id: effective_dep.clone(),
+                                title: effective_dep.clone(),
+                                entity: "vendor".to_string(),
+                            });
+                        }
+                    }
+
+                    graph.add_edge(&pf.module_name, &effective_dep, "depends");
                     links.push(Link {
                         from: pf.module_name.clone(),
-                        to: dep.clone(),
+                        to: effective_dep,
                         method: None,
                         link_type: Some("depends".to_string()),
                     });
@@ -330,6 +361,7 @@ pub fn analyze_with_config_strict(dir: &Path, config: &Config, strict: bool) -> 
     let mut graph = IndexedGraph::new();
     let mut components = Vec::new();
     let mut links = Vec::new();
+    let mut vendor_components_added: HashSet<String> = HashSet::new();
 
     for pf in &parsed {
         // Add component node
@@ -340,12 +372,39 @@ pub fn analyze_with_config_strict(dir: &Path, config: &Config, strict: bool) -> 
             entity: pf.language.clone(),
         });
 
+        // Track which vendor groups this module already links to (dedup edges).
+        let mut linked_vendors: HashSet<String> = HashSet::new();
+
         // Add dependency edges
         for dep in &pf.dependencies {
-            graph.add_edge(&pf.module_name, dep, "depends");
+            // Resolve to vendor group if configured.
+            let effective_dep: String = if let Some(group) = config.resolve_vendor(dep) {
+                group.to_string()
+            } else {
+                dep.clone()
+            };
+
+            // Deduplicate edges to the same vendor group.
+            if effective_dep != *dep {
+                if linked_vendors.contains(&effective_dep) {
+                    continue;
+                }
+                linked_vendors.insert(effective_dep.clone());
+                if !vendor_components_added.contains(&effective_dep) {
+                    vendor_components_added.insert(effective_dep.clone());
+                    graph.add_node(&effective_dep);
+                    components.push(Component {
+                        id: effective_dep.clone(),
+                        title: effective_dep.clone(),
+                        entity: "vendor".to_string(),
+                    });
+                }
+            }
+
+            graph.add_edge(&pf.module_name, &effective_dep, "depends");
             links.push(Link {
                 from: pf.module_name.clone(),
-                to: dep.clone(),
+                to: effective_dep,
                 method: None,
                 link_type: Some("depends".to_string()),
             });
