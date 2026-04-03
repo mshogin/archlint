@@ -891,6 +891,87 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
         }
     }
 
+    // Prescriptive mode: declared allow-list for component dependencies.
+    // For each link, resolve source/target to declared components by path matching.
+    // If the dependency is not in mayDependOn -> violation (taboo by default).
+    // Unknown components (not matched to any declared component) get a warning.
+    if config.is_prescriptive() {
+        for comp in components {
+            let from_component = config.component_for_module(&comp.id);
+
+            if let Some(&from_idx) = graph.node_indices.get(&comp.id) {
+                let neighbors: Vec<String> = graph
+                    .graph
+                    .neighbors_directed(from_idx, petgraph::Direction::Outgoing)
+                    .map(|idx| graph.graph[idx].clone())
+                    .collect();
+
+                for dep_id in neighbors {
+                    let to_component = config.component_for_module(&dep_id);
+
+                    match (from_component, to_component) {
+                        (None, _) => {
+                            // Source not in any declared component - warn once per module.
+                            violations.push(Violation {
+                                rule: "prescriptive".to_string(),
+                                component: comp.id.clone(),
+                                message: format!(
+                                    "component '{}' is not declared in any prescriptive component definition",
+                                    comp.id
+                                ),
+                                severity: "warning".to_string(),
+                                level: "personal".to_string(),
+                            });
+                            // Break to avoid duplicate warnings for the same source module.
+                            break;
+                        }
+                        (Some(from_name), None) => {
+                            // Dependency not in any declared component - warn.
+                            violations.push(Violation {
+                                rule: "prescriptive".to_string(),
+                                component: comp.id.clone(),
+                                message: format!(
+                                    "dependency '{}' (from component '{}') is not declared in any prescriptive component definition",
+                                    dep_id, from_name
+                                ),
+                                severity: "warning".to_string(),
+                                level: "personal".to_string(),
+                            });
+                        }
+                        (Some(from_name), Some(to_name)) => {
+                            // Both resolved: check the allow-list.
+                            if from_name == to_name {
+                                continue; // same component - always fine
+                            }
+                            if !config.check_dependency(from_name, to_name) {
+                                let allowed: Vec<&str> = config
+                                    .components
+                                    .get(from_name)
+                                    .map(|r| r.may_depend_on.iter().map(|s| s.as_str()).collect())
+                                    .unwrap_or_default();
+                                let allowed_list = if allowed.is_empty() {
+                                    "none".to_string()
+                                } else {
+                                    allowed.join(", ")
+                                };
+                                violations.push(Violation {
+                                    rule: "prescriptive".to_string(),
+                                    component: comp.id.clone(),
+                                    message: format!(
+                                        "VIOLATION: {} -> {} (forbidden, allowed: [{}])",
+                                        from_name, to_name, allowed_list
+                                    ),
+                                    severity: "error".to_string(),
+                                    level: "taboo".to_string(),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Layer dependency rule: detect forbidden cross-layer dependencies.
     if config.has_layer_rules() {
         for comp in components {
@@ -3327,5 +3408,124 @@ path = "src/server/main.rs"
         assert_eq!(fan_out_viols.len(), 1);
         assert_eq!(fan_out_viols[0].level, "telemetry",
             "strict mode should use configured level, not todo");
+    }
+
+    // ---- prescriptive mode tests ----
+
+    fn build_prescriptive_config() -> Config {
+        use crate::config::ComponentRule;
+        use std::collections::HashMap;
+
+        let mut components: HashMap<String, ComponentRule> = HashMap::new();
+        components.insert("handler".to_string(), ComponentRule {
+            paths: vec!["internal/handler".to_string()],
+            may_depend_on: vec!["service".to_string(), "model".to_string()],
+        });
+        components.insert("service".to_string(), ComponentRule {
+            paths: vec!["internal/service".to_string()],
+            may_depend_on: vec!["repository".to_string(), "model".to_string()],
+        });
+        components.insert("repository".to_string(), ComponentRule {
+            paths: vec!["internal/repository".to_string()],
+            may_depend_on: vec!["model".to_string()],
+        });
+        components.insert("model".to_string(), ComponentRule {
+            paths: vec!["internal/model".to_string()],
+            may_depend_on: vec![],
+        });
+
+        Config {
+            mode: Some("prescriptive".to_string()),
+            components,
+            ..Config::default()
+        }
+    }
+
+    #[test]
+    fn test_prescriptive_allowed_dependency_passes() {
+        // handler -> service: allowed
+        let cfg = build_prescriptive_config();
+        let violations = run_metrics_with_config(
+            &[("internal/handler/users", "internal/service/users")],
+            &cfg,
+        );
+        let p_viols: Vec<_> = violations.iter().filter(|v| v.rule == "prescriptive" && v.severity == "error").collect();
+        assert!(p_viols.is_empty(), "handler -> service should be allowed, got: {:?}", p_viols);
+    }
+
+    #[test]
+    fn test_prescriptive_disallowed_dependency_violation() {
+        // handler -> repository: FORBIDDEN (handler may only depend on service, model)
+        let cfg = build_prescriptive_config();
+        let violations = run_metrics_with_config(
+            &[("internal/handler/orders", "internal/repository/orders")],
+            &cfg,
+        );
+        let p_viols: Vec<_> = violations.iter().filter(|v| v.rule == "prescriptive" && v.severity == "error").collect();
+        assert_eq!(p_viols.len(), 1, "expected 1 prescriptive violation, got: {:?}", p_viols);
+        assert!(
+            p_viols[0].message.contains("VIOLATION: handler -> repository"),
+            "unexpected message: {}",
+            p_viols[0].message
+        );
+        assert!(
+            p_viols[0].message.contains("allowed: ["),
+            "message should list allowed components: {}",
+            p_viols[0].message
+        );
+        assert_eq!(p_viols[0].level, "taboo", "prescriptive violations should be taboo");
+    }
+
+    #[test]
+    fn test_prescriptive_model_no_deps_allowed() {
+        // model -> service: FORBIDDEN (model mayDependOn: [])
+        let cfg = build_prescriptive_config();
+        let violations = run_metrics_with_config(
+            &[("internal/model/user", "internal/service/users")],
+            &cfg,
+        );
+        let p_viols: Vec<_> = violations.iter().filter(|v| v.rule == "prescriptive" && v.severity == "error").collect();
+        assert_eq!(p_viols.len(), 1);
+        assert!(
+            p_viols[0].message.contains("VIOLATION: model -> service"),
+            "unexpected message: {}",
+            p_viols[0].message
+        );
+        assert!(
+            p_viols[0].message.contains("allowed: [none]"),
+            "should show 'none' when no deps allowed: {}",
+            p_viols[0].message
+        );
+    }
+
+    #[test]
+    fn test_prescriptive_unknown_component_warning() {
+        // pkg/utils is not in any declared component - should produce a personal warning
+        let cfg = build_prescriptive_config();
+        let violations = run_metrics_with_config(
+            &[("pkg/utils", "internal/service/orders")],
+            &cfg,
+        );
+        let warnings: Vec<_> = violations.iter()
+            .filter(|v| v.rule == "prescriptive" && v.level == "personal")
+            .collect();
+        assert!(!warnings.is_empty(), "unknown component should produce a personal warning, got: {:?}", violations);
+        assert!(
+            warnings[0].message.contains("not declared in any prescriptive component"),
+            "unexpected warning message: {}",
+            warnings[0].message
+        );
+    }
+
+    #[test]
+    fn test_prescriptive_discovery_mode_no_check() {
+        // Without mode: prescriptive, no prescriptive checks should fire
+        let cfg = Config::default(); // discovery mode
+        let violations = run_metrics_with_config(
+            &[("internal/handler/orders", "internal/repository/orders")],
+            &cfg,
+        );
+        let p_viols: Vec<_> = violations.iter().filter(|v| v.rule == "prescriptive").collect();
+        assert!(p_viols.is_empty(), "discovery mode should not trigger prescriptive checks");
     }
 }
