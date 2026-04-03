@@ -100,9 +100,59 @@ jobs:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
 
+  build-go:
+    name: Build Go ${{ matrix.artifact }}
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goarch: amd64
+            goos: linux
+            artifact: archlint-go-linux-amd64
+
+          - os: ubuntu-latest
+            goarch: arm64
+            goos: linux
+            artifact: archlint-go-linux-arm64
+
+          - os: macos-latest
+            goarch: amd64
+            goos: darwin
+            artifact: archlint-go-macos-amd64
+
+          - os: macos-latest
+            goarch: arm64
+            goos: darwin
+            artifact: archlint-go-macos-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build Go binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: go build -o ${{ matrix.artifact }} ./cmd/archlint/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
   release:
     name: Create Release
-    needs: build
+    needs: [build, build-go]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
