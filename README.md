@@ -35,6 +35,28 @@ archlint validate architecture.yaml --python --group core
 
 ---
 
+## Docker
+
+The easiest way to run archlint without installing Go, Rust, or Python:
+
+```bash
+# Scan a Go project for architecture violations
+docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint scan /workspace
+
+# Collect architecture graph and validate with Python validator
+docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint validate /workspace --python
+
+# Collect graph to a file
+docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint collect /workspace -o /workspace/architecture.yaml
+
+# Use archlint-rs (Rust binary) for Rust projects
+docker run --rm -v $(pwd):/workspace --entrypoint archlint-rs ghcr.io/mshogin/archlint scan /workspace
+```
+
+Image includes: Go binary (`archlint`), Rust binary (`archlint-rs`), and Python validator with all dependencies.
+
+---
+
 ## Requirements
 
 - **Go 1.21+** - for `archlint` binary
