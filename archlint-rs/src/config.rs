@@ -122,6 +122,22 @@ pub struct Config {
     /// Any dependency not listed here is a violation.
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub allowed_dependencies: HashMap<String, Vec<String>>,
+
+    /// Vendor/dependency grouping.
+    /// Key: group name (e.g. "web-framework"). Value: list of import path fragments
+    /// to match (e.g. ["gin", "echo", "chi", "fiber"]).
+    /// When a dependency import matches a fragment, the dependency is reported as
+    /// the group name instead of the raw import path — reducing noise in the graph.
+    ///
+    /// Example:
+    /// ```yaml
+    /// vendors:
+    ///   web-framework: [gin, echo, chi, fiber]
+    ///   database: [gorm, sqlx, pgx, "database/sql"]
+    ///   logging: [zap, zerolog, slog]
+    /// ```
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub vendors: HashMap<String, Vec<String>>,
 }
 
 /// All supported rules.
@@ -484,6 +500,33 @@ impl Config {
     /// Returns true when `layers` and `allowed_dependencies` are both configured.
     pub fn has_layer_rules(&self) -> bool {
         !self.layers.is_empty() && !self.allowed_dependencies.is_empty()
+    }
+
+    /// Resolve an import path to a vendor group name.
+    ///
+    /// Returns `Some(group_name)` if any fragment in the `vendors` map matches
+    /// `import_path` (substring match), or `None` if no group claims the import.
+    ///
+    /// Matching is case-sensitive and checks whether the import path contains the
+    /// fragment as a whole path segment or substring.  The first matching group is
+    /// returned (iteration order over a HashMap is non-deterministic, so define
+    /// non-overlapping fragments for predictable results).
+    pub fn resolve_vendor<'a>(&'a self, import_path: &str) -> Option<&'a str> {
+        for (group, fragments) in &self.vendors {
+            for fragment in fragments {
+                if import_path == fragment.as_str()
+                    || import_path.contains(fragment.as_str())
+                {
+                    return Some(group.as_str());
+                }
+            }
+        }
+        None
+    }
+
+    /// Returns true when vendor groups are configured.
+    pub fn has_vendors(&self) -> bool {
+        !self.vendors.is_empty()
     }
 }
 
@@ -882,5 +925,154 @@ rules:
         assert!(rules.srp.todo.is_empty());
         assert!(rules.shotgun_surgery.todo.is_empty());
         assert!(rules.coupling.todo.is_empty());
+    }
+
+    // --- vendor grouping ---
+
+    #[test]
+    fn test_vendors_parsed_from_config() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+vendors:
+  web-framework: [gin, echo, chi, fiber]
+  database: [gorm, sqlx, pgx, "database/sql"]
+  logging: [zap, zerolog, slog]
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert_eq!(cfg.vendors.len(), 3);
+        assert!(cfg.vendors.contains_key("web-framework"));
+        assert!(cfg.vendors.contains_key("database"));
+        assert!(cfg.vendors.contains_key("logging"));
+
+        let wf = cfg.vendors.get("web-framework").unwrap();
+        assert!(wf.contains(&"gin".to_string()));
+        assert!(wf.contains(&"echo".to_string()));
+        assert!(wf.contains(&"chi".to_string()));
+        assert!(wf.contains(&"fiber".to_string()));
+    }
+
+    #[test]
+    fn test_resolve_vendor_exact_match() {
+        let mut vendors = HashMap::new();
+        vendors.insert(
+            "web-framework".to_string(),
+            vec!["gin".to_string(), "echo".to_string()],
+        );
+        vendors.insert(
+            "database".to_string(),
+            vec!["gorm".to_string(), "sqlx".to_string()],
+        );
+        let cfg = Config {
+            vendors,
+            ..Config::default()
+        };
+        assert_eq!(cfg.resolve_vendor("gin"), Some("web-framework"));
+        assert_eq!(cfg.resolve_vendor("echo"), Some("web-framework"));
+        assert_eq!(cfg.resolve_vendor("gorm"), Some("database"));
+        assert_eq!(cfg.resolve_vendor("sqlx"), Some("database"));
+    }
+
+    #[test]
+    fn test_resolve_vendor_substring_match() {
+        let mut vendors = HashMap::new();
+        vendors.insert(
+            "web-framework".to_string(),
+            vec!["gin".to_string()],
+        );
+        vendors.insert(
+            "logging".to_string(),
+            vec!["zap".to_string(), "zerolog".to_string()],
+        );
+        let cfg = Config {
+            vendors,
+            ..Config::default()
+        };
+        // Import path containing the fragment should match.
+        assert_eq!(cfg.resolve_vendor("github.com/gin-gonic/gin"), Some("web-framework"));
+        assert_eq!(cfg.resolve_vendor("go.uber.org/zap"), Some("logging"));
+        assert_eq!(cfg.resolve_vendor("github.com/rs/zerolog"), Some("logging"));
+    }
+
+    #[test]
+    fn test_resolve_vendor_no_match() {
+        let mut vendors = HashMap::new();
+        vendors.insert("web-framework".to_string(), vec!["gin".to_string()]);
+        let cfg = Config {
+            vendors,
+            ..Config::default()
+        };
+        assert_eq!(cfg.resolve_vendor("fmt"), None);
+        assert_eq!(cfg.resolve_vendor("net/http"), None);
+        assert_eq!(cfg.resolve_vendor("internal/service"), None);
+    }
+
+    #[test]
+    fn test_resolve_vendor_empty_vendors() {
+        let cfg = Config::default();
+        assert_eq!(cfg.resolve_vendor("gin"), None);
+        assert!(!cfg.has_vendors());
+    }
+
+    #[test]
+    fn test_has_vendors_false_when_empty() {
+        let cfg = Config::default();
+        assert!(!cfg.has_vendors());
+    }
+
+    #[test]
+    fn test_has_vendors_true_when_configured() {
+        let mut vendors = HashMap::new();
+        vendors.insert("logging".to_string(), vec!["zap".to_string()]);
+        let cfg = Config {
+            vendors,
+            ..Config::default()
+        };
+        assert!(cfg.has_vendors());
+    }
+
+    #[test]
+    fn test_vendors_default_empty() {
+        let dir = TempDir::new().unwrap();
+        let cfg = Config::load(dir.path());
+        assert!(cfg.vendors.is_empty());
+        assert!(!cfg.has_vendors());
+    }
+
+    #[test]
+    fn test_vendors_coexist_with_layers_and_rules() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+rules:
+  fan_out:
+    threshold: 5
+
+layers:
+  - name: handler
+    paths: ["internal/handler"]
+  - name: service
+    paths: ["internal/service"]
+
+allowed_dependencies:
+  handler: [service]
+  service: []
+
+vendors:
+  web-framework: [gin, echo]
+  database: [gorm, pgx]
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert_eq!(cfg.fan_out_threshold(), 5);
+        assert_eq!(cfg.layers.len(), 2);
+        assert!(cfg.has_layer_rules());
+        assert_eq!(cfg.vendors.len(), 2);
+        assert!(cfg.has_vendors());
+        assert_eq!(cfg.resolve_vendor("gin"), Some("web-framework"));
+        assert_eq!(cfg.resolve_vendor("gorm"), Some("database"));
     }
 }
