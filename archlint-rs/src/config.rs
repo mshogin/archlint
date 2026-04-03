@@ -106,12 +106,38 @@ pub struct LayerDef {
     pub paths: Vec<String>,
 }
 
+/// A single component rule for prescriptive mode.
+/// Declares which paths belong to this component and which other components it may depend on.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ComponentRule {
+    /// Path prefixes (relative to project root) whose files belong to this component.
+    #[serde(default)]
+    pub paths: Vec<String>,
+
+    /// Names of other components this component is allowed to depend on.
+    /// Any dependency not listed here becomes a prescriptive violation.
+    #[serde(default, rename = "mayDependOn")]
+    pub may_depend_on: Vec<String>,
+}
+
 /// Top-level .archlint.yaml configuration.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Config {
     /// Rules section keyed by rule name.
     #[serde(default)]
     pub rules: Rules,
+
+    /// Analysis mode: "discovery" (default) or "prescriptive".
+    /// In prescriptive mode the `components` map is the source of truth for allowed
+    /// dependencies; any link not explicitly permitted is a violation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<String>,
+
+    /// Prescriptive component definitions.
+    /// Key: component name (e.g. "handler"). Value: paths + mayDependOn list.
+    /// Only used when `mode: prescriptive`.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub components: HashMap<String, ComponentRule>,
 
     /// Optional layer definitions.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -500,6 +526,45 @@ impl Config {
     /// Returns true when `layers` and `allowed_dependencies` are both configured.
     pub fn has_layer_rules(&self) -> bool {
         !self.layers.is_empty() && !self.allowed_dependencies.is_empty()
+    }
+
+    /// Returns true when mode is "prescriptive" and at least one component is declared.
+    pub fn is_prescriptive(&self) -> bool {
+        self.mode.as_deref() == Some("prescriptive") && !self.components.is_empty()
+    }
+
+    /// Resolve which prescriptive component name the given module path belongs to.
+    ///
+    /// `module_id` uses `::` as separator (e.g. "internal::handler::users").
+    /// Config `paths` may use either `/` or `::` as separator.
+    ///
+    /// Returns `None` if no component claims the module.
+    pub fn component_for_module<'a>(&'a self, module_id: &str) -> Option<&'a str> {
+        let as_path = module_id.replace("::", "/");
+        for (name, rule) in &self.components {
+            for prefix in &rule.paths {
+                let norm = prefix.replace("::", "/");
+                let norm = norm.trim_end_matches('/');
+                if as_path == norm || as_path.starts_with(&format!("{}/", norm)) {
+                    return Some(name.as_str());
+                }
+            }
+        }
+        None
+    }
+
+    /// Returns true when the dependency from `from_component` to `to_component` is allowed
+    /// according to the prescriptive rules. Same component is always allowed.
+    pub fn check_dependency(&self, from_component: &str, to_component: &str) -> bool {
+        if from_component == to_component {
+            return true;
+        }
+        if let Some(rule) = self.components.get(from_component) {
+            rule.may_depend_on.iter().any(|d| d == to_component)
+        } else {
+            // Unknown source component: allow (we emit a warning separately)
+            true
+        }
     }
 
     /// Resolve an import path to a vendor group name.
@@ -1074,5 +1139,132 @@ vendors:
         assert!(cfg.has_vendors());
         assert_eq!(cfg.resolve_vendor("gin"), Some("web-framework"));
         assert_eq!(cfg.resolve_vendor("gorm"), Some("database"));
+    }
+
+    // ---- prescriptive mode tests ----
+
+    #[test]
+    fn test_prescriptive_mode_parses() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+mode: prescriptive
+
+components:
+  handler:
+    paths: [internal/handler]
+    mayDependOn: [service, model]
+  service:
+    paths: [internal/service]
+    mayDependOn: [repository, model]
+  repository:
+    paths: [internal/repository]
+    mayDependOn: [model]
+  model:
+    paths: [internal/model]
+    mayDependOn: []
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert!(cfg.is_prescriptive(), "mode should be prescriptive");
+        assert_eq!(cfg.components.len(), 4);
+
+        let handler = cfg.components.get("handler").unwrap();
+        assert_eq!(handler.paths, vec!["internal/handler"]);
+        assert_eq!(handler.may_depend_on, vec!["service", "model"]);
+
+        let model = cfg.components.get("model").unwrap();
+        assert!(model.may_depend_on.is_empty());
+    }
+
+    #[test]
+    fn test_discovery_mode_is_default() {
+        let dir = TempDir::new().unwrap();
+        // No mode key set
+        write_config(&dir, "rules:\n  fan_out:\n    threshold: 5\n");
+        let cfg = Config::load(dir.path());
+        assert!(!cfg.is_prescriptive());
+    }
+
+    #[test]
+    fn test_prescriptive_without_components_is_not_prescriptive() {
+        let dir = TempDir::new().unwrap();
+        write_config(&dir, "mode: prescriptive\n");
+        let cfg = Config::load(dir.path());
+        // mode is prescriptive but no components declared - should not activate
+        assert!(!cfg.is_prescriptive());
+    }
+
+    #[test]
+    fn test_component_for_module_matches_path() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+mode: prescriptive
+components:
+  handler:
+    paths: [internal/handler]
+    mayDependOn: [service]
+  service:
+    paths: [internal/service]
+    mayDependOn: []
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert_eq!(cfg.component_for_module("internal/handler"), Some("handler"));
+        assert_eq!(cfg.component_for_module("internal/handler/users"), Some("handler"));
+        assert_eq!(cfg.component_for_module("internal/service/orders"), Some("service"));
+        assert_eq!(cfg.component_for_module("pkg/utils"), None);
+    }
+
+    #[test]
+    fn test_check_dependency_allowed() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+mode: prescriptive
+components:
+  handler:
+    paths: [internal/handler]
+    mayDependOn: [service, model]
+  service:
+    paths: [internal/service]
+    mayDependOn: [model]
+  model:
+    paths: [internal/model]
+    mayDependOn: []
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert!(cfg.check_dependency("handler", "service"), "handler -> service should be allowed");
+        assert!(cfg.check_dependency("handler", "model"), "handler -> model should be allowed");
+        assert!(cfg.check_dependency("handler", "handler"), "same component should be allowed");
+    }
+
+    #[test]
+    fn test_check_dependency_disallowed() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+mode: prescriptive
+components:
+  handler:
+    paths: [internal/handler]
+    mayDependOn: [service]
+  repository:
+    paths: [internal/repository]
+    mayDependOn: []
+  model:
+    paths: [internal/model]
+    mayDependOn: []
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert!(!cfg.check_dependency("handler", "repository"), "handler -> repository should be forbidden");
+        assert!(!cfg.check_dependency("model", "handler"), "model -> handler should be forbidden");
     }
 }
