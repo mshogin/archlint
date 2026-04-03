@@ -54,6 +54,13 @@ pub struct RuleConfig {
     /// Component IDs (or glob patterns) to exclude from this rule.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub exclude: Vec<String>,
+
+    /// Known violations: component paths that are allowed to violate this rule temporarily.
+    /// These are shown in output as TODO items (not counted as real violations).
+    /// Use for gradual migration: list legacy components that will be fixed later.
+    /// With --strict flag, todo items are treated as real violations.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub todo: Vec<String>,
 }
 
 fn default_true() -> bool {
@@ -68,7 +75,23 @@ impl Default for RuleConfig {
             level: Level::Telemetry,
             threshold: None,
             exclude: Vec::new(),
+            todo: Vec::new(),
         }
+    }
+}
+
+impl RuleConfig {
+    /// Returns true if the given component ID is in the todo list for gradual migration.
+    /// The component is considered a "known violation" that should not fail the gate.
+    pub fn is_todo(&self, component_id: &str) -> bool {
+        self.todo.iter().any(|t| {
+            // Normalize separators for comparison: both :: and / treated as equivalent.
+            let norm_component = component_id.replace("::", "/");
+            let norm_todo = t.replace("::", "/");
+            // Exact match or prefix match (module path prefix).
+            norm_component == norm_todo
+                || norm_component.starts_with(&format!("{}/", norm_todo))
+        })
     }
 }
 
@@ -145,6 +168,7 @@ fn default_fan_out() -> RuleConfig {
         level: Level::Telemetry,
         threshold: Some(5.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -155,6 +179,7 @@ fn default_fan_in() -> RuleConfig {
         level: Level::Telemetry,
         threshold: Some(10.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -165,6 +190,7 @@ fn default_cycles() -> RuleConfig {
         level: Level::Telemetry,
         threshold: None,
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -175,6 +201,7 @@ fn default_isp() -> RuleConfig {
         level: Level::Telemetry,
         threshold: Some(5.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -185,6 +212,7 @@ fn default_dip() -> RuleConfig {
         level: Level::Telemetry,
         threshold: None,
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -196,6 +224,7 @@ fn default_god_class() -> RuleConfig {
         // threshold here is the method count limit; field limit is threshold * 3/4 (see analyzer)
         threshold: Some(20.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -207,6 +236,7 @@ fn default_feature_envy() -> RuleConfig {
         // minimum number of foreign calls to trigger feature-envy
         threshold: Some(3.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -217,6 +247,7 @@ fn default_srp() -> RuleConfig {
         level: Level::Telemetry,
         threshold: Some(10.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -227,6 +258,7 @@ fn default_shotgun() -> RuleConfig {
         level: Level::Telemetry,
         threshold: Some(10.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -238,6 +270,7 @@ fn default_coupling() -> RuleConfig {
         // 80 = instability > 0.80 threshold (as integer percentage)
         threshold: Some(80.0),
         exclude: Vec::new(),
+        todo: Vec::new(),
     }
 }
 
@@ -250,6 +283,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: Some(5.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             fan_in: RuleConfig {
                 enabled: true,
@@ -257,6 +291,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: Some(10.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             cycles: RuleConfig {
                 enabled: true,
@@ -264,6 +299,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: None,
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             isp: RuleConfig {
                 enabled: true,
@@ -271,6 +307,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: Some(5.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             dip: RuleConfig {
                 enabled: true,
@@ -278,6 +315,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: None,
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             god_class: RuleConfig {
                 enabled: true,
@@ -285,6 +323,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: Some(20.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             feature_envy: RuleConfig {
                 enabled: true,
@@ -292,6 +331,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: Some(3.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             srp: RuleConfig {
                 enabled: true,
@@ -299,6 +339,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: Some(10.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             shotgun_surgery: RuleConfig {
                 enabled: true,
@@ -306,6 +347,7 @@ impl Default for Rules {
                 level: Level::Telemetry,
                 threshold: Some(10.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
             coupling: RuleConfig {
                 enabled: true,
@@ -313,6 +355,7 @@ impl Default for Rules {
                 level: Level::Personal,
                 threshold: Some(80.0),
                 exclude: Vec::new(),
+                todo: Vec::new(),
             },
         }
     }
@@ -754,5 +797,90 @@ allowed_dependencies:
         assert_eq!(cfg.layer_for_module("src::context"), Some("domain"));
         assert_eq!(cfg.layer_for_module("src::bus"),     Some("infra"));
         assert_eq!(cfg.layer_for_module("src::other"),   None);
+    }
+
+    #[test]
+    fn test_todo_list_parsed_from_config() {
+        let dir = TempDir::new().unwrap();
+        write_config(
+            &dir,
+            r#"
+rules:
+  fan_out:
+    threshold: 5
+    todo:
+      - internal/handler/legacy
+      - internal/service/monolith
+"#,
+        );
+        let cfg = Config::load(dir.path());
+        assert_eq!(
+            cfg.rules.fan_out.todo,
+            vec!["internal/handler/legacy", "internal/service/monolith"]
+        );
+        // Other rules should have empty todo.
+        assert!(cfg.rules.fan_in.todo.is_empty());
+        assert!(cfg.rules.cycles.todo.is_empty());
+    }
+
+    #[test]
+    fn test_rule_config_is_todo_exact_match() {
+        let rule = RuleConfig {
+            todo: vec!["internal/handler/legacy".to_string()],
+            ..RuleConfig::default()
+        };
+        assert!(rule.is_todo("internal/handler/legacy"));
+        assert!(rule.is_todo("internal::handler::legacy"));
+    }
+
+    #[test]
+    fn test_rule_config_is_todo_prefix_match() {
+        let rule = RuleConfig {
+            todo: vec!["internal/handler".to_string()],
+            ..RuleConfig::default()
+        };
+        // Prefix match: sub-components of handler should be in todo.
+        assert!(rule.is_todo("internal/handler/legacy"));
+        assert!(rule.is_todo("internal::handler::legacy"));
+        // Exact match.
+        assert!(rule.is_todo("internal::handler"));
+        // Sibling is NOT in todo.
+        assert!(!rule.is_todo("internal::service"));
+    }
+
+    #[test]
+    fn test_rule_config_is_todo_empty() {
+        let rule = RuleConfig::default();
+        assert!(!rule.is_todo("internal::handler::legacy"));
+        assert!(!rule.is_todo("anything"));
+    }
+
+    #[test]
+    fn test_rule_config_is_todo_colon_separator_in_todo() {
+        // Config uses :: notation in todo list.
+        let rule = RuleConfig {
+            todo: vec!["internal::handler::legacy".to_string()],
+            ..RuleConfig::default()
+        };
+        // Should match regardless of separator used.
+        assert!(rule.is_todo("internal/handler/legacy"));
+        assert!(rule.is_todo("internal::handler::legacy"));
+        // Should not match unrelated module.
+        assert!(!rule.is_todo("internal::service::legacy"));
+    }
+
+    #[test]
+    fn test_todo_default_is_empty_for_all_rules() {
+        let rules = Rules::default();
+        assert!(rules.fan_out.todo.is_empty());
+        assert!(rules.fan_in.todo.is_empty());
+        assert!(rules.cycles.todo.is_empty());
+        assert!(rules.isp.todo.is_empty());
+        assert!(rules.dip.todo.is_empty());
+        assert!(rules.god_class.todo.is_empty());
+        assert!(rules.feature_envy.todo.is_empty());
+        assert!(rules.srp.todo.is_empty());
+        assert!(rules.shotgun_surgery.todo.is_empty());
+        assert!(rules.coupling.todo.is_empty());
     }
 }

@@ -49,6 +49,11 @@ enum Commands {
         /// Show what config migration would do without writing changes
         #[arg(long)]
         dry_run: bool,
+
+        /// Strict mode: treat todo items as real violations (disables gradual migration exemptions).
+        /// Use for pre-merge checks to ensure no new violations were added.
+        #[arg(long)]
+        strict: bool,
     },
     /// Analyze prompt complexity and suggest model routing
     Prompt {
@@ -465,6 +470,7 @@ async fn main() {
             format,
             threshold,
             dry_run,
+            strict,
         } => {
             // Auto-migrate .archlint.yaml if old schema is detected.
             let config_path = dir.join(".archlint.yaml");
@@ -485,7 +491,7 @@ async fn main() {
                 }
             }
 
-            match analyzer::analyze_multi_language(&dir) {
+            match analyzer::analyze_multi_language_strict(&dir, strict) {
                 Ok(report) => {
                     match format.as_str() {
                         "json" => {
@@ -501,6 +507,7 @@ async fn main() {
                             let taboo: usize = report.per_language.iter().map(|r| r.taboo_count).sum();
                             let telemetry: usize = report.per_language.iter().map(|r| r.telemetry_count).sum();
                             let personal: usize = report.per_language.iter().map(|r| r.personal_count).sum();
+                            let todo: usize = report.per_language.iter().map(|r| r.todo_count).sum();
                             let all_entries: Vec<String> = report.per_language.iter()
                                 .flat_map(|r| r.entry_points.iter().cloned())
                                 .collect();
@@ -509,8 +516,13 @@ async fn main() {
                             } else {
                                 format!(" entry_points={}", all_entries.join(","))
                             };
+                            let todo_str = if todo > 0 {
+                                format!(" todo={}", todo)
+                            } else {
+                                String::new()
+                            };
                             println!(
-                                "languages={} components={} links={} violations={} taboo={} telemetry={} personal={} health={}/100{}",
+                                "languages={} components={} links={} violations={} taboo={} telemetry={} personal={} health={}/100{}{}",
                                 report.languages.join(","),
                                 report.total_components,
                                 report.total_links,
@@ -520,6 +532,7 @@ async fn main() {
                                 personal,
                                 report.total_health,
                                 entry_points_str,
+                                todo_str,
                             );
                         }
                         _ => {
@@ -538,15 +551,19 @@ async fn main() {
                                 if !lang_report.entry_points.is_empty() {
                                     println!("  Entry points: {}", lang_report.entry_points.join(", "));
                                 }
-                                if lang_report.violation_count == 0 {
+                                if lang_report.violation_count == 0 && lang_report.todo_count == 0 {
                                     println!("  Violations: 0");
                                 } else {
-                                    println!("  Violations: {} (taboo: {}, telemetry: {}, personal: {})",
-                                        lang_report.violation_count,
-                                        lang_report.taboo_count,
-                                        lang_report.telemetry_count,
-                                        lang_report.personal_count,
-                                    );
+                                    if lang_report.violation_count > 0 {
+                                        println!("  Violations: {} (taboo: {}, telemetry: {}, personal: {})",
+                                            lang_report.violation_count,
+                                            lang_report.taboo_count,
+                                            lang_report.telemetry_count,
+                                            lang_report.personal_count,
+                                        );
+                                    } else {
+                                        println!("  Violations: 0");
+                                    }
                                     // Show violations grouped by level
                                     let taboo_viols: Vec<_> = lang_report.violations_detail.iter()
                                         .filter(|v| v.level == "taboo").collect();
@@ -554,6 +571,8 @@ async fn main() {
                                         .filter(|v| v.level == "telemetry").collect();
                                     let personal_viols: Vec<_> = lang_report.violations_detail.iter()
                                         .filter(|v| v.level == "personal").collect();
+                                    let todo_viols: Vec<_> = lang_report.violations_detail.iter()
+                                        .filter(|v| v.level == "todo").collect();
                                     if !taboo_viols.is_empty() {
                                         println!("  [TABOO - CI BLOCKER]");
                                         for v in &taboo_viols {
@@ -572,17 +591,35 @@ async fn main() {
                                             println!("    [{}] {} - {}", v.rule, v.component, v.message);
                                         }
                                     }
+                                    if !todo_viols.is_empty() {
+                                        println!("  [TODO - known violations, gradual migration ({} items)]", todo_viols.len());
+                                        for v in &todo_viols {
+                                            println!("    [{}] {} - {}", v.rule, v.component, v.message);
+                                        }
+                                    }
                                 }
                                 println!();
                             }
                             println!("Total:");
                             println!("  Health: {}/100", report.total_health);
-                            println!("  Violations: {} (taboo: {}, telemetry: {}, personal: {})",
-                                report.total_violations,
-                                report.total_taboo,
-                                report.per_language.iter().map(|r| r.telemetry_count).sum::<usize>(),
-                                report.per_language.iter().map(|r| r.personal_count).sum::<usize>(),
-                            );
+                            let total_todo: usize = report.per_language.iter().map(|r| r.todo_count).sum();
+                            if total_todo > 0 {
+                                println!("  Violations: {} (taboo: {}, telemetry: {}, personal: {}, todo: {})",
+                                    report.total_violations,
+                                    report.total_taboo,
+                                    report.per_language.iter().map(|r| r.telemetry_count).sum::<usize>(),
+                                    report.per_language.iter().map(|r| r.personal_count).sum::<usize>(),
+                                    total_todo,
+                                );
+                                println!("  Note: {} known violation(s) in todo list (use --strict to enforce)", total_todo);
+                            } else {
+                                println!("  Violations: {} (taboo: {}, telemetry: {}, personal: {})",
+                                    report.total_violations,
+                                    report.total_taboo,
+                                    report.per_language.iter().map(|r| r.telemetry_count).sum::<usize>(),
+                                    report.per_language.iter().map(|r| r.personal_count).sum::<usize>(),
+                                );
+                            }
                         }
                     }
 
