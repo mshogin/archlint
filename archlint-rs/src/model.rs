@@ -142,6 +142,9 @@ pub struct LanguageReport {
     /// Number of personal-level violations (informational).
     #[serde(default)]
     pub personal_count: usize,
+    /// Number of todo-level violations (known violations for gradual migration).
+    #[serde(default)]
+    pub todo_count: usize,
     /// Full violation objects with level info.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub violations_detail: Vec<ViolationSummary>,
@@ -172,6 +175,9 @@ pub struct MultiLanguageReport {
     /// Number of taboo-level violations across all languages.
     #[serde(default)]
     pub total_taboo: usize,
+    /// Number of todo-level violations (known violations for gradual migration).
+    #[serde(default)]
+    pub total_todo: usize,
 }
 
 /// Indexed graph for efficient operations.
