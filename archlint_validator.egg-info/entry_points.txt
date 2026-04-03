@@ -1,2 +1,0 @@
-[console_scripts]
-archlint-validate = validator.__main__:main

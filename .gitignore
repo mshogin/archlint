@@ -38,3 +38,10 @@ Thumbs.db
 .worktrees/
 archlint
 archlint-rs/target/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+*.egg
+.archlint.yaml.bak
