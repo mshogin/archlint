@@ -1,0 +1,1090 @@
+rules:
+  dag_check:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  max_fan_out:
+    enabled: true
+    threshold: 5
+    error_on_violation: true
+    exclude:
+    - cmd/*
+    - test/*
+    - pkg/engine*
+    - pkg/storage*
+    - pkg/models
+    - pkg/providers/*
+    - pkg/executors/*
+    - pkg/feed*
+    - pkg/strategies/*
+    - pkg/stats*
+  modularity:
+    enabled: true
+    threshold: 0.3
+    error_on_violation: true
+    exclude: []
+  betweenness_centrality:
+    enabled: true
+    threshold: 0.3
+    error_on_violation: true
+    exclude: []
+  pagerank:
+    enabled: true
+    threshold: 0.1
+    error_on_violation: false
+    exclude: []
+  coupling:
+    enabled: true
+    error_on_violation: true
+    exclude:
+    - cmd/*
+    - pkg/engine*
+    - pkg/storage*
+    - pkg/models
+    - pkg/stats*
+    - pkg/providers/tinkoff.Provider
+    params:
+      ca_threshold: 10
+      ce_threshold: 10
+  instability:
+    enabled: true
+    error_on_violation: true
+    exclude:
+    - cmd/*
+  orphan_nodes:
+    enabled: true
+    error_on_violation: true
+    exclude:
+    - test/*
+  strongly_connected_components:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      max_size: 1
+  graph_depth:
+    enabled: true
+    threshold: 10
+    error_on_violation: true
+    exclude: []
+  hub_nodes:
+    enabled: true
+    threshold: 10
+    error_on_violation: true
+    exclude:
+    - cmd/*
+    - pkg/*
+  layer_violations:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      layers:
+        cmd: 0
+        api: 1
+        handler: 1
+        controller: 1
+        service: 2
+        usecase: 2
+        internal: 2
+        domain: 3
+        entity: 3
+        repository: 4
+        storage: 4
+        infrastructure: 5
+        pkg: 6
+        model: 7
+  forbidden_dependencies:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      rules:
+      - from: handler
+        to: repository
+      - from: controller
+        to: repository
+      - from: api
+        to: storage
+      - from: model
+        to: service
+      - from: entity
+        to: repository
+  component_distance:
+    enabled: true
+    threshold: 5
+    error_on_violation: true
+    exclude: []
+  abstractness:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      min_threshold: 0.1
+      max_threshold: 0.8
+      patterns:
+      - interface
+      - abstract
+      - base
+      - contract
+      - port
+  distance_from_main_sequence:
+    enabled: true
+    threshold: 0.5
+    error_on_violation: true
+    exclude: []
+  algebraic_connectivity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.1
+  api_consistency:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  articulation_points:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  auth_boundary:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  avg_path_length:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 5.0
+  blast_radius:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 0.3
+  bounded_context_leakage:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  bridge_edges:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  change_propagation:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 20
+  circular_dependency_depth:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 3
+  closeness_centrality:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 0.5
+  clustering_coefficient:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.1
+  cohesion_lcom4:
+    enabled: true
+    error_on_violation: true
+    exclude:
+    - cmd/*
+    - pkg/engine.Engine
+    - pkg/executors/backtest.Executor
+    - executors/backtest/*
+    threshold: 1
+  component_complexity:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 50
+  context_complexity:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 15
+  context_coupling:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.7
+  context_coverage:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 0.8
+    params:
+      top_n: 10
+  context_depth:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 10
+  data_clumps:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 3
+  degree_distribution:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  dependency_entropy:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 2.0
+  dependency_inversion:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 0.3
+  deprecated_usage:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      patterns:
+      - deprecated
+      - legacy
+      - old
+      - obsolete
+  divergent_change:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 3
+  domain_isolation:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      forbidden_patterns:
+      - database
+      - db
+      - sql
+      - http
+      - grpc
+      - redis
+  dto_boundaries:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  edge_density:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      min_threshold: 0.01
+      max_threshold: 0.3
+  eigenvector_centrality:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  feature_envy:
+    enabled: true
+    error_on_violation: true
+    exclude:
+    - cmd/portfolio-analysis.PortfolioAnalyzer.Analyze
+    threshold: 0.5
+  ghost_components:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  gini_coefficient:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 0.6
+  god_class:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      max_methods: 20
+      max_dependencies: 15
+  graph_cliques:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 4
+  graph_diameter:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 10
+  health_check_presence:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  hotspot_detection:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 10
+  input_validation_layer:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  interface_segregation:
+    enabled: true
+    error_on_violation: true
+    exclude:
+    - pkg/storage.SQLitePortfolio
+    - pkg/storage.MockPortfolio
+    - pkg/storage/local.CollectorDB
+    - pkg/engine.Engine
+    - providers/tinkoff/cache.Cache
+    threshold: 5
+  inward_dependencies:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  k_core_decomposition:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 5
+  layer_traversal:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      layers:
+        cmd: 0
+        api: 1
+        handler: 1
+        controller: 1
+        service: 2
+        usecase: 2
+        domain: 3
+        entity: 3
+        model: 3
+        repository: 4
+        storage: 4
+        infrastructure: 5
+        pkg: 6
+  lazy_class:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    params:
+      min_methods: 2
+      min_dependencies: 1
+  liskov_substitution:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 3
+  logging_coverage:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  metrics_exposure:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  middle_man:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  mockability:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  open_closed:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.2
+  ports_adapters:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  sensitive_data_flow:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  service_autonomy:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 3
+  shotgun_surgery:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 10
+  single_point_of_failure:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    params:
+      min_contexts: 3
+  single_responsibility:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 3
+  spectral_radius:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  speculative_generality:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  stability_violations:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  test_coverage_structure:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  test_isolation:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  untested_components:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  use_case_purity:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+  zscore_outliers:
+    enabled: true
+    error_on_violation: true
+    exclude:
+    - cmd/*
+    - pkg/engine*
+    - pkg/storage*
+    - pkg/models
+    threshold: 3.0
+  absorption_probability:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  adjunction:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  alpha_complex:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  attractor_basin:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  bayesian_dependencies:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  betti_numbers:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 10
+  bifurcation_analysis:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  bisimulation:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  boolean_algebra:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  bottleneck_stability:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  cech_complex:
+    enabled: false
+    error_on_violation: false
+    exclude: []
+    threshold: 3
+  chain_antichain:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  channel_capacity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  cheeger_constant:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  chinese_remainder:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  chromatic_number:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 5
+  circulation:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.1
+  clique_complex:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 4
+  closure_operator:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  commutative_diagrams:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.8
+  commute_time:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 50.0
+  computability_bounds:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  concentration_bounds:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.1
+  condition_number:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 100
+  conditional_entropy:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 1.0
+  controllability:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  convex_structure:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.7
+  cooperative_games:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  covering_space:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  cross_entropy:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 2.0
+  cycle_polynomial:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  diophantine_constraints:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.8
+  dirichlet_energy:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 1.0
+  discrete_exterior_calculus:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  divisibility_lattice:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  dominating_set:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  effective_resistance:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 2.0
+  entropy_measures:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  equivalence_classes:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  euler_characteristic:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: -5
+  evolutionary_stability:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  extremal_bounds:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  facility_location:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 3.0
+  filter_ideal:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  fixed_point_analysis:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  forman_curvature:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: -2.0
+  functor_structure:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  fundamental_group:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 10
+  galois_connection:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  generating_functions:
+    enabled: false
+    error_on_violation: false
+    exclude: []
+  geodesic_distance:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  gradient_flow:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  graph_curvature:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  graph_density_distribution:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.1
+  graph_fourier:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  graph_laplace_transform:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  graph_symmetry:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  green_function:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  heat_diffusion:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  heat_kernel_diagonal:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  heat_kernel_trace:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  hitting_time:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  hodge_decomposition:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  homological_density:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  homotopy_equivalence:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  ihara_zeta:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  inclusion_exclusion:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  independence_number:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.2
+  initial_terminal:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  join_meet_analysis:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  kolmogorov_complexity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  laplacian_smoothness:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 1.0
+  lattice_structure:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  local_consistency:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.7
+  lyapunov_stability:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  markov_properties:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  markov_stationary:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.2
+  matrix_rank:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  max_flow_min_cut:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 3
+  mechanism_design:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  mixing_time:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 10
+  mobius_function:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  modular_arithmetic:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 10
+  monad_structure:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  morphism_composition:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  morse_complexity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  morse_smale:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  mutual_information:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  nash_equilibrium:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  natural_transformation:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  nerve_complex:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  node_capacity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  operator_norm:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  optimal_matching:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.8
+  optimal_placement:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  partial_order_analysis:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  partition_refinement:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  path_homology:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 5
+  path_integral:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  persistence_diagram:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  persistence_landscape:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  persistent_homology:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 5
+  perturbation_sensitivity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  polya_enumeration:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  power_set_complexity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  prime_factorization:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  products_coproducts:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  pullback_pushout:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  pushdown_patterns:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 10
+  ramsey_analysis:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 5
+  random_walk:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 100
+  regular_language_properties:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 2
+  relation_properties:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  resolvent_analysis:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  resource_allocation:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 5.0
+  ricci_flow:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  shapley_value:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  sheaf_cohomology:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  simplicial_complexity:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 4
+  sobolev_regularity:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  spectral_filtering:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  spectral_gap:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.1
+  spectral_sequence:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  state_machine_properties:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  stirling_numbers:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  stochastic_processes:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.8
+  stokes_theorem:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  submodular_functions:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.8
+  svd_analysis:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  topological_persistence:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.3
+  transitive_closure:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 3.0
+  treewidth:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 5
+  vertex_cover:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.7
+  vietoris_rips:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  voting_power:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  wasserstein_stability:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+    threshold: 0.5
+  wavelet_decomposition:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  weight_filtration:
+    enabled: true
+    error_on_violation: false
+    exclude: []
+  yoneda_embedding:
+    enabled: true
+    error_on_violation: false
+    exclude: []
