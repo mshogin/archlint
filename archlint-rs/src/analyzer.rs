@@ -1906,7 +1906,7 @@ pub struct Agent {}\n\
     fn test_fan_out_violation_carries_level() {
         use crate::config::Level;
         let mut cfg = Config::default();
-        cfg.rules.fan_out.threshold = Some(2);
+        cfg.rules.fan_out.threshold = Some(2.0);
         cfg.rules.fan_out.level = Level::Taboo;
 
         // Build a node with fan-out of 3
@@ -1922,7 +1922,7 @@ pub struct Agent {}\n\
     #[test]
     fn test_fan_out_violation_default_level_is_telemetry() {
         let mut cfg = Config::default();
-        cfg.rules.fan_out.threshold = Some(2);
+        cfg.rules.fan_out.threshold = Some(2.0);
         // level is default (Telemetry)
 
         let violations = run_metrics_with_config(
@@ -1938,7 +1938,7 @@ pub struct Agent {}\n\
     fn test_fan_out_personal_level() {
         use crate::config::Level;
         let mut cfg = Config::default();
-        cfg.rules.fan_out.threshold = Some(2);
+        cfg.rules.fan_out.threshold = Some(2.0);
         cfg.rules.fan_out.level = Level::Personal;
 
         let violations = run_metrics_with_config(

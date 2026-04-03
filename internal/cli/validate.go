@@ -1,12 +1,15 @@
 package cli
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mshogin/archlint/internal/archlintcfg"
 	"github.com/mshogin/archlint/internal/mcp"
@@ -218,7 +221,16 @@ func runPythonValidator(archFile string) error {
 		return err
 	}
 
-	pyArgs := []string{"-m", "validator", "validate", archFile, "--structure-only", "-f", "yaml"}
+	// Convert archFile to absolute path so Python can find it regardless of workDir.
+	absArchFile := archFile
+	if archFile != "-" {
+		abs, err := filepath.Abs(archFile)
+		if err == nil {
+			absArchFile = abs
+		}
+	}
+
+	pyArgs := []string{"-m", "validator", "validate", absArchFile, "--structure-only", "-f", "yaml"}
 	if validateGroup != "" {
 		pyArgs = append(pyArgs, "-g", validateGroup)
 	}
@@ -231,17 +243,31 @@ func runPythonValidator(archFile string) error {
 		}
 	}
 
-	//nolint:gosec // G204: archFile is validated user input
-	pyCmd := exec.Command("python3", pyArgs...)
-	pyCmd.Dir = workDir
+	// Use a 300-second timeout to handle large graphs (research group can take a while).
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
+	defer cancel()
+
+	//nolint:gosec // G204: absArchFile is validated user input
+	pyCmd := exec.CommandContext(ctx, "python3", pyArgs...)
+	if workDir != "" {
+		pyCmd.Dir = workDir
+	}
 	pyCmd.Stderr = os.Stderr
 
-	out, err := pyCmd.Output()
-	if err != nil {
+	var stdout bytes.Buffer
+	pyCmd.Stdout = &stdout
+
+	runErr := pyCmd.Run()
+	out := stdout.Bytes()
+
+	if runErr != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return fmt.Errorf("python3 validator timed out after 300s; try --group to limit scope (e.g. --group core)")
+		}
 		// exit code 1 = FAILED, 2 = ERROR - still print output
-		exitErr, ok := err.(*exec.ExitError)
+		exitErr, ok := runErr.(*exec.ExitError)
 		if !ok || (exitErr.ExitCode() != 1 && exitErr.ExitCode() != 2) {
-			return fmt.Errorf("python3 validator failed: %w", err)
+			return fmt.Errorf("python3 validator failed: %w", runErr)
 		}
 		// print output even on failure
 		if len(out) > 0 {

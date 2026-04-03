@@ -47,8 +47,9 @@ pub struct RuleConfig {
     pub level: Level,
 
     /// Numeric threshold for this rule (e.g. max fan-out).
+    /// Accepts both integers and floating-point values in YAML.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub threshold: Option<usize>,
+    pub threshold: Option<f64>,
 
     /// Component IDs (or glob patterns) to exclude from this rule.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -142,7 +143,7 @@ fn default_fan_out() -> RuleConfig {
         enabled: true,
         error_on_violation: false,
         level: Level::Telemetry,
-        threshold: Some(5),
+        threshold: Some(5.0),
         exclude: Vec::new(),
     }
 }
@@ -152,7 +153,7 @@ fn default_fan_in() -> RuleConfig {
         enabled: true,
         error_on_violation: false,
         level: Level::Telemetry,
-        threshold: Some(10),
+        threshold: Some(10.0),
         exclude: Vec::new(),
     }
 }
@@ -172,7 +173,7 @@ fn default_isp() -> RuleConfig {
         enabled: true,
         error_on_violation: false,
         level: Level::Telemetry,
-        threshold: Some(5),
+        threshold: Some(5.0),
         exclude: Vec::new(),
     }
 }
@@ -193,7 +194,7 @@ fn default_god_class() -> RuleConfig {
         error_on_violation: false,
         level: Level::Telemetry,
         // threshold here is the method count limit; field limit is threshold * 3/4 (see analyzer)
-        threshold: Some(20),
+        threshold: Some(20.0),
         exclude: Vec::new(),
     }
 }
@@ -204,7 +205,7 @@ fn default_feature_envy() -> RuleConfig {
         error_on_violation: false,
         level: Level::Telemetry,
         // minimum number of foreign calls to trigger feature-envy
-        threshold: Some(3),
+        threshold: Some(3.0),
         exclude: Vec::new(),
     }
 }
@@ -214,7 +215,7 @@ fn default_srp() -> RuleConfig {
         enabled: true,
         error_on_violation: false,
         level: Level::Telemetry,
-        threshold: Some(10),
+        threshold: Some(10.0),
         exclude: Vec::new(),
     }
 }
@@ -224,7 +225,7 @@ fn default_shotgun() -> RuleConfig {
         enabled: true,
         error_on_violation: false,
         level: Level::Telemetry,
-        threshold: Some(10),
+        threshold: Some(10.0),
         exclude: Vec::new(),
     }
 }
@@ -235,7 +236,7 @@ fn default_coupling() -> RuleConfig {
         error_on_violation: false,
         level: Level::Personal,
         // 80 = instability > 0.80 threshold (as integer percentage)
-        threshold: Some(80),
+        threshold: Some(80.0),
         exclude: Vec::new(),
     }
 }
@@ -247,14 +248,14 @@ impl Default for Rules {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Telemetry,
-                threshold: Some(5),
+                threshold: Some(5.0),
                 exclude: Vec::new(),
             },
             fan_in: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Telemetry,
-                threshold: Some(10),
+                threshold: Some(10.0),
                 exclude: Vec::new(),
             },
             cycles: RuleConfig {
@@ -268,7 +269,7 @@ impl Default for Rules {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Telemetry,
-                threshold: Some(5),
+                threshold: Some(5.0),
                 exclude: Vec::new(),
             },
             dip: RuleConfig {
@@ -282,35 +283,35 @@ impl Default for Rules {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Telemetry,
-                threshold: Some(20),
+                threshold: Some(20.0),
                 exclude: Vec::new(),
             },
             feature_envy: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Telemetry,
-                threshold: Some(3),
+                threshold: Some(3.0),
                 exclude: Vec::new(),
             },
             srp: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Telemetry,
-                threshold: Some(10),
+                threshold: Some(10.0),
                 exclude: Vec::new(),
             },
             shotgun_surgery: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Telemetry,
-                threshold: Some(10),
+                threshold: Some(10.0),
                 exclude: Vec::new(),
             },
             coupling: RuleConfig {
                 enabled: true,
                 error_on_violation: false,
                 level: Level::Personal,
-                threshold: Some(80),
+                threshold: Some(80.0),
                 exclude: Vec::new(),
             },
         }
@@ -342,10 +343,10 @@ impl Config {
             Ok(mut cfg) => {
                 // Fill missing thresholds with defaults.
                 if cfg.rules.fan_out.threshold.is_none() {
-                    cfg.rules.fan_out.threshold = Some(5);
+                    cfg.rules.fan_out.threshold = Some(5.0);
                 }
                 if cfg.rules.fan_in.threshold.is_none() {
-                    cfg.rules.fan_in.threshold = Some(10);
+                    cfg.rules.fan_in.threshold = Some(10.0);
                 }
                 cfg
             }
@@ -362,22 +363,22 @@ impl Config {
 
     /// Fan-out threshold (default 5).
     pub fn fan_out_threshold(&self) -> usize {
-        self.rules.fan_out.threshold.unwrap_or(5)
+        self.rules.fan_out.threshold.unwrap_or(5.0) as usize
     }
 
     /// Fan-in threshold (default 10).
     pub fn fan_in_threshold(&self) -> usize {
-        self.rules.fan_in.threshold.unwrap_or(10)
+        self.rules.fan_in.threshold.unwrap_or(10.0) as usize
     }
 
     /// ISP: maximum number of methods allowed per trait (default 5).
     pub fn isp_threshold(&self) -> usize {
-        self.rules.isp.threshold.unwrap_or(5)
+        self.rules.isp.threshold.unwrap_or(5.0) as usize
     }
 
     /// God-class: maximum number of methods allowed per Go struct (default 20).
     pub fn god_class_method_threshold(&self) -> usize {
-        self.rules.god_class.threshold.unwrap_or(20)
+        self.rules.god_class.threshold.unwrap_or(20.0) as usize
     }
 
     /// God-class: maximum number of fields allowed per Go struct (default 15).
@@ -388,24 +389,25 @@ impl Config {
     }
 
     /// Feature-envy: minimum foreign call count to flag a method (default 3).
+    /// Accepts float thresholds from config (e.g. 0.5 rounds down to 0).
     pub fn feature_envy_threshold(&self) -> usize {
-        self.rules.feature_envy.threshold.unwrap_or(3)
+        self.rules.feature_envy.threshold.unwrap_or(3.0) as usize
     }
 
     /// SRP: max methods per struct/module (default 10).
     pub fn srp_method_threshold(&self) -> usize {
-        self.rules.srp.threshold.unwrap_or(10)
+        self.rules.srp.threshold.unwrap_or(10.0) as usize
     }
 
     /// Shotgun Surgery: max number of dependents before triggering (default 10).
     pub fn shotgun_threshold(&self) -> usize {
-        self.rules.shotgun_surgery.threshold.unwrap_or(10)
+        self.rules.shotgun_surgery.threshold.unwrap_or(10.0) as usize
     }
 
     /// Coupling instability threshold as fraction (threshold/100).
     /// Default: 0.80 (modules more unstable than 80% are flagged).
     pub fn coupling_instability_threshold(&self) -> f64 {
-        self.rules.coupling.threshold.unwrap_or(80) as f64 / 100.0
+        self.rules.coupling.threshold.unwrap_or(80.0) / 100.0
     }
 
     /// Resolve which layer name the given module path belongs to.
