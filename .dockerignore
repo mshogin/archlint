@@ -1,0 +1,52 @@
+# Version control
+.git
+.gitignore
+
+# Build artifacts
+bin/
+archlint-rs/target/
+archlint_validator.egg-info/
+
+# Test and demo data
+tests/
+demo/
+specs/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Editor and IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Go test cache
+*.test
+*.out
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+validator/__pycache__/
+validator/structure/__pycache__/
+validator/behavior/__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.bak
+
+# Local config overrides
+.archlint.yaml
+architecture.yaml
