@@ -316,12 +316,9 @@ def main():
             config_file=args.config,
         )
 
-        # Output results
-        if args.format == 'json':
-            output = json.dumps(results, indent=2, ensure_ascii=False)
-        else:
-            # Convert numpy types to native Python for YAML serialization
-            def convert_numpy(obj):
+        # Convert numpy types to native Python for serialization
+        def convert_numpy(obj):
+            try:
                 import numpy as np
                 if isinstance(obj, dict):
                     return {k: convert_numpy(v) for k, v in obj.items()}
@@ -335,8 +332,15 @@ def main():
                     return obj.tolist()
                 elif isinstance(obj, (np.bool_,)):
                     return bool(obj)
-                return obj
-            results = convert_numpy(results)
+            except ImportError:
+                pass
+            return obj
+
+        results = convert_numpy(results)
+
+        if args.format == 'json':
+            output = json.dumps(results, indent=2, ensure_ascii=False, default=str)
+        else:
             output = yaml.dump(results, allow_unicode=True, default_flow_style=False)
 
         if args.output:
