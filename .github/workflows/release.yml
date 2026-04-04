@@ -15,11 +15,17 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: archlint-rs
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run Go tests
+        run: go test ./...
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -33,7 +39,8 @@ jobs:
             archlint-rs/target
           key: ${{ runner.os }}-cargo-test-${{ hashFiles('archlint-rs/Cargo.lock') }}
 
-      - name: Run tests
+      - name: Run Rust tests
+        working-directory: archlint-rs
         run: cargo test --verbose
 
   build:
