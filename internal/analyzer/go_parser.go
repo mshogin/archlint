@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// GoParser отвечает за парсинг Go файлов и извлечение структурной информации.
+// GoParser is responsible for parsing Go files and extracting structural information.
 type GoParser struct {
 	packages  map[string]*PackageInfo
 	types     map[string]*TypeInfo
@@ -40,7 +40,7 @@ func (p *GoParser) parseFile(filename string) error {
 
 	node, err := goparser.ParseFile(fset, filename, nil, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("ошибка парсинга %s: %w", filename, err)
+		return fmt.Errorf("parse error %s: %w", filename, err)
 	}
 
 	pkgName := node.Name.Name

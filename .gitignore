@@ -1,3 +1,6 @@
+# Patch files
+*.patch
+
 # Binaries
 bin/
 *.exe

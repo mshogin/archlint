@@ -1,4 +1,4 @@
-// Package cli содержит реализацию интерфейса командной строки для archlint.
+// Package cli provides the command-line interface implementation for archlint.
 package cli
 
 import (
@@ -14,18 +14,18 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "archlint",
-	Short: "Инструмент для построения архитектурных графов",
-	Long: `archlint - инструмент для построения структурных графов и графов поведения
-из исходного кода на языке Go.`,
+	Short: "Architecture graph builder tool",
+	Long: `archlint - a tool for building structural graphs and behavioral graphs
+from Go source code.`,
 	Version: version,
 }
 
-// Execute запускает выполнение корневой команды CLI.
+// Execute runs the root CLI command.
 func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Ошибка: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 
-		return fmt.Errorf("ошибка выполнения команды: %w", err)
+		return fmt.Errorf("command execution error: %w", err)
 	}
 
 	return nil

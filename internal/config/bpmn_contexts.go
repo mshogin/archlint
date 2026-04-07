@@ -1,4 +1,4 @@
-// Package config загружает и валидирует конфигурацию BPMN-контекстов.
+// Package config loads and validates BPMN contexts configuration.
 package config
 
 import (
@@ -35,21 +35,21 @@ var validEntryPointTypes = map[EntryPointType]bool{
 	EntryPointCustom: true,
 }
 
-// Ошибки валидации конфигурации.
+// Configuration validation errors.
 var (
-	ErrEmptyContexts    = errors.New("секция contexts пуста")
-	ErrMissingBPMNFile  = errors.New("отсутствует bpmn_file в контексте")
-	ErrEmptyEvents      = errors.New("список events пуст в контексте")
-	ErrMissingEventID   = errors.New("отсутствует event_id в событии")
-	ErrMissingPackage   = errors.New("отсутствует entry_point.package")
-	ErrMissingFunction  = errors.New("отсутствует entry_point.function")
-	ErrInvalidType      = errors.New("невалидный entry_point.type")
-	ErrDuplicateEventID = errors.New("дубликат event_id внутри контекста")
-	ErrBPMNFileNotFound = errors.New("файл bpmn_file не найден")
-	ErrConfigRead       = errors.New("ошибка чтения файла конфигурации")
-	ErrConfigParse      = errors.New("ошибка парсинга YAML конфигурации")
-	ErrConfigTooLarge   = errors.New("файл конфигурации слишком большой")
-	ErrPathTraversal    = errors.New("путь выходит за пределы базовой директории")
+	ErrEmptyContexts    = errors.New("contexts section is empty")
+	ErrMissingBPMNFile  = errors.New("missing bpmn_file in context")
+	ErrEmptyEvents      = errors.New("events list is empty in context")
+	ErrMissingEventID   = errors.New("missing event_id in event")
+	ErrMissingPackage   = errors.New("missing entry_point.package")
+	ErrMissingFunction  = errors.New("missing entry_point.function")
+	ErrInvalidType      = errors.New("invalid entry_point.type")
+	ErrDuplicateEventID = errors.New("duplicate event_id within context")
+	ErrBPMNFileNotFound = errors.New("bpmn_file not found")
+	ErrConfigRead       = errors.New("failed to read config file")
+	ErrConfigParse      = errors.New("failed to parse YAML config")
+	ErrConfigTooLarge   = errors.New("config file is too large")
+	ErrPathTraversal    = errors.New("path escapes base directory")
 )
 
 // Warning представляет предупреждение валидации (не блокирует работу).
@@ -100,7 +100,7 @@ func LoadBPMNContexts(path string) (*BehavioralConfig, []Warning, error) {
 	}
 
 	if info.Size() > maxConfigFileSize {
-		return nil, nil, fmt.Errorf("%w: %d байт (лимит %d)", ErrConfigTooLarge, info.Size(), maxConfigFileSize)
+		return nil, nil, fmt.Errorf("%w: %d bytes (limit %d)", ErrConfigTooLarge, info.Size(), maxConfigFileSize)
 	}
 
 	//nolint:gosec // G304: path is a user-provided CLI argument
@@ -131,20 +131,20 @@ func LoadBPMNContexts(path string) (*BehavioralConfig, []Warning, error) {
 func validateContexts(config *BehavioralConfig, baseDir string) error {
 	for ctxName, ctx := range config.Contexts {
 		if ctx.BPMNFile == "" {
-			return fmt.Errorf("%w: контекст %q", ErrMissingBPMNFile, ctxName)
+			return fmt.Errorf("%w: context %q", ErrMissingBPMNFile, ctxName)
 		}
 
 		bpmnPath, err := resolvePath(baseDir, ctx.BPMNFile)
 		if err != nil {
-			return fmt.Errorf("контекст %q: %w", ctxName, err)
+			return fmt.Errorf("context %q: %w", ctxName, err)
 		}
 
 		if _, err := os.Stat(bpmnPath); os.IsNotExist(err) {
-			return fmt.Errorf("%w: %s (контекст %q)", ErrBPMNFileNotFound, ctx.BPMNFile, ctxName)
+			return fmt.Errorf("%w: %s (context %q)", ErrBPMNFileNotFound, ctx.BPMNFile, ctxName)
 		}
 
 		if len(ctx.Events) == 0 {
-			return fmt.Errorf("%w: контекст %q", ErrEmptyEvents, ctxName)
+			return fmt.Errorf("%w: context %q", ErrEmptyEvents, ctxName)
 		}
 
 		if err := validateEvents(ctxName, ctx.Events); err != nil {
@@ -161,26 +161,26 @@ func validateEvents(ctxName string, events []EventMapping) error {
 
 	for i, event := range events {
 		if event.EventID == "" {
-			return fmt.Errorf("%w: контекст %q, событие #%d", ErrMissingEventID, ctxName, i+1)
+			return fmt.Errorf("%w: context %q, event #%d", ErrMissingEventID, ctxName, i+1)
 		}
 
 		if eventIDs[event.EventID] {
-			return fmt.Errorf("%w: %q в контексте %q", ErrDuplicateEventID, event.EventID, ctxName)
+			return fmt.Errorf("%w: %q in context %q", ErrDuplicateEventID, event.EventID, ctxName)
 		}
 
 		eventIDs[event.EventID] = true
 
 		if event.EntryPoint.Package == "" {
-			return fmt.Errorf("%w: контекст %q, событие %q", ErrMissingPackage, ctxName, event.EventID)
+			return fmt.Errorf("%w: context %q, event %q", ErrMissingPackage, ctxName, event.EventID)
 		}
 
 		if event.EntryPoint.Function == "" {
-			return fmt.Errorf("%w: контекст %q, событие %q", ErrMissingFunction, ctxName, event.EventID)
+			return fmt.Errorf("%w: context %q, event %q", ErrMissingFunction, ctxName, event.EventID)
 		}
 
 		if !validEntryPointTypes[event.EntryPoint.Type] {
 			return fmt.Errorf(
-				"%w: %q в контексте %q, событие %q (допустимые: http, kafka, grpc, cron, custom)",
+				"%w: %q in context %q, event %q (allowed: http, kafka, grpc, cron, custom)",
 				ErrInvalidType, event.EntryPoint.Type, ctxName, event.EventID,
 			)
 		}
@@ -202,7 +202,7 @@ func ValidateAgainstBPMN(ctxName string, ctx *BPMNContext, process *bpmn.BPMNPro
 		if !elementIDs[event.EventID] {
 			warnings = append(warnings, Warning{
 				Context: ctxName,
-				Message: fmt.Sprintf("event_id %q не найден в BPMN-файле %s", event.EventID, ctx.BPMNFile),
+				Message: fmt.Sprintf("event_id %q not found in BPMN file %s", event.EventID, ctx.BPMNFile),
 			})
 		}
 	}
@@ -221,16 +221,16 @@ func resolvePath(baseDir, path string) (string, error) {
 
 	absBase, err := filepath.Abs(baseDir)
 	if err != nil {
-		return "", fmt.Errorf("ошибка разрешения базовой директории: %w", err)
+		return "", fmt.Errorf("failed to resolve base directory: %w", err)
 	}
 
 	absResolved, err := filepath.Abs(resolved)
 	if err != nil {
-		return "", fmt.Errorf("ошибка разрешения пути: %w", err)
+		return "", fmt.Errorf("failed to resolve path: %w", err)
 	}
 
 	if !strings.HasPrefix(absResolved, absBase+string(filepath.Separator)) && absResolved != absBase {
-		return "", fmt.Errorf("%w: %q относительно %q", ErrPathTraversal, path, baseDir)
+		return "", fmt.Errorf("%w: %q relative to %q", ErrPathTraversal, path, baseDir)
 	}
 
 	return resolved, nil
