@@ -1,0 +1,10 @@
+# Monitored repositories - scanned nightly by archlint
+repos:
+  - url: https://github.com/mshogin/archlint
+    language: Go
+    added: 2026-04-07
+    status: active
+  - url: https://github.com/kgatilin/deskd
+    language: Rust
+    added: 2026-04-07
+    status: active
