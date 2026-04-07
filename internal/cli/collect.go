@@ -17,26 +17,26 @@ var (
 )
 
 var (
-	errDirNotExist       = errors.New("директория не существует")
-	errUnsupportedLang   = errors.New("неподдерживаемый язык")
-	errFileCreate        = errors.New("ошибка создания файла")
-	errYAMLSerialization = errors.New("ошибка сериализации YAML")
+	errDirNotExist       = errors.New("directory does not exist")
+	errUnsupportedLang   = errors.New("unsupported language")
+	errFileCreate        = errors.New("failed to create file")
+	errYAMLSerialization = errors.New("YAML serialization error")
 )
 
 var collectCmd = &cobra.Command{
-	Use:   "collect [директория]",
-	Short: "Сбор архитектуры из исходного кода",
-	Long: `Анализирует исходный код и строит граф архитектуры в формате YAML.
+	Use:   "collect [directory]",
+	Short: "Collect architecture from source code",
+	Long: `Analyzes source code and builds an architecture graph in YAML format.
 
-Пример:
+Example:
   archlint collect . -l go -o architecture.yaml`,
 	Args: cobra.ExactArgs(1),
 	RunE: runCollect,
 }
 
 func init() {
-	collectCmd.Flags().StringVarP(&collectOutputFile, "output", "o", "architecture.yaml", "Выходной YAML файл")
-	collectCmd.Flags().StringVarP(&collectLanguage, "language", "l", "go", "Язык программирования (go)")
+	collectCmd.Flags().StringVarP(&collectOutputFile, "output", "o", "architecture.yaml", "Output YAML file")
+	collectCmd.Flags().StringVarP(&collectLanguage, "language", "l", "go", "Programming language (go)")
 	rootCmd.AddCommand(collectCmd)
 }
 
@@ -47,7 +47,7 @@ func runCollect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("%w: %s", errDirNotExist, codeDir)
 	}
 
-	fmt.Printf("Анализ кода: %s (язык: %s)\n", codeDir, collectLanguage)
+	fmt.Printf("Analyzing code: %s (language: %s)\n", codeDir, collectLanguage)
 
 	graph, err := analyzeCode(codeDir)
 	if err != nil {
@@ -60,7 +60,7 @@ func runCollect(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Граф сохранен в %s\n", collectOutputFile)
+	fmt.Printf("Graph saved to %s\n", collectOutputFile)
 
 	return nil
 }
@@ -72,7 +72,7 @@ func analyzeCode(codeDir string) (*model.Graph, error) {
 
 		graph, err := goAnalyzer.Analyze(codeDir)
 		if err != nil {
-			return nil, fmt.Errorf("ошибка анализа: %w", err)
+			return nil, fmt.Errorf("analysis error: %w", err)
 		}
 
 		return graph, nil
@@ -88,13 +88,13 @@ func printStats(graph *model.Graph) {
 		stats[node.Entity]++
 	}
 
-	fmt.Printf("Найдено компонентов: %d\n", len(graph.Nodes))
+	fmt.Printf("Found components: %d\n", len(graph.Nodes))
 
 	for entity, count := range stats {
 		fmt.Printf("  - %s: %d\n", entity, count)
 	}
 
-	fmt.Printf("Найдено связей: %d\n", len(graph.Edges))
+	fmt.Printf("Found edges: %d\n", len(graph.Edges))
 }
 
 func saveGraph(graph *model.Graph) error {
@@ -106,7 +106,7 @@ func saveGraph(graph *model.Graph) error {
 
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			fmt.Fprintf(os.Stderr, "Предупреждение: ошибка закрытия файла: %v\n", closeErr)
+			fmt.Fprintf(os.Stderr, "Warning: failed to close file: %v\n", closeErr)
 		}
 	}()
 
@@ -115,7 +115,7 @@ func saveGraph(graph *model.Graph) error {
 
 	defer func() {
 		if closeErr := encoder.Close(); closeErr != nil {
-			fmt.Fprintf(os.Stderr, "Предупреждение: ошибка закрытия encoder: %v\n", closeErr)
+			fmt.Fprintf(os.Stderr, "Warning: failed to close encoder: %v\n", closeErr)
 		}
 	}()
 

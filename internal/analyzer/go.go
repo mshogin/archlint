@@ -1,4 +1,4 @@
-// Package analyzer содержит анализаторы исходного кода для построения архитектурных графов.
+// Package analyzer contains source code analyzers for building architecture graphs.
 package analyzer
 
 import (
@@ -10,8 +10,8 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// GoAnalyzer анализирует Go код и строит граф зависимостей.
-// Оркестрирует GoParser и GoGraphBuilder, сохраняя публичный API.
+// GoAnalyzer analyzes Go code and builds a dependency graph.
+// It orchestrates GoParser and GoGraphBuilder while preserving the public API.
 type GoAnalyzer struct {
 	packages  map[string]*PackageInfo
 	types     map[string]*TypeInfo
@@ -21,7 +21,7 @@ type GoAnalyzer struct {
 	edges     []model.Edge
 }
 
-// PackageInfo содержит информацию о пакете.
+// PackageInfo holds information about a package.
 type PackageInfo struct {
 	Name    string
 	Path    string
@@ -29,22 +29,22 @@ type PackageInfo struct {
 	Imports []string
 }
 
-// TypeInfo - псевдоним для model.TypeInfo для обратной совместимости.
+// TypeInfo is an alias for model.TypeInfo for backward compatibility.
 type TypeInfo = model.TypeInfo
 
-// FieldInfo - псевдоним для model.FieldInfo для обратной совместимости.
+// FieldInfo is an alias for model.FieldInfo for backward compatibility.
 type FieldInfo = model.FieldInfo
 
-// FunctionInfo - псевдоним для model.FunctionInfo для обратной совместимости.
+// FunctionInfo is an alias for model.FunctionInfo for backward compatibility.
 type FunctionInfo = model.FunctionInfo
 
-// MethodInfo - псевдоним для model.MethodInfo для обратной совместимости.
+// MethodInfo is an alias for model.MethodInfo for backward compatibility.
 type MethodInfo = model.MethodInfo
 
-// CallInfo - псевдоним для model.CallInfo для обратной совместимости.
+// CallInfo is an alias for model.CallInfo for backward compatibility.
 type CallInfo = model.CallInfo
 
-// NewGoAnalyzer создает новый анализатор Go кода.
+// NewGoAnalyzer creates a new Go code analyzer.
 func NewGoAnalyzer() *GoAnalyzer {
 	return &GoAnalyzer{
 		packages:  make(map[string]*PackageInfo),
@@ -56,7 +56,7 @@ func NewGoAnalyzer() *GoAnalyzer {
 	}
 }
 
-// Analyze анализирует директорию с Go кодом.
+// Analyze analyzes a directory containing Go code.
 func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 	parser := newGoParser(a.packages, a.types, a.functions, a.methods)
 
@@ -81,7 +81,7 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 		return parser.parseFile(path)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("ошибка обхода директории: %w", err)
+		return nil, fmt.Errorf("directory walk error: %w", err)
 	}
 
 	builder := newGoGraphBuilder(a.packages, a.types, a.functions, a.methods, &a.nodes, &a.edges)
@@ -93,23 +93,23 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 	}, nil
 }
 
-// LookupFunction возвращает информацию о функции по ID.
+// LookupFunction returns function information by ID.
 func (a *GoAnalyzer) LookupFunction(funcID string) *FunctionInfo {
 	return a.functions[funcID]
 }
 
-// LookupMethod возвращает информацию о методе по ID.
+// LookupMethod returns method information by ID.
 func (a *GoAnalyzer) LookupMethod(methodID string) *MethodInfo {
 	return a.methods[methodID]
 }
 
-// LookupType возвращает информацию о типе по ID.
+// LookupType returns type information by ID.
 func (a *GoAnalyzer) LookupType(typeID string) *TypeInfo {
 	return a.types[typeID]
 }
 
-// FindImplementations ищет конкретные типы, реализующие интерфейс.
-// Возвращает IDs типов, у которых совпадают все методы интерфейса (best-effort).
+// FindImplementations searches for concrete types implementing an interface.
+// Returns IDs of types that match all interface methods (best-effort).
 func (a *GoAnalyzer) FindImplementations(interfaceID string) []string {
 	iface := a.types[interfaceID]
 	if iface == nil || iface.Kind != "interface" {
@@ -138,22 +138,22 @@ func (a *GoAnalyzer) FindImplementations(interfaceID string) []string {
 	return result
 }
 
-// AllFunctions возвращает все найденные функции.
+// AllFunctions returns all discovered functions.
 func (a *GoAnalyzer) AllFunctions() map[string]*FunctionInfo {
 	return a.functions
 }
 
-// AllMethods возвращает все найденные методы.
+// AllMethods returns all discovered methods.
 func (a *GoAnalyzer) AllMethods() map[string]*MethodInfo {
 	return a.methods
 }
 
-// AllTypes возвращает все найденные типы.
+// AllTypes returns all discovered types.
 func (a *GoAnalyzer) AllTypes() map[string]*TypeInfo {
 	return a.types
 }
 
-// ResolveCallTarget разрешает цель вызова в ID узла (публичный доступ).
+// ResolveCallTarget resolves a call target to a node ID (public access).
 func (a *GoAnalyzer) ResolveCallTarget(call CallInfo, callerPkg string) string {
 	builder := newGoGraphBuilder(a.packages, a.types, a.functions, a.methods, &a.nodes, &a.edges)
 

@@ -77,7 +77,7 @@ func TestCollectWorkflow(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "Найдено компонентов") {
+	if !strings.Contains(output, "Found components") {
 		t.Errorf("expected stats in stdout, got: %s", output)
 	}
 }
@@ -98,7 +98,7 @@ func TestCollectUnsupportedLanguage(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for unsupported language, got nil")
 	}
-	if !strings.Contains(err.Error(), "неподдерживаемый язык") {
+	if !strings.Contains(err.Error(), "unsupported language") {
 		t.Errorf("unexpected error message: %v", err)
 	}
 }

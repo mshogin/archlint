@@ -11,31 +11,31 @@ import (
 )
 
 var (
-	errBpmnFileNotFound = errors.New("файл не найден")
-	errBpmnParse        = errors.New("ошибка парсинга")
-	errBpmnBuildGraph   = errors.New("ошибка построения графа")
-	errBpmnSave         = errors.New("ошибка сохранения")
-	errBpmnFileCreate   = errors.New("ошибка создания файла")
-	errBpmnYAMLEncode   = errors.New("ошибка сериализации YAML")
+	errBpmnFileNotFound = errors.New("file not found")
+	errBpmnParse        = errors.New("parse error")
+	errBpmnBuildGraph   = errors.New("failed to build graph")
+	errBpmnSave         = errors.New("save error")
+	errBpmnFileCreate   = errors.New("failed to create file")
+	errBpmnYAMLEncode   = errors.New("YAML serialization error")
 )
 
 var bpmnOutputFile string
 
 var bpmnCmd = &cobra.Command{
-	Use:   "bpmn <файл.bpmn>",
-	Short: "Парсинг BPMN 2.0 файла в граф бизнес-процесса",
-	Long: `Анализирует BPMN 2.0 XML файл и строит граф бизнес-процесса.
+	Use:   "bpmn <file.bpmn>",
+	Short: "Parse BPMN 2.0 file into a business process graph",
+	Long: `Analyzes a BPMN 2.0 XML file and builds a business process graph.
 
-Поддерживаются файлы из Camunda Modeler, draw.io, Bizagi.
+Supports files from Camunda Modeler, draw.io, Bizagi.
 
-Пример:
+Example:
   archlint bpmn order-process.bpmn -o process-graph.yaml`,
 	Args: cobra.ExactArgs(1),
 	RunE: runBpmn,
 }
 
 func init() {
-	bpmnCmd.Flags().StringVarP(&bpmnOutputFile, "output", "o", "process-graph.yaml", "Выходной YAML файл")
+	bpmnCmd.Flags().StringVarP(&bpmnOutputFile, "output", "o", "process-graph.yaml", "Output YAML file")
 	rootCmd.AddCommand(bpmnCmd)
 }
 
@@ -46,7 +46,7 @@ func runBpmn(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("%w: %s", errBpmnFileNotFound, filename)
 	}
 
-	fmt.Printf("Парсинг BPMN: %s\n", filename)
+	fmt.Printf("Parsing BPMN: %s\n", filename)
 
 	process, err := bpmn.ParseFile(filename)
 	if err != nil {
@@ -66,7 +66,7 @@ func runBpmn(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("%w: %w", errBpmnSave, err)
 	}
 
-	fmt.Printf("Граф сохранен в %s\n", bpmnOutputFile)
+	fmt.Printf("Graph saved to %s\n", bpmnOutputFile)
 
 	return nil
 }
@@ -85,15 +85,15 @@ func printBpmnStats(process *bpmn.BPMNProcess, validationErrors []error) {
 		}
 	}
 
-	fmt.Printf("Процесс: %s (id: %s)\n", process.Name, process.ID)
-	fmt.Printf("Элементов: %d (events: %d, tasks: %d, gateways: %d)\n",
+	fmt.Printf("Process: %s (id: %s)\n", process.Name, process.ID)
+	fmt.Printf("Elements: %d (events: %d, tasks: %d, gateways: %d)\n",
 		len(process.Elements), events, tasks, gateways)
-	fmt.Printf("Потоков: %d\n", len(process.Flows))
+	fmt.Printf("Flows: %d\n", len(process.Flows))
 
 	if len(validationErrors) == 0 {
-		fmt.Println("Валидация: OK")
+		fmt.Println("Validation: OK")
 	} else {
-		fmt.Printf("Валидация: %d ошибок\n", len(validationErrors))
+		fmt.Printf("Validation: %d errors\n", len(validationErrors))
 
 		for _, e := range validationErrors {
 			fmt.Printf("  - %s\n", e.Error())
@@ -119,7 +119,7 @@ func saveProcessGraph(process *bpmn.BPMNProcess) error {
 
 	defer func() {
 		if closeErr := file.Close(); closeErr != nil {
-			fmt.Fprintf(os.Stderr, "Предупреждение: ошибка закрытия файла: %v\n", closeErr)
+			fmt.Fprintf(os.Stderr, "Warning: failed to close file: %v\n", closeErr)
 		}
 	}()
 
@@ -128,7 +128,7 @@ func saveProcessGraph(process *bpmn.BPMNProcess) error {
 
 	defer func() {
 		if closeErr := encoder.Close(); closeErr != nil {
-			fmt.Fprintf(os.Stderr, "Предупреждение: ошибка закрытия encoder: %v\n", closeErr)
+			fmt.Fprintf(os.Stderr, "Warning: failed to close encoder: %v\n", closeErr)
 		}
 	}()
 

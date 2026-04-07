@@ -6,7 +6,7 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// GoGraphBuilder отвечает за построение графа зависимостей из собранных данных.
+// GoGraphBuilder is responsible for building a dependency graph from collected data.
 type GoGraphBuilder struct {
 	packages  map[string]*PackageInfo
 	types     map[string]*TypeInfo

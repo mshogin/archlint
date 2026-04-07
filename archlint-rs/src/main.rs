@@ -23,7 +23,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "archlint")]
+#[command(name = "archlint-rs")]
 #[command(about = "Architecture linter - structural graphs, SOLID violations, cycle detection")]
 struct Cli {
     #[command(subcommand)]

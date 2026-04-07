@@ -25,19 +25,19 @@ var (
 )
 
 var (
-	errNoModeSelected = errors.New("необходимо указать --bpmn-contexts или --entry")
+	errNoModeSelected = errors.New("must specify --bpmn-contexts or --entry")
 )
 
 var callgraphCmd = &cobra.Command{
-	Use:   "callgraph [директория]",
-	Short: "Построение графов вызовов от точек входа",
-	Long: `Строит графы вызовов (call graphs) из исходного кода.
+	Use:   "callgraph [directory]",
+	Short: "Build call graphs from entry points",
+	Long: `Builds call graphs from source code.
 
-Два режима:
-  1. Полный режим (BPMN contexts): --bpmn-contexts bpmn-contexts.yaml
-  2. Одиночный режим: --entry "internal/service.OrderService.ProcessOrder"
+Two modes:
+  1. Full mode (BPMN contexts): --bpmn-contexts bpmn-contexts.yaml
+  2. Single mode: --entry "internal/service.OrderService.ProcessOrder"
 
-Пример:
+Example:
   archlint callgraph ./src --bpmn-contexts bpmn-contexts.yaml -o callgraphs/
   archlint callgraph ./src --entry "internal/service.OrderService.ProcessOrder"`,
 	Args: cobra.ExactArgs(1),
@@ -45,13 +45,13 @@ var callgraphCmd = &cobra.Command{
 }
 
 func init() {
-	callgraphCmd.Flags().StringVar(&cgBPMNContexts, "bpmn-contexts", "", "Файл конфигурации контекстов (bpmn-contexts.yaml)")
-	callgraphCmd.Flags().StringVar(&cgEntryPoint, "entry", "", "Точка входа (одиночный режим)")
-	callgraphCmd.Flags().StringVarP(&cgOutputDir, "output", "o", "callgraphs", "Директория для результатов")
-	callgraphCmd.Flags().IntVar(&cgMaxDepth, "max-depth", 10, "Максимальная глубина анализа")
-	callgraphCmd.Flags().BoolVar(&cgNoPuml, "no-puml", false, "Не генерировать PlantUML диаграммы")
-	callgraphCmd.Flags().IntVar(&cgPumlDepth, "puml-depth", 5, "Глубина для PlantUML диаграмм")
-	callgraphCmd.Flags().StringVarP(&cgLanguage, "language", "l", "go", "Язык программирования (go)")
+	callgraphCmd.Flags().StringVar(&cgBPMNContexts, "bpmn-contexts", "", "Contexts config file (bpmn-contexts.yaml)")
+	callgraphCmd.Flags().StringVar(&cgEntryPoint, "entry", "", "Entry point (single mode)")
+	callgraphCmd.Flags().StringVarP(&cgOutputDir, "output", "o", "callgraphs", "Output directory")
+	callgraphCmd.Flags().IntVar(&cgMaxDepth, "max-depth", 10, "Maximum analysis depth")
+	callgraphCmd.Flags().BoolVar(&cgNoPuml, "no-puml", false, "Do not generate PlantUML diagrams")
+	callgraphCmd.Flags().IntVar(&cgPumlDepth, "puml-depth", 5, "Depth for PlantUML diagrams")
+	callgraphCmd.Flags().StringVarP(&cgLanguage, "language", "l", "go", "Programming language (go)")
 	rootCmd.AddCommand(callgraphCmd)
 }
 
@@ -66,12 +66,12 @@ func runCallgraph(cmd *cobra.Command, args []string) error {
 		return errNoModeSelected
 	}
 
-	fmt.Printf("Анализ кода: %s (язык: %s)\n", codeDir, cgLanguage)
+	fmt.Printf("Analyzing code: %s (language: %s)\n", codeDir, cgLanguage)
 
 	goAnalyzer := analyzer.NewGoAnalyzer()
 
 	if _, err := goAnalyzer.Analyze(codeDir); err != nil {
-		return fmt.Errorf("ошибка анализа кода: %w", err)
+		return fmt.Errorf("code analysis error: %w", err)
 	}
 
 	opts := callgraph.BuildOptions{
@@ -81,7 +81,7 @@ func runCallgraph(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := os.MkdirAll(cgOutputDir, 0o750); err != nil {
-		return fmt.Errorf("ошибка создания директории %s: %w", cgOutputDir, err)
+		return fmt.Errorf("failed to create directory %s: %w", cgOutputDir, err)
 	}
 
 	if cgEntryPoint != "" {
@@ -94,12 +94,12 @@ func runCallgraph(cmd *cobra.Command, args []string) error {
 func runSingleMode(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptions) error {
 	builder, err := callgraph.NewBuilder(goAnalyzer, opts)
 	if err != nil {
-		return fmt.Errorf("создание builder: %w", err)
+		return fmt.Errorf("failed to create builder: %w", err)
 	}
 
 	cg, err := builder.Build(cgEntryPoint)
 	if err != nil {
-		return fmt.Errorf("ошибка построения графа: %w", err)
+		return fmt.Errorf("failed to build call graph: %w", err)
 	}
 
 	if err := exportSingleGraph(cg); err != nil {
@@ -117,7 +117,7 @@ func exportSingleGraph(cg *callgraph.CallGraph) error {
 	yamlPath := filepath.Join(cgOutputDir, "callgraph.yaml")
 
 	if err := exporter.ExportCallGraph(cg, yamlPath); err != nil {
-		return fmt.Errorf("экспорт YAML: %w", err)
+		return fmt.Errorf("YAML export error: %w", err)
 	}
 
 	fmt.Printf("YAML: %s\n", yamlPath)
@@ -147,11 +147,11 @@ func runFullMode(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptions) e
 func buildEventGraphs(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptions) (*callgraph.EventCallGraphSet, error) {
 	contexts, warnings, err := config.LoadBPMNContexts(cgBPMNContexts)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка загрузки контекстов: %w", err)
+		return nil, fmt.Errorf("failed to load contexts: %w", err)
 	}
 
 	for _, w := range warnings {
-		fmt.Printf("Предупреждение: %s\n", w)
+		fmt.Printf("Warning: %s\n", w)
 	}
 
 	eventCount := 0
@@ -159,7 +159,7 @@ func buildEventGraphs(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptio
 		eventCount += len(ctx.Events)
 	}
 
-	fmt.Printf("Загружено контекстов: %d, событий: %d\n", len(contexts.Contexts), eventCount)
+	fmt.Printf("Loaded contexts: %d, events: %d\n", len(contexts.Contexts), eventCount)
 
 	eventBuilder, err := callgraph.NewEventBuilder(goAnalyzer, contexts, opts)
 	if err != nil {
@@ -168,7 +168,7 @@ func buildEventGraphs(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptio
 
 	set, err := eventBuilder.BuildAll()
 	if err != nil {
-		return nil, fmt.Errorf("ошибка построения графов: %w", err)
+		return nil, fmt.Errorf("failed to build graphs: %w", err)
 	}
 
 	return set, nil
@@ -179,14 +179,14 @@ func exportEventGraphs(set *callgraph.EventCallGraphSet) error {
 		fmt.Printf("  WARN: %s\n", w)
 	}
 
-	fmt.Printf("\nРезультат: %d графов построено, %d warnings\n",
+	fmt.Printf("\nResult: %d graphs built, %d warnings\n",
 		set.Stats.BuiltGraphs, set.Stats.FailedGraphs)
 
 	exporter := callgraph.NewYAMLExporter()
 	yamlPath := filepath.Join(cgOutputDir, "event-graphs.yaml")
 
 	if err := exporter.ExportEventSet(set, yamlPath); err != nil {
-		return fmt.Errorf("экспорт YAML: %w", err)
+		return fmt.Errorf("YAML export error: %w", err)
 	}
 
 	fmt.Printf("YAML: %s\n", yamlPath)
@@ -196,7 +196,7 @@ func exportEventGraphs(set *callgraph.EventCallGraphSet) error {
 			cg := set.Graphs[eventID]
 
 			if err := generatePuml(&cg, eventID); err != nil {
-				fmt.Printf("  Предупреждение: PlantUML для %s: %v\n", eventID, err)
+				fmt.Printf("  Warning: PlantUML for %s: %v\n", eventID, err)
 			}
 		}
 	}
@@ -216,7 +216,7 @@ func generatePuml(cg *callgraph.CallGraph, name string) error {
 
 	puml, err := gen.Generate(cg)
 	if err != nil {
-		return fmt.Errorf("ошибка генерации PlantUML: %w", err)
+		return fmt.Errorf("PlantUML generation error: %w", err)
 	}
 
 	safeName := sanitizeFilename(name)
@@ -224,7 +224,7 @@ func generatePuml(cg *callgraph.CallGraph, name string) error {
 
 	//nolint:gosec // G306: puml files are not sensitive
 	if err := os.WriteFile(pumlPath, []byte(puml), 0o644); err != nil {
-		return fmt.Errorf("ошибка записи PlantUML %s: %w", pumlPath, err)
+		return fmt.Errorf("failed to write PlantUML %s: %w", pumlPath, err)
 	}
 
 	fmt.Printf("PlantUML: %s\n", pumlPath)
