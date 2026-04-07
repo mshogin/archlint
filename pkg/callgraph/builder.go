@@ -3,8 +3,6 @@ package callgraph
 import (
 	"fmt"
 	"time"
-
-	"github.com/mshogin/archlint/internal/analyzer"
 )
 
 // BuildOptions настройки построения графа.
@@ -28,12 +26,12 @@ func DefaultBuildOptions() BuildOptions {
 
 // Builder строит граф вызовов от заданной точки входа.
 type Builder struct {
-	analyzer *analyzer.GoAnalyzer
+	analyzer Analyzer
 	options  BuildOptions
 }
 
 // NewBuilder создает новый строитель.
-func NewBuilder(a *analyzer.GoAnalyzer, opts BuildOptions) (*Builder, error) {
+func NewBuilder(a Analyzer, opts BuildOptions) (*Builder, error) {
 	if a == nil {
 		return nil, ErrAnalyzerRequired
 	}
