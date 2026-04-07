@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/config"
 )
 
@@ -20,7 +19,7 @@ type EventBuilder struct {
 
 // NewEventBuilder создает новый строитель событийных графов.
 func NewEventBuilder(
-	a *analyzer.GoAnalyzer,
+	a Analyzer,
 	contexts *config.BehavioralConfig,
 	opts BuildOptions,
 ) (*EventBuilder, error) {

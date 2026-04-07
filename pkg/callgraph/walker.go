@@ -1,12 +1,12 @@
 package callgraph
 
 import (
-	"github.com/mshogin/archlint/internal/analyzer"
+	"github.com/mshogin/archlint/internal/model"
 )
 
 // CallWalker рекурсивно обходит вызовы от точки входа.
 type CallWalker struct {
-	analyzer *analyzer.GoAnalyzer
+	analyzer Analyzer
 	resolver *CallResolver
 	maxDepth int
 	visited  map[string]bool
@@ -17,7 +17,7 @@ type CallWalker struct {
 }
 
 // NewCallWalker создает новый обходчик.
-func NewCallWalker(a *analyzer.GoAnalyzer, resolver *CallResolver, maxDepth int) *CallWalker {
+func NewCallWalker(a Analyzer, resolver *CallResolver, maxDepth int) *CallWalker {
 	return &CallWalker{
 		analyzer: a,
 		resolver: resolver,
@@ -64,7 +64,7 @@ func (w *CallWalker) walk(functionID string, depth int) {
 		return
 	}
 
-	var calls []analyzer.CallInfo
+	var calls []model.CallInfo
 
 	var callerPkg string
 
@@ -105,7 +105,7 @@ func (w *CallWalker) walk(functionID string, depth int) {
 	}
 }
 
-func (w *CallWalker) addFunctionNode(info *analyzer.FunctionInfo, id string, depth int) {
+func (w *CallWalker) addFunctionNode(info *model.FunctionInfo, id string, depth int) {
 	w.nodes = append(w.nodes, CallNode{
 		ID:       id,
 		Package:  info.Package,
@@ -118,7 +118,7 @@ func (w *CallWalker) addFunctionNode(info *analyzer.FunctionInfo, id string, dep
 	w.stats.TotalNodes++
 }
 
-func (w *CallWalker) addMethodNode(info *analyzer.MethodInfo, id string, depth int) {
+func (w *CallWalker) addMethodNode(info *model.MethodInfo, id string, depth int) {
 	nodeType := NodeMethod
 
 	receiverTypeID := info.Package + "." + info.Receiver

@@ -3,12 +3,12 @@ package callgraph
 import (
 	"strings"
 
-	"github.com/mshogin/archlint/internal/analyzer"
+	"github.com/mshogin/archlint/internal/model"
 )
 
 // CallResolver разрешает цели вызовов: прямые, через интерфейс, горутины.
 type CallResolver struct {
-	analyzer *analyzer.GoAnalyzer
+	analyzer Analyzer
 }
 
 // ResolvedCall содержит разрешенную информацию о вызове.
@@ -25,14 +25,14 @@ type ResolvedCall struct {
 }
 
 // NewCallResolver создает новый резолвер.
-func NewCallResolver(a *analyzer.GoAnalyzer) *CallResolver {
+func NewCallResolver(a Analyzer) *CallResolver {
 	return &CallResolver{analyzer: a}
 }
 
 // Resolve разрешает вызов в конкретную цель.
 //
 //nolint:funlen // Call resolution requires checking multiple target types.
-func (r *CallResolver) Resolve(call analyzer.CallInfo, callerPkg string) *ResolvedCall {
+func (r *CallResolver) Resolve(call model.CallInfo, callerPkg string) *ResolvedCall {
 	targetID := r.analyzer.ResolveCallTarget(call, callerPkg)
 
 	callType := r.determineCallType(call)
@@ -93,7 +93,7 @@ func (r *CallResolver) Resolve(call analyzer.CallInfo, callerPkg string) *Resolv
 }
 
 // determineCallType определяет тип вызова из CallInfo.
-func (r *CallResolver) determineCallType(call analyzer.CallInfo) CallType {
+func (r *CallResolver) determineCallType(call model.CallInfo) CallType {
 	if call.IsGoroutine {
 		return CallGoroutine
 	}
@@ -106,7 +106,7 @@ func (r *CallResolver) determineCallType(call analyzer.CallInfo) CallType {
 }
 
 // determineMethodNodeType определяет тип узла для метода.
-func (r *CallResolver) determineMethodNodeType(methodInfo *analyzer.MethodInfo) CallNodeType {
+func (r *CallResolver) determineMethodNodeType(methodInfo *model.MethodInfo) CallNodeType {
 	receiverTypeID := methodInfo.Package + "." + methodInfo.Receiver
 	typeInfo := r.analyzer.LookupType(receiverTypeID)
 
