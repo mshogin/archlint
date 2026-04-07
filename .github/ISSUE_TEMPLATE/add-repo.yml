@@ -1,0 +1,36 @@
+name: Add Repository
+description: Request to add your repository to archlint monitoring
+title: "Add repo: "
+labels: ["add-repo"]
+body:
+  - type: input
+    id: repo_url
+    attributes:
+      label: Repository URL
+      description: Full URL of the repository to monitor
+      placeholder: "https://github.com/your-org/your-repo"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Primary Language
+      description: Main programming language of the repository
+      options:
+        - Go
+        - Rust
+        - TypeScript
+        - Python
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Brief description of the project and why you want it monitored
+      placeholder: "Tell us about your project..."
+    validations:
+      required: false

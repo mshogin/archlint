@@ -23,6 +23,7 @@ tests/output/
 *.yaml
 *.yml
 !.github/workflows/*.yml
+!.github/ISSUE_TEMPLATE/*.yml
 *.puml
 
 # IDE

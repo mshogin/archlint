@@ -467,6 +467,16 @@ make implement
 
 ---
 
+## Add Your Project
+
+Want archlint to monitor your project's architecture?
+
+1. [Create an issue](https://github.com/mshogin/archlint/issues/new?template=add-repo.yml) with your repo URL
+2. We'll review and add your project to monitoring
+3. Architecture metrics will be published at archlint.ru/projects/your-org/your-repo
+
+---
+
 ## License
 
 MIT
