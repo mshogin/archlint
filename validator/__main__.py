@@ -190,8 +190,8 @@ def run_validation(
     if contexts_file:
         contexts = load_contexts(contexts_file)
 
-    # Load config
-    config = load_config(config_file) if config_file else None
+    # Load config: use explicit path if given, otherwise try .archlint.yaml in cwd.
+    config = load_config(config_file if config_file else None)
 
     results = {
         'status': 'PASSED',
@@ -216,7 +216,14 @@ def run_validation(
         validators = get_structure_validators(group)
         for validator in validators:
             try:
-                result = validator(graph, config=config)
+                # Extract per-rule config from the Config object.
+                # Validator names are "validate_<rule_name>" and Config has matching attributes.
+                rule_config = None
+                if config is not None:
+                    func_name = validator.__name__
+                    rule_name = func_name.removeprefix('validate_')
+                    rule_config = getattr(config, rule_name, None)
+                result = validator(graph, config=rule_config)
                 results['checks'].append(result)
                 _update_summary(results, result)
             except Exception as e:
