@@ -1,0 +1,129 @@
+name: Nightly Architecture Scan
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 3am UTC daily
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install networkx pyyaml numpy scipy
+          pip install -e .
+          go build -o bin/archlint ./cmd/archlint/
+          cd archlint-rs && cargo build --release && cd ..
+
+      - name: Read monitored repos and scan
+        run: |
+          python3 -c "
+          import yaml, subprocess, json, os
+          from datetime import datetime
+
+          with open('monitored-repos.yaml') as f:
+              config = yaml.safe_load(f)
+
+          results = []
+          for repo in config.get('repos', []):
+              if repo.get('status') != 'active':
+                  continue
+              url = repo['url']
+              name = url.split('/')[-1]
+              owner = url.split('/')[-2]
+              lang = repo.get('language', 'Go')
+
+              print(f'Scanning {owner}/{name} ({lang})...')
+
+              # Clone
+              clone = subprocess.run(
+                  ['git', 'clone', '--depth=1', url, f'/tmp/{name}'],
+                  capture_output=True, text=True
+              )
+              if clone.returncode != 0:
+                  print(f'  SKIP: clone failed - {clone.stderr.strip()}')
+                  continue
+
+              # Collect architecture
+              collect = subprocess.run(
+                  ['./archlint-rs/target/release/archlint', 'collect', f'/tmp/{name}'],
+                  capture_output=True, text=True
+              )
+              if collect.returncode != 0:
+                  print(f'  WARN: collect failed - {collect.stderr.strip()}')
+
+              # Validate per group
+              os.makedirs(f'scan-results/{owner}/{name}', exist_ok=True)
+              for group in ['core', 'solid', 'advanced']:
+                  arch_yaml = f'/tmp/{name}/architecture.yaml'
+                  if not os.path.exists(arch_yaml):
+                      print(f'  SKIP: no architecture.yaml for group {group}')
+                      continue
+                  result = subprocess.run(
+                      ['python3', '-m', 'validator', 'validate', arch_yaml,
+                       '--structure-only', '--group', group, '-f', 'json'],
+                      capture_output=True, text=True
+                  )
+                  with open(f'scan-results/{owner}/{name}/{group}.json', 'w') as out:
+                      out.write(result.stdout if result.stdout else '{}')
+
+              results.append({'name': name, 'owner': owner, 'language': lang})
+              print(f'  done.')
+
+          with open('scan-results/manifest.json', 'w') as f:
+              json.dump({'repos': results, 'scan_date': datetime.utcnow().isoformat()}, f, indent=2)
+
+          print(f'Scanned {len(results)} repos.')
+          "
+
+      - name: Generate health summary
+        run: |
+          python3 -c "
+          import json, os
+
+          manifest = json.load(open('scan-results/manifest.json'))
+          print(f'Scan date: {manifest[\"scan_date\"]}')
+          print(f'Repos scanned: {len(manifest[\"repos\"])}')
+          print()
+
+          for repo in manifest['repos']:
+              owner = repo['owner']
+              name = repo['name']
+              total_passed = total_failed = total_warn = 0
+
+              for group in ['core', 'solid', 'advanced']:
+                  path = f'scan-results/{owner}/{name}/{group}.json'
+                  if os.path.exists(path):
+                      try:
+                          data = json.load(open(path))
+                          checks = data.get('checks', [])
+                          total_passed += sum(1 for c in checks if c.get('status') == 'PASSED')
+                          total_failed += sum(1 for c in checks if c.get('status') in ('ERROR', 'FAILED'))
+                          total_warn += sum(1 for c in checks if c.get('status') == 'WARNING')
+                      except (json.JSONDecodeError, KeyError):
+                          pass
+
+              total = total_passed + total_failed + total_warn
+              health = max(0, 100 - total_failed * 5 - total_warn * 2) if total > 0 else 0
+              print(f'{owner}/{name}: health={health}%, passed={total_passed}, failed={total_failed}, warn={total_warn}')
+          "
+
+      - name: Commit results
+        run: |
+          git config user.name 'archlint-bot'
+          git config user.email 'bot@archlint.ru'
+          git add scan-results/
+          git commit -m "nightly: scan results $(date +%Y-%m-%d)" || true
+          git push || true

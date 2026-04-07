@@ -8,3 +8,15 @@ repos:
     language: Rust
     added: 2026-04-07
     status: active
+  - url: https://github.com/mikeshogin/promptlint
+    language: Go
+    added: 2026-04-01
+    status: active
+  - url: https://github.com/mikeshogin/costlint
+    language: Go
+    added: 2026-04-01
+    status: active
+  - url: https://github.com/mikeshogin/seclint
+    language: Go
+    added: 2026-04-01
+    status: active
