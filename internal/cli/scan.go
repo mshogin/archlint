@@ -110,31 +110,52 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if cfg.Rules.ISP.Enabled {
 			violations = append(violations, m.ISPViolations...)
 		}
-		// SRP violations are always added (no dedicated rule key in config yet).
-		violations = append(violations, m.SRPViolations...)
-
-		for _, gc := range m.GodClasses {
-			violations = append(violations, mcp.Violation{
-				Kind:    "god-class",
-				Message: fmt.Sprintf("God class detected: %s", gc),
-				Target:  gc,
-			})
+		// SRP violations — respect config enabled flag and exclusions.
+		if cfg.Rules.SRP.Enabled {
+			for _, v := range m.SRPViolations {
+				if !cfg.IsSRPExcluded(v.Target) {
+					violations = append(violations, v)
+				}
+			}
 		}
 
-		for _, hub := range m.HubNodes {
-			violations = append(violations, mcp.Violation{
-				Kind:    "hub-node",
-				Message: fmt.Sprintf("Hub node detected: %s", hub),
-				Target:  hub,
-			})
+		// God-class violations — respect config enabled flag and exclusions.
+		if cfg.Rules.GodClass.Enabled {
+			for _, gc := range m.GodClasses {
+				if !cfg.IsGodClassExcluded(gc) {
+					violations = append(violations, mcp.Violation{
+						Kind:    "god-class",
+						Message: fmt.Sprintf("God class detected: %s", gc),
+						Target:  gc,
+					})
+				}
+			}
 		}
 
-		for _, fe := range m.FeatureEnvy {
-			violations = append(violations, mcp.Violation{
-				Kind:    "feature-envy",
-				Message: fmt.Sprintf("Feature envy: %s", fe),
-				Target:  fe,
-			})
+		// Hub-node violations — respect config enabled flag and exclusions.
+		if cfg.Rules.HubNode.Enabled {
+			for _, hub := range m.HubNodes {
+				if !cfg.IsHubNodeExcluded(hub) {
+					violations = append(violations, mcp.Violation{
+						Kind:    "hub-node",
+						Message: fmt.Sprintf("Hub node detected: %s", hub),
+						Target:  hub,
+					})
+				}
+			}
+		}
+
+		// Feature-envy violations — respect config enabled flag and exclusions.
+		if cfg.Rules.FeatureEnvy.Enabled {
+			for _, fe := range m.FeatureEnvy {
+				if !cfg.IsFeatureEnvyExcluded(fe) {
+					violations = append(violations, mcp.Violation{
+						Kind:    "feature-envy",
+						Message: fmt.Sprintf("Feature envy: %s", fe),
+						Target:  fe,
+					})
+				}
+			}
 		}
 
 		for _, ss := range m.ShotgunSurgery {

@@ -49,11 +49,15 @@ type LayerDef struct {
 
 // Rules holds configuration for all supported rules.
 type Rules struct {
-	FanOut RuleConfig `yaml:"fan_out"`
-	FanIn  RuleConfig `yaml:"fan_in"`
-	Cycles RuleConfig `yaml:"cycles"`
-	ISP    RuleConfig `yaml:"isp"`
-	DIP    RuleConfig `yaml:"dip"`
+	FanOut       RuleConfig `yaml:"fan_out"`
+	FanIn        RuleConfig `yaml:"fan_in"`
+	Cycles       RuleConfig `yaml:"cycles"`
+	ISP          RuleConfig `yaml:"isp"`
+	DIP          RuleConfig `yaml:"dip"`
+	FeatureEnvy  RuleConfig `yaml:"feature_envy"`
+	GodClass     RuleConfig `yaml:"god_class"`
+	HubNode      RuleConfig `yaml:"hub_node"`
+	SRP          RuleConfig `yaml:"srp"`
 }
 
 // Config is the top-level .archlint.yaml configuration.
@@ -90,11 +94,15 @@ func intPtr(v int) *int { return &v }
 func Default() Config {
 	return Config{
 		Rules: Rules{
-			FanOut: defaultRuleConfig(intPtr(DefaultFanOutThreshold)),
-			FanIn:  defaultRuleConfig(intPtr(DefaultFanInThreshold)),
-			Cycles: defaultRuleConfig(nil),
-			ISP:    defaultRuleConfig(intPtr(DefaultISPThreshold)),
-			DIP:    defaultRuleConfig(nil),
+			FanOut:      defaultRuleConfig(intPtr(DefaultFanOutThreshold)),
+			FanIn:       defaultRuleConfig(intPtr(DefaultFanInThreshold)),
+			Cycles:      defaultRuleConfig(nil),
+			ISP:         defaultRuleConfig(intPtr(DefaultISPThreshold)),
+			DIP:         defaultRuleConfig(nil),
+			FeatureEnvy: defaultRuleConfig(nil),
+			GodClass:    defaultRuleConfig(nil),
+			HubNode:     defaultRuleConfig(nil),
+			SRP:         defaultRuleConfig(nil),
 		},
 	}
 }
@@ -132,6 +140,10 @@ func LoadFile(path string) Config {
 	applyRuleDefaults(&raw.Rules.Cycles, &def.Rules.Cycles)
 	applyRuleDefaults(&raw.Rules.ISP, &def.Rules.ISP)
 	applyRuleDefaults(&raw.Rules.DIP, &def.Rules.DIP)
+	applyRuleDefaults(&raw.Rules.FeatureEnvy, &def.Rules.FeatureEnvy)
+	applyRuleDefaults(&raw.Rules.GodClass, &def.Rules.GodClass)
+	applyRuleDefaults(&raw.Rules.HubNode, &def.Rules.HubNode)
+	applyRuleDefaults(&raw.Rules.SRP, &def.Rules.SRP)
 
 	if raw.AllowedDependencies == nil {
 		raw.AllowedDependencies = make(map[string][]string)
@@ -151,6 +163,14 @@ func applyRuleDefaults(r, def *RuleConfig) {
 	// cannot set it to true unconditionally after parse. The safest approach
 	// (matching Rust's serde default=true) is to check: if the whole RuleConfig
 	// was zero-valued (empty struct), apply the default; otherwise leave as is.
+	//
+	// For rules that are new and not yet written to the user's .archlint.yaml,
+	// the zero-value struct will have Enabled=false, Level="", Threshold=nil, Exclude=nil.
+	// We detect this case by checking the sentinel fields and set the full default.
+	if !r.Enabled && r.Level == "" && r.Threshold == nil && len(r.Exclude) == 0 {
+		*r = *def
+		return
+	}
 	if r.Threshold == nil && def.Threshold != nil {
 		r.Threshold = def.Threshold
 	}
@@ -229,4 +249,24 @@ func (c *Config) IsFanInExcluded(target string) bool {
 // IsCyclesExcluded checks whether a package/component is excluded from cycle checks.
 func (c *Config) IsCyclesExcluded(target string) bool {
 	return isExcluded(c.Rules.Cycles.Exclude, target)
+}
+
+// IsFeatureEnvyExcluded checks whether a component is excluded from feature-envy checks.
+func (c *Config) IsFeatureEnvyExcluded(target string) bool {
+	return isExcluded(c.Rules.FeatureEnvy.Exclude, target)
+}
+
+// IsGodClassExcluded checks whether a component is excluded from god-class checks.
+func (c *Config) IsGodClassExcluded(target string) bool {
+	return isExcluded(c.Rules.GodClass.Exclude, target)
+}
+
+// IsHubNodeExcluded checks whether a component is excluded from hub-node checks.
+func (c *Config) IsHubNodeExcluded(target string) bool {
+	return isExcluded(c.Rules.HubNode.Exclude, target)
+}
+
+// IsSRPExcluded checks whether a component is excluded from SRP checks.
+func (c *Config) IsSRPExcluded(target string) bool {
+	return isExcluded(c.Rules.SRP.Exclude, target)
 }

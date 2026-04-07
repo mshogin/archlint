@@ -15,8 +15,11 @@ go install github.com/mshogin/archlint/cmd/archlint@latest
 # Scan Go project for violations (quality gate)
 archlint scan .
 
-# Collect architecture graph
+# Collect architecture graph (Go projects)
 archlint collect . -o architecture.yaml
+
+# Collect architecture graph (Rust projects)
+archlint-rs collect .    # outputs to architecture.yaml by default
 
 # Validate with 229 metrics (Python validator)
 python3 -m validator validate architecture.yaml
@@ -28,8 +31,7 @@ python3 -m validator validate architecture.yaml --group research
 # Combined: collect + validate in one step
 archlint validate . --python
 
-# Collect Rust project and validate
-archlint-rs collect . -o architecture.yaml
+# Validate Rust project graph
 archlint validate architecture.yaml --python --group core
 ```
 
@@ -49,8 +51,8 @@ docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint validate /workspac
 # Collect graph to a file
 docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint collect /workspace -o /workspace/architecture.yaml
 
-# Use archlint-rs (Rust binary) for Rust projects
-docker run --rm -v $(pwd):/workspace --entrypoint archlint-rs ghcr.io/mshogin/archlint scan /workspace
+# Use archlint-rs for Rust projects (collect writes to architecture.yaml in the project dir)
+docker run --rm -v $(pwd):/workspace --entrypoint archlint-rs ghcr.io/mshogin/archlint collect /workspace
 ```
 
 Image includes: Go binary (`archlint`), Rust binary (`archlint-rs`), and Python validator with all dependencies.
