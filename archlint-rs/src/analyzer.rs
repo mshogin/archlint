@@ -891,6 +891,28 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
         }
     }
 
+    // Max lines: flag modules exceeding the line count threshold.
+    if config.rules.max_lines.enabled {
+        let max_lines_threshold = config.max_lines_threshold();
+        for pf in parsed {
+            if config.rules.max_lines.exclude.contains(&pf.module_name) {
+                continue;
+            }
+            if pf.line_count > max_lines_threshold {
+                violations.push(Violation {
+                    rule: "max_lines".to_string(),
+                    component: pf.module_name.clone(),
+                    message: format!(
+                        "module has {} lines, exceeds max_lines threshold of {}",
+                        pf.line_count, max_lines_threshold
+                    ),
+                    severity: "warning".to_string(),
+                    level: effective_level(&config.rules.max_lines, &pf.module_name, strict),
+                });
+            }
+        }
+    }
+
     // Prescriptive mode: declared allow-list for component dependencies.
     // For each link, resolve source/target to declared components by path matching.
     // If the dependency is not in mayDependOn -> violation (taboo by default).
@@ -1026,6 +1048,34 @@ fn calculate_metrics(graph: &IndexedGraph, components: &[Component], parsed: &[P
                             severity: "error".to_string(),
                             level: "telemetry".to_string(), // layer violations use default level
                         });
+                    }
+                }
+            }
+        }
+    }
+
+    // Layer forbidden imports: ban specific imports per architectural layer.
+    if !config.layer_forbidden_imports.is_empty() {
+        for pf in parsed {
+            let layer = match config.layer_for_module(&pf.module_name) {
+                Some(l) => l,
+                None => continue,
+            };
+            if let Some(forbidden_list) = config.layer_forbidden_imports.get(layer) {
+                for dep in &pf.dependencies {
+                    for forbidden in forbidden_list {
+                        if dep == forbidden || dep.contains(forbidden.as_str()) {
+                            violations.push(Violation {
+                                rule: "layer_forbidden_imports".to_string(),
+                                component: pf.module_name.clone(),
+                                message: format!(
+                                    "layer '{}' imports forbidden dependency '{}' (matched rule '{}')",
+                                    layer, dep, forbidden
+                                ),
+                                severity: "error".to_string(),
+                                level: "taboo".to_string(),
+                            });
+                        }
                     }
                 }
             }
@@ -1859,6 +1909,7 @@ pub struct Agent {}\n\
                 has_service_structs: false,
                 go_structs: Vec::new(),
                 go_methods: Vec::new(),
+                line_count: 0,
             });
         }
         for (f, t) in edges {
@@ -2241,6 +2292,7 @@ import (
             has_service_structs: false,
             go_structs: Vec::new(),
             go_methods: Vec::new(),
+            line_count: 0,
         });
 
         let metrics = calculate_metrics(&graph, &components, &parsed, &cfg, false);
@@ -3527,5 +3579,270 @@ path = "src/server/main.rs"
         );
         let p_viols: Vec<_> = violations.iter().filter(|v| v.rule == "prescriptive").collect();
         assert!(p_viols.is_empty(), "discovery mode should not trigger prescriptive checks");
+    }
+
+    // ------------------------------------------------------------------
+    // max_lines tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_max_lines_violation_rust() {
+        let content = "fn foo() {}\n".repeat(501);
+        let pf = parse_rust_content(&content, "src::big_module", &make_deps(&[])).unwrap();
+        assert_eq!(pf.line_count, 501);
+
+        let mut cfg = Config::default();
+        cfg.rules.max_lines.threshold = Some(500.0);
+        cfg.rules.max_lines.enabled = true;
+
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        graph.add_node("src::big_module");
+        components.push(Component {
+            id: "src::big_module".to_string(),
+            title: "src::big_module".to_string(),
+            entity: "rust".to_string(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &[pf], &cfg, false);
+        let violations: Vec<_> = metrics.violations.iter().filter(|v| v.rule == "max_lines").collect();
+        assert_eq!(violations.len(), 1, "expected one max_lines violation");
+        assert!(violations[0].message.contains("501"), "message should contain line count: {}", violations[0].message);
+        assert_eq!(violations[0].level, "telemetry");
+    }
+
+    #[test]
+    fn test_max_lines_no_violation_below_threshold() {
+        let content = "fn foo() {}\n".repeat(100);
+        let pf = parse_rust_content(&content, "src::small_module", &make_deps(&[])).unwrap();
+        assert_eq!(pf.line_count, 100);
+
+        let mut cfg = Config::default();
+        cfg.rules.max_lines.threshold = Some(500.0);
+        cfg.rules.max_lines.enabled = true;
+
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        graph.add_node("src::small_module");
+        components.push(Component {
+            id: "src::small_module".to_string(),
+            title: "src::small_module".to_string(),
+            entity: "rust".to_string(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &[pf], &cfg, false);
+        let violations: Vec<_> = metrics.violations.iter().filter(|v| v.rule == "max_lines").collect();
+        assert!(violations.is_empty(), "should not trigger max_lines below threshold");
+    }
+
+    #[test]
+    fn test_max_lines_disabled_no_violation() {
+        let content = "fn foo() {}\n".repeat(1000);
+        let pf = parse_rust_content(&content, "src::huge_module", &make_deps(&[])).unwrap();
+
+        let mut cfg = Config::default();
+        cfg.rules.max_lines.enabled = false;
+
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        graph.add_node("src::huge_module");
+        components.push(Component {
+            id: "src::huge_module".to_string(),
+            title: "src::huge_module".to_string(),
+            entity: "rust".to_string(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &[pf], &cfg, false);
+        let violations: Vec<_> = metrics.violations.iter().filter(|v| v.rule == "max_lines").collect();
+        assert!(violations.is_empty(), "disabled max_lines should not fire");
+    }
+
+    #[test]
+    fn test_max_lines_exclude_list() {
+        let content = "fn foo() {}\n".repeat(600);
+        let pf = parse_rust_content(&content, "src::legacy", &make_deps(&[])).unwrap();
+
+        let mut cfg = Config::default();
+        cfg.rules.max_lines.threshold = Some(500.0);
+        cfg.rules.max_lines.enabled = true;
+        cfg.rules.max_lines.exclude = vec!["src::legacy".to_string()];
+
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        graph.add_node("src::legacy");
+        components.push(Component {
+            id: "src::legacy".to_string(),
+            title: "src::legacy".to_string(),
+            entity: "rust".to_string(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &[pf], &cfg, false);
+        let violations: Vec<_> = metrics.violations.iter().filter(|v| v.rule == "max_lines").collect();
+        assert!(violations.is_empty(), "excluded module should not trigger max_lines");
+    }
+
+    #[test]
+    fn test_max_lines_go_file() {
+        // Go files should also have line_count populated
+        let go_src = "package main\n\nfunc foo() {}\n".repeat(200);
+        let pf = parse_go_content(&go_src, "cmd/main", "").unwrap();
+        assert_eq!(pf.line_count, 600, "go line_count should be 3 lines * 200 repetitions");
+    }
+
+    // ------------------------------------------------------------------
+    // layer_forbidden_imports tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_layer_forbidden_imports_violation() {
+        use crate::config::LayerDef;
+        use std::collections::HashMap;
+
+        let mut cfg = Config::default();
+        cfg.layers = vec![
+            LayerDef { name: "handler".to_string(), paths: vec!["internal/handler".to_string()] },
+            LayerDef { name: "service".to_string(), paths: vec!["internal/service".to_string()] },
+        ];
+        let mut forbidden: HashMap<String, Vec<String>> = HashMap::new();
+        forbidden.insert("handler".to_string(), vec!["database/sql".to_string()]);
+        cfg.layer_forbidden_imports = forbidden;
+        // disable unrelated rules to get clean results
+        cfg.rules.fan_out.enabled = false;
+        cfg.rules.fan_in.enabled = false;
+        cfg.rules.cycles.enabled = false;
+        cfg.rules.srp.enabled = false;
+        cfg.rules.dip.enabled = false;
+        cfg.rules.coupling.enabled = false;
+        cfg.rules.max_lines.enabled = false;
+
+        let pf = ParsedFile {
+            module_name: "internal/handler/orders".to_string(),
+            language: "go".to_string(),
+            dependencies: vec!["database/sql".to_string(), "internal/service".to_string()],
+            structs: Vec::new(),
+            functions: Vec::new(),
+            traits: Vec::new(),
+            has_service_structs: false,
+            go_structs: Vec::new(),
+            go_methods: Vec::new(),
+            line_count: 10,
+        };
+
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        graph.add_node("internal/handler/orders");
+        components.push(Component {
+            id: "internal/handler/orders".to_string(),
+            title: "internal/handler/orders".to_string(),
+            entity: "go".to_string(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &[pf], &cfg, false);
+        let violations: Vec<_> = metrics.violations.iter()
+            .filter(|v| v.rule == "layer_forbidden_imports")
+            .collect();
+        assert_eq!(violations.len(), 1, "expected one layer_forbidden_imports violation, got: {:?}", violations);
+        assert_eq!(violations[0].level, "taboo");
+        assert!(violations[0].message.contains("database/sql"), "message: {}", violations[0].message);
+        assert!(violations[0].message.contains("handler"), "message: {}", violations[0].message);
+    }
+
+    #[test]
+    fn test_layer_forbidden_imports_no_violation_allowed_import() {
+        use crate::config::LayerDef;
+        use std::collections::HashMap;
+
+        let mut cfg = Config::default();
+        cfg.layers = vec![
+            LayerDef { name: "handler".to_string(), paths: vec!["internal/handler".to_string()] },
+        ];
+        let mut forbidden: HashMap<String, Vec<String>> = HashMap::new();
+        forbidden.insert("handler".to_string(), vec!["database/sql".to_string()]);
+        cfg.layer_forbidden_imports = forbidden;
+        cfg.rules.fan_out.enabled = false;
+        cfg.rules.fan_in.enabled = false;
+        cfg.rules.cycles.enabled = false;
+        cfg.rules.srp.enabled = false;
+        cfg.rules.dip.enabled = false;
+        cfg.rules.coupling.enabled = false;
+        cfg.rules.max_lines.enabled = false;
+
+        let pf = ParsedFile {
+            module_name: "internal/handler/orders".to_string(),
+            language: "go".to_string(),
+            dependencies: vec!["fmt".to_string(), "net/http".to_string()],
+            structs: Vec::new(),
+            functions: Vec::new(),
+            traits: Vec::new(),
+            has_service_structs: false,
+            go_structs: Vec::new(),
+            go_methods: Vec::new(),
+            line_count: 10,
+        };
+
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        graph.add_node("internal/handler/orders");
+        components.push(Component {
+            id: "internal/handler/orders".to_string(),
+            title: "internal/handler/orders".to_string(),
+            entity: "go".to_string(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &[pf], &cfg, false);
+        let violations: Vec<_> = metrics.violations.iter()
+            .filter(|v| v.rule == "layer_forbidden_imports")
+            .collect();
+        assert!(violations.is_empty(), "should not flag allowed imports");
+    }
+
+    #[test]
+    fn test_layer_forbidden_imports_not_in_layer_no_violation() {
+        use crate::config::LayerDef;
+        use std::collections::HashMap;
+
+        let mut cfg = Config::default();
+        cfg.layers = vec![
+            LayerDef { name: "handler".to_string(), paths: vec!["internal/handler".to_string()] },
+        ];
+        let mut forbidden: HashMap<String, Vec<String>> = HashMap::new();
+        forbidden.insert("handler".to_string(), vec!["database/sql".to_string()]);
+        cfg.layer_forbidden_imports = forbidden;
+        cfg.rules.fan_out.enabled = false;
+        cfg.rules.fan_in.enabled = false;
+        cfg.rules.cycles.enabled = false;
+        cfg.rules.srp.enabled = false;
+        cfg.rules.dip.enabled = false;
+        cfg.rules.coupling.enabled = false;
+        cfg.rules.max_lines.enabled = false;
+
+        // This module is NOT in any layer
+        let pf = ParsedFile {
+            module_name: "pkg/util".to_string(),
+            language: "go".to_string(),
+            dependencies: vec!["database/sql".to_string()],
+            structs: Vec::new(),
+            functions: Vec::new(),
+            traits: Vec::new(),
+            has_service_structs: false,
+            go_structs: Vec::new(),
+            go_methods: Vec::new(),
+            line_count: 10,
+        };
+
+        let mut graph = IndexedGraph::new();
+        let mut components = Vec::new();
+        graph.add_node("pkg/util");
+        components.push(Component {
+            id: "pkg/util".to_string(),
+            title: "pkg/util".to_string(),
+            entity: "go".to_string(),
+        });
+
+        let metrics = calculate_metrics(&graph, &components, &[pf], &cfg, false);
+        let violations: Vec<_> = metrics.violations.iter()
+            .filter(|v| v.rule == "layer_forbidden_imports")
+            .collect();
+        assert!(violations.is_empty(), "module not in any layer should not trigger forbidden imports");
     }
 }
