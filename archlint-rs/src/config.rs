@@ -164,6 +164,19 @@ pub struct Config {
     /// ```
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub vendors: HashMap<String, Vec<String>>,
+
+    /// Forbidden imports per layer.
+    /// Key: layer name. Value: list of import path fragments that are forbidden for
+    /// modules belonging to that layer.
+    ///
+    /// Example:
+    /// ```yaml
+    /// layer_forbidden_imports:
+    ///   handler: [database/sql, gorm]
+    ///   model: [gin, echo]
+    /// ```
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub layer_forbidden_imports: HashMap<String, Vec<String>>,
 }
 
 /// All supported rules.
@@ -201,6 +214,9 @@ pub struct Rules {
     /// Only fires when the module has at least 2 dependents (Ca) to avoid noise on leaf modules.
     #[serde(default = "default_coupling")]
     pub coupling: RuleConfig,
+    /// Max lines: flag modules exceeding a line count threshold (default 500).
+    #[serde(default = "default_max_lines")]
+    pub max_lines: RuleConfig,
 }
 
 fn default_fan_out() -> RuleConfig {
@@ -316,6 +332,17 @@ fn default_coupling() -> RuleConfig {
     }
 }
 
+fn default_max_lines() -> RuleConfig {
+    RuleConfig {
+        enabled: true,
+        error_on_violation: false,
+        level: Level::Telemetry,
+        threshold: Some(500.0),
+        exclude: Vec::new(),
+        todo: Vec::new(),
+    }
+}
+
 impl Default for Rules {
     fn default() -> Self {
         Self {
@@ -396,6 +423,14 @@ impl Default for Rules {
                 error_on_violation: false,
                 level: Level::Personal,
                 threshold: Some(80.0),
+                exclude: Vec::new(),
+                todo: Vec::new(),
+            },
+            max_lines: RuleConfig {
+                enabled: true,
+                error_on_violation: false,
+                level: Level::Telemetry,
+                threshold: Some(500.0),
                 exclude: Vec::new(),
                 todo: Vec::new(),
             },
@@ -493,6 +528,11 @@ impl Config {
     /// Default: 0.80 (modules more unstable than 80% are flagged).
     pub fn coupling_instability_threshold(&self) -> f64 {
         self.rules.coupling.threshold.unwrap_or(80.0) / 100.0
+    }
+
+    /// Max lines threshold (default 500).
+    pub fn max_lines_threshold(&self) -> usize {
+        self.rules.max_lines.threshold.unwrap_or(500.0) as usize
     }
 
     /// Resolve which layer name the given module path belongs to.

@@ -61,6 +61,8 @@ pub struct ParsedFile {
     pub go_structs: Vec<GoStructDef>,
     /// Go method definitions with call counts for feature-envy detection. Empty for Rust files.
     pub go_methods: Vec<GoMethodDef>,
+    /// Total number of lines in the source file.
+    pub line_count: usize,
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +161,8 @@ pub fn parse_rust_content(
     let re_trait_fn = Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+").unwrap();
     // Matches any `impl` block start.
     let re_impl = Regex::new(r"^impl\b").unwrap();
+
+    let line_count = content.lines().count();
 
     let mut deps = Vec::new();
     let mut structs = Vec::new();
@@ -314,6 +318,7 @@ pub fn parse_rust_content(
         has_service_structs,
         go_structs: Vec::new(),
         go_methods: Vec::new(),
+        line_count,
     })
 }
 
@@ -371,6 +376,8 @@ pub fn parse_go_content(
     // Struct field lines inside a struct body (lines that start with a word char = field name).
     // Applied to trimmed content (leading whitespace already stripped).
     let re_struct_field = Regex::new(r"^(\w+)\s+\S").unwrap();
+
+    let line_count = content.lines().count();
 
     let mut deps = Vec::new();
     let mut structs = Vec::new();
@@ -599,6 +606,7 @@ pub fn parse_go_content(
         has_service_structs: false, // Go files not analyzed for DIP heuristic
         go_structs,
         go_methods: go_methods_raw,
+        line_count,
     })
 }
 
