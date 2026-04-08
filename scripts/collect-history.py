@@ -65,18 +65,8 @@ def get_commit_samples(repo_dir, num_samples=100):
     if not commits:
         return []
 
-    # Evenly-space samples across total history
-    total = len(commits)
-    if total <= num_samples:
-        return commits
-
-    # Pick evenly spaced indices from newest to oldest
-    step = total / num_samples
-    sampled = []
-    for i in range(num_samples):
-        idx = int(i * step)
-        sampled.append(commits[idx])
-    return sampled
+    # Take the N most recent commits (owner preference: last 100, not evenly spaced)
+    return commits[:num_samples]
 
 
 def run_validator_group(repo_dir, group):
