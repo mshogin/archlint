@@ -20,3 +20,44 @@ repos:
     language: Go
     added: 2026-04-01
     status: active
+  # Popular open-source projects
+  - url: https://github.com/joho/godotenv
+    language: Go
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/fatih/color
+    language: Go
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/caarlos0/env
+    language: Go
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/twitchtv/twirp
+    language: Go
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/charmbracelet/log
+    language: Go
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/orhun/git-cliff
+    language: Rust
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/sharkdp/hyperfine
+    language: Rust
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/svenstaro/miniserve
+    language: Rust
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/ducaale/xh
+    language: Rust
+    added: 2026-04-08
+    status: active
+  - url: https://github.com/sharkdp/vivid
+    language: Rust
+    added: 2026-04-08
+    status: active
