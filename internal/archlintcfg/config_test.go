@@ -62,10 +62,10 @@ rules:
     threshold: 8
 `)
 	cfg := archlintcfg.Load(dir)
-	if cfg.Rules.FanOut.Enabled {
+	if cfg.Rules.FanOut.IsEnabled() {
 		t.Error("FanOut should be disabled")
 	}
-	if !cfg.Rules.FanIn.Enabled {
+	if !cfg.Rules.FanIn.IsEnabled() {
 		t.Error("FanIn should be enabled")
 	}
 	if cfg.FanInThreshold() != 8 {
@@ -92,6 +92,54 @@ rules:
 	}
 	if cfg.IsFanOutExcluded("lib::utils") == false {
 		t.Error("lib::utils should be excluded from fan_out")
+	}
+}
+
+// TestRuleDisabledOnlyFlag checks that "enabled: false" alone (without threshold or
+// level) is honoured. This was the core bug: the old heuristic treated such a struct
+// as "omitted" and silently applied the default (enabled: true).
+func TestRuleDisabledOnlyFlag(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, `
+rules:
+  feature_envy:
+    enabled: false
+  god_class:
+    enabled: false
+  srp:
+    enabled: false
+  hub_node:
+    enabled: false
+  cycles:
+    enabled: false
+  dip:
+    enabled: false
+`)
+	cfg := archlintcfg.Load(dir)
+	if cfg.Rules.FeatureEnvy.IsEnabled() {
+		t.Error("feature_envy should be disabled")
+	}
+	if cfg.Rules.GodClass.IsEnabled() {
+		t.Error("god_class should be disabled")
+	}
+	if cfg.Rules.SRP.IsEnabled() {
+		t.Error("srp should be disabled")
+	}
+	if cfg.Rules.HubNode.IsEnabled() {
+		t.Error("hub_node should be disabled")
+	}
+	if cfg.Rules.Cycles.IsEnabled() {
+		t.Error("cycles should be disabled")
+	}
+	if cfg.Rules.DIP.IsEnabled() {
+		t.Error("dip should be disabled")
+	}
+	// Rules not mentioned should default to enabled.
+	if !cfg.Rules.FanOut.IsEnabled() {
+		t.Error("fan_out should default to enabled when not mentioned")
+	}
+	if !cfg.Rules.FanIn.IsEnabled() {
+		t.Error("fan_in should default to enabled when not mentioned")
 	}
 }
 

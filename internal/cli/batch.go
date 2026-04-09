@@ -202,10 +202,10 @@ func scanRepo(dir string, cfg *archlintcfg.Config) batchRepoResult {
 	allMetrics := mcp.ComputeAllFileMetrics(a, graph)
 	for _, m := range allMetrics {
 		violations = append(violations, m.SRPViolations...)
-		if cfg == nil || cfg.Rules.DIP.Enabled {
+		if cfg == nil || cfg.Rules.DIP.IsEnabled() {
 			violations = append(violations, m.DIPViolations...)
 		}
-		if cfg == nil || cfg.Rules.ISP.Enabled {
+		if cfg == nil || cfg.Rules.ISP.IsEnabled() {
 			violations = append(violations, m.ISPViolations...)
 		}
 		for _, gc := range m.GodClasses {

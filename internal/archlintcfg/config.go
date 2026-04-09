@@ -27,7 +27,10 @@ const (
 // RuleConfig is the configuration for a single rule.
 type RuleConfig struct {
 	// Enabled controls whether the rule is active (default: true).
-	Enabled bool `yaml:"enabled"`
+	// Using *bool so we can distinguish "omitted" (nil -> default true) from
+	// "explicitly false" (false pointer). This mirrors serde's default=true in
+	// archlint-rs and fixes the bug where "enabled: false" was silently ignored.
+	Enabled *bool `yaml:"enabled"`
 	// ErrorOnViolation controls whether a violation causes a non-zero exit code.
 	ErrorOnViolation bool `yaml:"error_on_violation"`
 	// Level is the metric level: taboo, telemetry, or personal.
@@ -37,6 +40,15 @@ type RuleConfig struct {
 	Threshold *int `yaml:"threshold"`
 	// Exclude is a list of component IDs (or glob patterns) excluded from this rule.
 	Exclude []string `yaml:"exclude"`
+}
+
+// IsEnabled returns whether the rule is active.
+// When the Enabled field is nil (omitted from config), the rule defaults to active.
+func (r *RuleConfig) IsEnabled() bool {
+	if r.Enabled == nil {
+		return true
+	}
+	return *r.Enabled
 }
 
 // LayerDef defines a logical architectural layer.
@@ -78,9 +90,11 @@ const (
 	DefaultISPThreshold    = 5
 )
 
+func boolPtr(v bool) *bool { return &v }
+
 func defaultRuleConfig(threshold *int) RuleConfig {
 	return RuleConfig{
-		Enabled:          true,
+		Enabled:          boolPtr(true),
 		ErrorOnViolation: false,
 		Level:            LevelTelemetry,
 		Threshold:        threshold,
@@ -153,23 +167,25 @@ func LoadFile(path string) Config {
 }
 
 // applyRuleDefaults fills zero-value fields with defaults from def.
+// With Enabled as *bool we can cleanly distinguish:
+//   - nil:   not set by user -> apply default (true)
+//   - true:  user explicitly enabled
+//   - false: user explicitly disabled (the bug was here: previously treated
+//            the same as nil because bool zero-value == false)
+//
+// For other fields (Level, Threshold) we still fill in the default when absent.
 func applyRuleDefaults(r, def *RuleConfig) {
-	// enabled defaults to true (zero value of bool is false, so we check the
-	// YAML-unmarshalled value; yaml.v3 sets bool fields to false when absent,
-	// so we cannot distinguish "explicitly false" from "omitted" unless we use
-	// a pointer). We treat the default as true to match archlint-rs.
-	// NOTE: If a user explicitly writes "enabled: false" that is honoured
-	// because yaml unmarshals it as false, same as the zero value — so we
-	// cannot set it to true unconditionally after parse. The safest approach
-	// (matching Rust's serde default=true) is to check: if the whole RuleConfig
-	// was zero-valued (empty struct), apply the default; otherwise leave as is.
-	//
-	// For rules that are new and not yet written to the user's .archlint.yaml,
-	// the zero-value struct will have Enabled=false, Level="", Threshold=nil, Exclude=nil.
-	// We detect this case by checking the sentinel fields and set the full default.
-	if !r.Enabled && r.Level == "" && r.Threshold == nil && len(r.Exclude) == 0 {
+	// If the rule section was entirely absent from the YAML, all fields are
+	// zero: Enabled=nil, Level="", Threshold=nil, Exclude=nil.
+	// In that case apply the full default and return early.
+	if r.Enabled == nil && r.Level == "" && r.Threshold == nil && len(r.Exclude) == 0 {
 		*r = *def
 		return
+	}
+	// Rule section was present (user specified at least one field).
+	// Honour the user's Enabled value; for nil (omitted) default to true.
+	if r.Enabled == nil {
+		r.Enabled = def.Enabled
 	}
 	if r.Threshold == nil && def.Threshold != nil {
 		r.Threshold = def.Threshold

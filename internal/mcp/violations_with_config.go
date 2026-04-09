@@ -46,7 +46,7 @@ func detectViolationsForPackageWithConfig(graph *model.Graph, pkgID string, cfg 
 	var violations []Violation
 
 	// --- Fan-out (efferent coupling) ---
-	if cfg.Rules.FanOut.Enabled && !cfg.IsFanOutExcluded(pkgID) {
+	if cfg.Rules.FanOut.IsEnabled() && !cfg.IsFanOutExcluded(pkgID) {
 		importCount := 0
 		for _, edge := range graph.Edges {
 			if edge.From == pkgID && edge.Type == "import" {
@@ -64,7 +64,7 @@ func detectViolationsForPackageWithConfig(graph *model.Graph, pkgID string, cfg 
 	}
 
 	// --- Cycles ---
-	if cfg.Rules.Cycles.Enabled && !cfg.IsCyclesExcluded(pkgID) {
+	if cfg.Rules.Cycles.IsEnabled() && !cfg.IsCyclesExcluded(pkgID) {
 		violations = append(violations, detectCycles(graph, pkgID)...)
 	}
 
