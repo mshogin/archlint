@@ -29,6 +29,28 @@ func NewCallResolver(a Analyzer) *CallResolver {
 	return &CallResolver{analyzer: a}
 }
 
+// builtinFuncs is the set of Go builtin functions and common type conversions
+// that should be silently ignored during call resolution.
+var builtinFuncs = map[string]bool{
+	"make": true, "new": true, "len": true, "cap": true,
+	"append": true, "copy": true, "delete": true, "close": true,
+	"panic": true, "recover": true, "print": true, "println": true,
+	// type conversions
+	"string": true, "int": true, "int8": true, "int16": true, "int32": true, "int64": true,
+	"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
+	"float32": true, "float64": true, "bool": true, "byte": true, "rune": true,
+	"complex64": true, "complex128": true, "uintptr": true,
+	"error": true, "any": true,
+}
+
+// isBuiltinCall returns true if call.Target refers to a Go builtin or type conversion.
+func isBuiltinCall(target string) bool {
+	parts := strings.Split(target, ".")
+	last := parts[len(parts)-1]
+
+	return builtinFuncs[last]
+}
+
 // Resolve разрешает вызов в конкретную цель.
 //
 //nolint:funlen // Call resolution requires checking multiple target types.
@@ -40,6 +62,11 @@ func (r *CallResolver) Resolve(call model.CallInfo, callerPkg string) *ResolvedC
 
 	if targetID == "" {
 		if call.Target == "" || strings.HasPrefix(call.Target, "().") {
+			return nil
+		}
+
+		// Filter out builtins and type conversions - they are not meaningful call graph nodes.
+		if isBuiltinCall(call.Target) {
 			return nil
 		}
 

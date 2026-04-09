@@ -267,6 +267,71 @@ func TestBuilder_NilAnalyzer(t *testing.T) {
 	}
 }
 
+func TestBuilder_BuiltinsNotExternal(t *testing.T) {
+	a := setupAnalyzer(t)
+
+	builder, err := NewBuilder(a, BuildOptions{MaxDepth: 10})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	cg, err := builder.Build("testdata/sample.FuncWithBuiltins")
+	if err != nil {
+		t.Fatalf("unexpected error building graph: %v", err)
+	}
+
+	// Builtins (len, make, append, int) must not appear as external nodes.
+	builtinNames := map[string]bool{
+		"len": true, "make": true, "append": true, "int": true,
+	}
+
+	for _, node := range cg.Nodes {
+		if node.Type == NodeExternal {
+			if builtinNames[node.Function] {
+				t.Errorf("builtin %q should not appear as external node", node.Function)
+			}
+			// Also check nodes like "pkg.len" pattern.
+			for name := range builtinNames {
+				if len(node.Function) > len(name)+1 && node.Function[len(node.Function)-len(name)-1:] == "."+name {
+					t.Errorf("builtin %q should not appear as external node (got %q)", name, node.Function)
+				}
+			}
+		}
+	}
+}
+
+func TestBuilder_CycleWarning(t *testing.T) {
+	a := setupAnalyzer(t)
+
+	builder, err := NewBuilder(a, BuildOptions{MaxDepth: 10})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	cg, err := builder.Build("testdata/sample.CycleA")
+	if err != nil {
+		t.Fatalf("unexpected error building graph: %v", err)
+	}
+
+	if cg.Stats.CyclesDetected == 0 {
+		t.Error("expected at least 1 cycle detected, got 0")
+	}
+
+	hasCycleWarning := false
+
+	for _, w := range cg.Warnings {
+		if len(w) > 15 && w[:15] == "CYCLE DETECTED:" {
+			hasCycleWarning = true
+
+			break
+		}
+	}
+
+	if !hasCycleWarning {
+		t.Errorf("expected CYCLE DETECTED warning in warnings, got: %v", cg.Warnings)
+	}
+}
+
 func TestBuilder_NodeIDsUnique(t *testing.T) {
 	a := setupAnalyzer(t)
 
