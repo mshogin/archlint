@@ -1,0 +1,204 @@
+{
+  "repo": "mshogin/archlint-demo",
+  "repo_url": "https://github.com/mshogin/archlint-demo",
+  "language": "Go",
+  "collected_at": "2026-04-09T15:15:05.307204Z",
+  "data_points": [
+    {
+      "commit": "dae96768",
+      "commit_full": "dae9676890db0d715e80f28ceff559427bfba14a",
+      "date": "2026-03-28",
+      "message": "feat: rewrite demo scenario - layer violation focus",
+      "health": 0,
+      "components": 20,
+      "links": 31,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 3,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 14,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 0
+      }
+    },
+    {
+      "commit": "40bfb0e6",
+      "commit_full": "40bfb0e6d645294725618cc87a682a3113c84597",
+      "date": "2026-03-28",
+      "message": "feat: realistic live demo scenario for Stachka 2026",
+      "health": 15,
+      "components": 16,
+      "links": 22,
+      "violations": {
+        "core": {
+          "passed": 10,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 3,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 16,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 0
+      }
+    },
+    {
+      "commit": "78c410e9",
+      "commit_full": "78c410e9029289ccdfa8188529148ee4501a908a",
+      "date": "2026-03-28",
+      "message": "feat: demo project with intentional architecture violations",
+      "health": 65,
+      "components": 8,
+      "links": 11,
+      "violations": {
+        "core": {
+          "passed": 10,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 17,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 0
+      }
+    },
+    {
+      "commit": "dcb6f1b0",
+      "commit_full": "dcb6f1b0e1dca80d6bce2a05eeb1bb4be9b960f9",
+      "date": "2026-04-09",
+      "message": "demo: add Makefile for live demo (make step0..step4)",
+      "health": 0,
+      "components": 25,
+      "links": 37,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 3,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 14,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 0
+      }
+    },
+    {
+      "commit": "666431f4",
+      "commit_full": "666431f484e1ab8959d85b175d4eff70a3484f95",
+      "date": "2026-04-09",
+      "message": "demo: move api.go with intentional violations to demo-scenario",
+      "health": 0,
+      "components": 25,
+      "links": 37,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 3,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 14,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 0
+      }
+    },
+    {
+      "commit": "a46e26dd",
+      "commit_full": "a46e26dd98e480351ab569366da9da5db538df0f",
+      "date": "2026-04-09",
+      "message": "fix: correct repository layer path from internal/repository to internal/repo",
+      "health": 0,
+      "components": 25,
+      "links": 38,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 3,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 0
+      }
+    },
+    {
+      "commit": "fe2025ef",
+      "commit_full": "fe2025ef9ebc2a1323324e5e06a17fdce31f71b0",
+      "date": "2026-04-09",
+      "message": "feat: add behavioral callgraph cycle demo for Stachka 2026",
+      "health": 0,
+      "components": 25,
+      "links": 38,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 3,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 0
+      }
+    }
+  ]
+}
