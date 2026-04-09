@@ -227,13 +227,29 @@ func (c *Config) HasLayerRules() bool {
 // LayerForModule resolves which layer name a module path belongs to.
 // moduleID uses "/" or "::" as separator (both are normalised to "/").
 // Returns empty string when no layer matches.
+//
+// Matching rules (in order):
+//  1. Exact match: moduleID == layerPath
+//  2. Prefix match: moduleID starts with layerPath+"/" (sub-package)
+//  3. Suffix match: moduleID ends with "/"+layerPath (module prefix in ID)
+//  4. Suffix sub-package: moduleID ends with "/"+layerPath+"/" component
+//
+// Rule 3 and 4 handle the common case where the analyzer produces package IDs
+// that include the Go module name as a prefix, e.g. "mymodule/internal/handler"
+// while the config path is just "internal/handler".
 func (c *Config) LayerForModule(moduleID string) string {
 	asPath := strings.ReplaceAll(moduleID, "::", "/")
 	for _, layer := range c.Layers {
 		for _, prefix := range layer.Paths {
 			norm := strings.ReplaceAll(prefix, "::", "/")
 			norm = strings.TrimRight(norm, "/")
+			// Exact or prefix match (layerPath is a prefix of moduleID).
 			if asPath == norm || strings.HasPrefix(asPath, norm+"/") {
+				return layer.Name
+			}
+			// Suffix match: moduleID has a module-name prefix before layerPath.
+			// e.g. moduleID="mymodule/internal/handler", norm="internal/handler"
+			if strings.HasSuffix(asPath, "/"+norm) || strings.Contains(asPath, "/"+norm+"/") {
 				return layer.Name
 			}
 		}

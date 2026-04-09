@@ -181,11 +181,23 @@ allowed_dependencies:
 	}
 
 	cases := []struct{ id, want string }{
+		// Prefix / exact match (original behaviour).
 		{"internal/handler/users", "handler"},
 		{"src/service/orders", "service"},
 		{"internal/repo/pg", "repo"},
 		{"internal/model/user", "model"},
 		{"pkg/utils", ""},
+		// Suffix match: module name prefix in package ID (e.g. Go analyzer output).
+		// Package IDs include the module name: "mymodule/internal/handler"
+		// while the config path is just "internal/handler".
+		{"mymodule/internal/handler", "handler"},
+		{"mymodule/internal/repo", "repo"},
+		{"mymodule/internal/service", "service"},
+		{"mymodule/internal/model", "model"},
+		// Sub-package with module prefix.
+		{"mymodule/internal/handler/users", "handler"},
+		// Unrelated package should not match.
+		{"mymodule/pkg/utils", ""},
 	}
 	for _, tc := range cases {
 		got := cfg.LayerForModule(tc.id)
