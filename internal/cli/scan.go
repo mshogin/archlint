@@ -103,15 +103,15 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	for _, m := range allMetrics {
 		// DIP violations — respect config enabled flag.
-		if cfg.Rules.DIP.Enabled {
+		if cfg.Rules.DIP.IsEnabled() {
 			violations = append(violations, m.DIPViolations...)
 		}
 		// ISP violations — respect config enabled flag.
-		if cfg.Rules.ISP.Enabled {
+		if cfg.Rules.ISP.IsEnabled() {
 			violations = append(violations, m.ISPViolations...)
 		}
 		// SRP violations — respect config enabled flag and exclusions.
-		if cfg.Rules.SRP.Enabled {
+		if cfg.Rules.SRP.IsEnabled() {
 			for _, v := range m.SRPViolations {
 				if !cfg.IsSRPExcluded(v.Target) {
 					violations = append(violations, v)
@@ -120,7 +120,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 
 		// God-class violations — respect config enabled flag and exclusions.
-		if cfg.Rules.GodClass.Enabled {
+		if cfg.Rules.GodClass.IsEnabled() {
 			for _, gc := range m.GodClasses {
 				if !cfg.IsGodClassExcluded(gc) {
 					violations = append(violations, mcp.Violation{
@@ -133,7 +133,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 
 		// Hub-node violations — respect config enabled flag and exclusions.
-		if cfg.Rules.HubNode.Enabled {
+		if cfg.Rules.HubNode.IsEnabled() {
 			for _, hub := range m.HubNodes {
 				if !cfg.IsHubNodeExcluded(hub) {
 					violations = append(violations, mcp.Violation{
@@ -146,7 +146,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 
 		// Feature-envy violations — respect config enabled flag and exclusions.
-		if cfg.Rules.FeatureEnvy.Enabled {
+		if cfg.Rules.FeatureEnvy.IsEnabled() {
 			for _, fe := range m.FeatureEnvy {
 				if !cfg.IsFeatureEnvyExcluded(fe) {
 					violations = append(violations, mcp.Violation{
