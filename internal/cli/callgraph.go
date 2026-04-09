@@ -110,7 +110,7 @@ func runSingleMode(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptions)
 }
 
 func exportSingleGraph(cg *callgraph.CallGraph) error {
-	fmt.Printf("Граф построен: %d nodes, %d edges, depth %d\n",
+	fmt.Printf("Graph built: %d nodes, %d edges, depth %d\n",
 		cg.Stats.TotalNodes, cg.Stats.TotalEdges, cg.ActualDepth)
 
 	exporter := callgraph.NewYAMLExporter()
@@ -124,7 +124,7 @@ func exportSingleGraph(cg *callgraph.CallGraph) error {
 
 	if !cgNoPuml {
 		if err := generatePuml(cg, cgEntryPoint); err != nil {
-			return fmt.Errorf("генерация PlantUML: %w", err)
+			return fmt.Errorf("PlantUML generation: %w", err)
 		}
 	}
 
@@ -163,7 +163,7 @@ func buildEventGraphs(goAnalyzer *analyzer.GoAnalyzer, opts callgraph.BuildOptio
 
 	eventBuilder, err := callgraph.NewEventBuilder(goAnalyzer, contexts, opts)
 	if err != nil {
-		return nil, fmt.Errorf("создание event builder: %w", err)
+		return nil, fmt.Errorf("creating event builder: %w", err)
 	}
 
 	set, err := eventBuilder.BuildAll()
