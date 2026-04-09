@@ -1,226 +1,30 @@
 rules:
   fan_out:
-    level: taboo
+    enabled: true
+    error_on_violation: true
+    level: telemetry
     threshold: 10
     exclude:
-    - internal/cli
-    - internal/mcp
+    - archlint-rs::src::main
+    - archlint-rs::src::analyzer
   fan_in:
-    level: telemetry
-    threshold: 20
-  cycles:
-    level: taboo
-  isp:
-    level: telemetry
-    threshold: 5
-  dip:
-    level: telemetry
-    exclude:
-    - pkg/callgraph.Builder
-    - pkg/callgraph.CallResolver
-    - pkg/callgraph.CallWalker
-    - pkg/callgraph.EventBuilder
-    - demo/internal/handler.UserHandler
-    - demo/internal/repo.CachedRepo
-    - demo/internal/repo.UserRepo
-    - internal/cli.batchRepoResult
-    - internal/cli.checkResult
-    - internal/cli.scanGateResult
-    - internal/analyzer.GoAnalyzer
-    - internal/analyzer.RustAnalyzer
-    - internal/bot.ScanResult
-    - internal/mcp.State
-    - internal/mcp.Watcher
-    - internal/watcher.Watcher
-  feature_envy:
-    level: telemetry
-    exclude:
-    - internal/analyzer.GoAnalyzer.Analyze
-    - internal/analyzer.GoAnalyzer.buildGraph
-    - internal/analyzer.GoAnalyzer.collectCalls
-    - internal/analyzer.GoAnalyzer.extractCallInfo
-    - internal/analyzer.GoAnalyzer.getPkgID
-    - internal/analyzer.GoAnalyzer.getTypeName
-    - internal/analyzer.GoAnalyzer.isStdLib
-    - internal/analyzer.GoAnalyzer.parseFile
-    - internal/analyzer.GoAnalyzer.parseFuncDecl
-    - internal/analyzer.GoAnalyzer.parseTypeDecl
-    - internal/analyzer.GoAnalyzer.resolveCallTarget
-    - internal/analyzer.GoAnalyzer.resolveTypeDependency
-    - internal/analyzer.RustAnalyzer.Analyze
-    - internal/analyzer.RustAnalyzer.parseCargo
-    - internal/analyzer.RustAnalyzer.parseRustFile
-    - internal/analyzer.RustAnalyzer.parseWorkspace
-    - internal/archlintcfg.Config.LayerForModule
-    - internal/bot.Bot.Run
-    - internal/bot.Bot.poll
-    - internal/bot.Bot.process
-    - internal/bot.HTTPGitHubClient.CloseIssue
-    - internal/bot.HTTPGitHubClient.ListOpenIssues
-    - internal/bot.HTTPGitHubClient.PostComment
-    - internal/bot.HTTPGitHubClient.do
-    - internal/bot.LocalScanner.Scan
-    - internal/bot.LocalScanner.runExternalBinary
-    - internal/mcp.DegradationDetector.Check
-    - internal/mcp.Server.Run
-    - internal/mcp.Server.handleInitialize
-    - internal/mcp.Server.handleMessage
-    - internal/mcp.Server.handleToolsCall
-    - internal/mcp.Server.readMessage
-    - internal/mcp.Server.sendDegradationNotification
-    - internal/mcp.Server.startWatcher
-    - internal/mcp.Server.writeMessage
-    - internal/mcp.State.FileNodeIDs
-    - internal/mcp.State.GetDegradationReport
-    - internal/mcp.State.GetGraph
-    - internal/mcp.State.Initialize
-    - internal/mcp.State.InitializeMetricsBaseline
-    - internal/mcp.State.Reparse
-    - internal/mcp.State.ReparseFile
-    - internal/mcp.State.buildFileNodeIndex
-    - internal/mcp.Watcher.run
-    - internal/watcher.Debouncer.FileChanged
-    - internal/watcher.Debouncer.Stop
-    - internal/watcher.Debouncer.fire
-    - internal/watcher.Watcher.Start
-    - internal/watcher.Watcher.addDirs
-    - internal/watcher.Watcher.tryAddDir
-    - pkg/archtest.ArchResult.AssertHealthScore
-    - pkg/archtest.ArchResult.AssertMaxFanOut
-    - pkg/archtest.ArchResult.AssertMaxViolations
-    - pkg/archtest.ArchResult.AssertNoCircularDependencies
-    - pkg/bpmn.ProcessGraph.Validate
-    - pkg/callgraph.Builder.buildGraph
-    - pkg/callgraph.CallResolver.Resolve
-    - pkg/callgraph.CallWalker.walk
-    - pkg/callgraph.EventBuilder.BuildForContext
-    - pkg/callgraph.SequenceGenerator.Generate
-    - pkg/callgraph.SequenceGenerator.writeEdges
-    - pkg/callgraph.SequenceGenerator.writeFlatParticipants
-    - pkg/callgraph.SequenceGenerator.writeGroupedParticipants
-    - pkg/callgraph.YAMLExporter.writeYAML
-    - callgraph/testdata/sample.Service.Process
-    - demo/internal/handler.UserHandler.CreateUser
-    - demo/internal/handler.UserHandler.GetUser
-    - demo/internal/handler.UserHandler.writeError
-    - demo/internal/model.User.Validate
-    - demo/internal/repo.CachedRepo.GetCached
-    - demo/internal/service.UserService.Register
-  god_class:
-    level: telemetry
-    exclude:
-    - internal/analyzer.GoAnalyzer
-    - internal/mcp.FileMetrics
-    - demo/internal/model.User
-  hub_node:
-    level: telemetry
-    exclude:
-    - internal/mcp.ComputeFileMetrics
-    - internal/mcp.matchesFile
-    - pkg/bpmn.collectElements
-  srp:
-    level: telemetry
-    exclude:
-    - internal/cli.batchRepoResult
-    - internal/cli.packageMetrics
-    - internal/cli.selfScanResult
-    - internal/mcp.FileMetrics
-    - pkg/callgraph.CallGraph
-    - internal/analyzer.GoAnalyzer
-    - internal/archlintcfg.Config
-    - internal/mcp.Server
-    - internal/mcp.State
-    - pkg/callgraph.CallWalker
-    - pkg/callgraph.SequenceGenerator
-    - demo/internal/config.DefaultConfig
-    - demo/internal/model.User
-  max_fan_out:
     enabled: true
+    error_on_violation: true
+    level: telemetry
     threshold: 10
-    error_on_violation: true
-    exclude:
-    - archlint-rs::src::main
-    - archlint-rs::src::analyzer
-  coupling:
-    enabled: true
-    error_on_violation: true
-    params:
-      ca_threshold: 10
-      ce_threshold: 10
     exclude:
     - internal/analyzer
     - serde
     - tests
     - archlint-rs::src::main
     - archlint-rs::src::analyzer
-  hub_nodes:
-    enabled: true
-    threshold: 10
-    error_on_violation: false
-    exclude:
-    - archlint-rs::src::main
-    - archlint-rs::src::analyzer
-    - internal/analyzer
-    - tests
-    - serde
-  orphan_nodes:
-    enabled: true
-    error_on_violation: false
-    exclude:
-    - pkg::archtest::archtest
-    - pkg::bpmn::types
-    - pkg::bpmn::graph
-    - pkg::bpmn::adapter_test
-    - pkg::bpmn::graph_test
-    - pkg::bpmn::adapter
-    - pkg::callgraph::sequence
-    - pkg::callgraph::model
-    - pkg::callgraph::sequence_test
-    - pkg::callgraph::export
-    - pkg::callgraph::errors
-    - pkg::callgraph::testdata::sample::cycle
-    - pkg::callgraph::testdata::sample::service
-    - pkg::callgraph::testdata::sample::empty
-    - pkg::callgraph::export_test
-    - internal::mcp::tool_analyze_file
-    - internal::mcp::server_test
-    - internal::mcp::tool_callgraph
-    - internal::mcp::tool_metrics
-    - internal::mcp::tool_dependencies
-  layer_violations:
-    enabled: true
-    error_on_violation: false  # tracked debt: pkg/callgraph -> internal/analyzer (see TODO below)
-    exclude:
-      # pkg/callgraph uses internal/analyzer types (CallInfo, FunctionInfo, MethodInfo).
-      # Fix: move shared types to internal/model. Tracked as architectural debt.
-      - pkg::callgraph::resolver
-      - pkg::callgraph::builder
-      - pkg::callgraph::builder_test
-      - pkg::callgraph::walker
-      - pkg::callgraph::event_builder
-    params:
-      layers:
-        cmd: 0
-        api: 1
-        handler: 1
-        controller: 1
-        service: 2
-        usecase: 2
-        internal: 2
-        domain: 3
-        entity: 3
-        model: 3
-        repository: 4
-        storage: 4
-        infrastructure: 5
-        pkg: 6
   absorption_probability:
     enabled: true
     error_on_violation: false
     exclude: []
   abstractness:
     enabled: true
-    error_on_violation: false  # graph contains mixed Go+Rust nodes; Go interfaces not fully detected
+    error_on_violation: true
     exclude: []
     params:
       min_threshold: 0.1
@@ -389,10 +193,8 @@ rules:
     threshold: 50.0
   component_complexity:
     enabled: true
-    error_on_violation: false  # Rust entry points exceed threshold by design
-    exclude:
-      - archlint-rs::src::main
-      - archlint-rs::src::analyzer
+    error_on_violation: true
+    exclude: []
     threshold: 50
   component_distance:
     enabled: true
@@ -454,6 +256,13 @@ rules:
     enabled: true
     error_on_violation: false
     exclude: []
+  coupling:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      ca_threshold: 10
+      ce_threshold: 10
   covering_space:
     enabled: true
     error_on_violation: false
@@ -516,18 +325,8 @@ rules:
     exclude: []
   distance_from_main_sequence:
     enabled: true
-    error_on_violation: false  # mixed Go+Rust graph skews abstractness calculations
-    exclude:
-      # external Rust crates are concrete by nature, not our code
-      - serde
-      - tests
-      - tempfile
-      - petgraph
-      - rayon
-      - tracing
-      - walkdir
-      - regex
-      - notify
+    error_on_violation: true
+    exclude: []
     threshold: 0.5
   divergent_change:
     enabled: true
@@ -604,6 +403,11 @@ rules:
     error_on_violation: false
     exclude: []
     threshold: 3.0
+  feature_envy:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 0.5
   filter_ideal:
     enabled: true
     error_on_violation: false
@@ -660,9 +464,16 @@ rules:
     exclude: []
   gini_coefficient:
     enabled: true
-    error_on_violation: false  # Rust main.rs skews the distribution; tracked
+    error_on_violation: true
     exclude: []
     threshold: 0.6
+  god_class:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      max_methods: 20
+      max_dependencies: 15
   gradient_flow:
     enabled: true
     error_on_violation: false
@@ -742,9 +553,13 @@ rules:
     exclude: []
   hotspot_detection:
     enabled: true
-    error_on_violation: false  # entry points are hotspots by design
-    exclude:
-      - archlint-rs::src::main
+    error_on_violation: true
+    exclude: []
+    threshold: 10
+  hub_nodes:
+    enabled: true
+    error_on_violation: true
+    exclude: []
     threshold: 10
   ihara_zeta:
     enabled: true
@@ -821,6 +636,26 @@ rules:
         storage: 4
         infrastructure: 5
         pkg: 6
+  layer_violations:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    params:
+      layers:
+        cmd: 0
+        api: 1
+        handler: 1
+        controller: 1
+        service: 2
+        usecase: 2
+        internal: 2
+        domain: 3
+        entity: 3
+        model: 3
+        repository: 4
+        storage: 4
+        infrastructure: 5
+        pkg: 6
   lazy_class:
     enabled: true
     error_on_violation: false
@@ -861,6 +696,11 @@ rules:
     enabled: true
     error_on_violation: false
     exclude: []
+  max_fan_out:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 5
   max_flow_min_cut:
     enabled: true
     error_on_violation: false
@@ -957,6 +797,10 @@ rules:
   optimal_placement:
     enabled: true
     error_on_violation: false
+    exclude: []
+  orphan_nodes:
+    enabled: true
+    error_on_violation: true
     exclude: []
   pagerank:
     enabled: true
@@ -1097,16 +941,8 @@ rules:
       min_contexts: 3
   single_responsibility:
     enabled: true
-    error_on_violation: false  # Rust entry points inherently have high domain coupling
-    exclude:
-      # archlint-rs::src::main is the CLI dispatch - wires all subcommands by design
-      - archlint-rs::src::main
-      # archlint-rs::src::analyzer is the core analyzer - integrates many Rust crates
-      - archlint-rs::src::analyzer
-      # these modules integrate multiple external crates which inflates domain count
-      - archlint-rs::src::perflint
-      - archlint-rs::src::validate
-      - archlint-rs::src::watch
+    error_on_violation: true
+    exclude: []
     threshold: 3
   sobolev_regularity:
     enabled: true
@@ -1234,43 +1070,127 @@ rules:
     exclude: []
   zscore_outliers:
     enabled: true
-    error_on_violation: false  # entry points inherently have high z-scores; tracked
-    exclude:
-      # archlint-rs entry points have inherently high degree
-      - archlint-rs::src::main
-      - archlint-rs::src::analyzer
-      - internal/analyzer
+    error_on_violation: true
+    exclude: []
     threshold: 3.0
 layers:
 - name: cmd
-  paths:
-  - cmd
+  paths: []
+- name: api
+  paths: []
+- name: handler
+  paths: []
+- name: controller
+  paths: []
+- name: service
+  paths: []
+- name: usecase
+  paths: []
 - name: internal
-  paths:
-  - internal/analyzer
-  - internal/archlintcfg
-  - internal/bot
-  - internal/cli
-  - internal/config
-  - internal/mcp
-  - internal/model
-  - internal/watcher
+  paths: []
+- name: domain
+  paths: []
+- name: entity
+  paths: []
+- name: model
+  paths: []
+- name: repository
+  paths: []
+- name: storage
+  paths: []
+- name: infrastructure
+  paths: []
 - name: pkg
-  paths:
-  - pkg/archtest
-  - pkg/bpmn
-  - pkg/callgraph
-- name: demo
-  paths:
-  - demo
+  paths: []
 allowed_dependencies:
-  cmd:
+  api:
+  - domain
+  - entity
+  - infrastructure
   - internal
+  - model
+  - pkg
+  - repository
+  - service
+  - usecase
+  cmd:
+  - api
+  - controller
+  - domain
+  - entity
+  - handler
+  - infrastructure
+  - internal
+  - model
+  - pkg
+  - repository
+  - service
+  - storage
+  - usecase
+  controller:
+  - domain
+  - entity
+  - infrastructure
+  - internal
+  - model
+  - pkg
+  - service
+  - storage
+  - usecase
+  domain:
+  - infrastructure
+  - pkg
+  - repository
+  - storage
+  entity:
+  - infrastructure
+  - pkg
+  - storage
+  handler:
+  - domain
+  - entity
+  - infrastructure
+  - internal
+  - model
+  - pkg
+  - service
+  - storage
+  - usecase
+  infrastructure:
   - pkg
   internal:
+  - domain
+  - entity
+  - infrastructure
+  - model
   - pkg
-  pkg:
-  - internal
-  demo:
-  - internal
+  - repository
+  - storage
+  model:
+  - infrastructure
   - pkg
+  - repository
+  - storage
+  pkg: []
+  repository:
+  - infrastructure
+  - pkg
+  service:
+  - domain
+  - entity
+  - infrastructure
+  - model
+  - pkg
+  - repository
+  - storage
+  storage:
+  - infrastructure
+  - pkg
+  usecase:
+  - domain
+  - entity
+  - infrastructure
+  - model
+  - pkg
+  - repository
+  - storage

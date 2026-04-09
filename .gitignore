@@ -49,3 +49,4 @@ __pycache__/
 *.egg-info/
 *.egg
 .archlint.yaml.bak
+.env
