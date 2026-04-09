@@ -1,6 +1,8 @@
 package callgraph
 
 import (
+	"strings"
+
 	"github.com/mshogin/archlint/internal/model"
 )
 
@@ -10,6 +12,8 @@ type CallWalker struct {
 	resolver *CallResolver
 	maxDepth int
 	visited  map[string]bool
+	inStack  map[string]bool // tracks current DFS path for cycle reporting
+	stack    []string        // ordered DFS path for cycle path reconstruction
 	nodes    []CallNode
 	edges    []CallEdge
 	stats    Stats
@@ -23,6 +27,7 @@ func NewCallWalker(a Analyzer, resolver *CallResolver, maxDepth int) *CallWalker
 		resolver: resolver,
 		maxDepth: maxDepth,
 		visited:  make(map[string]bool),
+		inStack:  make(map[string]bool),
 	}
 }
 
@@ -49,6 +54,13 @@ func (w *CallWalker) walk(functionID string, depth int) {
 	}
 
 	w.visited[functionID] = true
+	w.inStack[functionID] = true
+	w.stack = append(w.stack, functionID)
+
+	defer func() {
+		w.inStack[functionID] = false
+		w.stack = w.stack[:len(w.stack)-1]
+	}()
 
 	if depth > w.stats.MaxDepthReached {
 		w.stats.MaxDepthReached = depth
@@ -84,9 +96,11 @@ func (w *CallWalker) walk(functionID string, depth int) {
 			continue
 		}
 
-		if w.visited[resolved.TargetID] && resolved.NodeType != NodeExternal {
+		// Cycle: target is already in the current DFS stack (back-edge).
+		if w.inStack[resolved.TargetID] && resolved.NodeType != NodeExternal {
 			w.addEdge(functionID, resolved, call.Line, true)
 			w.stats.CyclesDetected++
+			w.addCycleWarning(functionID, resolved.TargetID)
 
 			continue
 		}
@@ -103,6 +117,36 @@ func (w *CallWalker) walk(functionID string, depth int) {
 			w.walk(resolved.TargetID, depth+1)
 		}
 	}
+}
+
+// addCycleWarning records a human-readable cycle path in warnings.
+// Format: "CYCLE DETECTED: A -> B -> C -> A"
+func (w *CallWalker) addCycleWarning(from, cycleTarget string) {
+	// Find where cycleTarget appears in the stack.
+	cycleStart := -1
+
+	for i, id := range w.stack {
+		if id == cycleTarget {
+			cycleStart = i
+
+			break
+		}
+	}
+
+	if cycleStart < 0 {
+		// cycleTarget not found in stack - shouldn't happen, but guard anyway.
+		w.warnings = append(w.warnings, "CYCLE DETECTED: "+from+" -> "+cycleTarget)
+
+		return
+	}
+
+	// Build path: stack[cycleStart..] + cycleTarget (closes the loop).
+	// stack already contains 'from' as the last element since we push before walking.
+	parts := make([]string, 0, len(w.stack)-cycleStart+1)
+	parts = append(parts, w.stack[cycleStart:]...)
+	parts = append(parts, cycleTarget)
+
+	w.warnings = append(w.warnings, "CYCLE DETECTED: "+strings.Join(parts, " -> "))
 }
 
 func (w *CallWalker) addFunctionNode(info *model.FunctionInfo, id string, depth int) {
