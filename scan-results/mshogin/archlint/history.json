@@ -1,0 +1,568 @@
+{
+  "repo": "mshogin/archlint",
+  "repo_url": "https://github.com/mshogin/archlint",
+  "language": "Go",
+  "collected_at": "2026-04-09T15:14:14.876911Z",
+  "data_points": [
+    {
+      "commit": "62085e0e",
+      "commit_full": "62085e0eb922af9815f1b688bd2426fe8c8c78a3",
+      "date": "2026-04-07",
+      "message": "ci: add nightly architecture scan workflow",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "47049db0",
+      "commit_full": "47049db0b0e7373b1db738d6ecf91fc2b3b2a891",
+      "date": "2026-04-07",
+      "message": "ci: add workflow_dispatch trigger to CI",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "112cc67b",
+      "commit_full": "112cc67b990761e52f320cf0333542340a6318cf",
+      "date": "2026-04-07",
+      "message": "fix: translate all Russian user-facing strings to English, fix config issues",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "4a70bc8f",
+      "commit_full": "4a70bc8f6188d82b9b5d40dfed154f179c0d0c7a",
+      "date": "2026-04-07",
+      "message": "fix: resolve layer violation pkg/callgraph -> internal/analyzer (#114)",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "cdfb8d0a",
+      "commit_full": "cdfb8d0aabf5a0b891f4e3639bcf688427ab8c1a",
+      "date": "2026-04-07",
+      "message": "feat: add monitor subcommand and monitored-repos.yaml config (issue #110 Phase 1)",
+      "health": 0,
+      "components": 83,
+      "links": 55,
+      "violations": {
+        "core": {
+          "passed": 10,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 8
+      }
+    },
+    {
+      "commit": "55ce3341",
+      "commit_full": "55ce3341d2af6ca407acde2c7bd35bd2273b1014",
+      "date": "2026-04-07",
+      "message": "fix: archlint self-scan - replace aitrader config, add config-driven exclusions",
+      "health": 0,
+      "components": 81,
+      "links": 55,
+      "violations": {
+        "core": {
+          "passed": 10,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 8
+      }
+    },
+    {
+      "commit": "42a55ccd",
+      "commit_full": "42a55ccd7fe960ca878769ec00de845eb58f7940",
+      "date": "2026-04-07",
+      "message": "feat: add GitHub issue template for add-repo requests - closes #112",
+      "health": 0,
+      "components": 81,
+      "links": 55,
+      "violations": {
+        "core": {
+          "passed": 10,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 8
+      }
+    },
+    {
+      "commit": "e7af2c52",
+      "commit_full": "e7af2c5245e0c2ec16d25168dc2bd13798a5a4a5",
+      "date": "2026-04-08",
+      "message": "feat: historical metrics collector + collect-all script (closes #118)",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "cd927b90",
+      "commit_full": "cd927b9033446b10e273cd65d5072c701bcc207c",
+      "date": "2026-04-08",
+      "message": "feat: add scripts to collect architecture metrics from git history",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "49d844f2",
+      "commit_full": "49d844f284b6684abcee0c5ecd70b29b464980ea",
+      "date": "2026-04-08",
+      "message": "feat: add 10 popular Go/Rust repos to monitoring",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "d168df06",
+      "commit_full": "d168df06c0b350edc23dc52f2b4db1f683f30fce",
+      "date": "2026-04-08",
+      "message": "feat: max_lines + layer_forbidden_imports rules (closes #115, #116)",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "a1b5f228",
+      "commit_full": "a1b5f2288736b2845911e93311a89e3e20c4bbf7",
+      "date": "2026-04-09",
+      "message": "fix: callgraph cycle detection and builtin filtering (#126)",
+      "health": 0,
+      "components": 92,
+      "links": 59,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "cf54c546",
+      "commit_full": "cf54c5460a9e5854eea1daf5eca5754b01330e5f",
+      "date": "2026-04-09",
+      "message": "fix: detect layer violations when package IDs have Go module name prefix",
+      "health": 0,
+      "components": 91,
+      "links": 59,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "fb7b1e75",
+      "commit_full": "fb7b1e75da5993a9c86d618a42ef7272f21b715e",
+      "date": "2026-04-09",
+      "message": "fix: translate Russian strings in callgraph CLI to English",
+      "health": 0,
+      "components": 90,
+      "links": 57,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "eb24fc44",
+      "commit_full": "eb24fc44570150d0f7398400b328a428c951efa3",
+      "date": "2026-04-09",
+      "message": "feat: add init command to Go CLI for auto-detecting project structure",
+      "health": 0,
+      "components": 90,
+      "links": 57,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "28af509f",
+      "commit_full": "28af509f10a231103ca3deb0e96f7e24429b3a87",
+      "date": "2026-04-09",
+      "message": "feat: add watch command for real-time architecture scanning",
+      "health": 0,
+      "components": 88,
+      "links": 57,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "c6038663",
+      "commit_full": "c6038663e7c271c0077a1f05a2f2d31830d1f9ad",
+      "date": "2026-04-09",
+      "message": "fix: honour enabled: false in .archlint.yaml for all rule types",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "578e2446",
+      "commit_full": "578e24463fc8e9b94c13cb169781f8c6d761ddef",
+      "date": "2026-04-09",
+      "message": "fix: update version to 1.1.0",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "2930e6d5",
+      "commit_full": "2930e6d50c5d105609f8e2e69a64b6303243f672",
+      "date": "2026-04-09",
+      "message": "fix: update sonic to v1.15.0 for Go 1.26 compatibility",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    },
+    {
+      "commit": "179ffe2f",
+      "commit_full": "179ffe2fb7bb5a415143cf8e7a0347f600fd6cb3",
+      "date": "2026-04-09",
+      "message": "fix: update go.mod to go 1.26.1",
+      "health": 0,
+      "components": 86,
+      "links": 54,
+      "violations": {
+        "core": {
+          "passed": 8,
+          "failed": 0
+        },
+        "solid": {
+          "passed": 4,
+          "failed": 0
+        },
+        "advanced": {
+          "passed": 15,
+          "failed": 0
+        }
+      },
+      "metrics": {
+        "fan_out_max": 0,
+        "cycles": 0,
+        "god_classes": 7
+      }
+    }
+  ]
+}
