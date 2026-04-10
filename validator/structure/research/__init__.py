@@ -18,6 +18,7 @@ Modules:
 - number_theory_metrics: Number-theoretic analysis
 - probability_metrics: Probabilistic analysis
 - hott_metrics: Homotopy Type Theory (HoTT) - univalence, path spaces, identity types
+- prufer_metrics: Prüfer sequence theorem - canonical form, entropy, Cayley bound
 """
 
 from validator.structure.research import topology_metrics
@@ -36,6 +37,7 @@ from validator.structure.research import automata_theory_metrics
 from validator.structure.research import number_theory_metrics
 from validator.structure.research import probability_metrics
 from validator.structure.research import hott_metrics
+from validator.structure.research import prufer_metrics
 
 __all__ = [
     'topology_metrics',
@@ -54,4 +56,5 @@ __all__ = [
     'number_theory_metrics',
     'probability_metrics',
     'hott_metrics',
+    'prufer_metrics',
 ]
