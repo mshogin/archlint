@@ -17,6 +17,7 @@ Modules:
 - automata_theory_metrics: Automata-based analysis
 - number_theory_metrics: Number-theoretic analysis
 - probability_metrics: Probabilistic analysis
+- hott_metrics: Homotopy Type Theory (HoTT) - univalence, path spaces, identity types
 """
 
 from validator.structure.research import topology_metrics
@@ -34,6 +35,7 @@ from validator.structure.research import optimization_metrics
 from validator.structure.research import automata_theory_metrics
 from validator.structure.research import number_theory_metrics
 from validator.structure.research import probability_metrics
+from validator.structure.research import hott_metrics
 
 __all__ = [
     'topology_metrics',
@@ -51,4 +53,5 @@ __all__ = [
     'automata_theory_metrics',
     'number_theory_metrics',
     'probability_metrics',
+    'hott_metrics',
 ]
