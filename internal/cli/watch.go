@@ -14,20 +14,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var watchConfigFile string
+
 var watchCmd = &cobra.Command{
 	Use:   "watch [directory]",
 	Short: "Watch directory for .go file changes and re-run scan",
 	Long: `Watch a directory for .go file changes and re-run architecture scan on each change.
 Shows violations in real-time. Press Ctrl+C to stop.
 
+Reads .archlint.yaml from the watched directory (or --config path) to configure
+rule thresholds, exclusions, and layer dependency rules. Only violations matching
+enabled rules are shown.
+
 Examples:
   archlint watch .
-  archlint watch ./internal/handler/`,
+  archlint watch ./internal/handler/
+  archlint watch . --config /path/to/.archlint.yaml`,
 	Args: cobra.ExactArgs(1),
 	RunE: runWatch,
 }
 
 func init() {
+	watchCmd.Flags().StringVar(&watchConfigFile, "config", "", "Path to .archlint.yaml config file (default: <directory>/.archlint.yaml)")
 	rootCmd.AddCommand(watchCmd)
 }
 
@@ -55,9 +63,12 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("[archlint] Watching %s ...\n", dir)
+	if watchConfigFile != "" {
+		fmt.Printf("[archlint] Config: %s\n", watchConfigFile)
+	}
 
 	// Run initial scan.
-	runWatchScan(absDir)
+	runWatchScan(absDir, watchConfigFile)
 
 	for {
 		select {
@@ -76,8 +87,8 @@ func runWatch(cmd *cobra.Command, args []string) error {
 				if relErr != nil {
 					rel = event.Name
 				}
-				fmt.Printf("\n[archlint] File changed: %s\n", rel)
-				runWatchScan(absDir)
+				printWatchSeparator(rel)
+				runWatchScan(absDir, watchConfigFile)
 			}
 
 		case watchErr, ok := <-watcher.Errors:
@@ -89,11 +100,35 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 }
 
+// printWatchSeparator prints a visual separator between scans.
+func printWatchSeparator(changedFile string) {
+	fmt.Printf("\n%s\n", repeatChar('-', 60))
+	fmt.Printf("[archlint] File changed: %s\n", changedFile)
+	fmt.Printf("%s\n", repeatChar('-', 60))
+}
+
+// repeatChar returns a string with n repetitions of c.
+func repeatChar(c byte, n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = c
+	}
+	return string(b)
+}
+
+// loadWatchConfig loads config for a watch scan. configPath overrides dir-based discovery.
+func loadWatchConfig(dir, configPath string) archlintcfg.Config {
+	if configPath != "" {
+		return archlintcfg.LoadFile(configPath)
+	}
+	return archlintcfg.Load(dir)
+}
+
 // runWatchScan performs a scan of dir and prints results in watch output format.
-func runWatchScan(dir string) {
+func runWatchScan(dir, configPath string) {
 	fmt.Printf("[archlint] Scanning...\n")
 
-	cfg := archlintcfg.Load(dir)
+	cfg := loadWatchConfig(dir, configPath)
 
 	a := analyzer.NewGoAnalyzer()
 
@@ -154,6 +189,8 @@ func runWatchScan(dir string) {
 				}
 			}
 		}
+		// ShotgunSurgery: respect enabled flag (currently no dedicated rule config,
+		// treat as always-on unless we later add a rule entry).
 		for _, ss := range m.ShotgunSurgery {
 			violations = append(violations, mcp.Violation{
 				Kind:    "shotgun-surgery",
