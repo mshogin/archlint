@@ -133,6 +133,7 @@ def get_structure_validators(group: Optional[str] = None) -> List:
                 optimization_metrics, automata_theory_metrics, number_theory_metrics,
                 probability_metrics, mathematical_analysis_metrics,
                 integral_calculus_metrics, set_theory_metrics,
+                hott_metrics,
             )
             research_modules = [
                 topology_metrics, information_theory_metrics, linear_algebra_metrics,
@@ -141,6 +142,7 @@ def get_structure_validators(group: Optional[str] = None) -> List:
                 optimization_metrics, automata_theory_metrics, number_theory_metrics,
                 probability_metrics, mathematical_analysis_metrics,
                 integral_calculus_metrics, set_theory_metrics,
+                hott_metrics,
             ]
             seen_ids = set(id(v) for v in validators)
             seen_names = set(v.__name__ for v in validators)
