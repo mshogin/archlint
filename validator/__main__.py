@@ -5,14 +5,20 @@ archlint validator CLI
 Usage:
     python -m validator validate <architecture.yaml> [options]
     python -m validator validate <architecture.yaml> -c <contexts.yaml> [options]
+    python -m validator validate <callgraph.yaml> --source behavior [options]
 
 Options:
     -c, --contexts    Contexts file for behavior validation
     -g, --group       Validator group: core, solid, patterns, architecture, quality, advanced, research
     -f, --format      Output format: yaml, json (default: yaml)
     -o, --output      Output file (default: stdout)
+    --source          Graph source: structure (default, auto-detected) or behavior (callgraph)
     --structure-only  Run only structure validators
     --behavior-only   Run only behavior validators
+
+Source modes:
+    structure  Metrics of potential - what the system CAN do (architecture.yaml)
+    behavior   Metrics of behavior  - what the system ACTUALLY does (callgraph.yaml)
 """
 
 import argparse
@@ -23,7 +29,7 @@ from typing import Dict, List, Any, Optional
 
 import yaml
 
-from validator.graph_loader import GraphLoader
+from validator.graph_loader import GraphLoader, SOURCE_STRUCTURE, SOURCE_BEHAVIOR
 from validator.context_loader import load_contexts
 from validator.config import load_config
 
@@ -32,6 +38,33 @@ def load_graph(filename: str):
     """Load graph from YAML file"""
     loader = GraphLoader()
     return loader.load_yaml(filename)
+
+
+def load_graph_with_source(filename: str, source: Optional[str] = None):
+    """
+    Load graph from YAML file, auto-detecting or using explicit source type.
+
+    Args:
+        filename: Path to YAML file
+        source: 'structure', 'behavior', or None for auto-detection
+
+    Returns:
+        Tuple (graph, detected_source)
+    """
+    loader = GraphLoader()
+    graph, detected_source = loader.load_yaml_with_source(filename)
+
+    if source is not None:
+        # Explicit source overrides auto-detection
+        if source != detected_source:
+            import sys
+            print(
+                f"Note: --source={source} specified but file looks like {detected_source} format",
+                file=sys.stderr
+            )
+        return graph, source
+
+    return graph, detected_source
 
 
 def get_structure_validators(group: Optional[str] = None) -> List:
@@ -181,11 +214,22 @@ def run_validation(
     structure_only: bool = False,
     behavior_only: bool = False,
     config_file: Optional[str] = None,
+    source: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Run validation and return results"""
+    """Run validation and return results
 
-    # Load graph
-    graph = load_graph(arch_file)
+    Args:
+        arch_file: Path to architecture or callgraph YAML file
+        contexts_file: Optional contexts YAML file for behavior validation
+        group: Validator group filter
+        structure_only: Run only structure validators
+        behavior_only: Run only behavior validators
+        config_file: Optional config file path
+        source: Graph source type ('structure', 'behavior', or None for auto-detect)
+    """
+
+    # Load graph with source detection
+    graph, detected_source = load_graph_with_source(arch_file, source)
 
     # Load contexts if provided
     contexts = {}
@@ -197,6 +241,7 @@ def run_validation(
 
     results = {
         'status': 'PASSED',
+        'source': detected_source,
         'summary': {
             'total_checks': 0,
             'passed': 0,
@@ -213,7 +258,16 @@ def run_validation(
         'checks': [],
     }
 
-    # Run structure validators
+    # Include callgraph metadata in results when running on behavioral graph
+    if detected_source == SOURCE_BEHAVIOR:
+        entry_point = graph.graph.get('entry_point', '')
+        if entry_point:
+            results['graph']['entry_point'] = entry_point
+        stats = graph.graph.get('stats', {})
+        if stats:
+            results['graph']['stats'] = stats
+
+    # Run structure validators (works on both structural and behavioral graphs)
     if not behavior_only:
         validators = get_structure_validators(group)
         for validator in validators:
@@ -236,8 +290,13 @@ def run_validation(
                 })
                 results['summary']['errors'] += 1
 
-    # Run behavior validators if contexts provided
-    if contexts and not structure_only:
+    # Run behavior validators if contexts provided (structural source)
+    # or always when source is behavioral
+    run_behavior = (
+        (contexts and not structure_only)
+        or (detected_source == SOURCE_BEHAVIOR and not structure_only)
+    )
+    if run_behavior:
         validators = get_behavior_validators(group)
         for validator in validators:
             try:
@@ -304,6 +363,9 @@ def main():
                                  default='yaml', help='Output format')
     validate_parser.add_argument('-o', '--output', help='Output file')
     validate_parser.add_argument('--config', help='Config file')
+    validate_parser.add_argument('--source', choices=['structure', 'behavior'],
+                                 help='Graph source type: structure (architecture.yaml) or '
+                                      'behavior (callgraph.yaml). Auto-detected if not specified.')
     validate_parser.add_argument('--structure-only', action='store_true',
                                  help='Run only structure validators')
     validate_parser.add_argument('--behavior-only', action='store_true',
@@ -323,6 +385,7 @@ def main():
             structure_only=args.structure_only,
             behavior_only=args.behavior_only,
             config_file=args.config,
+            source=args.source,
         )
 
         # Convert numpy types to native Python for serialization
