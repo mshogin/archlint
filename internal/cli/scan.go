@@ -10,6 +10,7 @@ import (
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/archlintcfg"
 	"github.com/mshogin/archlint/internal/mcp"
+	"github.com/mshogin/archlint/internal/model"
 	"github.com/spf13/cobra"
 )
 
@@ -87,19 +88,34 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	a := analyzer.NewGoAnalyzer()
-
-	graph, err := a.Analyze(codeDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
-		os.Exit(2)
+	var graph *model.Graph
+	var a *analyzer.GoAnalyzer
+	if analyzer.DetectTypeScriptProject(codeDir) {
+		tsAnalyzer := analyzer.NewTypeScriptAnalyzer()
+		g, err := tsAnalyzer.Analyze(codeDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
+			os.Exit(2)
+		}
+		graph = g
+	} else {
+		a = analyzer.NewGoAnalyzer()
+		g, err := a.Analyze(codeDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
+			os.Exit(2)
+		}
+		graph = g
 	}
 
 	// Structural violations (coupling, cycles) — config-aware.
 	violations := mcp.DetectAllViolationsWithConfig(graph, &cfg)
 
-	// Per-file SOLID and smell violations.
-	allMetrics := mcp.ComputeAllFileMetrics(a, graph)
+	// Per-file SOLID and smell violations (Go projects only).
+	var allMetrics map[string]*mcp.FileMetrics
+	if a != nil {
+		allMetrics = mcp.ComputeAllFileMetrics(a, graph)
+	}
 
 	for _, m := range allMetrics {
 		// DIP violations — respect config enabled flag.
