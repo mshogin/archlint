@@ -1073,6 +1073,11 @@ rules:
     error_on_violation: true
     exclude: []
     threshold: 3.0
+  zigzag_coupling:
+    enabled: true
+    error_on_violation: true
+    exclude: []
+    threshold: 0
 layers:
 - name: cmd
   paths: []

@@ -254,6 +254,10 @@ class Config:
         threshold=3,  # Минимум совместных появлений
         error_on_violation=False
     ))
+    zigzag_coupling: RuleConfig = field(default_factory=lambda: RuleConfig(
+        threshold=0,  # max allowed zigzag occurrences per function
+        error_on_violation=True
+    ))
 
     # =========================
     # Clean Architecture
