@@ -569,3 +569,136 @@ def validate_data_clumps(
         }
     except Exception as e:
         return {'name': 'data_clumps', 'status': 'ERROR', 'error': str(e)}
+
+
+def validate_zigzag_coupling(
+    graph: nx.DiGraph,
+    config: Optional['RuleConfig'] = None
+) -> Dict[str, Any]:
+    """
+    Zigzag/Ping-Pong Coupling Detection - detects when a caller oscillates between
+    components non-adjacently in its call sequence.
+
+    Pattern (zigzag):
+        A.Orchestrate():
+          a.b.DoFirst()    # A -> B
+          a.c.Process()    # A -> C  (something between)
+          a.b.DoSecond()   # A -> B  (non-adjacent repeat = ZIGZAG)
+          a.d.Finalize()   # A -> D
+
+    Call sequence: [B, C, B, D] - B appears at positions 0 and 2 with C between = zigzag.
+
+    Adjacent repeats (e.g., [A, A, B]) are NOT violations - only non-adjacent ones.
+
+    Config (.archlint.yaml):
+        rules:
+          zigzag_coupling:
+            enabled: true
+            error_on_violation: true
+            threshold: 0  # max allowed zigzag occurrences per function
+            exclude: []
+
+    Author: @mshogin
+    """
+    threshold = 0
+    if config and config.threshold is not None:
+        threshold = int(config.threshold)
+    exclude = config.exclude if config else []
+    error_on_violation = config.error_on_violation if config else True
+
+    try:
+        violations = []
+
+        for caller in graph.nodes():
+            if _is_excluded(caller, exclude):
+                continue
+
+            # Get outgoing edges in insertion order (preserves YAML source order)
+            out_edges = list(graph.out_edges(caller))
+            if len(out_edges) < 3:
+                # Need at least 3 edges to have a non-adjacent repeat: [X, Y, X]
+                continue
+
+            # Map each target to its component identifier.
+            # For callgraph (method) nodes like "a.b.DoFirst", strip the last
+            # dot-segment to get the package component "a.b".
+            # For architecture (component) nodes, use the node as-is.
+            def _to_component(node: str) -> str:
+                """
+                Map a target node to its component identifier.
+
+                - If the node has entity='method' in the graph, strip last dot-segment.
+                - If the node is not in the graph (external callgraph target) and looks
+                  like a method call (has a dot/receiver pattern), strip last dot-segment.
+                - Otherwise use the node as-is (already a component identifier).
+                """
+                node_data = graph.nodes.get(node, {})
+                entity = node_data.get('entity', '')
+
+                if entity == 'method':
+                    # Callgraph method: strip method name to get the class/pkg
+                    dot_idx = node.rfind('.')
+                    if dot_idx > 0:
+                        return node[:dot_idx]
+
+                # For structural component nodes (entity != 'method'), use as-is.
+                return node
+
+            # Build sequence of component identifiers preserving YAML/insertion order
+            sequence = [_to_component(tgt) for _, tgt in out_edges]
+
+            # Scan for non-adjacent repeats: component X at positions i and j (j > i+1)
+            # where at least one different component Y appears between i and j.
+            component_last_seen: Dict[str, int] = {}
+            zigzag_count = 0
+            zigzag_details: List[Dict[str, Any]] = []
+
+            for pos, component in enumerate(sequence):
+                if _is_excluded(component, exclude):
+                    component_last_seen[component] = pos
+                    continue
+
+                if component in component_last_seen:
+                    prev_pos = component_last_seen[component]
+                    # Non-adjacent: there is at least one position between prev and current
+                    if pos > prev_pos + 1:
+                        # Verify there is a different component between prev_pos and pos
+                        between = sequence[prev_pos + 1:pos]
+                        if any(c != component for c in between):
+                            zigzag_count += 1
+                            zigzag_details.append({
+                                'component': component,
+                                'positions': [prev_pos, pos],
+                                'sequence_between': between,
+                            })
+
+                component_last_seen[component] = pos
+
+            if zigzag_count > threshold:
+                violations.append({
+                    'caller': caller,
+                    'zigzag_count': zigzag_count,
+                    'sequence': sequence,
+                    'zigzags': zigzag_details,
+                })
+
+        violations.sort(key=lambda x: x['zigzag_count'], reverse=True)
+
+        if violations:
+            status = _get_violation_status(error_on_violation)
+        else:
+            status = 'PASSED'
+
+        return {
+            'name': 'zigzag_coupling',
+            'description': (
+                f'Caller functions should not alternate between the same components '
+                f'non-adjacently (threshold: {threshold})'
+            ),
+            'status': status,
+            'threshold': threshold,
+            'violations': violations[:10],
+            'violations_count': len(violations),
+        }
+    except Exception as e:
+        return {'name': 'zigzag_coupling', 'status': 'ERROR', 'error': str(e)}

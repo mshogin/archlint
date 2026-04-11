@@ -9,6 +9,7 @@ Code smell and anti-pattern validators
 - Speculative Generality
 - Data Clumps
 - Feature Envy
+- Zigzag Coupling
 """
 
 from validator.structure.patterns.patterns_metrics import (
@@ -20,6 +21,7 @@ from validator.structure.patterns.patterns_metrics import (
     validate_middle_man,
     validate_speculative_generality,
     validate_data_clumps,
+    validate_zigzag_coupling,
 )
 
 __all__ = [
@@ -31,6 +33,7 @@ __all__ = [
     'validate_middle_man',
     'validate_speculative_generality',
     'validate_data_clumps',
+    'validate_zigzag_coupling',
 ]
 
 PATTERN_VALIDATORS = [
@@ -42,4 +45,5 @@ PATTERN_VALIDATORS = [
     validate_middle_man,
     validate_speculative_generality,
     validate_data_clumps,
+    validate_zigzag_coupling,
 ]
