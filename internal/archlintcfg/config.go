@@ -72,6 +72,21 @@ type Rules struct {
 	SRP          RuleConfig `yaml:"srp"`
 }
 
+// ExternalContract describes an external API boundary that this codebase
+// implements or depends on. It is used by the `archlint contracts` command
+// to cross-reference contract definitions with the actual module graph.
+type ExternalContract struct {
+	// Name is a human-readable identifier for the contract (e.g. "user_api").
+	Name string `yaml:"name"`
+	// Module is the component ID in the architecture graph that owns/implements
+	// the contract (e.g. "src::api::users").
+	Module string `yaml:"module"`
+	// Type is the protocol/style: "query", "stream", "rpc", "rest", or "event".
+	Type string `yaml:"type"`
+	// Schema is an optional reference to the contract schema file or URL.
+	Schema string `yaml:"schema,omitempty"`
+}
+
 // Config is the top-level .archlint.yaml configuration.
 type Config struct {
 	// Rules section, keyed by rule name.
@@ -81,6 +96,9 @@ type Config struct {
 	// AllowedDependencies maps source layer name -> allowed target layer names.
 	// Any cross-layer dependency not listed here is a violation.
 	AllowedDependencies map[string][]string `yaml:"allowed_dependencies"`
+	// ExternalContracts lists external API boundaries implemented by modules in
+	// the graph. Used by `archlint contracts` for cross-graph analysis.
+	ExternalContracts []ExternalContract `yaml:"external_contracts,omitempty"`
 }
 
 // Default thresholds matching archlint-rs defaults.
