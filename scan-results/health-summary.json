@@ -1,0 +1,140 @@
+{
+  "scan_date": "2026-04-12T04:05:45Z",
+  "repos": [
+    {
+      "owner": "mshogin",
+      "name": "archlint",
+      "language": "Go",
+      "health": 34,
+      "passed": 22,
+      "failed": 12,
+      "warnings": 3
+    },
+    {
+      "owner": "kgatilin",
+      "name": "deskd",
+      "language": "Rust",
+      "health": 29,
+      "passed": 23,
+      "failed": 13,
+      "warnings": 3
+    },
+    {
+      "owner": "mikeshogin",
+      "name": "promptlint",
+      "language": "Go",
+      "health": 69,
+      "passed": 30,
+      "failed": 5,
+      "warnings": 3
+    },
+    {
+      "owner": "mikeshogin",
+      "name": "costlint",
+      "language": "Go",
+      "health": 69,
+      "passed": 29,
+      "failed": 5,
+      "warnings": 3
+    },
+    {
+      "owner": "mikeshogin",
+      "name": "seclint",
+      "language": "Go",
+      "health": 74,
+      "passed": 31,
+      "failed": 4,
+      "warnings": 3
+    },
+    {
+      "owner": "joho",
+      "name": "godotenv",
+      "language": "Go",
+      "health": 88,
+      "passed": 32,
+      "failed": 2,
+      "warnings": 1
+    },
+    {
+      "owner": "fatih",
+      "name": "color",
+      "language": "Go",
+      "health": 88,
+      "passed": 32,
+      "failed": 2,
+      "warnings": 1
+    },
+    {
+      "owner": "caarlos0",
+      "name": "env",
+      "language": "Go",
+      "health": 86,
+      "passed": 31,
+      "failed": 2,
+      "warnings": 2
+    },
+    {
+      "owner": "twitchtv",
+      "name": "twirp",
+      "language": "Go",
+      "health": 14,
+      "passed": 17,
+      "failed": 16,
+      "warnings": 3
+    },
+    {
+      "owner": "charmbracelet",
+      "name": "log",
+      "language": "Go",
+      "health": 86,
+      "passed": 33,
+      "failed": 2,
+      "warnings": 2
+    },
+    {
+      "owner": "orhun",
+      "name": "git-cliff",
+      "language": "Rust",
+      "health": 59,
+      "passed": 28,
+      "failed": 7,
+      "warnings": 3
+    },
+    {
+      "owner": "sharkdp",
+      "name": "hyperfine",
+      "language": "Rust",
+      "health": 24,
+      "passed": 20,
+      "failed": 14,
+      "warnings": 3
+    },
+    {
+      "owner": "svenstaro",
+      "name": "miniserve",
+      "language": "Rust",
+      "health": 39,
+      "passed": 22,
+      "failed": 11,
+      "warnings": 3
+    },
+    {
+      "owner": "ducaale",
+      "name": "xh",
+      "language": "Rust",
+      "health": 26,
+      "passed": 20,
+      "failed": 14,
+      "warnings": 2
+    },
+    {
+      "owner": "sharkdp",
+      "name": "vivid",
+      "language": "Rust",
+      "health": 51,
+      "passed": 25,
+      "failed": 9,
+      "warnings": 2
+    }
+  ]
+}
