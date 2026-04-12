@@ -4,6 +4,9 @@ on:
     - cron: '0 3 * * *'  # 3am UTC daily
   workflow_dispatch:  # manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -12,7 +15,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.26'
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -120,10 +123,54 @@ jobs:
               print(f'{owner}/{name}: health={health}%, passed={total_passed}, failed={total_failed}, warn={total_warn}')
           "
 
+      - name: Generate health summary JSON
+        run: |
+          python3 -c "
+          import json, os
+          from datetime import datetime
+
+          manifest = json.load(open('scan-results/manifest.json'))
+          summary = {'scan_date': manifest['scan_date'], 'repos': []}
+
+          for repo in manifest['repos']:
+              owner = repo['owner']
+              name = repo['name']
+              lang = repo.get('language', 'unknown')
+              total_passed = total_failed = total_warn = 0
+
+              for group in ['core', 'solid', 'advanced']:
+                  path = f'scan-results/{owner}/{name}/{group}.json'
+                  if os.path.exists(path):
+                      try:
+                          data = json.load(open(path))
+                          checks = data.get('checks', [])
+                          total_passed += sum(1 for c in checks if c.get('status') == 'PASSED')
+                          total_failed += sum(1 for c in checks if c.get('status') in ('ERROR', 'FAILED'))
+                          total_warn += sum(1 for c in checks if c.get('status') == 'WARNING')
+                      except (json.JSONDecodeError, KeyError):
+                          pass
+
+              total = total_passed + total_failed + total_warn
+              health = max(0, 100 - total_failed * 5 - total_warn * 2) if total > 0 else 0
+              summary['repos'].append({
+                  'owner': owner, 'name': name, 'language': lang,
+                  'health': health, 'passed': total_passed,
+                  'failed': total_failed, 'warnings': total_warn
+              })
+
+          with open('scan-results/health-summary.json', 'w') as f:
+              json.dump(summary, f, indent=2)
+          print(f'Health summary written for {len(summary[\"repos\"])} repos.')
+          "
+
+      - name: Generate Hugo pages for archlint.ru
+        run: |
+          python3 scripts/generate-scan-pages.py
+
       - name: Commit results
         run: |
           git config user.name 'archlint-bot'
           git config user.email 'bot@archlint.ru'
-          git add scan-results/
+          git add scan-results/ site-content/
           git commit -m "nightly: scan results $(date +%Y-%m-%d)" || true
           git push || true
