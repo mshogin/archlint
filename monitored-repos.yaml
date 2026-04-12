@@ -61,3 +61,9 @@ repos:
     language: Rust
     added: 2026-04-08
     status: active
+  # TypeScript projects
+  - url: https://github.com/nassau-ecosystem/viewgraph
+    language: TypeScript
+    added: 2026-04-11
+    status: active
+    notes: graph-first terminal UI framework, npm monorepo with 4 packages
