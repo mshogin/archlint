@@ -2,12 +2,17 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"sort"
 
 	"github.com/mshogin/archlint/internal/analyzer"
+	"github.com/mshogin/archlint/internal/model"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
+
+var networkStdin bool
 
 var networkCmd = &cobra.Command{
 	Use:   "network [directory]",
@@ -25,16 +30,37 @@ advanced network/graph metrics including:
 
 Examples:
   archlint network .
-  archlint network ./internal`,
-	Args: cobra.ExactArgs(1),
+  archlint network ./internal
+  archlint collect . -o - | archlint network --stdin
+  cat architecture.yaml | archlint network --stdin`,
+	Args: cobra.RangeArgs(0, 1),
 	RunE: runNetwork,
 }
 
 func init() {
+	networkCmd.Flags().BoolVar(&networkStdin, "stdin", false, "Read architecture YAML graph from stdin instead of analyzing a directory")
 	rootCmd.AddCommand(networkCmd)
 }
 
 func runNetwork(cmd *cobra.Command, args []string) error {
+	if networkStdin {
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("failed to read from stdin: %w", err)
+		}
+		var graph model.Graph
+		if err := yaml.Unmarshal(data, &graph); err != nil {
+			return fmt.Errorf("failed to parse YAML from stdin: %w", err)
+		}
+		fmt.Printf("Nodes: %d  Edges: %d\n\n", len(graph.Nodes), len(graph.Edges))
+		nm := analyzer.ComputeNetworkMetrics(&graph)
+		printNetworkMetrics(nm)
+		return nil
+	}
+
+	if len(args) == 0 {
+		return fmt.Errorf("directory argument required when --stdin is not set")
+	}
 	codeDir := args[0]
 
 	if _, err := os.Stat(codeDir); os.IsNotExist(err) {
@@ -43,26 +69,32 @@ func runNetwork(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Analyzing architecture: %s\n", codeDir)
 
-	var a *analyzer.GoAnalyzer
-	if analyzer.DetectTypeScriptProject(codeDir) {
+	var graph *model.Graph
+	if analyzer.DetectRustProject(codeDir) {
+		rustAnalyzer := analyzer.NewRustAnalyzer()
+		g, err := rustAnalyzer.Analyze(codeDir)
+		if err != nil {
+			return fmt.Errorf("analysis error: %w", err)
+		}
+		graph = g
+	} else if analyzer.DetectTypeScriptProject(codeDir) {
 		tsAnalyzer := analyzer.NewTypeScriptAnalyzer()
-		graph, err := tsAnalyzer.Analyze(codeDir)
+		g, err := tsAnalyzer.Analyze(codeDir)
 		if err != nil {
 			return fmt.Errorf("analysis error: %w", err)
 		}
-		fmt.Printf("Nodes: %d  Edges: %d\n\n", len(graph.Nodes), len(graph.Edges))
-		nm := analyzer.ComputeNetworkMetrics(graph)
-		printNetworkMetrics(nm)
+		graph = g
 	} else {
-		a = analyzer.NewGoAnalyzer()
-		graph, err := a.Analyze(codeDir)
+		a := analyzer.NewGoAnalyzer()
+		g, err := a.Analyze(codeDir)
 		if err != nil {
 			return fmt.Errorf("analysis error: %w", err)
 		}
-		fmt.Printf("Nodes: %d  Edges: %d\n\n", len(graph.Nodes), len(graph.Edges))
-		nm := analyzer.ComputeNetworkMetrics(graph)
-		printNetworkMetrics(nm)
+		graph = g
 	}
+	fmt.Printf("Nodes: %d  Edges: %d\n\n", len(graph.Nodes), len(graph.Edges))
+	nm := analyzer.ComputeNetworkMetrics(graph)
+	printNetworkMetrics(nm)
 
 	return nil
 }

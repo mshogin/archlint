@@ -91,7 +91,7 @@ func TestCollectUnsupportedLanguage(t *testing.T) {
 		collectOutputFile = origOut
 	}()
 
-	collectLanguage = "rust"
+	collectLanguage = "cobol"
 	collectOutputFile = filepath.Join(t.TempDir(), "arch.yaml")
 
 	err := runCollect(nil, []string{"."})
