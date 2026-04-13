@@ -1,0 +1,193 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 5,
+    "passed": 3,
+    "failed": 0,
+    "warnings": 1,
+    "info": 0,
+    "skipped": 0,
+    "errors": 1
+  },
+  "graph": {
+    "nodes": 92,
+    "edges": 116
+  },
+  "checks": [
+    {
+      "name": "single_responsibility",
+      "description": "Модули зависят от <= 3 разных доменов (SRP)",
+      "status": "ERROR",
+      "threshold": 3,
+      "violations": [
+        {
+          "package": "src::export",
+          "domains_count": 15,
+          "domains": [
+            "markdown",
+            "asciidoc",
+            "src::benchmark",
+            "csv",
+            "orgmode",
+            "src::json",
+            "src::orgmode",
+            "src::csv",
+            "src::asciidoc",
+            "tests"
+          ]
+        },
+        {
+          "package": "src::benchmark",
+          "domains_count": 12,
+          "domains": [
+            "timing_result",
+            "src::output",
+            "relative_speed",
+            "executor",
+            "src::outlier_detection",
+            "src::command",
+            "src::options",
+            "src::util",
+            "src::parameter",
+            "src::executor"
+          ]
+        },
+        {
+          "package": "src::main",
+          "domains_count": 11,
+          "domains": [
+            "parameter",
+            "cli",
+            "benchmark",
+            "export",
+            "error",
+            "output",
+            "util",
+            "options",
+            "outlier_detection",
+            "timer"
+          ]
+        },
+        {
+          "package": "src::timer",
+          "domains_count": 6,
+          "domains": [
+            "nix",
+            "windows_timer",
+            "wall_clock_timer",
+            "src::util",
+            "windows_sys",
+            "unix_timer"
+          ]
+        },
+        {
+          "package": "src::benchmark::executor",
+          "domains_count": 6,
+          "domains": [
+            "src::output",
+            "src::timer",
+            "src::timing_result",
+            "src::command",
+            "src::options",
+            "src::util"
+          ]
+        },
+        {
+          "package": "src::benchmark::scheduler",
+          "domains_count": 6,
+          "domains": [
+            "src::cli",
+            "src::command",
+            "src::options",
+            "src::export",
+            "src::benchmark_result",
+            "src::executor"
+          ]
+        },
+        {
+          "package": "src::util",
+          "domains_count": 5,
+          "domains": [
+            "exit_code",
+            "randomized_environment_offset",
+            "units",
+            "number",
+            "min_max"
+          ]
+        },
+        {
+          "package": "src::export::markup",
+          "domains_count": 5,
+          "domains": [
+            "src::benchmark",
+            "src::output",
+            "src::options",
+            "src::util",
+            "src::Exporter"
+          ]
+        },
+        {
+          "package": "src::export::tests",
+          "domains_count": 4,
+          "domains": [
+            "src::benchmark",
+            "src::util",
+            "src::export",
+            "src::Exporter"
+          ]
+        },
+        {
+          "package": "src::export::csv",
+          "domains_count": 4,
+          "domains": [
+            "src::benchmark",
+            "src::options",
+            "src::util",
+            "src::Exporter"
+          ]
+        }
+      ],
+      "violations_count": 11
+    },
+    {
+      "name": "open_closed",
+      "description": "Соотношение абстракций >= 20% (OCP)",
+      "status": "WARNING",
+      "abstractions": 10,
+      "implementations": 82,
+      "ratio": 0.109,
+      "threshold": 0.2,
+      "issue": "Низкое соотношение абстракций (10.87%) - плохая расширяемость"
+    },
+    {
+      "name": "liskov_substitution",
+      "description": "Реализации не добавляют > 3 лишних зависимостей (LSP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0,
+      "interfaces_analyzed": 0,
+      "implementations_analyzed": 0
+    },
+    {
+      "name": "dependency_inversion",
+      "description": "Зависимости на абстракции >= 30% (DIP)",
+      "status": "PASSED",
+      "abstract_deps": 10,
+      "concrete_deps": 0,
+      "abstract_ratio": 1.0,
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "interface_segregation",
+      "description": "Типы с <= 5 методами (ISP)",
+      "status": "PASSED",
+      "threshold": 5,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

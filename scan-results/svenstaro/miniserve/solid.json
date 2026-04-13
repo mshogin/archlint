@@ -1,0 +1,128 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 5,
+    "passed": 3,
+    "failed": 0,
+    "warnings": 1,
+    "info": 0,
+    "skipped": 0,
+    "errors": 1
+  },
+  "graph": {
+    "nodes": 53,
+    "edges": 79
+  },
+  "checks": [
+    {
+      "name": "single_responsibility",
+      "description": "Модули зависят от <= 3 разных доменов (SRP)",
+      "status": "ERROR",
+      "threshold": 3,
+      "violations": [
+        {
+          "package": "src::main",
+          "domains_count": 17,
+          "domains": [
+            "args",
+            "src::file_op",
+            "src::webdav_fs",
+            "webdav_fs",
+            "file_op",
+            "auth",
+            "pipe",
+            "archive",
+            "src::errors",
+            "file_utils"
+          ]
+        },
+        {
+          "package": "src::args",
+          "domains_count": 7,
+          "domains": [
+            "auth",
+            "src::renderer",
+            "src::listing",
+            "src::auth",
+            "AuthParseError",
+            "RequiredAuthPassword",
+            "tests"
+          ]
+        },
+        {
+          "package": "src::listing",
+          "domains_count": 6,
+          "domains": [
+            "percent_encode_sets",
+            "src::archive",
+            "src::errors",
+            "src::renderer",
+            "src::auth",
+            "src::percent_encode_sets"
+          ]
+        },
+        {
+          "package": "src::renderer",
+          "domains_count": 4,
+          "domains": [
+            "src::consts",
+            "tests",
+            "src::auth",
+            "src::listing"
+          ]
+        },
+        {
+          "package": "tests::navigation",
+          "domains_count": 4,
+          "domains": [
+            "utils",
+            "fixtures",
+            "tests::fixtures",
+            "tests::utils"
+          ]
+        }
+      ],
+      "violations_count": 5
+    },
+    {
+      "name": "open_closed",
+      "description": "Соотношение абстракций >= 20% (OCP)",
+      "status": "WARNING",
+      "abstractions": 0,
+      "implementations": 53,
+      "ratio": 0.0,
+      "threshold": 0.2,
+      "issue": "Низкое соотношение абстракций (0.00%) - плохая расширяемость"
+    },
+    {
+      "name": "liskov_substitution",
+      "description": "Реализации не добавляют > 3 лишних зависимостей (LSP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0,
+      "interfaces_analyzed": 0,
+      "implementations_analyzed": 0
+    },
+    {
+      "name": "dependency_inversion",
+      "description": "Зависимости на абстракции >= 30% (DIP)",
+      "status": "PASSED",
+      "abstract_deps": 0,
+      "concrete_deps": 0,
+      "abstract_ratio": 1.0,
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "interface_segregation",
+      "description": "Типы с <= 5 методами (ISP)",
+      "status": "PASSED",
+      "threshold": 5,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

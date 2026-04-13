@@ -1,0 +1,168 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 5,
+    "passed": 3,
+    "failed": 0,
+    "warnings": 1,
+    "info": 0,
+    "skipped": 0,
+    "errors": 1
+  },
+  "graph": {
+    "nodes": 71,
+    "edges": 96
+  },
+  "checks": [
+    {
+      "name": "single_responsibility",
+      "description": "Модули зависят от <= 3 разных доменов (SRP)",
+      "status": "ERROR",
+      "threshold": 3,
+      "violations": [
+        {
+          "package": "src::main",
+          "domains_count": 30,
+          "domains": [
+            "utils",
+            "src::cli",
+            "formatting",
+            "error_reporting",
+            "src::buffer",
+            "auth",
+            "buffer",
+            "src::printer",
+            "decoder",
+            "src::utils"
+          ]
+        },
+        {
+          "package": "tests::cases",
+          "domains_count": 6,
+          "domains": [
+            "logging",
+            "unix_socket",
+            "download",
+            "xml",
+            "compress_request_body",
+            "auth_message_signature"
+          ]
+        },
+        {
+          "package": "src::request_items",
+          "domains_count": 5,
+          "domains": [
+            "src::nested_json",
+            "src::utils",
+            "src::cli",
+            "tests",
+            "RequestItem"
+          ]
+        },
+        {
+          "package": "src::auth",
+          "domains_count": 5,
+          "domains": [
+            "src::utils",
+            "src::cli",
+            "tests",
+            "src::middleware",
+            "src::netrc"
+          ]
+        },
+        {
+          "package": "src::cli",
+          "domains_count": 5,
+          "domains": [
+            "src::utils",
+            "src::redacted",
+            "tests",
+            "src::buffer",
+            "src::request_items"
+          ]
+        },
+        {
+          "package": "src::to_curl",
+          "domains_count": 4,
+          "domains": [
+            "src::cli",
+            "src::request_items",
+            "src::utils",
+            "tests"
+          ]
+        },
+        {
+          "package": "src::redirect",
+          "domains_count": 4,
+          "domains": [
+            "src::middleware",
+            "src::cli",
+            "src::utils",
+            "tests"
+          ]
+        },
+        {
+          "package": "src::nested_json",
+          "domains_count": 4,
+          "domains": [
+            "PathAction",
+            "src::utils",
+            "Token",
+            "tests"
+          ]
+        },
+        {
+          "package": "src::download",
+          "domains_count": 4,
+          "domains": [
+            "src::content_disposition",
+            "src::utils",
+            "src::decoder",
+            "tests"
+          ]
+        }
+      ],
+      "violations_count": 9
+    },
+    {
+      "name": "open_closed",
+      "description": "Соотношение абстракций >= 20% (OCP)",
+      "status": "WARNING",
+      "abstractions": 3,
+      "implementations": 68,
+      "ratio": 0.042,
+      "threshold": 0.2,
+      "issue": "Низкое соотношение абстракций (4.23%) - плохая расширяемость"
+    },
+    {
+      "name": "liskov_substitution",
+      "description": "Реализации не добавляют > 3 лишних зависимостей (LSP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0,
+      "interfaces_analyzed": 1,
+      "implementations_analyzed": 0
+    },
+    {
+      "name": "dependency_inversion",
+      "description": "Зависимости на абстракции >= 30% (DIP)",
+      "status": "PASSED",
+      "abstract_deps": 2,
+      "concrete_deps": 0,
+      "abstract_ratio": 1.0,
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "interface_segregation",
+      "description": "Типы с <= 5 методами (ISP)",
+      "status": "PASSED",
+      "threshold": 5,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

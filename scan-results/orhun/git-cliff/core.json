@@ -1,0 +1,365 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 11,
+    "passed": 8,
+    "failed": 0,
+    "warnings": 0,
+    "info": 0,
+    "skipped": 0,
+    "errors": 3
+  },
+  "graph": {
+    "nodes": 100,
+    "edges": 191
+  },
+  "checks": [
+    {
+      "name": "dag_check",
+      "description": "Граф должен быть ациклическим (без циклических зависимостей)",
+      "status": "PASSED",
+      "cycles": [],
+      "cycles_count": 0
+    },
+    {
+      "name": "max_fan_out",
+      "description": "Компонент не должен зависеть от более чем 5 других",
+      "status": "ERROR",
+      "threshold": 5,
+      "violations": [
+        {
+          "node": "git-cliff::src::args",
+          "fan_out": 8,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff::src::lib",
+          "fan_out": 6,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::lib",
+          "fan_out": 14,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::template",
+          "fan_out": 8,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::commit",
+          "fan_out": 8,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::config",
+          "fan_out": 10,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::release",
+          "fan_out": 11,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::remote::azure_devops",
+          "fan_out": 9,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::remote",
+          "fan_out": 16,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::remote::bitbucket",
+          "fan_out": 9,
+          "threshold": 5
+        }
+      ],
+      "violations_count": 16
+    },
+    {
+      "name": "coupling",
+      "description": "Ca <= 10, Ce <= 10",
+      "status": "ERROR",
+      "ca_threshold": 10,
+      "ce_threshold": 10,
+      "violations": [
+        {
+          "node": "git-cliff-core::src::lib",
+          "afferent_coupling": 0,
+          "efferent_coupling": 14,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::src::release",
+          "afferent_coupling": 0,
+          "efferent_coupling": 11,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::src::remote",
+          "afferent_coupling": 0,
+          "efferent_coupling": 16,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::src::repo",
+          "afferent_coupling": 0,
+          "efferent_coupling": 11,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "serde",
+          "afferent_coupling": 13,
+          "efferent_coupling": 0,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::error",
+          "afferent_coupling": 16,
+          "efferent_coupling": 0,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "test",
+          "afferent_coupling": 16,
+          "efferent_coupling": 0,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::config",
+          "afferent_coupling": 13,
+          "efferent_coupling": 0,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        }
+      ],
+      "violations_count": 8
+    },
+    {
+      "name": "instability",
+      "description": "Зависимости должны идти от нестабильных к стабильным",
+      "status": "PASSED",
+      "most_unstable": [
+        {
+          "node": "git-cliff::src::args",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 8
+        },
+        {
+          "node": "git-cliff::src::lib",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 6
+        },
+        {
+          "node": "git-cliff::src::bin::completions",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 3
+        },
+        {
+          "node": "git-cliff::src::bin::mangen",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 3
+        },
+        {
+          "node": "git-cliff::src::profiler",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 1
+        }
+      ],
+      "most_stable": [
+        {
+          "node": "git-cliff-core::summary",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "git-cliff-core::template",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "chrono",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "git-cliff-core::tag",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "temp_dir",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "layer_violations",
+      "description": "Зависимости должны идти только вниз по слоям",
+      "status": "PASSED",
+      "layers": {
+        "cmd": 0,
+        "api": 1,
+        "handler": 1,
+        "controller": 1,
+        "service": 2,
+        "usecase": 2,
+        "internal": 2,
+        "domain": 3,
+        "entity": 3,
+        "model": 3,
+        "repository": 4,
+        "storage": 4,
+        "infrastructure": 5,
+        "pkg": 6
+      },
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "forbidden_dependencies",
+      "description": "Проверка запрещенных зависимостей",
+      "status": "PASSED",
+      "rules": [
+        {
+          "from": "handler",
+          "to": "repository"
+        },
+        {
+          "from": "controller",
+          "to": "repository"
+        },
+        {
+          "from": "api",
+          "to": "storage"
+        },
+        {
+          "from": "model",
+          "to": "service"
+        },
+        {
+          "from": "entity",
+          "to": "repository"
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hub_nodes",
+      "description": "Компоненты с > 10 связей (потенциальные God Objects)",
+      "status": "ERROR",
+      "threshold": 10,
+      "hubs": [
+        {
+          "node": "git-cliff-core::src::remote",
+          "total_degree": 16,
+          "in_degree": 0,
+          "out_degree": 16
+        },
+        {
+          "node": "git-cliff-core::error",
+          "total_degree": 16,
+          "in_degree": 16,
+          "out_degree": 0
+        },
+        {
+          "node": "test",
+          "total_degree": 16,
+          "in_degree": 16,
+          "out_degree": 0
+        },
+        {
+          "node": "git-cliff-core::src::lib",
+          "total_degree": 14,
+          "in_degree": 0,
+          "out_degree": 14
+        },
+        {
+          "node": "serde",
+          "total_degree": 13,
+          "in_degree": 13,
+          "out_degree": 0
+        },
+        {
+          "node": "git-cliff-core::config",
+          "total_degree": 13,
+          "in_degree": 13,
+          "out_degree": 0
+        },
+        {
+          "node": "git-cliff-core::src::release",
+          "total_degree": 11,
+          "in_degree": 0,
+          "out_degree": 11
+        },
+        {
+          "node": "git-cliff-core::src::repo",
+          "total_degree": 11,
+          "in_degree": 0,
+          "out_degree": 11
+        }
+      ],
+      "hubs_count": 8
+    },
+    {
+      "name": "orphan_nodes",
+      "description": "Компоненты без связей (возможно мертвый код)",
+      "status": "PASSED",
+      "orphans": [],
+      "orphans_count": 0
+    },
+    {
+      "name": "strongly_connected_components",
+      "description": "Группы с взаимными зависимостями (размер > 1)",
+      "status": "PASSED",
+      "total_sccs": 100,
+      "problematic_sccs": [],
+      "problematic_count": 0
+    },
+    {
+      "name": "graph_depth",
+      "description": "Глубина графа должна быть <= 10",
+      "status": "PASSED",
+      "depth": 1,
+      "max_depth": 10,
+      "longest_path": [
+        "git-cliff::src::args",
+        "tests"
+      ]
+    },
+    {
+      "name": "component_distance",
+      "description": "Расстояние между компонентами должно быть <= 5",
+      "status": "PASSED",
+      "max_distance": 5,
+      "long_paths": [],
+      "long_paths_count": 0
+    }
+  ]
+}

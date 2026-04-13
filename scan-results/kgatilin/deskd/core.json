@@ -1,0 +1,351 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 11,
+    "passed": 6,
+    "failed": 0,
+    "warnings": 0,
+    "info": 0,
+    "skipped": 0,
+    "errors": 5
+  },
+  "graph": {
+    "nodes": 145,
+    "edges": 215
+  },
+  "checks": [
+    {
+      "name": "dag_check",
+      "description": "Граф должен быть ациклическим (без циклических зависимостей)",
+      "status": "PASSED",
+      "cycles": [],
+      "cycles_count": 0
+    },
+    {
+      "name": "max_fan_out",
+      "description": "Компонент не должен зависеть от более чем 5 других",
+      "status": "ERROR",
+      "threshold": 5,
+      "violations": [
+        {
+          "node": "src::domain",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
+          "node": "src::app",
+          "fan_out": 27,
+          "threshold": 5
+        },
+        {
+          "node": "src::app::commands",
+          "fan_out": 13,
+          "threshold": 5
+        },
+        {
+          "node": "src::infra",
+          "fan_out": 9,
+          "threshold": 5
+        }
+      ],
+      "violations_count": 4
+    },
+    {
+      "name": "coupling",
+      "description": "Ca <= 10, Ce <= 10",
+      "status": "ERROR",
+      "ca_threshold": 10,
+      "ce_threshold": 10,
+      "violations": [
+        {
+          "node": "src::config",
+          "afferent_coupling": 18,
+          "efferent_coupling": 3,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::domain",
+          "afferent_coupling": 21,
+          "efferent_coupling": 7,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::app",
+          "afferent_coupling": 20,
+          "efferent_coupling": 27,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::app::commands",
+          "afferent_coupling": 0,
+          "efferent_coupling": 13,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::ports",
+          "afferent_coupling": 13,
+          "efferent_coupling": 3,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::infra",
+          "afferent_coupling": 21,
+          "efferent_coupling": 9,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "tests",
+          "afferent_coupling": 37,
+          "efferent_coupling": 0,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        }
+      ],
+      "violations_count": 7
+    },
+    {
+      "name": "instability",
+      "description": "Зависимости должны идти от нестабильных к стабильным",
+      "status": "ERROR",
+      "most_unstable": [
+        {
+          "node": "src::lib",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 5
+        },
+        {
+          "node": "src::bin::session2graph",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 1
+        },
+        {
+          "node": "src::main",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
+          "node": "src::domain::task",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 1
+        },
+        {
+          "node": "src::domain::events",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 1
+        }
+      ],
+      "most_stable": [
+        {
+          "node": "memory_store",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "paths",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "sm_store",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "task_store",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "unix_bus",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        }
+      ],
+      "violations": [
+        {
+          "from": "src::config",
+          "to": "src::infra",
+          "from_instability": 0.143,
+          "to_instability": 0.3,
+          "issue": "Зависимость направлена к менее стабильному компоненту"
+        },
+        {
+          "from": "src::config",
+          "to": "src::domain",
+          "from_instability": 0.143,
+          "to_instability": 0.25,
+          "issue": "Зависимость направлена к менее стабильному компоненту"
+        }
+      ],
+      "violations_count": 2
+    },
+    {
+      "name": "layer_violations",
+      "description": "Зависимости должны идти только вниз по слоям",
+      "status": "PASSED",
+      "layers": {
+        "cmd": 0,
+        "api": 1,
+        "handler": 1,
+        "controller": 1,
+        "service": 2,
+        "usecase": 2,
+        "internal": 2,
+        "domain": 3,
+        "entity": 3,
+        "model": 3,
+        "repository": 4,
+        "storage": 4,
+        "infrastructure": 5,
+        "pkg": 6
+      },
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "forbidden_dependencies",
+      "description": "Проверка запрещенных зависимостей",
+      "status": "PASSED",
+      "rules": [
+        {
+          "from": "handler",
+          "to": "repository"
+        },
+        {
+          "from": "controller",
+          "to": "repository"
+        },
+        {
+          "from": "api",
+          "to": "storage"
+        },
+        {
+          "from": "model",
+          "to": "service"
+        },
+        {
+          "from": "entity",
+          "to": "repository"
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hub_nodes",
+      "description": "Компоненты с > 10 связей (потенциальные God Objects)",
+      "status": "ERROR",
+      "threshold": 10,
+      "hubs": [
+        {
+          "node": "src::app",
+          "total_degree": 47,
+          "in_degree": 20,
+          "out_degree": 27
+        },
+        {
+          "node": "tests",
+          "total_degree": 37,
+          "in_degree": 37,
+          "out_degree": 0
+        },
+        {
+          "node": "src::infra",
+          "total_degree": 30,
+          "in_degree": 21,
+          "out_degree": 9
+        },
+        {
+          "node": "src::domain",
+          "total_degree": 28,
+          "in_degree": 21,
+          "out_degree": 7
+        },
+        {
+          "node": "src::config",
+          "total_degree": 21,
+          "in_degree": 18,
+          "out_degree": 3
+        },
+        {
+          "node": "src::ports",
+          "total_degree": 16,
+          "in_degree": 13,
+          "out_degree": 3
+        },
+        {
+          "node": "src::app::commands",
+          "total_degree": 13,
+          "in_degree": 0,
+          "out_degree": 13
+        }
+      ],
+      "hubs_count": 7
+    },
+    {
+      "name": "orphan_nodes",
+      "description": "Компоненты без связей (возможно мертвый код)",
+      "status": "ERROR",
+      "orphans": [
+        "src::domain::message",
+        "src::domain::context",
+        "src::app::commands::restart",
+        "src::app::cli",
+        "src::ports::executor",
+        "build",
+        "tests::bus_integration",
+        "tests::crash_recovery",
+        "tests::budget_enforcement",
+        "tests::schedule_to_worker",
+        "tests::agent_lifecycle"
+      ],
+      "orphans_count": 11
+    },
+    {
+      "name": "strongly_connected_components",
+      "description": "Группы с взаимными зависимостями (размер > 1)",
+      "status": "PASSED",
+      "total_sccs": 145,
+      "problematic_sccs": [],
+      "problematic_count": 0
+    },
+    {
+      "name": "graph_depth",
+      "description": "Глубина графа должна быть <= 10",
+      "status": "PASSED",
+      "depth": 3,
+      "max_depth": 10,
+      "longest_path": [
+        "src::app::process_builder",
+        "src::config",
+        "src::infra",
+        "bus_server"
+      ]
+    },
+    {
+      "name": "component_distance",
+      "description": "Расстояние между компонентами должно быть <= 5",
+      "status": "PASSED",
+      "max_distance": 5,
+      "long_paths": [],
+      "long_paths_count": 0
+    }
+  ]
+}

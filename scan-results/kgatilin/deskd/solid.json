@@ -1,0 +1,202 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 5,
+    "passed": 3,
+    "failed": 0,
+    "warnings": 1,
+    "info": 0,
+    "skipped": 0,
+    "errors": 1
+  },
+  "graph": {
+    "nodes": 145,
+    "edges": 215
+  },
+  "checks": [
+    {
+      "name": "single_responsibility",
+      "description": "Модули зависят от <= 3 разных доменов (SRP)",
+      "status": "ERROR",
+      "threshold": 3,
+      "violations": [
+        {
+          "package": "src::app",
+          "domains_count": 27,
+          "domains": [
+            "mcp_protocol",
+            "workflow",
+            "schedule",
+            "unified_inbox",
+            "tasklog",
+            "serve",
+            "process_builder",
+            "worker",
+            "bus_api",
+            "acp"
+          ]
+        },
+        {
+          "package": "src::app::commands",
+          "domains_count": 13,
+          "domains": [
+            "upgrade",
+            "tests",
+            "sm",
+            "status",
+            "schedule",
+            "graph",
+            "remind",
+            "restart",
+            "usage",
+            "bus"
+          ]
+        },
+        {
+          "package": "src::infra",
+          "domains_count": 9,
+          "domains": [
+            "memory_store",
+            "memory_bus",
+            "sm_store",
+            "task_store",
+            "bus_server",
+            "dto",
+            "unix_bus",
+            "context_store",
+            "paths"
+          ]
+        },
+        {
+          "package": "src::domain",
+          "domains_count": 7,
+          "domains": [
+            "message",
+            "statemachine",
+            "context",
+            "events",
+            "workitem",
+            "task",
+            "agent"
+          ]
+        },
+        {
+          "package": "src::lib",
+          "domains_count": 5,
+          "domains": [
+            "config",
+            "ports",
+            "infra",
+            "app",
+            "domain"
+          ]
+        },
+        {
+          "package": "src::app::workflow",
+          "domains_count": 5,
+          "domains": [
+            "tests",
+            "src::ports",
+            "src::infra",
+            "src::domain",
+            "src::app"
+          ]
+        },
+        {
+          "package": "src::app::bus_api",
+          "domains_count": 5,
+          "domains": [
+            "tests",
+            "src::ports",
+            "src::infra",
+            "src::config",
+            "src::app"
+          ]
+        },
+        {
+          "package": "src::app::agent",
+          "domains_count": 5,
+          "domains": [
+            "tests",
+            "src::ports",
+            "src::agent_process",
+            "src::process_builder",
+            "src::agent_registry"
+          ]
+        },
+        {
+          "package": "src::app::agent_registry",
+          "domains_count": 5,
+          "domains": [
+            "tests",
+            "src::infra",
+            "src::process_builder",
+            "src::config",
+            "src::domain"
+          ]
+        },
+        {
+          "package": "src::infra::dto",
+          "domains_count": 5,
+          "domains": [
+            "instance",
+            "config",
+            "context",
+            "bus",
+            "task"
+          ]
+        }
+      ],
+      "violations_count": 19
+    },
+    {
+      "name": "open_closed",
+      "description": "Соотношение абстракций >= 20% (OCP)",
+      "status": "WARNING",
+      "abstractions": 5,
+      "implementations": 140,
+      "ratio": 0.034,
+      "threshold": 0.2,
+      "issue": "Низкое соотношение абстракций (3.45%) - плохая расширяемость"
+    },
+    {
+      "name": "liskov_substitution",
+      "description": "Реализации не добавляют > 3 лишних зависимостей (LSP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0,
+      "interfaces_analyzed": 0,
+      "implementations_analyzed": 0
+    },
+    {
+      "name": "dependency_inversion",
+      "description": "Зависимости на абстракции >= 30% (DIP)",
+      "status": "PASSED",
+      "abstract_deps": 14,
+      "concrete_deps": 2,
+      "abstract_ratio": 0.875,
+      "threshold": 0.3,
+      "violations": [
+        {
+          "source": "src::app",
+          "concrete_deps": [
+            "adapters",
+            "mcp_service"
+          ],
+          "count": 2
+        }
+      ],
+      "violations_count": 1
+    },
+    {
+      "name": "interface_segregation",
+      "description": "Типы с <= 5 методами (ISP)",
+      "status": "PASSED",
+      "threshold": 5,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

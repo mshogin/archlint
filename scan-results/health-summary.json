@@ -1,13 +1,13 @@
 {
-  "scan_date": "2026-04-12T04:05:45Z",
+  "scan_date": "2026-04-13T04:10:24.792344",
   "repos": [
     {
       "owner": "mshogin",
       "name": "archlint",
       "language": "Go",
-      "health": 34,
-      "passed": 22,
-      "failed": 12,
+      "health": 29,
+      "passed": 21,
+      "failed": 13,
       "warnings": 3
     },
     {

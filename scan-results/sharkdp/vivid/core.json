@@ -1,0 +1,235 @@
+{
+  "status": "FAILED",
+  "source": "structure",
+  "summary": {
+    "total_checks": 11,
+    "passed": 5,
+    "failed": 1,
+    "warnings": 0,
+    "info": 0,
+    "skipped": 1,
+    "errors": 4
+  },
+  "graph": {
+    "nodes": 19,
+    "edges": 27
+  },
+  "checks": [
+    {
+      "name": "dag_check",
+      "description": "Граф должен быть ациклическим (без циклических зависимостей)",
+      "status": "FAILED",
+      "cycles": [
+        [
+          "src::color"
+        ]
+      ],
+      "cycles_count": 1
+    },
+    {
+      "name": "max_fan_out",
+      "description": "Компонент не должен зависеть от более чем 5 других",
+      "status": "ERROR",
+      "threshold": 5,
+      "violations": [
+        {
+          "node": "src::theme",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
+          "node": "src::main",
+          "fan_out": 11,
+          "threshold": 5
+        }
+      ],
+      "violations_count": 2
+    },
+    {
+      "name": "coupling",
+      "description": "Ca <= 10, Ce <= 10",
+      "status": "ERROR",
+      "ca_threshold": 10,
+      "ce_threshold": 10,
+      "violations": [
+        {
+          "node": "src::main",
+          "afferent_coupling": 0,
+          "efferent_coupling": 11,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        }
+      ],
+      "violations_count": 1
+    },
+    {
+      "name": "instability",
+      "description": "Зависимости должны идти от нестабильных к стабильным",
+      "status": "PASSED",
+      "most_unstable": [
+        {
+          "node": "src::main",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 11
+        },
+        {
+          "node": "src::theme",
+          "instability": 0.875,
+          "ca": 1,
+          "ce": 7
+        },
+        {
+          "node": "src::filetypes",
+          "instability": 0.833,
+          "ca": 1,
+          "ce": 5
+        },
+        {
+          "node": "src::color",
+          "instability": 0.5,
+          "ca": 3,
+          "ce": 3
+        },
+        {
+          "node": "tests::main",
+          "instability": 0.5,
+          "ca": 0,
+          "ce": 0
+        }
+      ],
+      "most_stable": [
+        {
+          "node": "font_style",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "theme",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "types",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "util",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "src::FileTypes",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "layer_violations",
+      "description": "Зависимости должны идти только вниз по слоям",
+      "status": "PASSED",
+      "layers": {
+        "cmd": 0,
+        "api": 1,
+        "handler": 1,
+        "controller": 1,
+        "service": 2,
+        "usecase": 2,
+        "internal": 2,
+        "domain": 3,
+        "entity": 3,
+        "model": 3,
+        "repository": 4,
+        "storage": 4,
+        "infrastructure": 5,
+        "pkg": 6
+      },
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "forbidden_dependencies",
+      "description": "Проверка запрещенных зависимостей",
+      "status": "PASSED",
+      "rules": [
+        {
+          "from": "handler",
+          "to": "repository"
+        },
+        {
+          "from": "controller",
+          "to": "repository"
+        },
+        {
+          "from": "api",
+          "to": "storage"
+        },
+        {
+          "from": "model",
+          "to": "service"
+        },
+        {
+          "from": "entity",
+          "to": "repository"
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hub_nodes",
+      "description": "Компоненты с > 10 связей (потенциальные God Objects)",
+      "status": "ERROR",
+      "threshold": 10,
+      "hubs": [
+        {
+          "node": "src::main",
+          "total_degree": 11,
+          "in_degree": 0,
+          "out_degree": 11
+        }
+      ],
+      "hubs_count": 1
+    },
+    {
+      "name": "orphan_nodes",
+      "description": "Компоненты без связей (возможно мертвый код)",
+      "status": "ERROR",
+      "orphans": [
+        "tests::main"
+      ],
+      "orphans_count": 1
+    },
+    {
+      "name": "strongly_connected_components",
+      "description": "Группы с взаимными зависимостями (размер > 1)",
+      "status": "PASSED",
+      "total_sccs": 19,
+      "problematic_sccs": [],
+      "problematic_count": 0
+    },
+    {
+      "name": "graph_depth",
+      "description": "Глубина графа зависимостей",
+      "status": "SKIP",
+      "reason": "Граф содержит циклы, невозможно вычислить глубину"
+    },
+    {
+      "name": "component_distance",
+      "description": "Расстояние между компонентами должно быть <= 5",
+      "status": "PASSED",
+      "max_distance": 5,
+      "long_paths": [],
+      "long_paths_count": 0
+    }
+  ]
+}

@@ -1,0 +1,557 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 29,
+    "passed": 17,
+    "failed": 0,
+    "warnings": 2,
+    "info": 7,
+    "skipped": 0,
+    "errors": 3
+  },
+  "graph": {
+    "nodes": 30,
+    "edges": 26
+  },
+  "checks": [
+    {
+      "name": "betweenness_centrality",
+      "description": "Компоненты с centrality > 0.3 являются узкими местами",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "bottlenecks": [],
+      "bottlenecks_count": 0
+    },
+    {
+      "name": "pagerank",
+      "description": "Компоненты с PageRank > 0.1 критически важны",
+      "status": "PASSED",
+      "threshold": 0.1,
+      "critical_components": [],
+      "critical_count": 0
+    },
+    {
+      "name": "modularity",
+      "description": "Модульность графа должна быть >= 0.3",
+      "status": "PASSED",
+      "modularity": 0.399,
+      "threshold": 0.3,
+      "communities_count": 15
+    },
+    {
+      "name": "abstractness",
+      "description": "Абстрактность должна быть между 0.1 и 0.8",
+      "status": "ERROR",
+      "abstractness": 0.0,
+      "abstract_count": 0,
+      "concrete_count": 30,
+      "total_count": 30,
+      "min_threshold": 0.1,
+      "max_threshold": 0.8,
+      "issue": "Слишком мало абстракций (< 0.1)"
+    },
+    {
+      "name": "distance_from_main_sequence",
+      "description": "D = |A + I - 1| должен быть близок к 0",
+      "status": "ERROR",
+      "packages": [
+        {
+          "package": "pkg",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 11,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "pkg::trend::trend",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::trend::trend_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::validator::validator",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::analyzer::analyzer_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::template::template",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::template::template_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::config::config",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::metrics::basic",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::metrics::domain",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        }
+      ],
+      "violations": [
+        {
+          "package": "pkg",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 11,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        }
+      ],
+      "violations_count": 1
+    },
+    {
+      "name": "clustering_coefficient",
+      "description": "Средний коэффициент кластеризации >= 0.1",
+      "status": "WARNING",
+      "avg_clustering": 0.0,
+      "threshold": 0.1,
+      "low_clustering_nodes": [
+        {
+          "node": "pkg::server::server",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg::analyzer::analyzer",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg::perf::perf",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg::abtest::abtest",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg::router::router",
+          "coefficient": 0.0
+        },
+        {
+          "node": "cmd::promptlint::main",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg/analyzer",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg/router",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg/validator",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg/config",
+          "coefficient": 0.0
+        }
+      ],
+      "low_clustering_count": 11
+    },
+    {
+      "name": "edge_density",
+      "description": "Плотность графа между 0.01 и 0.3",
+      "status": "PASSED",
+      "density": 0.0299,
+      "nodes": 30,
+      "edges": 26,
+      "max_possible_edges": 870
+    },
+    {
+      "name": "articulation_points",
+      "description": "Критические узлы (удаление разбивает граф)",
+      "status": "WARNING",
+      "articulation_points": [
+        "cmd::promptlint::main",
+        "pkg::analyzer::analyzer",
+        "pkg/metrics",
+        "pkg/analyzer"
+      ],
+      "count": 4,
+      "recommendation": "Уменьшить зависимость от критических узлов"
+    },
+    {
+      "name": "bridge_edges",
+      "description": "Критические рёбра (удаление разбивает граф)",
+      "status": "INFO",
+      "bridges": [
+        {
+          "from": "pkg::analyzer::analyzer",
+          "to": "pkg/score"
+        },
+        {
+          "from": "pkg::middleware::middleware",
+          "to": "pkg/analyzer"
+        },
+        {
+          "from": "pkg::score::score",
+          "to": "pkg/metrics"
+        },
+        {
+          "from": "pkg::telemetry::telemetry",
+          "to": "pkg/analyzer"
+        },
+        {
+          "from": "cmd::promptlint::main",
+          "to": "pkg/abtest"
+        },
+        {
+          "from": "cmd::promptlint::main",
+          "to": "pkg/perf"
+        },
+        {
+          "from": "cmd::promptlint::main",
+          "to": "pkg/server"
+        },
+        {
+          "from": "cmd::promptlint::main",
+          "to": "pkg/template"
+        },
+        {
+          "from": "cmd::promptlint::main",
+          "to": "pkg/trend"
+        }
+      ],
+      "count": 9
+    },
+    {
+      "name": "graph_diameter",
+      "description": "Диаметр графа",
+      "status": "INFO",
+      "diameter": "infinity",
+      "reason": "Граф не связан (11 компонент)"
+    },
+    {
+      "name": "avg_path_length",
+      "description": "Средняя длина пути <= 5.0",
+      "status": "PASSED",
+      "avg_path_length": 2.584,
+      "threshold": 5.0,
+      "note": "Вычислено для наибольшей связной компоненты"
+    },
+    {
+      "name": "closeness_centrality",
+      "description": "Близость узлов к остальным",
+      "status": "INFO",
+      "central_nodes": [],
+      "peripheral_nodes": [
+        {
+          "node": "pkg/router",
+          "closeness": 0.138
+        },
+        {
+          "node": "pkg/config",
+          "closeness": 0.138
+        },
+        {
+          "node": "pkg/validator",
+          "closeness": 0.103
+        },
+        {
+          "node": "pkg/metrics",
+          "closeness": 0.103
+        },
+        {
+          "node": "pkg/score",
+          "closeness": 0.034
+        },
+        {
+          "node": "pkg/abtest",
+          "closeness": 0.034
+        },
+        {
+          "node": "pkg/perf",
+          "closeness": 0.034
+        },
+        {
+          "node": "pkg/server",
+          "closeness": 0.034
+        },
+        {
+          "node": "pkg/template",
+          "closeness": 0.034
+        },
+        {
+          "node": "pkg/trend",
+          "closeness": 0.034
+        }
+      ],
+      "avg_closeness": 0.03
+    },
+    {
+      "name": "eigenvector_centrality",
+      "description": "Влиятельность узлов",
+      "status": "INFO",
+      "threshold": 0.3,
+      "influential_nodes": [
+        {
+          "node": "pkg/analyzer",
+          "eigenvector": 0.625
+        },
+        {
+          "node": "pkg/router",
+          "eigenvector": 0.417
+        },
+        {
+          "node": "pkg/config",
+          "eigenvector": 0.417
+        },
+        {
+          "node": "pkg/validator",
+          "eigenvector": 0.313
+        },
+        {
+          "node": "pkg/metrics",
+          "eigenvector": 0.313
+        }
+      ],
+      "influential_count": 5,
+      "top_5": [
+        {
+          "node": "pkg/analyzer",
+          "eigenvector": 0.625
+        },
+        {
+          "node": "pkg/router",
+          "eigenvector": 0.417
+        },
+        {
+          "node": "pkg/config",
+          "eigenvector": 0.417
+        },
+        {
+          "node": "pkg/validator",
+          "eigenvector": 0.313
+        },
+        {
+          "node": "pkg/metrics",
+          "eigenvector": 0.313
+        }
+      ]
+    },
+    {
+      "name": "k_core_decomposition",
+      "description": "Максимальное k-ядро <= 5",
+      "status": "PASSED",
+      "max_k_core": 3,
+      "threshold": 5,
+      "core_distribution": {
+        "0": 10,
+        "1": 9,
+        "2": 5,
+        "3": 6
+      },
+      "high_core_nodes": [],
+      "high_core_count": 0
+    },
+    {
+      "name": "graph_cliques",
+      "description": "Клики размером <= 4",
+      "status": "PASSED",
+      "max_clique_size": 2,
+      "threshold": 4,
+      "large_cliques": [],
+      "large_cliques_count": 0,
+      "total_cliques": 36
+    },
+    {
+      "name": "degree_distribution",
+      "description": "Распределение степеней узлов",
+      "status": "INFO",
+      "mean_degree": 1.73,
+      "std_degree": 2.06,
+      "max_degree": 9,
+      "min_degree": 0,
+      "distribution": {
+        "0": 10,
+        "1": 9,
+        "2": 2,
+        "3": 4,
+        "4": 3,
+        "6": 1,
+        "9": 1
+      },
+      "is_scale_free": true,
+      "interpretation": "Scale-free сеть (hub-dominated)"
+    },
+    {
+      "name": "dependency_entropy",
+      "description": "Энтропия распределения зависимостей",
+      "status": "PASSED",
+      "entropy": 2.776,
+      "max_entropy": 4.907,
+      "normalized_entropy": 0.566
+    },
+    {
+      "name": "gini_coefficient",
+      "description": "Коэффициент Джини <= 0.6",
+      "status": "PASSED",
+      "gini": 0.591,
+      "threshold": 0.6,
+      "interpretation": "Неравномерно"
+    },
+    {
+      "name": "zscore_outliers",
+      "description": "Узлы с |Z| > 3.0",
+      "status": "ERROR",
+      "outliers": [
+        {
+          "node": "cmd::promptlint::main",
+          "degree": 9,
+          "z_score": 3.52
+        }
+      ],
+      "outliers_count": 1,
+      "mean_degree": 1.73,
+      "std_degree": 2.06,
+      "z_threshold": 3.0
+    },
+    {
+      "name": "algebraic_connectivity",
+      "status": "INFO",
+      "algebraic_connectivity": 0,
+      "reason": "Граф не связан (λ₂ = 0)"
+    },
+    {
+      "name": "spectral_radius",
+      "description": "Спектральный радиус матрицы смежности",
+      "status": "INFO",
+      "spectral_radius": 0.0,
+      "max_degree": 9,
+      "interpretation": "Коррелирует с максимальной степенью"
+    },
+    {
+      "name": "cohesion_lcom4",
+      "description": "LCOM4 <= 1 (связность методов)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0,
+      "types_analyzed": 0
+    },
+    {
+      "name": "change_propagation",
+      "description": "Радиус изменений <= 20 компонентов",
+      "status": "PASSED",
+      "threshold": 20,
+      "avg_impact": 0.87,
+      "max_impact": 6,
+      "top_impact": [
+        {
+          "node": "pkg/analyzer",
+          "impact": 6
+        },
+        {
+          "node": "pkg/router",
+          "impact": 4
+        },
+        {
+          "node": "pkg/config",
+          "impact": 4
+        },
+        {
+          "node": "pkg/validator",
+          "impact": 3
+        },
+        {
+          "node": "pkg/metrics",
+          "impact": 3
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "blast_radius",
+      "description": "Радиус поражения <= 0.3",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hotspot_detection",
+      "description": "Компоненты с суммарной степенью <= 20",
+      "status": "PASSED",
+      "threshold": 20,
+      "hotspots": [],
+      "hotspots_count": 0
+    },
+    {
+      "name": "deprecated_usage",
+      "description": "Отсутствие использования deprecated компонентов",
+      "status": "PASSED",
+      "deprecated_components": [],
+      "deprecated_count": 0,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "stability_violations",
+      "description": "Зависимости направлены от нестабильных к стабильным (SDP)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "circular_dependency_depth",
+      "description": "Циклы размером <= 3",
+      "status": "PASSED",
+      "threshold": 3,
+      "total_cycles": 0,
+      "large_cycles": [],
+      "large_cycles_count": 0
+    },
+    {
+      "name": "component_complexity",
+      "description": "Комплексная сложность <= 50",
+      "status": "PASSED",
+      "threshold": 50,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}
