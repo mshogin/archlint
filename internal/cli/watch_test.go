@@ -47,5 +47,5 @@ func TestAddDirRecursiveValidDir(t *testing.T) {
 	//
 	// Test through the exported function surface: run runWatchScan on "." to
 	// ensure it completes without panicking.
-	runWatchScan(".")
+	runWatchScan(".", "")
 }

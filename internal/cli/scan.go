@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,12 +13,14 @@ import (
 	"github.com/mshogin/archlint/internal/mcp"
 	"github.com/mshogin/archlint/internal/model"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var (
 	scanFormat     string
 	scanThreshold  int
 	scanConfigFile string
+	scanStdin      bool
 )
 
 var scanCmd = &cobra.Command{
@@ -40,8 +43,10 @@ Examples:
   archlint scan . --format json
   archlint scan . --format json --threshold 5
   archlint scan ./internal --threshold 0
-  archlint scan . --config /path/to/.archlint.yaml`,
-	Args: cobra.ExactArgs(1),
+  archlint scan . --config /path/to/.archlint.yaml
+  archlint collect . -o - | archlint scan --stdin
+  cat architecture.yaml | archlint scan --stdin`,
+	Args: cobra.RangeArgs(0, 1),
 	RunE: runScan,
 }
 
@@ -49,6 +54,7 @@ func init() {
 	scanCmd.Flags().StringVar(&scanFormat, "format", "text", "Output format: text or json")
 	scanCmd.Flags().IntVar(&scanThreshold, "threshold", -1, "Max violations before failing gate (-1 = any violation fails)")
 	scanCmd.Flags().StringVar(&scanConfigFile, "config", "", "Path to .archlint.yaml config file (default: <directory>/.archlint.yaml)")
+	scanCmd.Flags().BoolVar(&scanStdin, "stdin", false, "Read architecture YAML graph from stdin instead of analyzing a directory")
 	rootCmd.AddCommand(scanCmd)
 }
 
@@ -63,49 +69,84 @@ type scanGateResult struct {
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
-	codeDir := args[0]
-
-	if _, err := os.Stat(codeDir); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "error: %v: %s\n", errDirNotExist, codeDir)
-		os.Exit(2)
-	}
-
 	// Load .archlint.yaml config.
 	var cfg archlintcfg.Config
 	var configFile string
-	if scanConfigFile != "" {
-		cfg = archlintcfg.LoadFile(scanConfigFile)
-		configFile = scanConfigFile
-	} else {
-		absDir, err := filepath.Abs(codeDir)
-		if err != nil {
-			absDir = codeDir
-		}
-		cfg = archlintcfg.Load(absDir)
-		candidate := filepath.Join(absDir, ".archlint.yaml")
-		if _, err := os.Stat(candidate); err == nil {
-			configFile = candidate
-		}
-	}
 
 	var graph *model.Graph
 	var a *analyzer.GoAnalyzer
-	if analyzer.DetectTypeScriptProject(codeDir) {
-		tsAnalyzer := analyzer.NewTypeScriptAnalyzer()
-		g, err := tsAnalyzer.Analyze(codeDir)
+
+	if scanStdin {
+		// Read YAML graph from stdin.
+		data, err := io.ReadAll(os.Stdin)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
+			fmt.Fprintf(os.Stderr, "error reading stdin: %v\n", err)
 			os.Exit(2)
 		}
-		graph = g
+		var g model.Graph
+		if err := yaml.Unmarshal(data, &g); err != nil {
+			fmt.Fprintf(os.Stderr, "error parsing YAML from stdin: %v\n", err)
+			os.Exit(2)
+		}
+		graph = &g
+
+		// Load config from --config flag if provided; otherwise use defaults.
+		if scanConfigFile != "" {
+			cfg = archlintcfg.LoadFile(scanConfigFile)
+			configFile = scanConfigFile
+		}
 	} else {
-		a = analyzer.NewGoAnalyzer()
-		g, err := a.Analyze(codeDir)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
+		if len(args) == 0 {
+			fmt.Fprintf(os.Stderr, "error: directory argument required when --stdin is not set\n")
 			os.Exit(2)
 		}
-		graph = g
+		codeDir := args[0]
+
+		if _, err := os.Stat(codeDir); os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "error: %v: %s\n", errDirNotExist, codeDir)
+			os.Exit(2)
+		}
+
+		if scanConfigFile != "" {
+			cfg = archlintcfg.LoadFile(scanConfigFile)
+			configFile = scanConfigFile
+		} else {
+			absDir, err := filepath.Abs(codeDir)
+			if err != nil {
+				absDir = codeDir
+			}
+			cfg = archlintcfg.Load(absDir)
+			candidate := filepath.Join(absDir, ".archlint.yaml")
+			if _, err := os.Stat(candidate); err == nil {
+				configFile = candidate
+			}
+		}
+
+		if analyzer.DetectRustProject(codeDir) {
+			rustAnalyzer := analyzer.NewRustAnalyzer()
+			g, err := rustAnalyzer.Analyze(codeDir)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
+				os.Exit(2)
+			}
+			graph = g
+		} else if analyzer.DetectTypeScriptProject(codeDir) {
+			tsAnalyzer := analyzer.NewTypeScriptAnalyzer()
+			g, err := tsAnalyzer.Analyze(codeDir)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
+				os.Exit(2)
+			}
+			graph = g
+		} else {
+			a = analyzer.NewGoAnalyzer()
+			g, err := a.Analyze(codeDir)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
+				os.Exit(2)
+			}
+			graph = g
+		}
 	}
 
 	// Structural violations (coupling, cycles) — config-aware.
