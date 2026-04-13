@@ -1,0 +1,66 @@
+{
+  "status": "WARNING",
+  "source": "structure",
+  "summary": {
+    "total_checks": 5,
+    "passed": 4,
+    "failed": 0,
+    "warnings": 1,
+    "info": 0,
+    "skipped": 0,
+    "errors": 0
+  },
+  "graph": {
+    "nodes": 24,
+    "edges": 17
+  },
+  "checks": [
+    {
+      "name": "single_responsibility",
+      "description": "Модули зависят от <= 3 разных доменов (SRP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "open_closed",
+      "description": "Соотношение абстракций >= 20% (OCP)",
+      "status": "WARNING",
+      "abstractions": 2,
+      "implementations": 22,
+      "ratio": 0.083,
+      "threshold": 0.2,
+      "issue": "Низкое соотношение абстракций (8.33%) - плохая расширяемость"
+    },
+    {
+      "name": "liskov_substitution",
+      "description": "Реализации не добавляют > 3 лишних зависимостей (LSP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0,
+      "interfaces_analyzed": 0,
+      "implementations_analyzed": 0
+    },
+    {
+      "name": "dependency_inversion",
+      "description": "Зависимости на абстракции >= 30% (DIP)",
+      "status": "PASSED",
+      "abstract_deps": 1,
+      "concrete_deps": 0,
+      "abstract_ratio": 1.0,
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "interface_segregation",
+      "description": "Типы с <= 5 методами (ISP)",
+      "status": "PASSED",
+      "threshold": 5,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

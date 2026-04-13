@@ -1,0 +1,682 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 29,
+    "passed": 15,
+    "failed": 0,
+    "warnings": 2,
+    "info": 8,
+    "skipped": 0,
+    "errors": 4
+  },
+  "graph": {
+    "nodes": 53,
+    "edges": 79
+  },
+  "checks": [
+    {
+      "name": "betweenness_centrality",
+      "description": "Компоненты с centrality > 0.3 являются узкими местами",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "bottlenecks": [],
+      "bottlenecks_count": 0
+    },
+    {
+      "name": "pagerank",
+      "description": "Компоненты с PageRank > 0.1 критически важны",
+      "status": "INFO",
+      "threshold": 0.1,
+      "critical_components": [
+        {
+          "node": "tests::fixtures",
+          "pagerank": 0.107
+        },
+        {
+          "node": "fixtures",
+          "pagerank": 0.107
+        }
+      ],
+      "critical_count": 2
+    },
+    {
+      "name": "modularity",
+      "description": "Модульность графа должна быть >= 0.3",
+      "status": "PASSED",
+      "modularity": 0.582,
+      "threshold": 0.3,
+      "communities_count": 5
+    },
+    {
+      "name": "abstractness",
+      "description": "Абстрактность должна быть между 0.1 и 0.8",
+      "status": "ERROR",
+      "abstractness": 0.0,
+      "abstract_count": 0,
+      "concrete_count": 53,
+      "total_count": 53,
+      "min_threshold": 0.1,
+      "max_threshold": 0.8,
+      "issue": "Слишком мало абстракций (< 0.1)"
+    },
+    {
+      "name": "distance_from_main_sequence",
+      "description": "D = |A + I - 1| должен быть близок к 0",
+      "status": "ERROR",
+      "packages": [
+        {
+          "package": "src::errors",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::webdav_fs",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::consts",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::file_op",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "tests::utils",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "tests::fixtures",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "AuthParseError",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "tests",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "auth",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "RequiredAuthPassword",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        }
+      ],
+      "violations": [
+        {
+          "package": "src::errors",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::webdav_fs",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::consts",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::file_op",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "tests::utils",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        }
+      ],
+      "violations_count": 26
+    },
+    {
+      "name": "clustering_coefficient",
+      "description": "Средний коэффициент кластеризации >= 0.1",
+      "status": "WARNING",
+      "avg_clustering": 0.1,
+      "threshold": 0.1,
+      "low_clustering_nodes": [
+        {
+          "node": "src::config",
+          "coefficient": 0.0
+        },
+        {
+          "node": "src::main",
+          "coefficient": 0.007
+        },
+        {
+          "node": "src::file_utils",
+          "coefficient": 0.0
+        },
+        {
+          "node": "tests::bind",
+          "coefficient": 0.0
+        },
+        {
+          "node": "tests::tls",
+          "coefficient": 0.0
+        },
+        {
+          "node": "tests::auth",
+          "coefficient": 0.0
+        },
+        {
+          "node": "tests::upload_files",
+          "coefficient": 0.0
+        },
+        {
+          "node": "tests::auth_file",
+          "coefficient": 0.0
+        },
+        {
+          "node": "tests::create_directories",
+          "coefficient": 0.0
+        },
+        {
+          "node": "tests::fixtures",
+          "coefficient": 0.0
+        }
+      ],
+      "low_clustering_count": 23
+    },
+    {
+      "name": "edge_density",
+      "description": "Плотность графа между 0.01 и 0.3",
+      "status": "PASSED",
+      "density": 0.0287,
+      "nodes": 53,
+      "edges": 79,
+      "max_possible_edges": 2756
+    },
+    {
+      "name": "articulation_points",
+      "description": "Критические узлы (удаление разбивает граф)",
+      "status": "WARNING",
+      "articulation_points": [
+        "src::renderer",
+        "src::listing",
+        "src::main",
+        "src::args",
+        "tests::navigation",
+        "tests::qrcode"
+      ],
+      "count": 6,
+      "recommendation": "Уменьшить зависимость от критических узлов"
+    },
+    {
+      "name": "bridge_edges",
+      "description": "Критические рёбра (удаление разбивает граф)",
+      "status": "INFO",
+      "bridges": [
+        {
+          "from": "src::args",
+          "to": "AuthParseError"
+        },
+        {
+          "from": "src::renderer",
+          "to": "src::consts"
+        },
+        {
+          "from": "src::listing",
+          "to": "src::percent_encode_sets"
+        },
+        {
+          "from": "src::listing",
+          "to": "percent_encode_sets"
+        },
+        {
+          "from": "src::main",
+          "to": "archive"
+        },
+        {
+          "from": "src::main",
+          "to": "args"
+        },
+        {
+          "from": "src::main",
+          "to": "config"
+        },
+        {
+          "from": "src::main",
+          "to": "consts"
+        },
+        {
+          "from": "src::main",
+          "to": "errors"
+        },
+        {
+          "from": "src::main",
+          "to": "file_op"
+        },
+        {
+          "from": "src::main",
+          "to": "file_utils"
+        },
+        {
+          "from": "src::main",
+          "to": "listing"
+        },
+        {
+          "from": "src::main",
+          "to": "pipe"
+        },
+        {
+          "from": "src::main",
+          "to": "renderer"
+        },
+        {
+          "from": "src::main",
+          "to": "webdav_fs"
+        },
+        {
+          "from": "src::main",
+          "to": "src::file_op"
+        },
+        {
+          "from": "src::main",
+          "to": "src::webdav_fs"
+        },
+        {
+          "from": "tests::utils",
+          "to": "tests::navigation"
+        },
+        {
+          "from": "tests::navigation",
+          "to": "utils"
+        },
+        {
+          "from": "tests::qrcode",
+          "to": "fake_tty"
+        }
+      ],
+      "count": 20
+    },
+    {
+      "name": "graph_diameter",
+      "description": "Диаметр графа",
+      "status": "INFO",
+      "diameter": "infinity",
+      "reason": "Граф не связан (3 компонент)"
+    },
+    {
+      "name": "avg_path_length",
+      "description": "Средняя длина пути <= 5.0",
+      "status": "PASSED",
+      "avg_path_length": 2.468,
+      "threshold": 5.0,
+      "note": "Вычислено для наибольшей связной компоненты"
+    },
+    {
+      "name": "closeness_centrality",
+      "description": "Близость узлов к остальным",
+      "status": "INFO",
+      "central_nodes": [],
+      "peripheral_nodes": [
+        {
+          "node": "tests",
+          "closeness": 0.094
+        },
+        {
+          "node": "src::errors",
+          "closeness": 0.087
+        },
+        {
+          "node": "src::auth",
+          "closeness": 0.062
+        },
+        {
+          "node": "RequiredAuthPassword",
+          "closeness": 0.06
+        },
+        {
+          "node": "src::renderer",
+          "closeness": 0.043
+        },
+        {
+          "node": "src::listing",
+          "closeness": 0.043
+        },
+        {
+          "node": "src::consts",
+          "closeness": 0.038
+        },
+        {
+          "node": "src::archive",
+          "closeness": 0.038
+        },
+        {
+          "node": "auth",
+          "closeness": 0.038
+        },
+        {
+          "node": "src::percent_encode_sets",
+          "closeness": 0.038
+        }
+      ],
+      "avg_closeness": 0.032
+    },
+    {
+      "name": "eigenvector_centrality",
+      "description": "Влиятельность узлов",
+      "status": "INFO",
+      "threshold": 0.3,
+      "influential_nodes": [
+        {
+          "node": "src::errors",
+          "eigenvector": 0.641
+        },
+        {
+          "node": "tests",
+          "eigenvector": 0.48
+        },
+        {
+          "node": "src::auth",
+          "eigenvector": 0.32
+        },
+        {
+          "node": "RequiredAuthPassword",
+          "eigenvector": 0.32
+        }
+      ],
+      "influential_count": 4,
+      "top_5": [
+        {
+          "node": "src::errors",
+          "eigenvector": 0.641
+        },
+        {
+          "node": "tests",
+          "eigenvector": 0.48
+        },
+        {
+          "node": "src::auth",
+          "eigenvector": 0.32
+        },
+        {
+          "node": "RequiredAuthPassword",
+          "eigenvector": 0.32
+        },
+        {
+          "node": "src::renderer",
+          "eigenvector": 0.16
+        }
+      ]
+    },
+    {
+      "name": "k_core_decomposition",
+      "description": "Максимальное k-ядро <= 5",
+      "status": "PASSED",
+      "max_k_core": 3,
+      "threshold": 5,
+      "core_distribution": {
+        "0": 1,
+        "1": 20,
+        "2": 27,
+        "3": 5
+      },
+      "high_core_nodes": [],
+      "high_core_count": 0
+    },
+    {
+      "name": "graph_cliques",
+      "description": "Клики размером <= 4",
+      "status": "PASSED",
+      "max_clique_size": 4,
+      "threshold": 4,
+      "large_cliques": [],
+      "large_cliques_count": 0,
+      "total_cliques": 67
+    },
+    {
+      "name": "degree_distribution",
+      "description": "Распределение степеней узлов",
+      "status": "INFO",
+      "mean_degree": 2.98,
+      "std_degree": 3.95,
+      "max_degree": 18,
+      "min_degree": 0,
+      "distribution": {
+        "0": 1,
+        "1": 20,
+        "2": 21,
+        "3": 1,
+        "4": 3,
+        "6": 2,
+        "8": 2,
+        "17": 1,
+        "18": 2
+      },
+      "is_scale_free": true,
+      "interpretation": "Scale-free сеть (hub-dominated)"
+    },
+    {
+      "name": "dependency_entropy",
+      "description": "Энтропия распределения зависимостей",
+      "status": "PASSED",
+      "entropy": 4.251,
+      "max_entropy": 5.728,
+      "normalized_entropy": 0.742
+    },
+    {
+      "name": "gini_coefficient",
+      "description": "Коэффициент Джини <= 0.6",
+      "status": "PASSED",
+      "gini": 0.501,
+      "threshold": 0.6,
+      "interpretation": "Неравномерно"
+    },
+    {
+      "name": "zscore_outliers",
+      "description": "Узлы с |Z| > 3.0",
+      "status": "ERROR",
+      "outliers": [
+        {
+          "node": "tests::fixtures",
+          "degree": 18,
+          "z_score": 3.8
+        },
+        {
+          "node": "fixtures",
+          "degree": 18,
+          "z_score": 3.8
+        },
+        {
+          "node": "src::main",
+          "degree": 17,
+          "z_score": 3.55
+        }
+      ],
+      "outliers_count": 3,
+      "mean_degree": 2.98,
+      "std_degree": 3.95,
+      "z_threshold": 3.0
+    },
+    {
+      "name": "algebraic_connectivity",
+      "status": "INFO",
+      "algebraic_connectivity": 0,
+      "reason": "Граф не связан (λ₂ = 0)"
+    },
+    {
+      "name": "spectral_radius",
+      "description": "Спектральный радиус матрицы смежности",
+      "status": "INFO",
+      "spectral_radius": 1.0,
+      "max_degree": 18,
+      "interpretation": "Коррелирует с максимальной степенью"
+    },
+    {
+      "name": "cohesion_lcom4",
+      "description": "LCOM4 <= 1 (связность методов)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0,
+      "types_analyzed": 0
+    },
+    {
+      "name": "change_propagation",
+      "description": "Радиус изменений <= 20 компонентов",
+      "status": "PASSED",
+      "threshold": 20,
+      "avg_impact": 1.96,
+      "max_impact": 18,
+      "top_impact": [
+        {
+          "node": "tests::fixtures",
+          "impact": 18
+        },
+        {
+          "node": "fixtures",
+          "impact": 18
+        },
+        {
+          "node": "tests",
+          "impact": 7
+        },
+        {
+          "node": "src::errors",
+          "impact": 6
+        },
+        {
+          "node": "RequiredAuthPassword",
+          "impact": 5
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "blast_radius",
+      "description": "Радиус поражения <= 0.3",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hotspot_detection",
+      "description": "Компоненты с суммарной степенью <= 20",
+      "status": "PASSED",
+      "threshold": 20,
+      "hotspots": [],
+      "hotspots_count": 0
+    },
+    {
+      "name": "deprecated_usage",
+      "description": "Отсутствие использования deprecated компонентов",
+      "status": "PASSED",
+      "deprecated_components": [],
+      "deprecated_count": 0,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "stability_violations",
+      "description": "Зависимости направлены от нестабильных к стабильным (SDP)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "circular_dependency_depth",
+      "description": "Циклы размером <= 3",
+      "status": "PASSED",
+      "threshold": 3,
+      "total_cycles": 1,
+      "large_cycles": [],
+      "large_cycles_count": 0
+    },
+    {
+      "name": "component_complexity",
+      "description": "Комплексная сложность <= 50",
+      "status": "ERROR",
+      "threshold": 50,
+      "violations": [
+        {
+          "component": "src::main",
+          "complexity": 51.0,
+          "in_degree": 0,
+          "out_degree": 17,
+          "betweenness": 0.0
+        }
+      ],
+      "violations_count": 1
+    }
+  ]
+}

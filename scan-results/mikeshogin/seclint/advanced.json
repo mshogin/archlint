@@ -1,0 +1,486 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 29,
+    "passed": 16,
+    "failed": 0,
+    "warnings": 3,
+    "info": 7,
+    "skipped": 0,
+    "errors": 3
+  },
+  "graph": {
+    "nodes": 15,
+    "edges": 8
+  },
+  "checks": [
+    {
+      "name": "betweenness_centrality",
+      "description": "Компоненты с centrality > 0.3 являются узкими местами",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "bottlenecks": [],
+      "bottlenecks_count": 0
+    },
+    {
+      "name": "pagerank",
+      "description": "Компоненты с PageRank > 0.1 критически важны",
+      "status": "PASSED",
+      "threshold": 0.1,
+      "critical_components": [],
+      "critical_count": 0
+    },
+    {
+      "name": "modularity",
+      "description": "Модульность графа должна быть >= 0.3",
+      "status": "ERROR",
+      "modularity": 0.117,
+      "threshold": 0.3,
+      "communities_count": 10
+    },
+    {
+      "name": "abstractness",
+      "description": "Абстрактность должна быть между 0.1 и 0.8",
+      "status": "PASSED",
+      "abstractness": 0.2,
+      "abstract_count": 3,
+      "concrete_count": 12,
+      "total_count": 15,
+      "min_threshold": 0.1,
+      "max_threshold": 0.8
+    },
+    {
+      "name": "distance_from_main_sequence",
+      "description": "D = |A + I - 1| должен быть близок к 0",
+      "status": "ERROR",
+      "packages": [
+        {
+          "package": "pkg",
+          "abstractness": 0.2,
+          "instability": 0.0,
+          "distance": 0.8,
+          "nodes_count": 5
+        },
+        {
+          "package": "pkg::audit::audit",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::config::config_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::config::config",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::threat::threat",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::threat::threat_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::classifier::classifier_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::report::report_test",
+          "abstractness": 1.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::report::report",
+          "abstractness": 1.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::classifier::classifier",
+          "abstractness": 0.0,
+          "instability": 1.0,
+          "distance": 0.0,
+          "nodes_count": 1
+        }
+      ],
+      "violations": [
+        {
+          "package": "pkg",
+          "abstractness": 0.2,
+          "instability": 0.0,
+          "distance": 0.8,
+          "nodes_count": 5
+        }
+      ],
+      "violations_count": 1
+    },
+    {
+      "name": "clustering_coefficient",
+      "description": "Средний коэффициент кластеризации >= 0.1",
+      "status": "WARNING",
+      "avg_clustering": 0.0,
+      "threshold": 0.1,
+      "low_clustering_nodes": [
+        {
+          "node": "pkg::classifier::classifier",
+          "coefficient": 0.0
+        },
+        {
+          "node": "cmd::seclint::main",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg/audit",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg/config",
+          "coefficient": 0.0
+        },
+        {
+          "node": "pkg/threat",
+          "coefficient": 0.0
+        }
+      ],
+      "low_clustering_count": 5
+    },
+    {
+      "name": "edge_density",
+      "description": "Плотность графа между 0.01 и 0.3",
+      "status": "PASSED",
+      "density": 0.0381,
+      "nodes": 15,
+      "edges": 8,
+      "max_possible_edges": 210
+    },
+    {
+      "name": "articulation_points",
+      "description": "Критические узлы (удаление разбивает граф)",
+      "status": "WARNING",
+      "articulation_points": [
+        "cmd::seclint::main"
+      ],
+      "count": 1,
+      "recommendation": "Уменьшить зависимость от критических узлов"
+    },
+    {
+      "name": "bridge_edges",
+      "description": "Критические рёбра (удаление разбивает граф)",
+      "status": "INFO",
+      "bridges": [
+        {
+          "from": "cmd::seclint::main",
+          "to": "pkg/classifier"
+        },
+        {
+          "from": "cmd::seclint::main",
+          "to": "pkg/report"
+        }
+      ],
+      "count": 2
+    },
+    {
+      "name": "graph_diameter",
+      "description": "Диаметр графа",
+      "status": "INFO",
+      "diameter": "infinity",
+      "reason": "Граф не связан (9 компонент)"
+    },
+    {
+      "name": "avg_path_length",
+      "description": "Средняя длина пути <= 5.0",
+      "status": "PASSED",
+      "avg_path_length": 1.714,
+      "threshold": 5.0,
+      "note": "Вычислено для наибольшей связной компоненты"
+    },
+    {
+      "name": "closeness_centrality",
+      "description": "Близость узлов к остальным",
+      "status": "INFO",
+      "central_nodes": [],
+      "peripheral_nodes": [
+        {
+          "node": "pkg/audit",
+          "closeness": 0.143
+        },
+        {
+          "node": "pkg/config",
+          "closeness": 0.143
+        },
+        {
+          "node": "pkg/threat",
+          "closeness": 0.143
+        },
+        {
+          "node": "pkg/classifier",
+          "closeness": 0.071
+        },
+        {
+          "node": "pkg/report",
+          "closeness": 0.071
+        },
+        {
+          "node": "pkg::audit::audit",
+          "closeness": 0.0
+        },
+        {
+          "node": "pkg::config::config_test",
+          "closeness": 0.0
+        },
+        {
+          "node": "pkg::config::config",
+          "closeness": 0.0
+        },
+        {
+          "node": "pkg::threat::threat",
+          "closeness": 0.0
+        },
+        {
+          "node": "pkg::threat::threat_test",
+          "closeness": 0.0
+        }
+      ],
+      "avg_closeness": 0.038
+    },
+    {
+      "name": "eigenvector_centrality",
+      "description": "Влиятельность узлов",
+      "status": "INFO",
+      "threshold": 0.3,
+      "influential_nodes": [
+        {
+          "node": "pkg/audit",
+          "eigenvector": 0.534
+        },
+        {
+          "node": "pkg/config",
+          "eigenvector": 0.534
+        },
+        {
+          "node": "pkg/threat",
+          "eigenvector": 0.534
+        }
+      ],
+      "influential_count": 3,
+      "top_5": [
+        {
+          "node": "pkg/audit",
+          "eigenvector": 0.534
+        },
+        {
+          "node": "pkg/config",
+          "eigenvector": 0.534
+        },
+        {
+          "node": "pkg/threat",
+          "eigenvector": 0.534
+        },
+        {
+          "node": "pkg/classifier",
+          "eigenvector": 0.268
+        },
+        {
+          "node": "pkg/report",
+          "eigenvector": 0.268
+        }
+      ]
+    },
+    {
+      "name": "k_core_decomposition",
+      "description": "Максимальное k-ядро <= 5",
+      "status": "PASSED",
+      "max_k_core": 2,
+      "threshold": 5,
+      "core_distribution": {
+        "0": 8,
+        "1": 2,
+        "2": 5
+      },
+      "high_core_nodes": [],
+      "high_core_count": 0
+    },
+    {
+      "name": "graph_cliques",
+      "description": "Клики размером <= 4",
+      "status": "PASSED",
+      "max_clique_size": 2,
+      "threshold": 4,
+      "large_cliques": [],
+      "large_cliques_count": 0,
+      "total_cliques": 16
+    },
+    {
+      "name": "degree_distribution",
+      "description": "Распределение степеней узлов",
+      "status": "INFO",
+      "mean_degree": 1.07,
+      "std_degree": 1.44,
+      "max_degree": 5,
+      "min_degree": 0,
+      "distribution": {
+        "0": 8,
+        "1": 2,
+        "2": 3,
+        "3": 1,
+        "5": 1
+      },
+      "is_scale_free": true,
+      "interpretation": "Scale-free сеть (hub-dominated)"
+    },
+    {
+      "name": "dependency_entropy",
+      "description": "Энтропия распределения зависимостей",
+      "status": "WARNING",
+      "entropy": 0.954,
+      "max_entropy": 3.907,
+      "normalized_entropy": 0.244,
+      "issue": "Низкая энтропия - неравномерное распределение зависимостей"
+    },
+    {
+      "name": "gini_coefficient",
+      "description": "Коэффициент Джини <= 0.6",
+      "status": "ERROR",
+      "gini": 0.667,
+      "threshold": 0.6,
+      "interpretation": "Неравномерно",
+      "issue": "Высокое неравенство (God Objects): Gini = 0.667"
+    },
+    {
+      "name": "zscore_outliers",
+      "description": "Узлы с |Z| > 3.0",
+      "status": "PASSED",
+      "outliers": [],
+      "outliers_count": 0,
+      "mean_degree": 1.07,
+      "std_degree": 1.44,
+      "z_threshold": 3.0
+    },
+    {
+      "name": "algebraic_connectivity",
+      "status": "INFO",
+      "algebraic_connectivity": 0,
+      "reason": "Граф не связан (λ₂ = 0)"
+    },
+    {
+      "name": "spectral_radius",
+      "description": "Спектральный радиус матрицы смежности",
+      "status": "INFO",
+      "spectral_radius": 0.0,
+      "max_degree": 5,
+      "interpretation": "Коррелирует с максимальной степенью"
+    },
+    {
+      "name": "cohesion_lcom4",
+      "description": "LCOM4 <= 1 (связность методов)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0,
+      "types_analyzed": 0
+    },
+    {
+      "name": "change_propagation",
+      "description": "Радиус изменений <= 20 компонентов",
+      "status": "PASSED",
+      "threshold": 20,
+      "avg_impact": 0.53,
+      "max_impact": 2,
+      "top_impact": [
+        {
+          "node": "pkg/audit",
+          "impact": 2
+        },
+        {
+          "node": "pkg/config",
+          "impact": 2
+        },
+        {
+          "node": "pkg/threat",
+          "impact": 2
+        },
+        {
+          "node": "pkg/classifier",
+          "impact": 1
+        },
+        {
+          "node": "pkg/report",
+          "impact": 1
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "blast_radius",
+      "description": "Радиус поражения <= 0.3",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hotspot_detection",
+      "description": "Компоненты с суммарной степенью <= 20",
+      "status": "PASSED",
+      "threshold": 20,
+      "hotspots": [],
+      "hotspots_count": 0
+    },
+    {
+      "name": "deprecated_usage",
+      "description": "Отсутствие использования deprecated компонентов",
+      "status": "PASSED",
+      "deprecated_components": [],
+      "deprecated_count": 0,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "stability_violations",
+      "description": "Зависимости направлены от нестабильных к стабильным (SDP)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "circular_dependency_depth",
+      "description": "Циклы размером <= 3",
+      "status": "PASSED",
+      "threshold": 3,
+      "total_cycles": 0,
+      "large_cycles": [],
+      "large_cycles_count": 0
+    },
+    {
+      "name": "component_complexity",
+      "description": "Комплексная сложность <= 50",
+      "status": "PASSED",
+      "threshold": 50,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "repos": [
+    {
+      "name": "archlint",
+      "owner": "mshogin",
+      "language": "Go"
+    },
+    {
+      "name": "deskd",
+      "owner": "kgatilin",
+      "language": "Rust"
+    },
+    {
+      "name": "promptlint",
+      "owner": "mikeshogin",
+      "language": "Go"
+    },
+    {
+      "name": "costlint",
+      "owner": "mikeshogin",
+      "language": "Go"
+    },
+    {
+      "name": "seclint",
+      "owner": "mikeshogin",
+      "language": "Go"
+    },
+    {
+      "name": "godotenv",
+      "owner": "joho",
+      "language": "Go"
+    },
+    {
+      "name": "color",
+      "owner": "fatih",
+      "language": "Go"
+    },
+    {
+      "name": "env",
+      "owner": "caarlos0",
+      "language": "Go"
+    },
+    {
+      "name": "twirp",
+      "owner": "twitchtv",
+      "language": "Go"
+    },
+    {
+      "name": "log",
+      "owner": "charmbracelet",
+      "language": "Go"
+    },
+    {
+      "name": "git-cliff",
+      "owner": "orhun",
+      "language": "Rust"
+    },
+    {
+      "name": "hyperfine",
+      "owner": "sharkdp",
+      "language": "Rust"
+    },
+    {
+      "name": "miniserve",
+      "owner": "svenstaro",
+      "language": "Rust"
+    },
+    {
+      "name": "xh",
+      "owner": "ducaale",
+      "language": "Rust"
+    },
+    {
+      "name": "vivid",
+      "owner": "sharkdp",
+      "language": "Rust"
+    }
+  ],
+  "scan_date": "2026-04-13T04:10:24.792344"
+}

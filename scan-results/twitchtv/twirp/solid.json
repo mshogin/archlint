@@ -1,0 +1,298 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 5,
+    "passed": 2,
+    "failed": 0,
+    "warnings": 1,
+    "info": 0,
+    "skipped": 0,
+    "errors": 2
+  },
+  "graph": {
+    "nodes": 376,
+    "edges": 1029
+  },
+  "checks": [
+    {
+      "name": "single_responsibility",
+      "description": "Модули зависят от <= 3 разных доменов (SRP)",
+      "status": "ERROR",
+      "threshold": 3,
+      "violations": [
+        {
+          "package": "_tools::src::google.golang.org::protobuf::compiler::protogen::protogen",
+          "domains_count": 24,
+          "domains": [
+            "descriptorpb",
+            "bufio",
+            "token",
+            "proto",
+            "printer",
+            "path",
+            "ioutil",
+            "prototext",
+            "sort",
+            "genid"
+          ]
+        },
+        {
+          "package": "internal::twirptest::service_test",
+          "domains_count": 19,
+          "domains": [
+            "context",
+            "testing",
+            "time",
+            "http",
+            "errors",
+            "twirp",
+            "fmt",
+            "reflect",
+            "descriptors",
+            "os"
+          ]
+        },
+        {
+          "package": "protoc-gen-twirp::generator",
+          "domains_count": 18,
+          "domains": [
+            "path",
+            "bytes",
+            "errors",
+            "descriptorpb",
+            "bufio",
+            "sort",
+            "token",
+            "pluginpb",
+            "fmt",
+            "strings"
+          ]
+        },
+        {
+          "package": "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
+          "domains_count": 17,
+          "domains": [
+            "protogen",
+            "descriptorpb",
+            "version",
+            "genid",
+            "tag",
+            "token",
+            "protoreflect",
+            "ast",
+            "fmt",
+            "strings"
+          ]
+        },
+        {
+          "package": "_tools::src::google.golang.org::protobuf::encoding::prototext::encode",
+          "domains_count": 15,
+          "domains": [
+            "errors",
+            "order",
+            "messageset",
+            "text",
+            "genid",
+            "protoreflect",
+            "fmt",
+            "proto",
+            "pragma",
+            "utf8"
+          ]
+        },
+        {
+          "package": "_tools::src::golang.org::x::tools::go::loader::loader",
+          "domains_count": 15,
+          "domains": [
+            "sync",
+            "errors",
+            "build",
+            "sort",
+            "token",
+            "ast",
+            "fmt",
+            "filepath",
+            "strings",
+            "astutil"
+          ]
+        },
+        {
+          "package": "_tools::src::google.golang.org::protobuf::encoding::prototext::decode",
+          "domains_count": 13,
+          "domains": [
+            "errors",
+            "messageset",
+            "text",
+            "set",
+            "genid",
+            "protoreflect",
+            "fmt",
+            "proto",
+            "pragma",
+            "utf8"
+          ]
+        },
+        {
+          "package": "_tools::src::google.golang.org::protobuf::internal::impl::validate",
+          "domains_count": 13,
+          "domains": [
+            "messageset",
+            "protoiface",
+            "genid",
+            "protoreflect",
+            "fmt",
+            "reflect",
+            "utf8",
+            "bits",
+            "protoregistry",
+            "math"
+          ]
+        },
+        {
+          "package": "_tools::src::google.golang.org::protobuf::internal::filedesc::desc",
+          "domains_count": 13,
+          "domains": [
+            "sync",
+            "descopts",
+            "bytes",
+            "atomic",
+            "defval",
+            "messageset",
+            "genid",
+            "protoreflect",
+            "fmt",
+            "pragma"
+          ]
+        },
+        {
+          "package": "_tools::src::github.com::kisielk::errcheck::internal::errcheck::errcheck",
+          "domains_count": 13,
+          "domains": [
+            "sync",
+            "errors",
+            "bufio",
+            "build",
+            "token",
+            "sort",
+            "ast",
+            "fmt",
+            "strings",
+            "loader"
+          ]
+        }
+      ],
+      "violations_count": 129
+    },
+    {
+      "name": "open_closed",
+      "description": "Соотношение абстракций >= 20% (OCP)",
+      "status": "WARNING",
+      "abstractions": 31,
+      "implementations": 345,
+      "ratio": 0.082,
+      "threshold": 0.2,
+      "issue": "Низкое соотношение абстракций (8.24%) - плохая расширяемость"
+    },
+    {
+      "name": "liskov_substitution",
+      "description": "Реализации не добавляют > 3 лишних зависимостей (LSP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0,
+      "interfaces_analyzed": 0,
+      "implementations_analyzed": 0
+    },
+    {
+      "name": "dependency_inversion",
+      "description": "Зависимости на абстракции >= 30% (DIP)",
+      "status": "ERROR",
+      "abstract_deps": 1,
+      "concrete_deps": 22,
+      "abstract_ratio": 0.043,
+      "threshold": 0.3,
+      "violations": [
+        {
+          "source": "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "_tools::src::google.golang.org::protobuf::types::descriptorpb::descriptor.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "_tools::src::google.golang.org::protobuf::types::pluginpb::plugin.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "_tools::src::google.golang.org::protobuf::internal::filetype::build",
+          "concrete_deps": [
+            "impl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "clientcompat::internal::clientcompat::clientcompat.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "internal::twirptest::snake_case_names::snake_case_names.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "internal::twirptest::json_serialization::json_serialization.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "internal::twirptest::importmapping::y::y.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "internal::twirptest::importmapping::x::x.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        },
+        {
+          "source": "internal::twirptest::multiple::multiple2.pb",
+          "concrete_deps": [
+            "protoimpl"
+          ],
+          "count": 1
+        }
+      ],
+      "violations_count": 22
+    },
+    {
+      "name": "interface_segregation",
+      "description": "Типы с <= 5 методами (ISP)",
+      "status": "PASSED",
+      "threshold": 5,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

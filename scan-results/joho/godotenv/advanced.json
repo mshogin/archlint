@@ -1,0 +1,404 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 29,
+    "passed": 17,
+    "failed": 0,
+    "warnings": 1,
+    "info": 8,
+    "skipped": 2,
+    "errors": 1
+  },
+  "graph": {
+    "nodes": 5,
+    "edges": 0
+  },
+  "checks": [
+    {
+      "name": "betweenness_centrality",
+      "description": "Компоненты с centrality > 0.3 являются узкими местами",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "bottlenecks": [],
+      "bottlenecks_count": 0
+    },
+    {
+      "name": "pagerank",
+      "description": "Компоненты с PageRank > 0.1 критически важны",
+      "status": "INFO",
+      "threshold": 0.1,
+      "critical_components": [
+        {
+          "node": "godotenv_test",
+          "pagerank": 0.2
+        },
+        {
+          "node": "godotenv",
+          "pagerank": 0.2
+        },
+        {
+          "node": "parser",
+          "pagerank": 0.2
+        },
+        {
+          "node": "cmd::godotenv::cmd",
+          "pagerank": 0.2
+        },
+        {
+          "node": "autoload::autoload",
+          "pagerank": 0.2
+        }
+      ],
+      "critical_count": 5
+    },
+    {
+      "name": "modularity",
+      "description": "Модульность графа",
+      "status": "SKIP",
+      "reason": "Граф не содержит достаточно связей для вычисления модульности"
+    },
+    {
+      "name": "abstractness",
+      "description": "Абстрактность должна быть между 0.1 и 0.8",
+      "status": "ERROR",
+      "abstractness": 0.0,
+      "abstract_count": 0,
+      "concrete_count": 5,
+      "total_count": 5,
+      "min_threshold": 0.1,
+      "max_threshold": 0.8,
+      "issue": "Слишком мало абстракций (< 0.1)"
+    },
+    {
+      "name": "distance_from_main_sequence",
+      "description": "D = |A + I - 1| должен быть близок к 0",
+      "status": "PASSED",
+      "packages": [
+        {
+          "package": "godotenv_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "godotenv",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "parser",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "cmd::godotenv::cmd",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "autoload::autoload",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "clustering_coefficient",
+      "description": "Средний коэффициент кластеризации >= 0.1",
+      "status": "WARNING",
+      "avg_clustering": 0.0,
+      "threshold": 0.1,
+      "low_clustering_nodes": [],
+      "low_clustering_count": 0
+    },
+    {
+      "name": "edge_density",
+      "description": "Плотность графа между 0.01 и 0.3",
+      "status": "INFO",
+      "density": 0,
+      "nodes": 5,
+      "edges": 0,
+      "max_possible_edges": 20,
+      "issue": "Низкая плотность (фрагментация) < 0.01"
+    },
+    {
+      "name": "articulation_points",
+      "description": "Критические узлы (удаление разбивает граф)",
+      "status": "PASSED",
+      "articulation_points": [],
+      "count": 0,
+      "recommendation": null
+    },
+    {
+      "name": "bridge_edges",
+      "description": "Критические рёбра (удаление разбивает граф)",
+      "status": "PASSED",
+      "bridges": [],
+      "count": 0
+    },
+    {
+      "name": "graph_diameter",
+      "description": "Диаметр графа",
+      "status": "INFO",
+      "diameter": "infinity",
+      "reason": "Граф не связан (5 компонент)"
+    },
+    {
+      "name": "avg_path_length",
+      "description": "Средняя длина пути <= 5.0",
+      "status": "PASSED",
+      "avg_path_length": 0,
+      "threshold": 5.0,
+      "note": "Вычислено для наибольшей связной компоненты"
+    },
+    {
+      "name": "closeness_centrality",
+      "description": "Близость узлов к остальным",
+      "status": "INFO",
+      "central_nodes": [],
+      "peripheral_nodes": [
+        {
+          "node": "godotenv_test",
+          "closeness": 0.0
+        },
+        {
+          "node": "godotenv",
+          "closeness": 0.0
+        },
+        {
+          "node": "parser",
+          "closeness": 0.0
+        },
+        {
+          "node": "cmd::godotenv::cmd",
+          "closeness": 0.0
+        },
+        {
+          "node": "autoload::autoload",
+          "closeness": 0.0
+        }
+      ],
+      "avg_closeness": 0.0
+    },
+    {
+      "name": "eigenvector_centrality",
+      "description": "Влиятельность узлов",
+      "status": "INFO",
+      "threshold": 0.3,
+      "influential_nodes": [
+        {
+          "node": "godotenv_test",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "godotenv",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "parser",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "cmd::godotenv::cmd",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "autoload::autoload",
+          "eigenvector": 0.447
+        }
+      ],
+      "influential_count": 5,
+      "top_5": [
+        {
+          "node": "godotenv_test",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "godotenv",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "parser",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "cmd::godotenv::cmd",
+          "eigenvector": 0.447
+        },
+        {
+          "node": "autoload::autoload",
+          "eigenvector": 0.447
+        }
+      ]
+    },
+    {
+      "name": "k_core_decomposition",
+      "description": "Максимальное k-ядро <= 5",
+      "status": "PASSED",
+      "max_k_core": 0,
+      "threshold": 5,
+      "core_distribution": {
+        "0": 5
+      },
+      "high_core_nodes": [],
+      "high_core_count": 0
+    },
+    {
+      "name": "graph_cliques",
+      "description": "Клики размером <= 4",
+      "status": "PASSED",
+      "max_clique_size": 1,
+      "threshold": 4,
+      "large_cliques": [],
+      "large_cliques_count": 0,
+      "total_cliques": 5
+    },
+    {
+      "name": "degree_distribution",
+      "description": "Распределение степеней узлов",
+      "status": "INFO",
+      "mean_degree": 0.0,
+      "std_degree": 0.0,
+      "max_degree": 0,
+      "min_degree": 0,
+      "distribution": {
+        "0": 5
+      },
+      "is_scale_free": false,
+      "interpretation": "Относительно равномерное распределение"
+    },
+    {
+      "name": "dependency_entropy",
+      "status": "SKIP",
+      "reason": "Нет зависимостей"
+    },
+    {
+      "name": "gini_coefficient",
+      "description": "Коэффициент Джини <= 0.6",
+      "status": "PASSED",
+      "gini": 0.0,
+      "threshold": 0.6,
+      "interpretation": "Равномерно"
+    },
+    {
+      "name": "zscore_outliers",
+      "status": "PASSED",
+      "description": "Нет выбросов (все степени одинаковы)"
+    },
+    {
+      "name": "algebraic_connectivity",
+      "status": "INFO",
+      "algebraic_connectivity": 0,
+      "reason": "Граф не связан (λ₂ = 0)"
+    },
+    {
+      "name": "spectral_radius",
+      "description": "Спектральный радиус матрицы смежности",
+      "status": "INFO",
+      "spectral_radius": 0.0,
+      "max_degree": 0,
+      "interpretation": "Коррелирует с максимальной степенью"
+    },
+    {
+      "name": "cohesion_lcom4",
+      "description": "LCOM4 <= 1 (связность методов)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0,
+      "types_analyzed": 0
+    },
+    {
+      "name": "change_propagation",
+      "description": "Радиус изменений <= 20 компонентов",
+      "status": "PASSED",
+      "threshold": 20,
+      "avg_impact": 0.0,
+      "max_impact": 0,
+      "top_impact": [
+        {
+          "node": "godotenv_test",
+          "impact": 0
+        },
+        {
+          "node": "godotenv",
+          "impact": 0
+        },
+        {
+          "node": "parser",
+          "impact": 0
+        },
+        {
+          "node": "cmd::godotenv::cmd",
+          "impact": 0
+        },
+        {
+          "node": "autoload::autoload",
+          "impact": 0
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "blast_radius",
+      "description": "Радиус поражения <= 0.3",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hotspot_detection",
+      "description": "Компоненты с суммарной степенью <= 20",
+      "status": "PASSED",
+      "threshold": 20,
+      "hotspots": [],
+      "hotspots_count": 0
+    },
+    {
+      "name": "deprecated_usage",
+      "description": "Отсутствие использования deprecated компонентов",
+      "status": "PASSED",
+      "deprecated_components": [],
+      "deprecated_count": 0,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "stability_violations",
+      "description": "Зависимости направлены от нестабильных к стабильным (SDP)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "circular_dependency_depth",
+      "description": "Циклы размером <= 3",
+      "status": "PASSED",
+      "threshold": 3,
+      "total_cycles": 0,
+      "large_cycles": [],
+      "large_cycles_count": 0
+    },
+    {
+      "name": "component_complexity",
+      "description": "Комплексная сложность <= 50",
+      "status": "PASSED",
+      "threshold": 50,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

@@ -1,0 +1,976 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 29,
+    "passed": 10,
+    "failed": 0,
+    "warnings": 2,
+    "info": 8,
+    "skipped": 0,
+    "errors": 9
+  },
+  "graph": {
+    "nodes": 376,
+    "edges": 1029
+  },
+  "checks": [
+    {
+      "name": "betweenness_centrality",
+      "description": "Компоненты с centrality > 0.3 являются узкими местами",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "bottlenecks": [],
+      "bottlenecks_count": 0
+    },
+    {
+      "name": "pagerank",
+      "description": "Компоненты с PageRank > 0.1 критически важны",
+      "status": "PASSED",
+      "threshold": 0.1,
+      "critical_components": [],
+      "critical_count": 0
+    },
+    {
+      "name": "modularity",
+      "description": "Модульность графа должна быть >= 0.3",
+      "status": "PASSED",
+      "modularity": 0.429,
+      "threshold": 0.3,
+      "communities_count": 88
+    },
+    {
+      "name": "abstractness",
+      "description": "Абстрактность должна быть между 0.1 и 0.8",
+      "status": "ERROR",
+      "abstractness": 0.08,
+      "abstract_count": 30,
+      "concrete_count": 346,
+      "total_count": 376,
+      "min_threshold": 0.1,
+      "max_threshold": 0.8,
+      "issue": "Слишком мало абстракций (< 0.1)"
+    },
+    {
+      "name": "distance_from_main_sequence",
+      "description": "D = |A + I - 1| должен быть близок к 0",
+      "status": "ERROR",
+      "packages": [
+        {
+          "package": "internal::twirptest::importmapping::y::y",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::importmapping::x::x",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::importer::importer",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::no_package_name_importer::no_package_name_importer",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::importable::importable",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::importer_local::importer_local",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::importer_local::importer_local_msgdef",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::google_protobuf_imports::service",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "json",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "fmt",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        }
+      ],
+      "violations": [
+        {
+          "package": "errors",
+          "abstractness": 0.0,
+          "instability": 0.098,
+          "distance": 0.902,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "internal::twirptest::importmapping::y::y",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::importmapping::x::x",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::importer::importer",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "internal::twirptest::no_package_name_importer::no_package_name_importer",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 2,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        }
+      ],
+      "violations_count": 109
+    },
+    {
+      "name": "clustering_coefficient",
+      "description": "Средний коэффициент кластеризации >= 0.1",
+      "status": "WARNING",
+      "avg_clustering": 0.012,
+      "threshold": 0.1,
+      "low_clustering_nodes": [
+        {
+          "node": "errors",
+          "coefficient": 0.031
+        },
+        {
+          "node": "protoc-gen-twirp::go_naming_test",
+          "coefficient": 0.0
+        },
+        {
+          "node": "protoc-gen-twirp::command_line",
+          "coefficient": 0.0
+        },
+        {
+          "node": "protoc-gen-twirp::go_naming",
+          "coefficient": 0.0
+        },
+        {
+          "node": "protoc-gen-twirp::main",
+          "coefficient": 0.0
+        },
+        {
+          "node": "protoc-gen-twirp::generator",
+          "coefficient": 0.013
+        },
+        {
+          "node": "protoc-gen-twirp::generator_test",
+          "coefficient": 0.0
+        },
+        {
+          "node": "protoc-gen-twirp::command_line_test",
+          "coefficient": 0.0
+        },
+        {
+          "node": "errors_test",
+          "coefficient": 0.095
+        },
+        {
+          "node": "_tools::src::google.golang.org::protobuf::proto::reset",
+          "coefficient": 0.0
+        }
+      ],
+      "low_clustering_count": 233
+    },
+    {
+      "name": "edge_density",
+      "description": "Плотность графа между 0.01 и 0.3",
+      "status": "INFO",
+      "density": 0.0073,
+      "nodes": 376,
+      "edges": 1029,
+      "max_possible_edges": 141000,
+      "issue": "Низкая плотность (фрагментация) < 0.01"
+    },
+    {
+      "name": "articulation_points",
+      "description": "Критические узлы (удаление разбивает граф)",
+      "status": "WARNING",
+      "articulation_points": [
+        "_tools::src::google.golang.org::protobuf::runtime::protoimpl::impl",
+        "internal::twirptest::importmapping::x::x.pb",
+        "internal::twirptest::importer::importer.pb",
+        "internal::twirptest::no_package_name_importer::no_package_name_importer.pb",
+        "internal::twirptest::google_protobuf_imports::service.pb",
+        "_tools::src::google.golang.org::protobuf::encoding::prototext::decode",
+        "_tools::src::github.com::twitchtv::retool::tooldir",
+        "_tools::src::golang.org::x::tools::go::loader::util",
+        "internal::twirptest::service_test",
+        "internal::twirptest::client_test",
+        "example::cmd::server::main",
+        "hooks::statsd::statsd_test",
+        "_tools::src::golang.org::x::tools::go::loader::loader",
+        "_tools::src::google.golang.org::protobuf::internal::detrand::rand",
+        "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+        "pragma",
+        "_tools::src::google.golang.org::protobuf::internal::encoding::text::decode_string",
+        "internal::gen::typemap::typemap_test",
+        "_tools::src::github.com::kisielk::errcheck::main",
+        "_tools::src::github.com::kisielk::errcheck::internal::errcheck::errcheck"
+      ],
+      "count": 30,
+      "recommendation": "Уменьшить зависимость от критических узлов"
+    },
+    {
+      "name": "bridge_edges",
+      "description": "Критические рёбра (удаление разбивает граф)",
+      "status": "INFO",
+      "bridges": [
+        {
+          "from": "protoc-gen-twirp::generator",
+          "to": "typemap"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::proto::extension",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::runtime::protoimpl::version",
+          "to": "version"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::runtime::protoimpl::impl",
+          "to": "filetype"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::compiler::protogen::protogen",
+          "to": "protodesc"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::main",
+          "to": "internal_gengo"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::reflect::protoreflect::source",
+          "to": "strconv"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::reflect::protoreflect::methods",
+          "to": "pragma"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::encoding::prototext::decode",
+          "to": "set"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+          "to": "crc32"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::order::order",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::encoding::text::decode_string",
+          "to": "utf16"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::detrand::rand",
+          "to": "fnv"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::genid::field_mask_gen",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::genid::wrappers_gen",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::genid::duration_gen",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::genid::descriptor_gen",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::genid::timestamp_gen",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::genid::api_gen",
+          "to": "protoreflect"
+        },
+        {
+          "from": "_tools::src::google.golang.org::protobuf::internal::genid::struct_gen",
+          "to": "protoreflect"
+        }
+      ],
+      "count": 50
+    },
+    {
+      "name": "graph_diameter",
+      "description": "Диаметр графа",
+      "status": "INFO",
+      "diameter": "infinity",
+      "reason": "Граф не связан (82 компонент)"
+    },
+    {
+      "name": "avg_path_length",
+      "description": "Средняя длина пути <= 5.0",
+      "status": "PASSED",
+      "avg_path_length": 3.153,
+      "threshold": 5.0,
+      "note": "Вычислено для наибольшей связной компоненты"
+    },
+    {
+      "name": "closeness_centrality",
+      "description": "Близость узлов к остальным",
+      "status": "INFO",
+      "central_nodes": [],
+      "peripheral_nodes": [
+        {
+          "node": "fmt",
+          "closeness": 0.197
+        },
+        {
+          "node": "reflect",
+          "closeness": 0.147
+        },
+        {
+          "node": "errors",
+          "closeness": 0.131
+        },
+        {
+          "node": "strings",
+          "closeness": 0.125
+        },
+        {
+          "node": "strconv",
+          "closeness": 0.104
+        },
+        {
+          "node": "sync",
+          "closeness": 0.099
+        },
+        {
+          "node": "http",
+          "closeness": 0.097
+        },
+        {
+          "node": "os",
+          "closeness": 0.091
+        },
+        {
+          "node": "json",
+          "closeness": 0.081
+        },
+        {
+          "node": "protowire",
+          "closeness": 0.072
+        }
+      ],
+      "avg_closeness": 0.008
+    },
+    {
+      "name": "eigenvector_centrality",
+      "description": "Влиятельность узлов",
+      "status": "INFO",
+      "threshold": 0.3,
+      "influential_nodes": [
+        {
+          "node": "errors",
+          "eigenvector": 0.452
+        },
+        {
+          "node": "http",
+          "eigenvector": 0.452
+        },
+        {
+          "node": "json",
+          "eigenvector": 0.444
+        },
+        {
+          "node": "fmt",
+          "eigenvector": 0.444
+        },
+        {
+          "node": "strconv",
+          "eigenvector": 0.444
+        }
+      ],
+      "influential_count": 5,
+      "top_5": [
+        {
+          "node": "errors",
+          "eigenvector": 0.452
+        },
+        {
+          "node": "http",
+          "eigenvector": 0.452
+        },
+        {
+          "node": "json",
+          "eigenvector": 0.444
+        },
+        {
+          "node": "fmt",
+          "eigenvector": 0.444
+        },
+        {
+          "node": "strconv",
+          "eigenvector": 0.444
+        }
+      ]
+    },
+    {
+      "name": "k_core_decomposition",
+      "status": "ERROR",
+      "error": "Input graph has self loops which is not permitted; Consider using G.remove_edges_from(nx.selfloop_edges(G))."
+    },
+    {
+      "name": "graph_cliques",
+      "description": "Клики размером <= 4",
+      "status": "PASSED",
+      "max_clique_size": 4,
+      "threshold": 4,
+      "large_cliques": [],
+      "large_cliques_count": 0,
+      "total_cliques": 1065
+    },
+    {
+      "name": "degree_distribution",
+      "description": "Распределение степеней узлов",
+      "status": "INFO",
+      "mean_degree": 5.47,
+      "std_degree": 9.06,
+      "max_degree": 100,
+      "min_degree": 0,
+      "distribution": {
+        "0": 81,
+        "1": 49,
+        "2": 29,
+        "3": 33,
+        "4": 42,
+        "5": 22,
+        "6": 24,
+        "7": 17,
+        "8": 18,
+        "9": 8,
+        "10": 7,
+        "11": 5,
+        "12": 2,
+        "13": 7,
+        "14": 2,
+        "15": 5,
+        "16": 3,
+        "17": 2,
+        "18": 4,
+        "19": 1
+      },
+      "is_scale_free": true,
+      "interpretation": "Scale-free сеть (hub-dominated)"
+    },
+    {
+      "name": "dependency_entropy",
+      "description": "Энтропия распределения зависимостей",
+      "status": "PASSED",
+      "entropy": 7.312,
+      "max_entropy": 8.555,
+      "normalized_entropy": 0.855
+    },
+    {
+      "name": "gini_coefficient",
+      "description": "Коэффициент Джини <= 0.6",
+      "status": "ERROR",
+      "gini": 0.618,
+      "threshold": 0.6,
+      "interpretation": "Неравномерно",
+      "issue": "Высокое неравенство (God Objects): Gini = 0.618"
+    },
+    {
+      "name": "zscore_outliers",
+      "description": "Узлы с |Z| > 3.0",
+      "status": "ERROR",
+      "outliers": [
+        {
+          "node": "protoreflect",
+          "degree": 100,
+          "z_score": 10.43
+        },
+        {
+          "node": "fmt",
+          "degree": 71,
+          "z_score": 7.23
+        },
+        {
+          "node": "reflect",
+          "degree": 55,
+          "z_score": 5.46
+        },
+        {
+          "node": "errors",
+          "degree": 51,
+          "z_score": 5.02
+        },
+        {
+          "node": "strings",
+          "degree": 47,
+          "z_score": 4.58
+        },
+        {
+          "node": "sync",
+          "degree": 37,
+          "z_score": 3.48
+        },
+        {
+          "node": "os",
+          "degree": 34,
+          "z_score": 3.15
+        }
+      ],
+      "outliers_count": 7,
+      "mean_degree": 5.47,
+      "std_degree": 9.06,
+      "z_threshold": 3.0
+    },
+    {
+      "name": "algebraic_connectivity",
+      "status": "INFO",
+      "algebraic_connectivity": 0,
+      "reason": "Граф не связан (λ₂ = 0)"
+    },
+    {
+      "name": "spectral_radius",
+      "description": "Спектральный радиус матрицы смежности",
+      "status": "INFO",
+      "spectral_radius": 1.0,
+      "max_degree": 100,
+      "interpretation": "Коррелирует с максимальной степенью"
+    },
+    {
+      "name": "cohesion_lcom4",
+      "description": "LCOM4 <= 1 (связность методов)",
+      "status": "ERROR",
+      "violations": [
+        {
+          "type": "_tools::src::google.golang",
+          "lcom4": 130,
+          "methods_count": 130
+        }
+      ],
+      "violations_count": 1,
+      "types_analyzed": 3
+    },
+    {
+      "name": "change_propagation",
+      "description": "Радиус изменений <= 20 компонентов",
+      "status": "ERROR",
+      "threshold": 20,
+      "avg_impact": 3.37,
+      "max_impact": 109,
+      "top_impact": [
+        {
+          "node": "fmt",
+          "impact": 109
+        },
+        {
+          "node": "protoreflect",
+          "impact": 100
+        },
+        {
+          "node": "strconv",
+          "impact": 76
+        },
+        {
+          "node": "json",
+          "impact": 66
+        },
+        {
+          "node": "http",
+          "impact": 64
+        }
+      ],
+      "violations": [
+        {
+          "component": "fmt",
+          "impact_radius": 109,
+          "sample_dependents": [
+            "_tools::src::github.com::kisielk::errcheck::main",
+            "hooks::statsd::statsd_test",
+            "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
+            "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+            "_tools::src::google.golang.org::protobuf::reflect::protodesc::desc"
+          ]
+        },
+        {
+          "component": "protoreflect",
+          "impact_radius": 100,
+          "sample_dependents": [
+            "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
+            "_tools::src::google.golang.org::protobuf::internal::filedesc::build",
+            "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+            "_tools::src::google.golang.org::protobuf::reflect::protodesc::desc",
+            "_tools::src::google.golang.org::protobuf::proto::decode"
+          ]
+        },
+        {
+          "component": "strconv",
+          "impact_radius": 76,
+          "sample_dependents": [
+            "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
+            "hooks::statsd::statsd_test",
+            "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+            "_tools::src::google.golang.org::protobuf::reflect::protodesc::desc",
+            "_tools::src::google.golang.org::protobuf::proto::decode"
+          ]
+        },
+        {
+          "component": "json",
+          "impact_radius": 66,
+          "sample_dependents": [
+            "hooks::statsd::statsd_test",
+            "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+            "_tools::src::google.golang.org::protobuf::reflect::protodesc::desc",
+            "_tools::src::google.golang.org::protobuf::proto::decode",
+            "_tools::src::google.golang.org::protobuf::proto::decode_gen"
+          ]
+        },
+        {
+          "component": "http",
+          "impact_radius": 64,
+          "sample_dependents": [
+            "hooks::statsd::statsd_test",
+            "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+            "_tools::src::google.golang.org::protobuf::reflect::protodesc::desc",
+            "_tools::src::google.golang.org::protobuf::proto::decode",
+            "_tools::src::google.golang.org::protobuf::proto::decode_gen"
+          ]
+        },
+        {
+          "component": "errors",
+          "impact_radius": 63,
+          "sample_dependents": [
+            "hooks::statsd::statsd_test",
+            "_tools::src::google.golang.org::protobuf::proto::encode_gen",
+            "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+            "_tools::src::google.golang.org::protobuf::reflect::protodesc::desc",
+            "_tools::src::google.golang.org::protobuf::proto::decode"
+          ]
+        },
+        {
+          "component": "reflect",
+          "impact_radius": 55,
+          "sample_dependents": [
+            "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+            "internal::twirptest::no_package_name_importer::no_package_name_importer.pb",
+            "internal::twirptest::json_serialization::json_serialization.pb",
+            "_tools::src::google.golang.org::protobuf::internal::impl::convert_map",
+            "internal::twirptest::service_test"
+          ]
+        },
+        {
+          "component": "strings",
+          "impact_radius": 47,
+          "sample_dependents": [
+            "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
+            "_tools::src::google.golang.org::protobuf::internal::strs::strings",
+            "_tools::src::github.com::kisielk::errcheck::main",
+            "internal::twirptest::client_test",
+            "_tools::src::github.com::kisielk::gotool::internal::load::pkg"
+          ]
+        },
+        {
+          "component": "sync",
+          "impact_radius": 37,
+          "sample_dependents": [
+            "internal::twirptest::json_serialization::json_serialization.pb",
+            "_tools::src::google.golang.org::protobuf::internal::filedesc::desc_init",
+            "_tools::src::google.golang.org::protobuf::internal::impl::codec_extension",
+            "_tools::src::github.com::kisielk::errcheck::internal::errcheck::errcheck",
+            "internal::twirptest::service_test"
+          ]
+        },
+        {
+          "component": "os",
+          "impact_radius": 34,
+          "sample_dependents": [
+            "_tools::src::github.com::kisielk::errcheck::main",
+            "_tools::src::github.com::twitchtv::retool::tooldir",
+            "_tools::src::github.com::kisielk::errcheck::internal::errcheck::errcheck",
+            "license_test",
+            "internal::twirptest::service_test"
+          ]
+        }
+      ],
+      "violations_count": 16
+    },
+    {
+      "name": "blast_radius",
+      "description": "Радиус поражения <= 0.3",
+      "status": "PASSED",
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hotspot_detection",
+      "description": "Компоненты с суммарной степенью <= 20",
+      "status": "ERROR",
+      "threshold": 20,
+      "hotspots": [
+        {
+          "component": "protoreflect",
+          "in_degree": 100,
+          "out_degree": 0,
+          "total_degree": 100,
+          "hotspot_score": 5.0
+        },
+        {
+          "component": "fmt",
+          "in_degree": 71,
+          "out_degree": 0,
+          "total_degree": 71,
+          "hotspot_score": 3.55
+        },
+        {
+          "component": "reflect",
+          "in_degree": 55,
+          "out_degree": 0,
+          "total_degree": 55,
+          "hotspot_score": 2.75
+        },
+        {
+          "component": "errors",
+          "in_degree": 46,
+          "out_degree": 5,
+          "total_degree": 51,
+          "hotspot_score": 2.55
+        },
+        {
+          "component": "strings",
+          "in_degree": 47,
+          "out_degree": 0,
+          "total_degree": 47,
+          "hotspot_score": 2.35
+        },
+        {
+          "component": "sync",
+          "in_degree": 37,
+          "out_degree": 0,
+          "total_degree": 37,
+          "hotspot_score": 1.85
+        },
+        {
+          "component": "os",
+          "in_degree": 34,
+          "out_degree": 0,
+          "total_degree": 34,
+          "hotspot_score": 1.7
+        },
+        {
+          "component": "protowire",
+          "in_degree": 27,
+          "out_degree": 0,
+          "total_degree": 27,
+          "hotspot_score": 1.35
+        },
+        {
+          "component": "context",
+          "in_degree": 22,
+          "out_degree": 4,
+          "total_degree": 26,
+          "hotspot_score": 1.3
+        },
+        {
+          "component": "_tools::src::google.golang.org::protobuf::compiler::protogen::protogen",
+          "in_degree": 0,
+          "out_degree": 24,
+          "total_degree": 24,
+          "hotspot_score": 1.2
+        }
+      ],
+      "hotspots_count": 14
+    },
+    {
+      "name": "deprecated_usage",
+      "description": "Отсутствие использования deprecated компонентов",
+      "status": "PASSED",
+      "deprecated_components": [
+        "_tools::src::google.golang.org::protobuf::internal::impl::legacy_extension",
+        "_tools::src::google.golang.org::protobuf::internal::impl::legacy_export",
+        "_tools::src::google.golang.org::protobuf::internal::flags::proto_legacy_enable",
+        "_tools::src::google.golang.org::protobuf::internal::impl::legacy_message",
+        "_tools::src::google.golang.org::protobuf::internal::flags::proto_legacy_disable",
+        "_tools::src::google.golang.org::protobuf::internal::filedesc::placeholder",
+        "_tools::src::github.com::twitchtv::retool::tooldir",
+        "_tools::src::google.golang.org::protobuf::internal::impl::legacy_enum",
+        "_tools::src::google.golang.org::protobuf::runtime::protoiface::legacy",
+        "_tools::src::google.golang.org::protobuf::internal::impl::legacy_file"
+      ],
+      "deprecated_count": 10,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "stability_violations",
+      "description": "Зависимости направлены от нестабильных к стабильным (SDP)",
+      "status": "PASSED",
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "circular_dependency_depth",
+      "description": "Циклы размером <= 3",
+      "status": "PASSED",
+      "threshold": 3,
+      "total_cycles": 2,
+      "large_cycles": [],
+      "large_cycles_count": 0
+    },
+    {
+      "name": "component_complexity",
+      "description": "Комплексная сложность <= 50",
+      "status": "ERROR",
+      "threshold": 50,
+      "violations": [
+        {
+          "component": "protoreflect",
+          "complexity": 200.0,
+          "in_degree": 100,
+          "out_degree": 0,
+          "betweenness": 0.0
+        },
+        {
+          "component": "fmt",
+          "complexity": 142.0,
+          "in_degree": 71,
+          "out_degree": 0,
+          "betweenness": 0.0
+        },
+        {
+          "component": "reflect",
+          "complexity": 110.0,
+          "in_degree": 55,
+          "out_degree": 0,
+          "betweenness": 0.0
+        },
+        {
+          "component": "errors",
+          "complexity": 107.14,
+          "in_degree": 46,
+          "out_degree": 5,
+          "betweenness": 0.001
+        },
+        {
+          "component": "strings",
+          "complexity": 94.0,
+          "in_degree": 47,
+          "out_degree": 0,
+          "betweenness": 0.0
+        },
+        {
+          "component": "sync",
+          "complexity": 74.0,
+          "in_degree": 37,
+          "out_degree": 0,
+          "betweenness": 0.0
+        },
+        {
+          "component": "_tools::src::google.golang.org::protobuf::compiler::protogen::protogen",
+          "complexity": 72.0,
+          "in_degree": 0,
+          "out_degree": 24,
+          "betweenness": 0.0
+        },
+        {
+          "component": "os",
+          "complexity": 68.0,
+          "in_degree": 34,
+          "out_degree": 0,
+          "betweenness": 0.0
+        },
+        {
+          "component": "internal::twirptest::service_test",
+          "complexity": 57.0,
+          "in_degree": 0,
+          "out_degree": 19,
+          "betweenness": 0.0
+        },
+        {
+          "component": "context",
+          "complexity": 56.07,
+          "in_degree": 22,
+          "out_degree": 4,
+          "betweenness": 0.001
+        }
+      ],
+      "violations_count": 13
+    }
+  ]
+}

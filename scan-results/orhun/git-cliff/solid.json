@@ -1,0 +1,223 @@
+{
+  "status": "ERROR",
+  "source": "structure",
+  "summary": {
+    "total_checks": 5,
+    "passed": 3,
+    "failed": 0,
+    "warnings": 1,
+    "info": 0,
+    "skipped": 0,
+    "errors": 1
+  },
+  "graph": {
+    "nodes": 100,
+    "edges": 191
+  },
+  "checks": [
+    {
+      "name": "single_responsibility",
+      "description": "Модули зависят от <= 3 разных доменов (SRP)",
+      "status": "ERROR",
+      "threshold": 3,
+      "violations": [
+        {
+          "package": "git-cliff-core::src::remote",
+          "domains_count": 16,
+          "domains": [
+            "git-cliff-core::error",
+            "reqwest",
+            "time",
+            "http_cache_reqwest",
+            "git-cliff-core::config",
+            "secrecy",
+            "gitea",
+            "dyn_clone",
+            "etcetera",
+            "git-cliff-core::contributor"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::lib",
+          "domains_count": 14,
+          "domains": [
+            "statistics",
+            "tag",
+            "summary",
+            "remote",
+            "repo",
+            "changelog",
+            "embed",
+            "command",
+            "contributor",
+            "error"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::release",
+          "domains_count": 11,
+          "domains": [
+            "git-cliff-core::config",
+            "git-cliff-core::remote",
+            "serde_json",
+            "semver",
+            "git-cliff-core::commit",
+            "next_version",
+            "git-cliff-core::statistics",
+            "test",
+            "serde",
+            "pretty_assertions"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::repo",
+          "domains_count": 11,
+          "domains": [
+            "url",
+            "git-cliff-core::config",
+            "git2",
+            "glob",
+            "git-cliff-core::tag",
+            "git-cliff-core::commit",
+            "indexmap",
+            "test",
+            "temp_dir",
+            "git-cliff-core::error"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::config",
+          "domains_count": 10,
+          "domains": [
+            "secrecy",
+            "glob",
+            "etcetera",
+            "git-cliff-core::embed",
+            "test",
+            "serde",
+            "pretty_assertions",
+            "git-cliff-core::error",
+            "regex",
+            "serde_pattern"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::changelog",
+          "domains_count": 10,
+          "domains": [
+            "git-cliff-core::config",
+            "git-cliff-core::template",
+            "git-cliff-core::remote",
+            "git-cliff-core::summary",
+            "git-cliff-core::commit",
+            "test",
+            "git-cliff-core::release",
+            "pretty_assertions",
+            "git-cliff-core::error",
+            "regex"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::remote::azure_devops",
+          "domains_count": 9,
+          "domains": [
+            "git-cliff-core::error",
+            "git-cliff-core::config",
+            "futures",
+            "git-cliff-core::remote",
+            "reqwest_middleware",
+            "test",
+            "serde",
+            "pretty_assertions",
+            "async_stream"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::remote::bitbucket",
+          "domains_count": 9,
+          "domains": [
+            "git-cliff-core::error",
+            "git-cliff-core::config",
+            "futures",
+            "git-cliff-core::remote",
+            "reqwest_middleware",
+            "test",
+            "serde",
+            "pretty_assertions",
+            "async_stream"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::remote::github",
+          "domains_count": 9,
+          "domains": [
+            "git-cliff-core::error",
+            "git-cliff-core::config",
+            "futures",
+            "git-cliff-core::remote",
+            "reqwest_middleware",
+            "test",
+            "serde",
+            "pretty_assertions",
+            "async_stream"
+          ]
+        },
+        {
+          "package": "git-cliff-core::src::remote::gitea",
+          "domains_count": 9,
+          "domains": [
+            "git-cliff-core::error",
+            "git-cliff-core::config",
+            "futures",
+            "git-cliff-core::remote",
+            "reqwest_middleware",
+            "test",
+            "serde",
+            "pretty_assertions",
+            "async_stream"
+          ]
+        }
+      ],
+      "violations_count": 19
+    },
+    {
+      "name": "open_closed",
+      "description": "Соотношение абстракций >= 20% (OCP)",
+      "status": "WARNING",
+      "abstractions": 0,
+      "implementations": 100,
+      "ratio": 0.0,
+      "threshold": 0.2,
+      "issue": "Низкое соотношение абстракций (0.00%) - плохая расширяемость"
+    },
+    {
+      "name": "liskov_substitution",
+      "description": "Реализации не добавляют > 3 лишних зависимостей (LSP)",
+      "status": "PASSED",
+      "threshold": 3,
+      "violations": [],
+      "violations_count": 0,
+      "interfaces_analyzed": 0,
+      "implementations_analyzed": 0
+    },
+    {
+      "name": "dependency_inversion",
+      "description": "Зависимости на абстракции >= 30% (DIP)",
+      "status": "PASSED",
+      "abstract_deps": 0,
+      "concrete_deps": 0,
+      "abstract_ratio": 1.0,
+      "threshold": 0.3,
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "interface_segregation",
+      "description": "Типы с <= 5 методами (ISP)",
+      "status": "PASSED",
+      "threshold": 5,
+      "violations": [],
+      "violations_count": 0
+    }
+  ]
+}

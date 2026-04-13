@@ -1,0 +1,272 @@
+{
+  "status": "FAILED",
+  "source": "structure",
+  "summary": {
+    "total_checks": 11,
+    "passed": 4,
+    "failed": 1,
+    "warnings": 0,
+    "info": 0,
+    "skipped": 1,
+    "errors": 5
+  },
+  "graph": {
+    "nodes": 53,
+    "edges": 79
+  },
+  "checks": [
+    {
+      "name": "dag_check",
+      "description": "Граф должен быть ациклическим (без циклических зависимостей)",
+      "status": "FAILED",
+      "cycles": [
+        [
+          "src::renderer",
+          "src::listing"
+        ]
+      ],
+      "cycles_count": 1
+    },
+    {
+      "name": "max_fan_out",
+      "description": "Компонент не должен зависеть от более чем 5 других",
+      "status": "ERROR",
+      "threshold": 5,
+      "violations": [
+        {
+          "node": "src::args",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
+          "node": "src::listing",
+          "fan_out": 6,
+          "threshold": 5
+        },
+        {
+          "node": "src::main",
+          "fan_out": 17,
+          "threshold": 5
+        }
+      ],
+      "violations_count": 3
+    },
+    {
+      "name": "coupling",
+      "description": "Ca <= 10, Ce <= 10",
+      "status": "ERROR",
+      "ca_threshold": 10,
+      "ce_threshold": 10,
+      "violations": [
+        {
+          "node": "src::main",
+          "afferent_coupling": 0,
+          "efferent_coupling": 17,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "tests::fixtures",
+          "afferent_coupling": 18,
+          "efferent_coupling": 0,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "fixtures",
+          "afferent_coupling": 18,
+          "efferent_coupling": 0,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        }
+      ],
+      "violations_count": 3
+    },
+    {
+      "name": "instability",
+      "description": "Зависимости должны идти от нестабильных к стабильным",
+      "status": "PASSED",
+      "most_unstable": [
+        {
+          "node": "src::main",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 17
+        },
+        {
+          "node": "tests::bind",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
+          "node": "tests::tls",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
+          "node": "tests::auth",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
+          "node": "tests::upload_files",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        }
+      ],
+      "most_stable": [
+        {
+          "node": "renderer",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "webdav_fs",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "fixtures",
+          "instability": 0.0,
+          "ca": 18,
+          "ce": 0
+        },
+        {
+          "node": "utils",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "fake_tty",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "layer_violations",
+      "description": "Зависимости должны идти только вниз по слоям",
+      "status": "PASSED",
+      "layers": {
+        "cmd": 0,
+        "api": 1,
+        "handler": 1,
+        "controller": 1,
+        "service": 2,
+        "usecase": 2,
+        "internal": 2,
+        "domain": 3,
+        "entity": 3,
+        "model": 3,
+        "repository": 4,
+        "storage": 4,
+        "infrastructure": 5,
+        "pkg": 6
+      },
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "forbidden_dependencies",
+      "description": "Проверка запрещенных зависимостей",
+      "status": "PASSED",
+      "rules": [
+        {
+          "from": "handler",
+          "to": "repository"
+        },
+        {
+          "from": "controller",
+          "to": "repository"
+        },
+        {
+          "from": "api",
+          "to": "storage"
+        },
+        {
+          "from": "model",
+          "to": "service"
+        },
+        {
+          "from": "entity",
+          "to": "repository"
+        }
+      ],
+      "violations": [],
+      "violations_count": 0
+    },
+    {
+      "name": "hub_nodes",
+      "description": "Компоненты с > 10 связей (потенциальные God Objects)",
+      "status": "ERROR",
+      "threshold": 10,
+      "hubs": [
+        {
+          "node": "tests::fixtures",
+          "total_degree": 18,
+          "in_degree": 18,
+          "out_degree": 0
+        },
+        {
+          "node": "fixtures",
+          "total_degree": 18,
+          "in_degree": 18,
+          "out_degree": 0
+        },
+        {
+          "node": "src::main",
+          "total_degree": 17,
+          "in_degree": 0,
+          "out_degree": 17
+        }
+      ],
+      "hubs_count": 3
+    },
+    {
+      "name": "orphan_nodes",
+      "description": "Компоненты без связей (возможно мертвый код)",
+      "status": "ERROR",
+      "orphans": [
+        "src::pipe"
+      ],
+      "orphans_count": 1
+    },
+    {
+      "name": "strongly_connected_components",
+      "description": "Группы с взаимными зависимостями (размер > 1)",
+      "status": "ERROR",
+      "total_sccs": 52,
+      "problematic_sccs": [
+        [
+          "src::renderer",
+          "src::listing"
+        ]
+      ],
+      "problematic_count": 1
+    },
+    {
+      "name": "graph_depth",
+      "description": "Глубина графа зависимостей",
+      "status": "SKIP",
+      "reason": "Граф содержит циклы, невозможно вычислить глубину"
+    },
+    {
+      "name": "component_distance",
+      "description": "Расстояние между компонентами должно быть <= 5",
+      "status": "PASSED",
+      "max_distance": 5,
+      "long_paths": [],
+      "long_paths_count": 0
+    }
+  ]
+}
