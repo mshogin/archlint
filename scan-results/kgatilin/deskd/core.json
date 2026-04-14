@@ -67,14 +67,14 @@
         },
         {
           "node": "src::domain",
-          "afferent_coupling": 21,
+          "afferent_coupling": 22,
           "efferent_coupling": 7,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::app",
-          "afferent_coupling": 20,
+          "afferent_coupling": 19,
           "efferent_coupling": 27,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -185,16 +185,9 @@
           "from_instability": 0.143,
           "to_instability": 0.3,
           "issue": "Зависимость направлена к менее стабильному компоненту"
-        },
-        {
-          "from": "src::config",
-          "to": "src::domain",
-          "from_instability": 0.143,
-          "to_instability": 0.25,
-          "issue": "Зависимость направлена к менее стабильному компоненту"
         }
       ],
-      "violations_count": 2
+      "violations_count": 1
     },
     {
       "name": "layer_violations",
@@ -256,8 +249,8 @@
       "hubs": [
         {
           "node": "src::app",
-          "total_degree": 47,
-          "in_degree": 20,
+          "total_degree": 46,
+          "in_degree": 19,
           "out_degree": 27
         },
         {
@@ -274,8 +267,8 @@
         },
         {
           "node": "src::domain",
-          "total_degree": 28,
-          "in_degree": 21,
+          "total_degree": 29,
+          "in_degree": 22,
           "out_degree": 7
         },
         {

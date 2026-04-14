@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.475,
+      "modularity": 0.478,
       "threshold": 0.3,
-      "communities_count": 20
+      "communities_count": 21
     },
     {
       "name": "abstractness",
@@ -160,8 +160,8 @@
         {
           "package": "src::domain",
           "abstractness": 0.0,
-          "instability": 0.25,
-          "distance": 0.75,
+          "instability": 0.241,
+          "distance": 0.759,
           "nodes_count": 1
         },
         {
@@ -375,7 +375,7 @@
       "name": "avg_path_length",
       "description": "Средняя длина пути <= 5.0",
       "status": "PASSED",
-      "avg_path_length": 3.368,
+      "avg_path_length": 3.372,
       "threshold": 5.0,
       "note": "Вычислено для наибольшей связной компоненты"
     },
@@ -387,7 +387,7 @@
       "peripheral_nodes": [
         {
           "node": "src::domain",
-          "closeness": 0.179
+          "closeness": 0.186
         },
         {
           "node": "src::infra",
@@ -415,7 +415,7 @@
         },
         {
           "node": "src::app",
-          "closeness": 0.139
+          "closeness": 0.132
         },
         {
           "node": "src::config",
@@ -423,10 +423,10 @@
         },
         {
           "node": "bus",
-          "closeness": 0.119
+          "closeness": 0.115
         }
       ],
-      "avg_closeness": 0.034
+      "avg_closeness": 0.033
     },
     {
       "name": "eigenvector_centrality",
@@ -489,8 +489,8 @@
       "description": "Распределение степеней узлов",
       "status": "INFO",
       "mean_degree": 2.97,
-      "std_degree": 6.15,
-      "max_degree": 47,
+      "std_degree": 6.13,
+      "max_degree": 46,
       "min_degree": 0,
       "distribution": {
         "0": 11,
@@ -502,10 +502,10 @@
         "13": 1,
         "16": 1,
         "21": 1,
-        "28": 1,
+        "29": 1,
         "30": 1,
         "37": 1,
-        "47": 1
+        "46": 1
       },
       "is_scale_free": true,
       "interpretation": "Scale-free сеть (hub-dominated)"
@@ -534,28 +534,28 @@
       "outliers": [
         {
           "node": "src::app",
-          "degree": 47,
-          "z_score": 7.16
+          "degree": 46,
+          "z_score": 7.02
         },
         {
           "node": "tests",
           "degree": 37,
-          "z_score": 5.53
+          "z_score": 5.55
         },
         {
           "node": "src::infra",
           "degree": 30,
-          "z_score": 4.39
+          "z_score": 4.41
         },
         {
           "node": "src::domain",
-          "degree": 28,
-          "z_score": 4.07
+          "degree": 29,
+          "z_score": 4.25
         }
       ],
       "outliers_count": 4,
       "mean_degree": 2.97,
-      "std_degree": 6.15,
+      "std_degree": 6.13,
       "z_threshold": 3.0
     },
     {
@@ -569,7 +569,7 @@
       "description": "Спектральный радиус матрицы смежности",
       "status": "INFO",
       "spectral_radius": 0.0,
-      "max_degree": 47,
+      "max_degree": 46,
       "interpretation": "Коррелирует с максимальной степенью"
     },
     {
@@ -585,7 +585,7 @@
       "description": "Радиус изменений <= 20 компонентов",
       "status": "ERROR",
       "threshold": 20,
-      "avg_impact": 9.1,
+      "avg_impact": 8.97,
       "max_impact": 49,
       "top_impact": [
         {
@@ -614,114 +614,114 @@
           "component": "tests",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::domain::agent",
-            "src::app::worker",
-            "src::app::workflow"
+            "src::app::bus_api",
+            "src::bin::session2graph",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus"
           ]
         },
         {
           "component": "task",
           "impact_radius": 46,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::domain"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::domain"
           ]
         },
         {
           "component": "context",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::domain"
           ]
         },
         {
           "component": "message",
           "impact_radius": 44,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::domain"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 44,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::domain"
           ]
         },
         {
           "component": "events",
-          "impact_radius": 38,
+          "impact_radius": 39,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::domain"
           ]
         },
         {
           "component": "workitem",
-          "impact_radius": 38,
+          "impact_radius": 39,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::domain"
           ]
         },
         {
           "component": "src::domain",
-          "impact_radius": 37,
+          "impact_radius": 38,
           "sample_dependents": [
-            "src::infra::dto::instance",
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::ports::bus"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::infra::dto::bus",
+            "src::app::commands::tui"
           ]
         },
         {
           "component": "bus_server",
           "impact_radius": 35,
           "sample_dependents": [
-            "src::app::commands::status",
-            "src::app::worker",
-            "src::app::workflow",
-            "src::app::context",
-            "src::app::agent_process"
+            "src::app::bus_api",
+            "src::app::agent_registry",
+            "src::app::mcp",
+            "src::app::commands::tui",
+            "src::app::context"
           ]
         }
       ],
-      "violations_count": 41
+      "violations_count": 22
     },
     {
       "name": "blast_radius",
@@ -739,10 +739,10 @@
       "hotspots": [
         {
           "component": "src::app",
-          "in_degree": 20,
+          "in_degree": 19,
           "out_degree": 27,
-          "total_degree": 47,
-          "hotspot_score": 2.35
+          "total_degree": 46,
+          "hotspot_score": 2.3
         },
         {
           "component": "tests",
@@ -760,10 +760,10 @@
         },
         {
           "component": "src::domain",
-          "in_degree": 21,
+          "in_degree": 22,
           "out_degree": 7,
-          "total_degree": 28,
-          "hotspot_score": 1.4
+          "total_degree": 29,
+          "hotspot_score": 1.45
         },
         {
           "component": "src::config",
@@ -808,10 +808,10 @@
       "violations": [
         {
           "component": "src::app",
-          "complexity": 123.56,
-          "in_degree": 20,
+          "complexity": 121.43,
+          "in_degree": 19,
           "out_degree": 27,
-          "betweenness": 0.026
+          "betweenness": 0.024
         },
         {
           "component": "tests",
@@ -829,10 +829,10 @@
         },
         {
           "component": "src::domain",
-          "complexity": 63.94,
-          "in_degree": 21,
+          "complexity": 65.98,
+          "in_degree": 22,
           "out_degree": 7,
-          "betweenness": 0.009
+          "betweenness": 0.01
         }
       ],
       "violations_count": 4
