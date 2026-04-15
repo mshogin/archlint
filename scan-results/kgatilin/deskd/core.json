@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 145,
-    "edges": 215
+    "nodes": 158,
+    "edges": 230
   },
   "checks": [
     {
@@ -30,17 +30,17 @@
       "violations": [
         {
           "node": "src::domain",
-          "fan_out": 7,
+          "fan_out": 8,
           "threshold": 5
         },
         {
           "node": "src::app",
-          "fan_out": 27,
+          "fan_out": 30,
           "threshold": 5
         },
         {
           "node": "src::app::commands",
-          "fan_out": 13,
+          "fan_out": 14,
           "threshold": 5
         },
         {
@@ -60,49 +60,49 @@
       "violations": [
         {
           "node": "src::config",
-          "afferent_coupling": 18,
+          "afferent_coupling": 20,
           "efferent_coupling": 3,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::domain",
-          "afferent_coupling": 22,
-          "efferent_coupling": 7,
+          "afferent_coupling": 27,
+          "efferent_coupling": 8,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::app",
-          "afferent_coupling": 19,
-          "efferent_coupling": 27,
+          "afferent_coupling": 21,
+          "efferent_coupling": 30,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::app::commands",
           "afferent_coupling": 0,
-          "efferent_coupling": 13,
+          "efferent_coupling": 14,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::ports",
-          "afferent_coupling": 13,
-          "efferent_coupling": 3,
+          "afferent_coupling": 16,
+          "efferent_coupling": 4,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::infra",
-          "afferent_coupling": 21,
+          "afferent_coupling": 11,
           "efferent_coupling": 9,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "tests",
-          "afferent_coupling": 37,
+          "afferent_coupling": 41,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -182,8 +182,8 @@
         {
           "from": "src::config",
           "to": "src::infra",
-          "from_instability": 0.143,
-          "to_instability": 0.3,
+          "from_instability": 0.13,
+          "to_instability": 0.45,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
       ],
@@ -249,45 +249,45 @@
       "hubs": [
         {
           "node": "src::app",
-          "total_degree": 46,
-          "in_degree": 19,
-          "out_degree": 27
+          "total_degree": 51,
+          "in_degree": 21,
+          "out_degree": 30
         },
         {
           "node": "tests",
-          "total_degree": 37,
-          "in_degree": 37,
+          "total_degree": 41,
+          "in_degree": 41,
           "out_degree": 0
         },
         {
-          "node": "src::infra",
-          "total_degree": 30,
-          "in_degree": 21,
-          "out_degree": 9
-        },
-        {
           "node": "src::domain",
-          "total_degree": 29,
-          "in_degree": 22,
-          "out_degree": 7
+          "total_degree": 35,
+          "in_degree": 27,
+          "out_degree": 8
         },
         {
           "node": "src::config",
-          "total_degree": 21,
-          "in_degree": 18,
+          "total_degree": 23,
+          "in_degree": 20,
           "out_degree": 3
         },
         {
           "node": "src::ports",
-          "total_degree": 16,
-          "in_degree": 13,
-          "out_degree": 3
+          "total_degree": 20,
+          "in_degree": 16,
+          "out_degree": 4
+        },
+        {
+          "node": "src::infra",
+          "total_degree": 20,
+          "in_degree": 11,
+          "out_degree": 9
         },
         {
           "node": "src::app::commands",
-          "total_degree": 13,
+          "total_degree": 14,
           "in_degree": 0,
-          "out_degree": 13
+          "out_degree": 14
         }
       ],
       "hubs_count": 7
@@ -303,19 +303,18 @@
         "src::app::cli",
         "src::ports::executor",
         "build",
-        "tests::bus_integration",
         "tests::crash_recovery",
         "tests::budget_enforcement",
         "tests::schedule_to_worker",
         "tests::agent_lifecycle"
       ],
-      "orphans_count": 11
+      "orphans_count": 10
     },
     {
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 145,
+      "total_sccs": 158,
       "problematic_sccs": [],
       "problematic_count": 0
     },
@@ -328,8 +327,8 @@
       "longest_path": [
         "src::app::process_builder",
         "src::config",
-        "src::infra",
-        "bus_server"
+        "src::domain",
+        "agent"
       ]
     },
     {

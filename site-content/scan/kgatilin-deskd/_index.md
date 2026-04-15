@@ -41,11 +41,12 @@ description: "Architecture analysis of kgatilin/deskd"
 |-------|--------|-------|-----------|
 | abstractness | ERROR |  |  |
 | distance_from_main_sequence | ERROR |  |  |
-| gini_coefficient | ERROR |  | 0.6 |
 | zscore_outliers | ERROR |  |  |
 | change_propagation | ERROR |  | 20 |
 | hotspot_detection | ERROR |  | 20 |
+| stability_violations | ERROR |  |  |
 | component_complexity | ERROR |  | 50 |
+| edge_density | INFO |  |  |
 | bridge_edges | INFO |  |  |
 | graph_diameter | INFO |  |  |
 | closeness_centrality | INFO |  |  |
@@ -55,16 +56,15 @@ description: "Architecture analysis of kgatilin/deskd"
 | betweenness_centrality | PASSED |  | 0.3 |
 | pagerank | PASSED |  | 0.1 |
 | modularity | PASSED |  | 0.3 |
-| edge_density | PASSED |  |  |
 | avg_path_length | PASSED |  | 5.0 |
 | eigenvector_centrality | PASSED |  | 0.3 |
 | k_core_decomposition | PASSED |  | 5 |
 | graph_cliques | PASSED |  | 4 |
 | dependency_entropy | PASSED |  |  |
+| gini_coefficient | PASSED |  | 0.6 |
 | cohesion_lcom4 | PASSED |  |  |
 | blast_radius | PASSED |  | 0.3 |
 | deprecated_usage | PASSED |  |  |
-| stability_violations | PASSED |  |  |
 | circular_dependency_depth | PASSED |  | 3 |
 | clustering_coefficient | WARNING |  | 0.1 |
 | articulation_points | WARNING |  |  |
