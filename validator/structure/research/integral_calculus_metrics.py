@@ -775,6 +775,15 @@ def validate_cheeger_constant(
                 'reason': 'Insufficient nodes'
             }
 
+        if n > 100:
+            return {
+                'name': 'cheeger_constant',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 100) - algorithm is O(n^3)/NP-hard',
+                'threshold': 100,
+            }
+
         node_list = list(subgraph.nodes())
 
         # Приближённый поиск минимального разреза через Fiedler vector

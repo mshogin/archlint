@@ -125,10 +125,15 @@ def validate_chromatic_number(
         chromatic_upper = max(coloring.values()) + 1 if coloring else 1
 
         # Максимальная клика как нижняя граница
-        try:
-            max_clique = max(len(c) for c in nx.find_cliques(subgraph))
-        except Exception:
-            max_clique = 1
+        # For large graphs skip NP-hard find_cliques and use degeneracy as lower bound
+        if n > 100:
+            # degeneracy (max core number) is a tight lower bound for chromatic number
+            max_clique = max(nx.core_number(subgraph).values(), default=1)
+        else:
+            try:
+                max_clique = max(len(c) for c in nx.find_cliques(subgraph))
+            except Exception:
+                max_clique = 1
 
         chromatic_lower = max_clique
 

@@ -122,6 +122,15 @@ def validate_condition_number(
                 'reason': 'Недостаточно узлов'
             }
 
+        if n > 500:
+            return {
+                'name': 'condition_number',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 500) - algorithm is O(n^3)/NP-hard',
+                'threshold': 500,
+            }
+
         # Используем Laplacian matrix (более стабильна)
         laplacian = nx.laplacian_matrix(subgraph.to_undirected()).todense().astype(float)
 
@@ -181,6 +190,15 @@ def validate_svd_analysis(
                 'name': 'svd_analysis',
                 'status': 'SKIP',
                 'reason': 'Недостаточно узлов'
+            }
+
+        if n > 500:
+            return {
+                'name': 'svd_analysis',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 500) - algorithm is O(n^3)/NP-hard',
+                'threshold': 500,
             }
 
         adj_matrix = nx.adjacency_matrix(subgraph).todense().astype(float)
@@ -355,6 +373,15 @@ def validate_controllability(
                 'reason': 'Недостаточно узлов'
             }
 
+        if n > 200:
+            return {
+                'name': 'controllability',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
+            }
+
         adj_matrix = nx.adjacency_matrix(subgraph).todense().astype(float)
 
         # Матрица управления B = I (можем воздействовать на все узлы)
@@ -491,6 +518,15 @@ def validate_effective_resistance(
                 'name': 'effective_resistance',
                 'status': 'SKIP',
                 'reason': 'Недостаточно узлов'
+            }
+
+        if n > 300:
+            return {
+                'name': 'effective_resistance',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 300) - algorithm is O(n^3)/NP-hard',
+                'threshold': 300,
             }
 
         if not nx.is_connected(subgraph):

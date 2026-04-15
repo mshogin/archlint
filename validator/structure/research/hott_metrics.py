@@ -316,6 +316,17 @@ def validate_higher_inductive_types(
                 'violations': [],
             }
 
+        if n > 200:
+            return {
+                'name': 'higher_inductive_types',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
+                'details': {},
+                'violations': [],
+            }
+
         # Find all simple cycles
         try:
             all_cycles = list(nx.simple_cycles(subgraph))
@@ -516,6 +527,17 @@ def validate_n_truncation(
                 'status': 'SKIP',
                 'description': 'n-truncation level: minimum n for which the graph is n-truncated',
                 'reason': 'Insufficient nodes',
+                'details': {},
+                'violations': [],
+            }
+
+        if n > 200:
+            return {
+                'name': 'n_truncation',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
                 'details': {},
                 'violations': [],
             }

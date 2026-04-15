@@ -177,8 +177,18 @@ def validate_markov_properties(graph: nx.DiGraph, config: Any = None) -> Dict[st
             "name": "markov_properties",
             "status": "INFO",
             "reason": "Insufficient components for Markov analysis",
-            
+
             "details": {"components": len(components)}
+        }
+
+    if len(components) > 200:
+        n = len(components)
+        return {
+            "name": "markov_properties",
+            "status": "SKIPPED",
+            "value": None,
+            "message": f"Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard",
+            "threshold": 200,
         }
 
     # Build graph

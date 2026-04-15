@@ -316,10 +316,10 @@ def validate_pushdown_patterns(graph: nx.DiGraph, config: Any = None) -> Dict[st
             # For cyclic graphs, find longest simple path (approximation)
             longest_path_length = 0
             longest_path = []
-            for source in [n for n in G.nodes() if G.in_degree(n) == 0][:5]:
-                for target in [n for n in G.nodes() if G.out_degree(n) == 0][:5]:
+            for source in [n for n in G.nodes() if G.in_degree(n) == 0][:10]:
+                for target in [n for n in G.nodes() if G.out_degree(n) == 0][:10]:
                     try:
-                        for path in nx.all_simple_paths(G, source, target, cutoff=15):
+                        for path in nx.all_simple_paths(G, source, target, cutoff=5):
                             if len(path) > longest_path_length:
                                 longest_path_length = len(path)
                                 longest_path = path
