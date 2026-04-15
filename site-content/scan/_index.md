@@ -3,7 +3,7 @@ title: "Scan Results"
 description: "Nightly architecture analysis of open-source projects"
 ---
 
-Last scan: 2026-04-14
+Last scan: 2026-04-15
 Repositories monitored: 15
 
 ## Health Dashboard
@@ -21,7 +21,7 @@ Repositories monitored: 15
 | [sharkdp/vivid](sharkdp-vivid/) | Rust | 51% (needs work) | 25 | 9 | 2 |
 | [svenstaro/miniserve](svenstaro-miniserve/) | Rust | 39% (poor) | 22 | 11 | 3 |
 | [mshogin/archlint](mshogin-archlint/) | Go | 29% (poor) | 21 | 13 | 3 |
-| [kgatilin/deskd](kgatilin-deskd/) | Rust | 29% (poor) | 23 | 13 | 3 |
+| [kgatilin/deskd](kgatilin-deskd/) | Rust | 29% (poor) | 22 | 13 | 3 |
 | [ducaale/xh](ducaale-xh/) | Rust | 26% (poor) | 20 | 14 | 2 |
 | [sharkdp/hyperfine](sharkdp-hyperfine/) | Rust | 24% (poor) | 20 | 14 | 3 |
 | [twitchtv/twirp](twitchtv-twirp/) | Go | 14% (poor) | 17 | 16 | 3 |

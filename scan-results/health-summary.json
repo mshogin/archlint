@@ -1,5 +1,5 @@
 {
-  "scan_date": "2026-04-14T04:05:04.424880",
+  "scan_date": "2026-04-15T04:05:04.921159",
   "repos": [
     {
       "owner": "mshogin",
@@ -15,7 +15,7 @@
       "name": "deskd",
       "language": "Rust",
       "health": 29,
-      "passed": 23,
+      "passed": 22,
       "failed": 13,
       "warnings": 3
     },
