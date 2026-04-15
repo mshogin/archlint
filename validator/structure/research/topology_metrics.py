@@ -178,6 +178,16 @@ def validate_simplicial_complexity(
         nodes = [n for n in graph.nodes() if not _is_excluded(n, exclude)]
         subgraph = graph.subgraph(nodes).to_undirected()
 
+        n = len(nodes)
+        if n > 100:
+            return {
+                'name': 'simplicial_complexity',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 100) - algorithm is O(n^3)/NP-hard',
+                'threshold': 100,
+            }
+
         # Считаем симплексы разных размерностей
         simplices = {0: len(nodes), 1: subgraph.number_of_edges()}
 
@@ -249,6 +259,15 @@ def validate_topological_persistence(
                 'name': 'topological_persistence',
                 'status': 'SKIP',
                 'reason': 'Нет рёбер для анализа'
+            }
+
+        if n_edges > 2000:
+            return {
+                'name': 'topological_persistence',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n_edges} edges, limit 2000) - algorithm is O(n^3)/NP-hard',
+                'threshold': 2000,
             }
 
         # Начальные топологические характеристики

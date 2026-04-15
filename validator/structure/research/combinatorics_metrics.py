@@ -308,9 +308,10 @@ def validate_polya_enumeration(
 
         # Оценка размера группы автоморфизмов
         # Aut(G) ≤ Π(degree_counts[d]!)
+        # Cap per-degree factorial at 20 to avoid bignum overflow for large graphs
         automorphism_bound = 1
         for count in degree_counts.values():
-            automorphism_bound *= math.factorial(count)
+            automorphism_bound *= math.factorial(min(count, 20))
 
         # Cycle index (упрощённый)
         # Z(G) для тривиальной группы = x₁ⁿ
@@ -358,6 +359,15 @@ def validate_ramsey_analysis(
         n = len(nodes)
         if n < 4:
             return {'name': 'ramsey_analysis', 'status': 'SKIP', 'reason': 'Insufficient nodes'}
+
+        if n > 100:
+            return {
+                'name': 'ramsey_analysis',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 100) - algorithm is O(n^3)/NP-hard',
+                'threshold': 100,
+            }
 
         undirected = subgraph.to_undirected()
 
@@ -434,6 +444,15 @@ def validate_extremal_bounds(
 
         if n < 3:
             return {'name': 'extremal_bounds', 'status': 'SKIP', 'reason': 'Insufficient nodes'}
+
+        if n > 100:
+            return {
+                'name': 'extremal_bounds',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 100) - algorithm is O(n^3)/NP-hard',
+                'threshold': 100,
+            }
 
         undirected = subgraph.to_undirected()
         e_undirected = undirected.number_of_edges()

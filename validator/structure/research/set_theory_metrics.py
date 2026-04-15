@@ -266,6 +266,15 @@ def validate_partial_order_analysis(
                 'reason': 'Insufficient nodes'
             }
 
+        if n > 200:
+            return {
+                'name': 'partial_order_analysis',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
+            }
+
         # Проверяем, является ли граф DAG
         is_dag = nx.is_directed_acyclic_graph(subgraph)
 
@@ -370,6 +379,15 @@ def validate_chain_antichain(
                 'name': 'chain_antichain',
                 'status': 'SKIP',
                 'reason': 'Insufficient nodes'
+            }
+
+        if n > 200:
+            return {
+                'name': 'chain_antichain',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
             }
 
         # Работаем с DAG или конденсацией
@@ -490,6 +508,15 @@ def validate_lattice_structure(
                 'name': 'lattice_structure',
                 'status': 'SKIP',
                 'reason': 'Insufficient nodes'
+            }
+
+        if n > 200:
+            return {
+                'name': 'lattice_structure',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
             }
 
         # Работаем с DAG
@@ -717,6 +744,15 @@ def validate_transitive_closure(
                 'name': 'transitive_closure',
                 'status': 'SKIP',
                 'reason': 'Insufficient nodes'
+            }
+
+        if n > 200:
+            return {
+                'name': 'transitive_closure',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
             }
 
         # Транзитивное замыкание

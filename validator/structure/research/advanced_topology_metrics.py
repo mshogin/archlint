@@ -304,6 +304,16 @@ def validate_bottleneck_stability(
                 'reason': 'Недостаточно рёбер'
             }
 
+        n = len(nodes)
+        if n > 500 or n_edges > 2000:
+            return {
+                'name': 'bottleneck_stability',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, {n_edges} edges, limits 500/2000) - algorithm is O(n^3)/NP-hard',
+                'threshold': 500,
+            }
+
         # Базовые топологические характеристики
         base_components = nx.number_connected_components(subgraph)
         base_cycles = n_edges - len(nodes) + base_components
@@ -508,11 +518,12 @@ def validate_gradient_flow(
         sinks = [node for node in nodes if subgraph.out_degree(node) == 0]
 
         # Анализ потоков от источников к стокам
+        # Limit sources/sinks to 10 each and add cutoff=5 to prevent path explosion
         flow_paths = []
-        for source in sources:
-            for sink in sinks:
+        for source in sources[:10]:
+            for sink in sinks[:10]:
                 try:
-                    paths = list(nx.all_simple_paths(subgraph, source, sink))
+                    paths = list(nx.all_simple_paths(subgraph, source, sink, cutoff=5))
                     for path in paths:
                         flow_paths.append({
                             'source': source,
@@ -1326,6 +1337,15 @@ def validate_hodge_decomposition(
                 'name': 'hodge_decomposition',
                 'status': 'SKIP',
                 'reason': 'Недостаточно узлов или рёбер'
+            }
+
+        if n > 300:
+            return {
+                'name': 'hodge_decomposition',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 300) - algorithm is O(n^3)/NP-hard',
+                'threshold': 300,
             }
 
         node_list = list(nodes)

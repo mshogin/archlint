@@ -149,6 +149,15 @@ def validate_heat_diffusion(
                 'reason': 'Insufficient nodes'
             }
 
+        if n > 500:
+            return {
+                'name': 'heat_diffusion',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 500) - algorithm is O(n^3)/NP-hard',
+                'threshold': 500,
+            }
+
         # Лапласиан
         L = _get_laplacian_matrix(subgraph)
 
@@ -231,6 +240,15 @@ def validate_laplacian_smoothness(
                 'name': 'laplacian_smoothness',
                 'status': 'SKIP',
                 'reason': 'Insufficient nodes'
+            }
+
+        if n > 500:
+            return {
+                'name': 'laplacian_smoothness',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 500) - algorithm is O(n^3)/NP-hard',
+                'threshold': 500,
             }
 
         node_list = list(subgraph.nodes())
@@ -317,6 +335,15 @@ def validate_operator_norm(
                 'name': 'operator_norm',
                 'status': 'SKIP',
                 'reason': 'Insufficient nodes'
+            }
+
+        if n > 500:
+            return {
+                'name': 'operator_norm',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 500) - algorithm is O(n^3)/NP-hard',
+                'threshold': 500,
             }
 
         A = _get_adjacency_matrix(subgraph)
@@ -919,6 +946,15 @@ def validate_bifurcation_analysis(
                 'name': 'bifurcation_analysis',
                 'status': 'SKIP',
                 'reason': 'Insufficient nodes or edges'
+            }
+
+        if n > 200:
+            return {
+                'name': 'bifurcation_analysis',
+                'status': 'SKIPPED',
+                'value': None,
+                'message': f'Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard',
+                'threshold': 200,
             }
 
         # Текущее состояние
