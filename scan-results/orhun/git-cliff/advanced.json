@@ -35,7 +35,7 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.515,
+      "modularity": 0.511,
       "threshold": 0.3,
       "communities_count": 7
     },
