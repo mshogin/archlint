@@ -360,7 +360,8 @@ def validate_circular_dependency_depth(
     try:
         # Находим все циклы
         try:
-            cycles = list(nx.simple_cycles(graph))
+            from validator.utils.cycles import simple_cycles_bounded
+            cycles = list(simple_cycles_bounded(graph, max_length=10))
         except Exception:
             cycles = []
 
