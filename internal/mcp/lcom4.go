@@ -1,6 +1,8 @@
 package mcp
 
 import (
+	"strings"
+
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/model"
 )
@@ -31,25 +33,33 @@ type LCOMResult struct {
 	Components [][]string
 }
 
-// ComputeLCOM4 computes the LCOM4 metric for the given type using the
-// architecture graph that was already built by the analyzer.
+// ComputeLCOM4 computes the LCOM4 metric for the given type.
 //
-// Edge construction strategy (limitation note):
-// The Go AST parser in this codebase does not track which struct fields each
-// method accesses. True LCOM4 would connect methods that share a field access.
+// Edge construction strategy:
+// The Go AST parser records method calls with the *variable name* of the
+// receiver (e.g. "w", "s"), not the type name. The pre-built graph call edges
+// are not resolved for same-type intra-method calls because the resolver needs
+// full type-inference to map variable names to types.
 //
-// Instead, we use the call graph edges already present in the model.Graph:
-// two methods of the same struct are connected when one directly calls the
-// other (i.e. there is a "calls" edge between their method IDs in the graph).
+// Approach used here:
+//  1. For each method M of the struct, scan M's Calls.
+//  2. A call is an intra-struct call if its Target ends with
+//     ".<receiverVar>.<methodName>" where <methodName> exists as another
+//     method of the same struct. Because the AST captures `w.B()` as
+//     Target="w.B" Receiver="w", we extract the last dotted segment as the
+//     potential method name and check membership.
 //
-// This is a conservative heuristic: it detects structural cohesion via
-// direct intra-struct method calls. Methods that only access the same field
-// without calling each other will appear in separate components, producing
-// higher (worse) LCOM4 values than true field-based LCOM4.
+// This heuristic connects methods that call each other on the struct receiver,
+// which is the primary cohesion signal in Go code. It does not detect cohesion
+// via shared field access (that would require tracking `w.field` expressions
+// per method body, which the analyzer does not currently provide).
+//
+// The graph parameter is accepted for API consistency but is not used for edge
+// detection (the pre-built edges do not resolve intra-struct calls).
 //
 // TODO: Once the analyzer tracks field-access expressions per method body,
-// replace or augment the call-based heuristic with proper shared-field edges.
-func ComputeLCOM4(a *analyzer.GoAnalyzer, typeID string, graph *model.Graph) *LCOMResult {
+// augment with shared-field edges for true LCOM4 semantics.
+func ComputeLCOM4(a *analyzer.GoAnalyzer, typeID string, _ *model.Graph) *LCOMResult {
 	t := a.LookupType(typeID)
 	if t == nil {
 		return &LCOMResult{Type: typeID}
@@ -63,8 +73,8 @@ func ComputeLCOM4(a *analyzer.GoAnalyzer, typeID string, graph *model.Graph) *LC
 		return &LCOMResult{Type: typeID, LCOM: 0, Methods: nil, Components: nil}
 	}
 
-	// Build adjacency list using "calls" edges from the pre-built graph.
-	adj := buildMethodGraphFromEdges(typeMethods, graph)
+	// Build adjacency list from intra-struct call analysis.
+	adj := buildMethodGraphFromCalls(a, typeMethods)
 
 	// Count connected components via BFS.
 	components := countConnectedComponents(typeMethods, adj)
@@ -96,12 +106,25 @@ func collectTypeMethods(a *analyzer.GoAnalyzer, pkg, receiverName string) map[st
 	return result
 }
 
-// buildMethodGraphFromEdges constructs an undirected adjacency list (by method
-// name) from the pre-built graph's "calls" edges. Two methods of the same
-// struct are adjacent when a "calls" edge exists between their method IDs.
-func buildMethodGraphFromEdges(
+// buildMethodGraphFromCalls constructs an undirected adjacency list (by method
+// name) by scanning each method's Call list for intra-struct calls.
+//
+// Detection logic: the AST parser stores a call `w.B()` as
+//
+//	CallInfo{Target: "w.B", IsMethod: true, Receiver: "w"}
+//
+// We extract the last segment of Target (after the final ".") and check
+// whether it matches a method name in the same struct. If it does, we add
+// an undirected edge between the caller and that method.
+//
+// Edge cases handled:
+//   - Self-calls (methodA calling methodA) are ignored.
+//   - Calls to other types that happen to share a method name but have a
+//     different target path are skipped because we only check IsMethod calls
+//     whose full Target has exactly one dot (i.e. "receiverVar.MethodName").
+func buildMethodGraphFromCalls(
+	a *analyzer.GoAnalyzer,
 	typeMethods map[string]string, // name -> methodID
-	graph *model.Graph,
 ) map[string]map[string]bool {
 	adj := make(map[string]map[string]bool, len(typeMethods))
 
@@ -109,27 +132,44 @@ func buildMethodGraphFromEdges(
 		adj[name] = make(map[string]bool)
 	}
 
-	// Reverse index: methodID -> methodName (for this type only).
-	idToName := make(map[string]string, len(typeMethods))
-	for name, id := range typeMethods {
-		idToName[id] = name
-	}
-
-	for _, edge := range graph.Edges {
-		if edge.Type != "calls" {
+	for callerName, callerID := range typeMethods {
+		m := a.LookupMethod(callerID)
+		if m == nil {
 			continue
 		}
 
-		fromName, fromOK := idToName[edge.From]
-		toName, toOK := idToName[edge.To]
+		for _, call := range m.Calls {
+			if !call.IsMethod {
+				continue
+			}
 
-		if fromOK && toOK && fromName != toName {
-			adj[fromName][toName] = true
-			adj[toName][fromName] = true
+			// Target format: "receiverVar.MethodName"
+			// Extract the method name as the last segment.
+			calleeName := lastSegment(call.Target)
+			if calleeName == "" || calleeName == callerName {
+				continue
+			}
+
+			// Check that this method name actually belongs to the same struct.
+			if _, exists := typeMethods[calleeName]; exists {
+				adj[callerName][calleeName] = true
+				adj[calleeName][callerName] = true
+			}
 		}
 	}
 
 	return adj
+}
+
+// lastSegment returns the substring after the last "." in s, or s itself if
+// there is no ".".
+func lastSegment(s string) string {
+	idx := strings.LastIndex(s, ".")
+	if idx < 0 {
+		return s
+	}
+
+	return s[idx+1:]
 }
 
 // countConnectedComponents performs BFS over the undirected method graph and
