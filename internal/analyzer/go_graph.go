@@ -45,6 +45,8 @@ func (g *GoGraphBuilder) buildGraph() {
 	g.buildFunctionCallEdges()
 	g.buildMethodCallEdges()
 	g.buildTypeDependencyEdges()
+	g.buildFieldAccessNodes()
+	g.buildFieldAccessEdges()
 }
 
 func (g *GoGraphBuilder) buildPackageNodes() {
@@ -184,6 +186,69 @@ func (g *GoGraphBuilder) buildTypeDependencyEdges() {
 					Type: "embeds",
 				})
 			}
+		}
+	}
+}
+
+// buildFieldAccessNodes creates "field" nodes for every struct field that is
+// accessed by at least one method.  The node ID follows the convention
+// <pkg>.<TypeName>.<FieldName> and the entity is "field".
+// If a node with that ID already exists (e.g. emitted by an earlier run) it is
+// not duplicated.
+func (g *GoGraphBuilder) buildFieldAccessNodes() {
+	existing := make(map[string]bool, len(*g.nodes))
+	for _, n := range *g.nodes {
+		existing[n.ID] = true
+	}
+
+	// Iterate methods and collect field node IDs to emit.
+	for _, methodInfo := range g.methods {
+		for _, fa := range methodInfo.FieldAccess {
+			nodeID := methodInfo.Package + "." + methodInfo.Receiver + "." + fa.FieldName
+			if existing[nodeID] {
+				continue
+			}
+
+			existing[nodeID] = true
+			*g.nodes = append(*g.nodes, model.Node{
+				ID:     nodeID,
+				Title:  fa.FieldName,
+				Entity: model.EntityField,
+			})
+		}
+	}
+}
+
+// buildFieldAccessEdges emits field_read / field_write edges from each method
+// to the field nodes it accesses.
+func (g *GoGraphBuilder) buildFieldAccessEdges() {
+	// Deduplicate edges per (method, field, edgeType) triple.
+	type edgeKey struct {
+		from, to, edgeType string
+	}
+
+	emitted := make(map[edgeKey]bool)
+
+	for methodID, methodInfo := range g.methods {
+		for _, fa := range methodInfo.FieldAccess {
+			fieldNodeID := methodInfo.Package + "." + methodInfo.Receiver + "." + fa.FieldName
+
+			edgeType := model.EdgeFieldRead
+			if fa.IsWrite {
+				edgeType = model.EdgeFieldWrite
+			}
+
+			key := edgeKey{from: methodID, to: fieldNodeID, edgeType: edgeType}
+			if emitted[key] {
+				continue
+			}
+
+			emitted[key] = true
+			*g.edges = append(*g.edges, model.Edge{
+				From: methodID,
+				To:   fieldNodeID,
+				Type: edgeType,
+			})
 		}
 	}
 }

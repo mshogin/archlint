@@ -201,13 +201,24 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 		receiverType := p.getReceiverType(decl.Recv.List[0].Type)
 		methodID := pkgID + "." + receiverType + "." + funcName
 
+		// Collect receiver variable name(s) to detect field accesses.
+		var receiverVars []string
+		for _, field := range decl.Recv.List {
+			for _, name := range field.Names {
+				receiverVars = append(receiverVars, name.Name)
+			}
+		}
+
+		fieldAccess := p.collectFieldAccess(decl.Body, receiverVars, fset)
+
 		p.methods[methodID] = &MethodInfo{
-			Name:     funcName,
-			Receiver: receiverType,
-			Package:  pkgID,
-			File:     filename,
-			Line:     pos.Line,
-			Calls:    calls,
+			Name:        funcName,
+			Receiver:    receiverType,
+			Package:     pkgID,
+			File:        filename,
+			Line:        pos.Line,
+			Calls:       calls,
+			FieldAccess: fieldAccess,
 		}
 	} else {
 		funcID := pkgID + "." + funcName
@@ -220,6 +231,116 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			Calls:   calls,
 		}
 	}
+}
+
+// collectFieldAccess walks the function body and collects field accesses on the receiver.
+//
+// A SelectorExpr where X is one of receiverVars is considered a field access.
+// We walk the AST and track parent nodes to determine read vs write:
+//   - LHS of an assignment -> write
+//   - Target of inc/dec stmt -> write
+//   - Operand of UnaryExpr with token.AND -> write (address taken)
+//   - All other positions -> read
+//
+//nolint:gocyclo,cyclop // Field-access classification necessarily handles multiple parent-node kinds.
+func (p *GoParser) collectFieldAccess(
+	body *ast.BlockStmt,
+	receiverVars []string,
+	fset *token.FileSet,
+) []FieldAccessInfo {
+	if body == nil || len(receiverVars) == 0 {
+		return nil
+	}
+
+	receiverSet := make(map[string]bool, len(receiverVars))
+	for _, rv := range receiverVars {
+		receiverSet[rv] = true
+	}
+
+	// Build a set of write-position nodes using a first pass.
+	writeNodes := make(map[ast.Node]bool)
+
+	ast.Inspect(body, func(n ast.Node) bool {
+		switch stmt := n.(type) {
+		case *ast.AssignStmt:
+			for _, lhs := range stmt.Lhs {
+				p.markSelectorExprsAsWrite(lhs, writeNodes)
+			}
+		case *ast.IncDecStmt:
+			p.markSelectorExprsAsWrite(stmt.X, writeNodes)
+		case *ast.UnaryExpr:
+			if stmt.Op == token.AND {
+				p.markSelectorExprsAsWrite(stmt.X, writeNodes)
+			}
+		}
+		return true
+	})
+
+	// Deduplicate: track (field, isWrite) per method to avoid duplicate edges.
+	seen := make(map[string]bool)
+
+	var accesses []FieldAccessInfo
+
+	ast.Inspect(body, func(n ast.Node) bool {
+		sel, ok := n.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		// Only consider direct receiver access: r.Field (not r.Sub.Field).
+		ident, ok := sel.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+
+		if !receiverSet[ident.Name] {
+			return true
+		}
+
+		fieldName := sel.Sel.Name
+		isWrite := writeNodes[n]
+
+		key := fieldName + "|" + boolStr(isWrite)
+		if seen[key] {
+			return true
+		}
+
+		seen[key] = true
+		pos := fset.Position(sel.Pos())
+		accesses = append(accesses, FieldAccessInfo{
+			FieldName: fieldName,
+			IsWrite:   isWrite,
+			Line:      pos.Line,
+		})
+
+		return true
+	})
+
+	return accesses
+}
+
+// markSelectorExprsAsWrite recursively marks all *ast.SelectorExpr nodes
+// reachable from expr (through index, deref, paren) as write positions.
+func (p *GoParser) markSelectorExprsAsWrite(expr ast.Expr, writeNodes map[ast.Node]bool) {
+	switch e := expr.(type) {
+	case *ast.SelectorExpr:
+		writeNodes[e] = true
+	case *ast.IndexExpr:
+		p.markSelectorExprsAsWrite(e.X, writeNodes)
+	case *ast.StarExpr:
+		p.markSelectorExprsAsWrite(e.X, writeNodes)
+	case *ast.ParenExpr:
+		p.markSelectorExprsAsWrite(e.X, writeNodes)
+	}
+}
+
+// boolStr converts a bool to a short string for map keys.
+func boolStr(b bool) string {
+	if b {
+		return "w"
+	}
+
+	return "r"
 }
 
 // collectCalls собирает все вызовы функций/методов из тела функции.

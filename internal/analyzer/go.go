@@ -44,6 +44,9 @@ type MethodInfo = model.MethodInfo
 // CallInfo is an alias for model.CallInfo for backward compatibility.
 type CallInfo = model.CallInfo
 
+// FieldAccessInfo is an alias for model.FieldAccessInfo for backward compatibility.
+type FieldAccessInfo = model.FieldAccessInfo
+
 // NewGoAnalyzer creates a new Go code analyzer.
 func NewGoAnalyzer() *GoAnalyzer {
 	return &GoAnalyzer{
