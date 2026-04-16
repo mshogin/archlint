@@ -11,8 +11,8 @@
     "errors": 1
   },
   "graph": {
-    "nodes": 158,
-    "edges": 230
+    "nodes": 160,
+    "edges": 235
   },
   "checks": [
     {
@@ -23,48 +23,48 @@
       "violations": [
         {
           "package": "src::app",
-          "domains_count": 30,
+          "domains_count": 31,
           "domains": [
-            "a2a_server",
-            "jsonrpc",
-            "schedule",
-            "mcp_protocol",
+            "serve",
+            "a2a_jwt",
+            "context",
+            "mcp_tools",
             "agent_registry",
-            "statemachine",
-            "a2a",
             "acp",
-            "config_watcher",
-            "timeout_sweep"
+            "timeout_sweep",
+            "mcp_service",
+            "worker",
+            "a2a"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 14,
           "domains": [
-            "status",
-            "usage",
-            "schedule",
             "agent",
             "task",
-            "upgrade",
-            "bus",
-            "graph",
+            "tests",
+            "remind",
             "a2a",
-            "remind"
+            "restart",
+            "schedule",
+            "graph",
+            "sm",
+            "tui"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 9,
           "domains": [
-            "task_store",
-            "memory_bus",
             "bus_server",
-            "memory_store",
-            "unix_bus",
-            "dto",
             "context_store",
+            "task_store",
+            "dto",
+            "unix_bus",
             "sm_store",
+            "memory_store",
+            "memory_bus",
             "paths"
           ]
         },
@@ -72,24 +72,24 @@
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "statemachine",
             "agent",
-            "message",
             "task",
-            "workitem",
-            "context",
             "config_types",
-            "events"
+            "events",
+            "context",
+            "workitem",
+            "statemachine",
+            "message"
           ]
         },
         {
           "package": "src::lib",
           "domains_count": 5,
           "domains": [
+            "domain",
             "infra",
             "app",
             "config",
-            "domain",
             "ports"
           ]
         },
@@ -97,22 +97,33 @@
           "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "src::app",
-            "src::domain",
             "tests",
+            "src::infra",
             "src::ports",
-            "src::infra"
+            "src::domain",
+            "src::app"
           ]
         },
         {
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
-            "src::agent_registry",
+            "tests",
+            "src::ports",
             "src::agent_process",
             "src::process_builder",
+            "src::agent_registry"
+          ]
+        },
+        {
+          "package": "src::app::mcp_tools",
+          "domains_count": 5,
+          "domains": [
+            "src::config",
+            "src::infra",
             "tests",
-            "src::ports"
+            "src::ports",
+            "src::app"
           ]
         },
         {
@@ -120,44 +131,34 @@
           "domains_count": 5,
           "domains": [
             "task",
-            "config",
-            "bus",
             "context",
-            "instance"
+            "config",
+            "instance",
+            "bus"
           ]
         },
         {
           "package": "src::app::process_builder",
           "domains_count": 4,
           "domains": [
+            "src::config",
             "src::agent_registry",
-            "src::config",
             "src::domain",
-            "tests"
-          ]
-        },
-        {
-          "package": "src::app::bus_api",
-          "domains_count": 4,
-          "domains": [
-            "src::ports",
-            "src::app",
-            "src::config",
             "tests"
           ]
         }
       ],
-      "violations_count": 18
+      "violations_count": 19
     },
     {
       "name": "open_closed",
       "description": "Соотношение абстракций >= 20% (OCP)",
       "status": "WARNING",
       "abstractions": 6,
-      "implementations": 152,
-      "ratio": 0.038,
+      "implementations": 154,
+      "ratio": 0.037,
       "threshold": 0.2,
-      "issue": "Низкое соотношение абстракций (3.80%) - плохая расширяемость"
+      "issue": "Низкое соотношение абстракций (3.75%) - плохая расширяемость"
     },
     {
       "name": "liskov_substitution",
@@ -173,9 +174,9 @@
       "name": "dependency_inversion",
       "description": "Зависимости на абстракции >= 30% (DIP)",
       "status": "PASSED",
-      "abstract_deps": 17,
+      "abstract_deps": 18,
       "concrete_deps": 2,
-      "abstract_ratio": 0.895,
+      "abstract_ratio": 0.9,
       "threshold": 0.3,
       "violations": [
         {
