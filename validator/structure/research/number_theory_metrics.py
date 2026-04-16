@@ -166,9 +166,10 @@ def validate_modular_arithmetic(graph: nx.DiGraph, config: Any = None) -> Dict[s
         if src and tgt and src in G.nodes() and tgt in G.nodes():
             G.add_edge(src, tgt)
 
-    # Find all cycles
+    # Find all cycles (bounded to avoid explosion on large graphs)
+    from validator.utils.cycles import simple_cycles_bounded
     try:
-        cycles = list(nx.simple_cycles(G))
+        cycles = list(simple_cycles_bounded(G, max_length=10))
     except:
         cycles = []
 
@@ -304,7 +305,8 @@ def validate_chinese_remainder(graph: nx.DiGraph, config: Any = None) -> Dict[st
         m = subgraph.number_of_edges()
 
         try:
-            cycle_count = len(list(nx.simple_cycles(subgraph)))
+            from validator.utils.cycles import simple_cycles_bounded
+            cycle_count = len(list(simple_cycles_bounded(subgraph, max_length=10)))
         except:
             cycle_count = 0
 

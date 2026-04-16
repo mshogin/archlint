@@ -28,6 +28,10 @@ type FileMetrics struct {
 	Methods   int `json:"methods"`
 	Fields    int `json:"fields"` // total across all types
 
+	// LCOM4 results per type (Lack of Cohesion of Methods).
+	// Only types with LCOM4 >= 2 are reported here.
+	LCOMViolations []LCOMResult `json:"lcomViolations,omitempty"`
+
 	// SOLID violations.
 	SRPViolations []Violation `json:"srpViolations,omitempty"`
 	DIPViolations []Violation `json:"dipViolations,omitempty"`
@@ -89,7 +93,7 @@ func ComputeFileMetrics(filePath string, a *analyzer.GoAnalyzer, graph *model.Gr
 	computeFanMetrics(m, fileNodeIDs, graph)
 
 	// SOLID checks.
-	computeSRPViolations(m, absPath, a)
+	computeSRPViolations(m, absPath, a, graph)
 	computeDIPViolations(m, absPath, a)
 	computeISPViolations(m, absPath, a)
 
@@ -305,7 +309,7 @@ func computeFanMetrics(m *FileMetrics, nodeIDs map[string]bool, graph *model.Gra
 	}
 }
 
-func computeSRPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer) {
+func computeSRPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer, graph *model.Graph) {
 	for typeID, t := range a.AllTypes() {
 		if !matchesFile(t.File, absPath) || t.Kind != "struct" {
 			continue
@@ -341,6 +345,18 @@ func computeSRPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 				Message: fmt.Sprintf("Type %s has too many fields (%d > %d)", t.Name, len(t.Fields), srpFieldThreshold),
 				Target:  typeID,
 			})
+		}
+
+		// LCOM4: detect structurally incoherent types even when they pass
+		// the size-based thresholds above.
+		lcom := ComputeLCOM4(a, typeID, graph)
+		if lcom.LCOM >= 2 {
+			m.SRPViolations = append(m.SRPViolations, Violation{
+				Kind:    "srp-lack-of-cohesion",
+				Message: fmt.Sprintf("Type %s has LCOM4=%d (multiple responsibilities detected)", t.Name, lcom.LCOM),
+				Target:  typeID,
+			})
+			m.LCOMViolations = append(m.LCOMViolations, *lcom)
 		}
 	}
 }

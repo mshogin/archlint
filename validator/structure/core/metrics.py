@@ -49,7 +49,8 @@ def validate_dag(
     error_on_violation = config.error_on_violation if config else True
 
     try:
-        all_cycles = list(nx.simple_cycles(graph))
+        from validator.utils.cycles import simple_cycles_bounded
+        all_cycles = list(simple_cycles_bounded(graph, max_length=10))
 
         # Фильтруем циклы по исключениям
         cycles = []

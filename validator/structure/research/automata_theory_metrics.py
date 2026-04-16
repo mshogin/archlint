@@ -180,8 +180,9 @@ def validate_regular_language_properties(graph: nx.DiGraph, config: Any = None) 
             G.add_edge(src, tgt)
 
     # Analyze cycle structure (related to pumping lemma)
+    from validator.utils.cycles import simple_cycles_bounded
     try:
-        cycles = list(nx.simple_cycles(G))
+        cycles = list(simple_cycles_bounded(G, max_length=10))
     except:
         cycles = []
 
@@ -437,8 +438,9 @@ def validate_computability_bounds(graph: nx.DiGraph, config: Any = None) -> Dict
             G.add_edge(src, tgt)
 
     # Halting analysis: cycles indicate potential non-termination
+    from validator.utils.cycles import simple_cycles_bounded
     try:
-        cycles = list(nx.simple_cycles(G))
+        cycles = list(simple_cycles_bounded(G, max_length=10))
     except:
         cycles = []
 

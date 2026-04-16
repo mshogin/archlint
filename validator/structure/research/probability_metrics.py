@@ -181,16 +181,6 @@ def validate_markov_properties(graph: nx.DiGraph, config: Any = None) -> Dict[st
             "details": {"components": len(components)}
         }
 
-    if len(components) > 200:
-        n = len(components)
-        return {
-            "name": "markov_properties",
-            "status": "SKIPPED",
-            "value": None,
-            "message": f"Skipped: graph too large ({n} nodes, limit 200) - algorithm is O(n^3)/NP-hard",
-            "threshold": 200,
-        }
-
     # Build graph
     G = nx.DiGraph()
 
@@ -215,8 +205,9 @@ def validate_markov_properties(graph: nx.DiGraph, config: Any = None) -> Dict[st
 
     # Check aperiodicity
     # A Markov chain is aperiodic if GCD of cycle lengths is 1
+    from validator.utils.cycles import simple_cycles_bounded
     try:
-        cycles = list(nx.simple_cycles(G))
+        cycles = list(simple_cycles_bounded(G, max_length=10))
         if cycles:
             cycle_lengths = [len(c) for c in cycles]
             overall_gcd = cycle_lengths[0]
@@ -557,8 +548,9 @@ def validate_bayesian_dependencies(graph: nx.DiGraph, config: Any = None) -> Dic
 
     if not is_dag:
         # Find cycles for reporting
+        from validator.utils.cycles import simple_cycles_bounded
         try:
-            cycles = list(nx.simple_cycles(G))
+            cycles = list(simple_cycles_bounded(G, max_length=10))
             cycle_count = len(cycles)
         except:
             cycle_count = -1
