@@ -32,6 +32,10 @@ type FileMetrics struct {
 	// Only types with LCOM4 >= 2 are reported here.
 	LCOMViolations []LCOMResult `json:"lcomViolations,omitempty"`
 
+	// ReachSRP results per type.
+	// Only types with ρ >= 2 are reported here.
+	ReachSRPResults []ReachSRPResult `json:"reachSrpResults,omitempty"`
+
 	// SOLID violations.
 	SRPViolations []Violation `json:"srpViolations,omitempty"`
 	DIPViolations []Violation `json:"dipViolations,omitempty"`
@@ -357,6 +361,17 @@ func computeSRPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 				Target:  typeID,
 			})
 			m.LCOMViolations = append(m.LCOMViolations, *lcom)
+		}
+
+		// ReachSRP: reach-based responsibility count ρ.
+		srp := ComputeReachSRP(a, typeID, graph)
+		if srp.Rho >= 2 {
+			m.SRPViolations = append(m.SRPViolations, Violation{
+				Kind:    "srp-multiple-responsibilities",
+				Message: fmt.Sprintf("Type %s has %d responsibilities (ρ=%d, LCOM4=%d)", t.Name, srp.Rho, srp.Rho, srp.LCOM4),
+				Target:  typeID,
+			})
+			m.ReachSRPResults = append(m.ReachSRPResults, *srp)
 		}
 	}
 }
