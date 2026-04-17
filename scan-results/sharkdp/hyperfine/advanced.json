@@ -616,66 +616,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::export",
-            "src::output::format",
+            "src::command",
+            "src::benchmark::timing_result",
             "src::benchmark::executor",
-            "src::output::warnings"
+            "src::output::format",
+            "src::export::asciidoc"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::export",
-            "src::output::format",
+            "src::command",
+            "src::benchmark::timing_result",
             "src::benchmark::executor",
-            "src::output::warnings"
+            "src::output::format",
+            "src::export::asciidoc"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::export",
-            "src::output::format",
+            "src::command",
+            "src::benchmark::timing_result",
             "src::benchmark::executor",
-            "src::output::warnings"
+            "src::output::format",
+            "src::export::asciidoc"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::export",
-            "src::output::format",
+            "src::command",
+            "src::benchmark::timing_result",
             "src::benchmark::executor",
-            "src::output::warnings"
+            "src::output::format",
+            "src::export::asciidoc"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::export",
-            "src::output::format",
+            "src::command",
+            "src::benchmark::timing_result",
             "src::benchmark::executor",
-            "src::output::warnings"
+            "src::output::format",
+            "src::export::asciidoc"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::export",
-            "src::output::format",
+            "src::command",
+            "src::benchmark::timing_result",
             "src::benchmark::executor",
-            "src::output::warnings"
+            "src::output::format",
+            "src::export::asciidoc"
           ]
         }
       ],

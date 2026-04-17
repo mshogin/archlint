@@ -35,7 +35,7 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.492,
+      "modularity": 0.491,
       "threshold": 0.3,
       "communities_count": 20
     },
@@ -616,110 +616,110 @@
           "component": "tests",
           "impact_radius": 56,
           "sample_dependents": [
+            "src::app::commands::a2a",
+            "src::domain::config_types",
             "src::infra::paths",
-            "src::app::workflow",
-            "src::app::worker",
-            "src::app::agent",
-            "src::infra::sm_store"
+            "src::app::serve",
+            "src::app::commands::bus"
           ]
         },
         {
           "component": "task",
           "impact_radius": 52,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "context",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "message",
           "impact_radius": 50,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 50,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "events",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 44,
           "sample_dependents": [
-            "src::app::workflow",
-            "src::app::worker",
+            "src::app::commands::a2a",
+            "src::app::serve",
+            "src::app::commands::bus",
             "src::infra::sm_store",
-            "src::app::adapters::discord",
-            "src::ports::bus"
+            "src::domain::workitem"
           ]
         }
       ],
