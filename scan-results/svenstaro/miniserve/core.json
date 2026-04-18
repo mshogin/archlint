@@ -21,8 +21,8 @@
       "status": "FAILED",
       "cycles": [
         [
-          "src::renderer",
-          "src::listing"
+          "src::listing",
+          "src::renderer"
         ]
       ],
       "cycles_count": 1
@@ -248,8 +248,8 @@
       "total_sccs": 52,
       "problematic_sccs": [
         [
-          "src::renderer",
-          "src::listing"
+          "src::listing",
+          "src::renderer"
         ]
       ],
       "problematic_count": 1

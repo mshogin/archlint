@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.491,
+      "modularity": 0.485,
       "threshold": 0.3,
-      "communities_count": 20
+      "communities_count": 18
     },
     {
       "name": "abstractness",
@@ -616,110 +616,110 @@
           "component": "tests",
           "impact_radius": 56,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::domain::config_types",
-            "src::infra::paths",
-            "src::app::serve",
-            "src::app::commands::bus"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "task",
           "impact_radius": 52,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "context",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "message",
           "impact_radius": 50,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 50,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "events",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 44,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::serve",
-            "src::app::commands::bus",
-            "src::infra::sm_store",
-            "src::domain::workitem"
+            "src::infra::context_store",
+            "src::app::commands::agent",
+            "src::infra::memory_store",
+            "src::app::timeout_sweep",
+            "src::app::acp"
           ]
         }
       ],
