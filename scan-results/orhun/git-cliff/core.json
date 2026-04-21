@@ -12,7 +12,7 @@
   },
   "graph": {
     "nodes": 100,
-    "edges": 191
+    "edges": 192
   },
   "checks": [
     {
@@ -55,7 +55,7 @@
         },
         {
           "node": "git-cliff-core::src::config",
-          "fan_out": 10,
+          "fan_out": 11,
           "threshold": 5
         },
         {
@@ -92,6 +92,13 @@
           "node": "git-cliff-core::src::lib",
           "afferent_coupling": 0,
           "efferent_coupling": 14,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::src::config",
+          "afferent_coupling": 0,
+          "efferent_coupling": 11,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -145,7 +152,7 @@
           "ce_threshold": 10
         }
       ],
-      "violations_count": 8
+      "violations_count": 9
     },
     {
       "name": "instability",
@@ -185,6 +192,12 @@
       ],
       "most_stable": [
         {
+          "node": "git-cliff-core::contributor",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
           "node": "git-cliff-core::summary",
           "instability": 0.0,
           "ca": 1,
@@ -204,12 +217,6 @@
         },
         {
           "node": "git-cliff-core::tag",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "temp_dir",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -313,6 +320,12 @@
           "out_degree": 0
         },
         {
+          "node": "git-cliff-core::src::config",
+          "total_degree": 11,
+          "in_degree": 0,
+          "out_degree": 11
+        },
+        {
           "node": "git-cliff-core::src::release",
           "total_degree": 11,
           "in_degree": 0,
@@ -325,7 +338,7 @@
           "out_degree": 11
         }
       ],
-      "hubs_count": 8
+      "hubs_count": 9
     },
     {
       "name": "orphan_nodes",

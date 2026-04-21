@@ -40,7 +40,7 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.532,
+      "modularity": 0.534,
       "threshold": 0.3,
       "communities_count": 12
     },
@@ -483,11 +483,11 @@
       "threshold": 4,
       "large_cliques": [
         [
+          "src::to_curl",
+          "src::request_items",
           "tests",
           "src::utils",
-          "src::cli",
-          "src::to_curl",
-          "src::request_items"
+          "src::cli"
         ]
       ],
       "large_cliques_count": 1,

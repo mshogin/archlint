@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 162,
-    "edges": 239
+    "nodes": 166,
+    "edges": 244
   },
   "checks": [
     {
@@ -45,7 +45,7 @@
         },
         {
           "node": "src::infra",
-          "fan_out": 9,
+          "fan_out": 10,
           "threshold": 5
         }
       ],
@@ -60,7 +60,7 @@
       "violations": [
         {
           "node": "src::config",
-          "afferent_coupling": 21,
+          "afferent_coupling": 22,
           "efferent_coupling": 3,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -96,13 +96,13 @@
         {
           "node": "src::infra",
           "afferent_coupling": 12,
-          "efferent_coupling": 9,
+          "efferent_coupling": 10,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "tests",
-          "afferent_coupling": 44,
+          "afferent_coupling": 45,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -148,25 +148,13 @@
       ],
       "most_stable": [
         {
-          "node": "memory_store",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "paths",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "sm_store",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
           "node": "task_store",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "telegram_mtproto",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -176,21 +164,33 @@
           "instability": 0.0,
           "ca": 1,
           "ce": 0
+        },
+        {
+          "node": "imp",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "src::ChatMessage",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
         }
       ],
       "violations": [
         {
           "from": "src::config",
           "to": "src::domain",
-          "from_instability": 0.125,
+          "from_instability": 0.12,
           "to_instability": 0.229,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         },
         {
           "from": "src::config",
           "to": "src::infra",
-          "from_instability": 0.125,
-          "to_instability": 0.429,
+          "from_instability": 0.12,
+          "to_instability": 0.455,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
       ],
@@ -262,8 +262,8 @@
         },
         {
           "node": "tests",
-          "total_degree": 44,
-          "in_degree": 44,
+          "total_degree": 45,
+          "in_degree": 45,
           "out_degree": 0
         },
         {
@@ -274,21 +274,21 @@
         },
         {
           "node": "src::config",
-          "total_degree": 24,
-          "in_degree": 21,
+          "total_degree": 25,
+          "in_degree": 22,
           "out_degree": 3
+        },
+        {
+          "node": "src::infra",
+          "total_degree": 22,
+          "in_degree": 12,
+          "out_degree": 10
         },
         {
           "node": "src::ports",
           "total_degree": 21,
           "in_degree": 17,
           "out_degree": 4
-        },
-        {
-          "node": "src::infra",
-          "total_degree": 21,
-          "in_degree": 12,
-          "out_degree": 9
         },
         {
           "node": "src::app::commands",
@@ -320,7 +320,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 162,
+      "total_sccs": 166,
       "problematic_sccs": [],
       "problematic_count": 0
     },
