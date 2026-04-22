@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 166,
-    "edges": 244
+    "nodes": 164,
+    "edges": 241
   },
   "checks": [
     {
@@ -35,7 +35,7 @@
         },
         {
           "node": "src::app",
-          "fan_out": 32,
+          "fan_out": 33,
           "threshold": 5
         },
         {
@@ -45,7 +45,7 @@
         },
         {
           "node": "src::infra",
-          "fan_out": 10,
+          "fan_out": 9,
           "threshold": 5
         }
       ],
@@ -60,7 +60,7 @@
       "violations": [
         {
           "node": "src::config",
-          "afferent_coupling": 22,
+          "afferent_coupling": 21,
           "efferent_coupling": 3,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -75,7 +75,7 @@
         {
           "node": "src::app",
           "afferent_coupling": 22,
-          "efferent_coupling": 32,
+          "efferent_coupling": 33,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -96,7 +96,7 @@
         {
           "node": "src::infra",
           "afferent_coupling": 12,
-          "efferent_coupling": 10,
+          "efferent_coupling": 9,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -148,13 +148,25 @@
       ],
       "most_stable": [
         {
-          "node": "task_store",
+          "node": "memory_store",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "telegram_mtproto",
+          "node": "paths",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "sm_store",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "task_store",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -164,33 +176,21 @@
           "instability": 0.0,
           "ca": 1,
           "ce": 0
-        },
-        {
-          "node": "imp",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "src::ChatMessage",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
         }
       ],
       "violations": [
         {
           "from": "src::config",
           "to": "src::domain",
-          "from_instability": 0.12,
+          "from_instability": 0.125,
           "to_instability": 0.229,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         },
         {
           "from": "src::config",
           "to": "src::infra",
-          "from_instability": 0.12,
-          "to_instability": 0.455,
+          "from_instability": 0.125,
+          "to_instability": 0.429,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
       ],
@@ -256,9 +256,9 @@
       "hubs": [
         {
           "node": "src::app",
-          "total_degree": 54,
+          "total_degree": 55,
           "in_degree": 22,
-          "out_degree": 32
+          "out_degree": 33
         },
         {
           "node": "tests",
@@ -274,21 +274,21 @@
         },
         {
           "node": "src::config",
-          "total_degree": 25,
-          "in_degree": 22,
+          "total_degree": 24,
+          "in_degree": 21,
           "out_degree": 3
-        },
-        {
-          "node": "src::infra",
-          "total_degree": 22,
-          "in_degree": 12,
-          "out_degree": 10
         },
         {
           "node": "src::ports",
           "total_degree": 21,
           "in_degree": 17,
           "out_degree": 4
+        },
+        {
+          "node": "src::infra",
+          "total_degree": 21,
+          "in_degree": 12,
+          "out_degree": 9
         },
         {
           "node": "src::app::commands",
@@ -320,7 +320,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 166,
+      "total_sccs": 164,
       "problematic_sccs": [],
       "problematic_count": 0
     },
