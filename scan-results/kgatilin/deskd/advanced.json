@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.487,
+      "modularity": 0.49,
       "threshold": 0.3,
-      "communities_count": 18
+      "communities_count": 19
     },
     {
       "name": "abstractness",
@@ -616,110 +616,110 @@
           "component": "tests",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::tasklog",
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
-            "src::app::graph"
+            "src::app::commands::status",
+            "src::app::a2a_jwt",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "task",
           "impact_radius": 53,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 52,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "context",
           "impact_radius": 52,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "message",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 46,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "events",
           "impact_radius": 46,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 46,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::workflow",
-            "src::infra::bus_server",
             "src::infra::dto::context",
-            "src::app::commands::schedule"
+            "src::app::commands::status",
+            "src::app::context",
+            "src::app::config_reload",
+            "src::app::serve"
           ]
         }
       ],

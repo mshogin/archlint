@@ -25,28 +25,28 @@
           "package": "src::main",
           "domains_count": 17,
           "domains": [
-            "config",
-            "listing",
-            "src::errors",
+            "file_utils",
             "pipe",
-            "auth",
-            "args",
             "renderer",
-            "errors",
-            "src::args",
-            "src::config"
+            "src::config",
+            "src::file_op",
+            "src::webdav_fs",
+            "args",
+            "consts",
+            "listing",
+            "src::args"
           ]
         },
         {
           "package": "src::args",
           "domains_count": 7,
           "domains": [
-            "src::listing",
-            "auth",
-            "tests",
-            "src::auth",
-            "RequiredAuthPassword",
             "AuthParseError",
+            "auth",
+            "RequiredAuthPassword",
+            "src::auth",
+            "src::listing",
+            "tests",
             "src::renderer"
           ]
         },
@@ -54,11 +54,11 @@
           "package": "src::listing",
           "domains_count": 6,
           "domains": [
-            "src::errors",
-            "src::archive",
             "percent_encode_sets",
-            "src::percent_encode_sets",
             "src::auth",
+            "src::errors",
+            "src::percent_encode_sets",
+            "src::archive",
             "src::renderer"
           ]
         },
@@ -66,9 +66,9 @@
           "package": "src::renderer",
           "domains_count": 4,
           "domains": [
-            "src::auth",
-            "tests",
             "src::listing",
+            "tests",
+            "src::auth",
             "src::consts"
           ]
         },
@@ -76,10 +76,10 @@
           "package": "tests::navigation",
           "domains_count": 4,
           "domains": [
-            "tests::utils",
             "fixtures",
-            "tests::fixtures",
-            "utils"
+            "tests::utils",
+            "utils",
+            "tests::fixtures"
           ]
         }
       ],

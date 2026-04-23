@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.58,
+      "modularity": 0.574,
       "threshold": 0.3,
-      "communities_count": 16
+      "communities_count": 15
     },
     {
       "name": "abstractness",
@@ -616,66 +616,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
+            "src::export::json",
+            "src::export::tests",
+            "src::parameter",
             "src::options",
-            "src::export::asciidoc",
-            "src::timer::unix_timer",
-            "src::export::markdown",
-            "src::util"
+            "src::export::markup"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
+            "src::export::json",
+            "src::export::tests",
+            "src::parameter",
             "src::options",
-            "src::export::asciidoc",
-            "src::timer::unix_timer",
-            "src::export::markdown",
-            "src::util"
+            "src::export::markup"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
+            "src::export::json",
+            "src::export::tests",
+            "src::parameter",
             "src::options",
-            "src::export::asciidoc",
-            "src::timer::unix_timer",
-            "src::export::markdown",
-            "src::util"
+            "src::export::markup"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
+            "src::export::json",
+            "src::export::tests",
+            "src::parameter",
             "src::options",
-            "src::export::asciidoc",
-            "src::timer::unix_timer",
-            "src::export::markdown",
-            "src::util"
+            "src::export::markup"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
+            "src::export::json",
+            "src::export::tests",
+            "src::parameter",
             "src::options",
-            "src::export::asciidoc",
-            "src::timer::unix_timer",
-            "src::export::markdown",
-            "src::util"
+            "src::export::markup"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
+            "src::export::json",
+            "src::export::tests",
+            "src::parameter",
             "src::options",
-            "src::export::asciidoc",
-            "src::timer::unix_timer",
-            "src::export::markdown",
-            "src::benchmark::executor"
+            "src::export::markup"
           ]
         }
       ],
