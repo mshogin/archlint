@@ -25,156 +25,156 @@
           "package": "git-cliff-core::src::remote",
           "domains_count": 16,
           "domains": [
-            "time",
-            "gitea",
-            "http_cache_reqwest",
+            "reqwest_middleware",
+            "gitlab",
             "serde",
-            "github",
-            "reqwest",
-            "git-cliff-core::contributor",
-            "etcetera",
             "secrecy",
-            "git-cliff-core::config"
+            "gitea",
+            "etcetera",
+            "git-cliff-core::error",
+            "http_cache_reqwest",
+            "github",
+            "dyn_clone"
           ]
         },
         {
           "package": "git-cliff-core::src::lib",
           "domains_count": 15,
           "domains": [
-            "command",
-            "error",
-            "changelog",
-            "embed",
             "contributor",
             "repo",
-            "config",
             "template",
             "release",
-            "summary"
+            "commit",
+            "remote",
+            "config",
+            "embed",
+            "error",
+            "command"
           ]
         },
         {
           "package": "git-cliff-core::src::config",
           "domains_count": 11,
           "domains": [
-            "regex",
-            "git-cliff-core::embed",
+            "serde_pattern",
             "serde",
-            "test",
-            "pretty_assertions",
-            "temp_dir",
-            "etcetera",
+            "glob",
+            "git-cliff-core::embed",
             "secrecy",
+            "test",
+            "etcetera",
             "git-cliff-core::error",
-            "glob"
+            "temp_dir",
+            "pretty_assertions"
           ]
         },
         {
           "package": "git-cliff-core::src::release",
           "domains_count": 11,
           "domains": [
-            "git-cliff-core::statistics",
-            "serde",
-            "test",
-            "serde_json",
-            "pretty_assertions",
-            "semver",
-            "git-cliff-core::error",
-            "git-cliff-core::config",
             "git-cliff-core::remote",
-            "git-cliff-core::commit"
+            "serde",
+            "next_version",
+            "test",
+            "git-cliff-core::error",
+            "pretty_assertions",
+            "git-cliff-core::config",
+            "serde_json",
+            "git-cliff-core::commit",
+            "git-cliff-core::statistics"
           ]
         },
         {
           "package": "git-cliff-core::src::changelog",
           "domains_count": 11,
           "domains": [
-            "regex",
-            "test",
-            "pretty_assertions",
-            "git-cliff-core::error",
-            "git-cliff-core::process",
-            "git-cliff-core::config",
-            "git-cliff-core::remote",
             "git-cliff-core::summary",
+            "git-cliff-core::remote",
+            "test",
+            "git-cliff-core::template",
+            "git-cliff-core::error",
+            "pretty_assertions",
             "git-cliff-core::commit",
-            "git-cliff-core::release"
+            "git-cliff-core::config",
+            "git-cliff-core::release",
+            "git-cliff-core::process"
           ]
         },
         {
           "package": "git-cliff-core::src::repo",
           "domains_count": 11,
           "domains": [
-            "regex",
             "git-cliff-core::tag",
+            "glob",
             "test",
-            "git2",
             "temp_dir",
-            "indexmap",
+            "git2",
             "git-cliff-core::error",
-            "git-cliff-core::config",
             "url",
-            "glob"
+            "indexmap",
+            "git-cliff-core::config",
+            "git-cliff-core::commit"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::azure_devops",
           "domains_count": 9,
           "domains": [
-            "serde",
-            "test",
-            "pretty_assertions",
-            "futures",
-            "async_stream",
-            "git-cliff-core::error",
-            "git-cliff-core::config",
+            "reqwest_middleware",
             "git-cliff-core::remote",
-            "reqwest_middleware"
+            "serde",
+            "async_stream",
+            "test",
+            "git-cliff-core::error",
+            "pretty_assertions",
+            "git-cliff-core::config",
+            "futures"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::bitbucket",
           "domains_count": 9,
           "domains": [
-            "serde",
-            "test",
-            "pretty_assertions",
-            "futures",
-            "async_stream",
-            "git-cliff-core::error",
-            "git-cliff-core::config",
+            "reqwest_middleware",
             "git-cliff-core::remote",
-            "reqwest_middleware"
+            "serde",
+            "async_stream",
+            "test",
+            "git-cliff-core::error",
+            "pretty_assertions",
+            "git-cliff-core::config",
+            "futures"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::github",
           "domains_count": 9,
           "domains": [
-            "serde",
-            "test",
-            "pretty_assertions",
-            "futures",
-            "async_stream",
-            "git-cliff-core::error",
-            "git-cliff-core::config",
+            "reqwest_middleware",
             "git-cliff-core::remote",
-            "reqwest_middleware"
+            "serde",
+            "async_stream",
+            "test",
+            "git-cliff-core::error",
+            "pretty_assertions",
+            "git-cliff-core::config",
+            "futures"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::gitea",
           "domains_count": 9,
           "domains": [
-            "serde",
-            "test",
-            "pretty_assertions",
-            "futures",
-            "async_stream",
-            "git-cliff-core::error",
-            "git-cliff-core::config",
+            "reqwest_middleware",
             "git-cliff-core::remote",
-            "reqwest_middleware"
+            "serde",
+            "async_stream",
+            "test",
+            "git-cliff-core::error",
+            "pretty_assertions",
+            "git-cliff-core::config",
+            "futures"
           ]
         }
       ],
