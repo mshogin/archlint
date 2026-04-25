@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.487,
+      "modularity": 0.486,
       "threshold": 0.3,
-      "communities_count": 18
+      "communities_count": 19
     },
     {
       "name": "abstractness",
@@ -616,110 +616,110 @@
           "component": "tests",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::graph",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::app::tasklog",
-            "src::infra::sm_store"
+            "src::domain::task",
+            "src::app::a2a_server",
+            "src::main",
+            "src::infra::dto::task",
+            "src::app::acp"
           ]
         },
         {
           "component": "task",
           "impact_radius": 53,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::infra::dto"
+            "src::infra::dto::task",
+            "src::app::serve",
+            "src::app::commands::bus",
+            "src::app::commands::task",
+            "src::app::acp"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 52,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::app::config_reload"
+            "src::infra::dto::task",
+            "src::app::serve",
+            "src::app::commands::bus",
+            "src::app::commands::task",
+            "src::app::acp"
           ]
         },
         {
           "component": "context",
           "impact_radius": 52,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::infra::dto"
+            "src::infra::dto::task",
+            "src::app::serve",
+            "src::app::commands::bus",
+            "src::app::commands::task",
+            "src::app::acp"
           ]
         },
         {
           "component": "message",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::app::config_reload"
+            "src::infra::dto::task",
+            "src::app::serve",
+            "src::app::commands::bus",
+            "src::app::commands::task",
+            "src::app::acp"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 51,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::app::config_reload"
+            "src::infra::dto::task",
+            "src::app::serve",
+            "src::app::commands::bus",
+            "src::app::commands::task",
+            "src::app::acp"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 46,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::app::config_reload"
+            "src::app::commands::bus",
+            "src::app::serve",
+            "src::app::acp",
+            "src::domain::workitem",
+            "src::infra::memory_store"
           ]
         },
         {
           "component": "events",
           "impact_radius": 46,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::app::config_reload"
+            "src::app::commands::bus",
+            "src::app::serve",
+            "src::app::acp",
+            "src::domain::workitem",
+            "src::infra::memory_store"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 46,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::app::config_reload"
+            "src::app::commands::bus",
+            "src::app::serve",
+            "src::app::acp",
+            "src::domain::workitem",
+            "src::infra::memory_store"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 45,
           "sample_dependents": [
-            "src::ports::bus",
-            "src::app::commands::tui",
-            "src::app::agent_registry",
-            "src::infra::sm_store",
-            "src::app::config_reload"
+            "src::app::commands::bus",
+            "src::app::serve",
+            "src::app::acp",
+            "src::domain::workitem",
+            "src::infra::memory_store"
           ]
         }
       ],

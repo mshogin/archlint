@@ -3,7 +3,7 @@ title: "Scan Results"
 description: "Nightly architecture analysis of open-source projects"
 ---
 
-Last scan: 2026-04-24
+Last scan: 2026-04-25
 Repositories monitored: 15
 
 ## Health Dashboard
@@ -17,7 +17,7 @@ Repositories monitored: 15
 | [mikeshogin/seclint](mikeshogin-seclint/) | Go | 74% (moderate) | 31 | 4 | 3 |
 | [mikeshogin/promptlint](mikeshogin-promptlint/) | Go | 69% (moderate) | 30 | 5 | 3 |
 | [mikeshogin/costlint](mikeshogin-costlint/) | Go | 69% (moderate) | 29 | 5 | 3 |
-| [orhun/git-cliff](orhun-git-cliff/) | Rust | 59% (needs work) | 28 | 7 | 3 |
+| [orhun/git-cliff](orhun-git-cliff/) | Rust | 52% (needs work) | 28 | 8 | 4 |
 | [sharkdp/vivid](sharkdp-vivid/) | Rust | 51% (needs work) | 25 | 9 | 2 |
 | [svenstaro/miniserve](svenstaro-miniserve/) | Rust | 39% (poor) | 22 | 11 | 3 |
 | [mshogin/archlint](mshogin-archlint/) | Go | 29% (poor) | 21 | 13 | 3 |

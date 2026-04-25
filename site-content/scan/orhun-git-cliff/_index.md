@@ -5,7 +5,7 @@ description: "Architecture analysis of orhun/git-cliff"
 
 **Repository:** [orhun/git-cliff](https://github.com/orhun/git-cliff)
 **Language:** Rust
-**Health:** 59% (needs work)
+**Health:** 52% (needs work)
 
 ## Validation Results
 
@@ -42,17 +42,17 @@ description: "Architecture analysis of orhun/git-cliff"
 | abstractness | ERROR |  |  |
 | distance_from_main_sequence | ERROR |  |  |
 | zscore_outliers | ERROR |  |  |
+| component_complexity | ERROR |  | 50 |
 | bridge_edges | INFO |  |  |
-| graph_diameter | INFO |  |  |
 | closeness_centrality | INFO |  |  |
 | eigenvector_centrality | INFO |  | 0.3 |
 | degree_distribution | INFO |  |  |
-| algebraic_connectivity | INFO |  |  |
 | spectral_radius | INFO |  |  |
 | betweenness_centrality | PASSED |  | 0.3 |
 | pagerank | PASSED |  | 0.1 |
 | modularity | PASSED |  | 0.3 |
 | edge_density | PASSED |  |  |
+| graph_diameter | PASSED |  | 10 |
 | avg_path_length | PASSED |  | 5.0 |
 | k_core_decomposition | PASSED |  | 5 |
 | graph_cliques | PASSED |  | 4 |
@@ -65,7 +65,7 @@ description: "Architecture analysis of orhun/git-cliff"
 | deprecated_usage | PASSED |  |  |
 | stability_violations | PASSED |  |  |
 | circular_dependency_depth | PASSED |  | 3 |
-| component_complexity | PASSED |  | 50 |
 | clustering_coefficient | WARNING |  | 0.1 |
 | articulation_points | WARNING |  |  |
+| algebraic_connectivity | WARNING |  | 0.1 |
 

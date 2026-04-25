@@ -1,5 +1,5 @@
 {
-  "scan_date": "2026-04-24T04:08:55.589160",
+  "scan_date": "2026-04-25T04:01:54.680558",
   "repos": [
     {
       "owner": "mshogin",
@@ -95,10 +95,10 @@
       "owner": "orhun",
       "name": "git-cliff",
       "language": "Rust",
-      "health": 59,
+      "health": 52,
       "passed": 28,
-      "failed": 7,
-      "warnings": 3
+      "failed": 8,
+      "warnings": 4
     },
     {
       "owner": "sharkdp",
