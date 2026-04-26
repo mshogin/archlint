@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 164,
-    "edges": 241
+    "nodes": 172,
+    "edges": 252
   },
   "checks": [
     {
@@ -35,12 +35,12 @@
         },
         {
           "node": "src::app",
-          "fan_out": 33,
+          "fan_out": 34,
           "threshold": 5
         },
         {
           "node": "src::app::commands",
-          "fan_out": 14,
+          "fan_out": 16,
           "threshold": 5
         },
         {
@@ -74,15 +74,15 @@
         },
         {
           "node": "src::app",
-          "afferent_coupling": 22,
-          "efferent_coupling": 33,
+          "afferent_coupling": 24,
+          "efferent_coupling": 34,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::app::commands",
           "afferent_coupling": 0,
-          "efferent_coupling": 14,
+          "efferent_coupling": 16,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -102,7 +102,7 @@
         },
         {
           "node": "tests",
-          "afferent_coupling": 45,
+          "afferent_coupling": 48,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -256,14 +256,14 @@
       "hubs": [
         {
           "node": "src::app",
-          "total_degree": 55,
-          "in_degree": 22,
-          "out_degree": 33
+          "total_degree": 58,
+          "in_degree": 24,
+          "out_degree": 34
         },
         {
           "node": "tests",
-          "total_degree": 45,
-          "in_degree": 45,
+          "total_degree": 48,
+          "in_degree": 48,
           "out_degree": 0
         },
         {
@@ -292,9 +292,9 @@
         },
         {
           "node": "src::app::commands",
-          "total_degree": 14,
+          "total_degree": 16,
           "in_degree": 0,
-          "out_degree": 14
+          "out_degree": 16
         }
       ],
       "hubs_count": 7
@@ -320,7 +320,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 164,
+      "total_sccs": 172,
       "problematic_sccs": [],
       "problematic_count": 0
     },
