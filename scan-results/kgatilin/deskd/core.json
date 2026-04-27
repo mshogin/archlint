@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 172,
-    "edges": 252
+    "nodes": 178,
+    "edges": 259
   },
   "checks": [
     {
@@ -35,7 +35,7 @@
         },
         {
           "node": "src::app",
-          "fan_out": 34,
+          "fan_out": 36,
           "threshold": 5
         },
         {
@@ -60,7 +60,7 @@
       "violations": [
         {
           "node": "src::config",
-          "afferent_coupling": 21,
+          "afferent_coupling": 22,
           "efferent_coupling": 3,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -75,7 +75,7 @@
         {
           "node": "src::app",
           "afferent_coupling": 24,
-          "efferent_coupling": 34,
+          "efferent_coupling": 36,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -102,7 +102,7 @@
         },
         {
           "node": "tests",
-          "afferent_coupling": 48,
+          "afferent_coupling": 51,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -182,14 +182,14 @@
         {
           "from": "src::config",
           "to": "src::domain",
-          "from_instability": 0.125,
+          "from_instability": 0.12,
           "to_instability": 0.229,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         },
         {
           "from": "src::config",
           "to": "src::infra",
-          "from_instability": 0.125,
+          "from_instability": 0.12,
           "to_instability": 0.429,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
@@ -256,14 +256,14 @@
       "hubs": [
         {
           "node": "src::app",
-          "total_degree": 58,
+          "total_degree": 60,
           "in_degree": 24,
-          "out_degree": 34
+          "out_degree": 36
         },
         {
           "node": "tests",
-          "total_degree": 48,
-          "in_degree": 48,
+          "total_degree": 51,
+          "in_degree": 51,
           "out_degree": 0
         },
         {
@@ -274,8 +274,8 @@
         },
         {
           "node": "src::config",
-          "total_degree": 24,
-          "in_degree": 21,
+          "total_degree": 25,
+          "in_degree": 22,
           "out_degree": 3
         },
         {
@@ -320,7 +320,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 172,
+      "total_sccs": 178,
       "problematic_sccs": [],
       "problematic_count": 0
     },
