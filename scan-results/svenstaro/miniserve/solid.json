@@ -25,41 +25,41 @@
           "package": "src::main",
           "domains_count": 17,
           "domains": [
-            "args",
-            "src::errors",
-            "webdav_fs",
             "archive",
-            "errors",
-            "src::file_op",
-            "pipe",
+            "listing",
             "renderer",
+            "errors",
+            "src::args",
+            "config",
+            "file_utils",
             "src::config",
-            "config"
+            "webdav_fs",
+            "pipe"
           ]
         },
         {
           "package": "src::args",
           "domains_count": 7,
           "domains": [
-            "tests",
+            "AuthParseError",
             "src::listing",
-            "src::auth",
+            "tests",
             "RequiredAuthPassword",
-            "auth",
             "src::renderer",
-            "AuthParseError"
+            "auth",
+            "src::auth"
           ]
         },
         {
           "package": "src::listing",
           "domains_count": 6,
           "domains": [
-            "src::errors",
-            "src::percent_encode_sets",
-            "src::auth",
-            "src::archive",
             "percent_encode_sets",
-            "src::renderer"
+            "src::percent_encode_sets",
+            "src::errors",
+            "src::archive",
+            "src::renderer",
+            "src::auth"
           ]
         },
         {
@@ -67,18 +67,18 @@
           "domains_count": 4,
           "domains": [
             "tests",
+            "src::listing",
             "src::consts",
-            "src::auth",
-            "src::listing"
+            "src::auth"
           ]
         },
         {
           "package": "tests::navigation",
           "domains_count": 4,
           "domains": [
+            "fixtures",
             "tests::fixtures",
             "utils",
-            "fixtures",
             "tests::utils"
           ]
         }
