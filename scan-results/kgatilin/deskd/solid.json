@@ -11,8 +11,8 @@
     "errors": 1
   },
   "graph": {
-    "nodes": 178,
-    "edges": 259
+    "nodes": 181,
+    "edges": 263
   },
   "checks": [
     {
@@ -25,61 +25,62 @@
           "package": "src::app",
           "domains_count": 36,
           "domains": [
-            "context",
+            "tasklog",
             "bus",
-            "config_watcher",
-            "mcp_protocol",
             "cli",
-            "serve",
-            "mcp",
-            "jsonrpc",
+            "a2a",
+            "schedule",
+            "mcp_protocol",
+            "mcp_tools",
+            "acp",
             "workflow",
-            "a2a"
+            "unified_inbox"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 16,
           "domains": [
-            "a2a",
-            "tests",
-            "context",
+            "graph",
+            "task",
+            "dashboard",
             "bus",
             "agent",
-            "dashboard",
-            "upgrade",
-            "usage",
-            "restart",
-            "schedule"
+            "context",
+            "remind",
+            "sm",
+            "tui",
+            "tests"
           ]
         },
         {
           "package": "src::infra",
-          "domains_count": 9,
+          "domains_count": 10,
           "domains": [
-            "unix_bus",
-            "context_store",
-            "memory_bus",
-            "task_store",
+            "dto",
             "memory_store",
             "sm_store",
-            "dto",
+            "context_store",
+            "task_store",
+            "agent_file",
+            "memory_bus",
             "paths",
-            "bus_server"
+            "bus_server",
+            "unix_bus"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "context",
-            "message",
-            "agent",
-            "statemachine",
-            "config_types",
-            "events",
             "task",
-            "workitem"
+            "agent",
+            "context",
+            "config_types",
+            "statemachine",
+            "events",
+            "workitem",
+            "message"
           ]
         },
         {
@@ -87,9 +88,9 @@
           "domains_count": 5,
           "domains": [
             "infra",
-            "app",
             "config",
             "domain",
+            "app",
             "ports"
           ]
         },
@@ -97,55 +98,55 @@
           "package": "src::app::process_builder",
           "domains_count": 5,
           "domains": [
-            "tests",
-            "src::agent_registry",
-            "src::context_size",
             "src::config",
-            "src::domain"
+            "tests",
+            "src::domain",
+            "src::context_size",
+            "src::agent_registry"
           ]
         },
         {
           "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "src::infra",
             "tests",
-            "src::ports",
+            "src::domain",
             "src::app",
-            "src::domain"
+            "src::ports",
+            "src::infra"
           ]
         },
         {
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
-            "src::agent_process",
             "tests",
+            "src::process_builder",
             "src::ports",
             "src::agent_registry",
-            "src::process_builder"
+            "src::agent_process"
           ]
         },
         {
           "package": "src::app::mcp_tools",
           "domains_count": 5,
           "domains": [
-            "src::infra",
+            "src::config",
             "tests",
-            "src::ports",
             "src::app",
-            "src::config"
+            "src::ports",
+            "src::infra"
           ]
         },
         {
           "package": "src::infra::dto",
           "domains_count": 5,
           "domains": [
-            "context",
+            "task",
             "bus",
+            "context",
             "config",
-            "instance",
-            "task"
+            "instance"
           ]
         }
       ],
@@ -156,10 +157,10 @@
       "description": "Соотношение абстракций >= 20% (OCP)",
       "status": "WARNING",
       "abstractions": 6,
-      "implementations": 172,
-      "ratio": 0.034,
+      "implementations": 175,
+      "ratio": 0.033,
       "threshold": 0.2,
-      "issue": "Низкое соотношение абстракций (3.37%) - плохая расширяемость"
+      "issue": "Низкое соотношение абстракций (3.31%) - плохая расширяемость"
     },
     {
       "name": "liskov_substitution",
