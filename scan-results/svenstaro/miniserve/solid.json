@@ -25,61 +25,61 @@
           "package": "src::main",
           "domains_count": 17,
           "domains": [
-            "auth",
-            "args",
-            "archive",
-            "errors",
-            "config",
-            "src::args",
             "consts",
+            "file_utils",
+            "src::errors",
             "listing",
-            "webdav_fs",
-            "src::webdav_fs"
+            "errors",
+            "renderer",
+            "src::file_op",
+            "auth",
+            "src::config",
+            "pipe"
           ]
         },
         {
           "package": "src::args",
           "domains_count": 7,
           "domains": [
-            "auth",
-            "src::renderer",
-            "src::listing",
-            "RequiredAuthPassword",
-            "tests",
             "src::auth",
-            "AuthParseError"
+            "AuthParseError",
+            "src::renderer",
+            "tests",
+            "auth",
+            "src::listing",
+            "RequiredAuthPassword"
           ]
         },
         {
           "package": "src::listing",
           "domains_count": 6,
           "domains": [
-            "src::archive",
             "src::percent_encode_sets",
-            "percent_encode_sets",
-            "src::errors",
             "src::auth",
-            "src::renderer"
+            "src::errors",
+            "src::renderer",
+            "src::archive",
+            "percent_encode_sets"
           ]
         },
         {
           "package": "src::renderer",
           "domains_count": 4,
           "domains": [
+            "tests",
             "src::auth",
             "src::listing",
-            "src::consts",
-            "tests"
+            "src::consts"
           ]
         },
         {
           "package": "tests::navigation",
           "domains_count": 4,
           "domains": [
-            "fixtures",
-            "utils",
             "tests::utils",
-            "tests::fixtures"
+            "fixtures",
+            "tests::fixtures",
+            "utils"
           ]
         }
       ],

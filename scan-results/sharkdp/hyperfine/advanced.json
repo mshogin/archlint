@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.58,
+      "modularity": 0.575,
       "threshold": 0.3,
-      "communities_count": 16
+      "communities_count": 15
     },
     {
       "name": "abstractness",
@@ -616,66 +616,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::export::markup",
+            "src::output::format",
             "src::util",
-            "src::command",
+            "src::export::csv",
             "src::export",
-            "src::export::csv"
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::export::markup",
+            "src::output::format",
             "src::util",
-            "src::command",
+            "src::export::csv",
             "src::export",
-            "src::export::csv"
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::export::markup",
+            "src::output::format",
             "src::util",
-            "src::command",
+            "src::export::csv",
             "src::export",
-            "src::export::csv"
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::export::markup",
+            "src::output::format",
             "src::util",
-            "src::command",
+            "src::export::csv",
             "src::export",
-            "src::export::csv"
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::export::markup",
+            "src::output::format",
             "src::util",
-            "src::command",
+            "src::export::csv",
             "src::export",
-            "src::export::csv"
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::export::markup",
-            "src::command",
-            "src::export",
+            "src::output::format",
             "src::export::csv",
-            "src::benchmark"
+            "src::export",
+            "src::benchmark::executor",
+            "src::timer::windows_timer"
           ]
         }
       ],
