@@ -25,128 +25,128 @@
           "package": "src::app",
           "domains_count": 38,
           "domains": [
-            "message",
             "mcp_tools",
-            "a2a",
-            "mcp",
+            "context",
             "agent_components",
             "worker",
-            "agent_process",
+            "tasklog",
+            "acp",
             "commands",
-            "a2a_jwt",
-            "agent"
+            "bus_api",
+            "unified_inbox",
+            "workflow"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "agent",
             "dashboard",
-            "status",
             "upgrade",
-            "a2a",
+            "remind",
+            "restart",
+            "bus",
             "context",
-            "tui",
-            "tests",
-            "usage",
-            "sm"
+            "graph",
+            "status",
+            "task",
+            "tui"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "sm_store",
+            "dto",
+            "agent_file",
             "context_store",
             "task_store",
-            "dto",
-            "unix_bus",
-            "bus_server",
             "memory_store",
+            "memory_bus",
             "paths",
-            "agent_file",
-            "diag"
+            "sm_store",
+            "diag",
+            "bus_server"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "agent",
-            "message",
-            "context",
-            "events",
             "statemachine",
-            "workitem",
+            "context",
             "task",
-            "config_types"
+            "workitem",
+            "agent",
+            "events",
+            "config_types",
+            "message"
           ]
         },
         {
           "package": "src::lib",
           "domains_count": 5,
           "domains": [
-            "domain",
-            "config",
             "infra",
             "app",
-            "ports"
+            "ports",
+            "domain",
+            "config"
           ]
         },
         {
           "package": "src::app::process_builder",
           "domains_count": 5,
           "domains": [
-            "src::domain",
+            "src::agent_registry",
             "tests",
-            "src::context_size",
             "src::config",
-            "src::agent_registry"
+            "src::domain",
+            "src::context_size"
           ]
         },
         {
           "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "src::domain",
+            "src::app",
             "tests",
-            "src::ports",
             "src::infra",
-            "src::app"
+            "src::domain",
+            "src::ports"
           ]
         },
         {
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
+            "src::agent_registry",
             "src::process_builder",
-            "src::agent_process",
             "tests",
             "src::ports",
-            "src::agent_registry"
+            "src::agent_process"
           ]
         },
         {
           "package": "src::app::mcp_service",
           "domains_count": 5,
           "domains": [
-            "src::domain",
-            "src::ports",
-            "src::config",
             "restart_tests",
-            "src::app"
+            "src::app",
+            "src::domain",
+            "src::config",
+            "src::ports"
           ]
         },
         {
           "package": "src::app::mcp_tools",
           "domains_count": 5,
           "domains": [
+            "src::app",
             "tests",
-            "src::ports",
-            "src::config",
             "src::infra",
-            "src::app"
+            "src::config",
+            "src::ports"
           ]
         }
       ],
