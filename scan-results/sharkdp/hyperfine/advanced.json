@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.575,
+      "modularity": 0.58,
       "threshold": 0.3,
-      "communities_count": 15
+      "communities_count": 16
     },
     {
       "name": "abstractness",
@@ -617,10 +617,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::format",
-            "src::util",
-            "src::export::csv",
-            "src::export",
-            "src::benchmark::executor"
+            "src::timer::unix_timer",
+            "src::command",
+            "src::timer::windows_timer",
+            "src::benchmark::timing_result"
           ]
         },
         {
@@ -628,10 +628,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::format",
-            "src::util",
-            "src::export::csv",
-            "src::export",
-            "src::benchmark::executor"
+            "src::timer::unix_timer",
+            "src::command",
+            "src::timer::windows_timer",
+            "src::benchmark::timing_result"
           ]
         },
         {
@@ -639,10 +639,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::format",
-            "src::util",
-            "src::export::csv",
-            "src::export",
-            "src::benchmark::executor"
+            "src::timer::unix_timer",
+            "src::command",
+            "src::timer::windows_timer",
+            "src::benchmark::timing_result"
           ]
         },
         {
@@ -650,10 +650,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::format",
-            "src::util",
-            "src::export::csv",
-            "src::export",
-            "src::benchmark::executor"
+            "src::timer::unix_timer",
+            "src::command",
+            "src::timer::windows_timer",
+            "src::benchmark::timing_result"
           ]
         },
         {
@@ -661,10 +661,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::format",
-            "src::util",
-            "src::export::csv",
-            "src::export",
-            "src::benchmark::executor"
+            "src::timer::unix_timer",
+            "src::command",
+            "src::timer::windows_timer",
+            "src::benchmark::timing_result"
           ]
         },
         {
@@ -672,10 +672,10 @@
           "impact_radius": 24,
           "sample_dependents": [
             "src::output::format",
-            "src::export::csv",
-            "src::export",
-            "src::benchmark::executor",
-            "src::timer::windows_timer"
+            "src::timer::unix_timer",
+            "src::command",
+            "src::timer::windows_timer",
+            "src::output::progress_bar"
           ]
         }
       ],
