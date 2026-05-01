@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 190,
-    "edges": 276
+    "nodes": 193,
+    "edges": 279
   },
   "checks": [
     {
@@ -29,13 +29,18 @@
       "threshold": 5,
       "violations": [
         {
+          "node": "src::lib",
+          "fan_out": 6,
+          "threshold": 5
+        },
+        {
           "node": "src::domain",
           "fan_out": 8,
           "threshold": 5
         },
         {
           "node": "src::app",
-          "fan_out": 38,
+          "fan_out": 39,
           "threshold": 5
         },
         {
@@ -49,7 +54,7 @@
           "threshold": 5
         }
       ],
-      "violations_count": 4
+      "violations_count": 5
     },
     {
       "name": "coupling",
@@ -75,7 +80,7 @@
         {
           "node": "src::app",
           "afferent_coupling": 26,
-          "efferent_coupling": 38,
+          "efferent_coupling": 39,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -102,7 +107,7 @@
         },
         {
           "node": "tests",
-          "afferent_coupling": 55,
+          "afferent_coupling": 56,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -119,7 +124,7 @@
           "node": "src::lib",
           "instability": 1.0,
           "ca": 0,
-          "ce": 5
+          "ce": 6
         },
         {
           "node": "src::bin::session2graph",
@@ -256,14 +261,14 @@
       "hubs": [
         {
           "node": "src::app",
-          "total_degree": 64,
+          "total_degree": 65,
           "in_degree": 26,
-          "out_degree": 38
+          "out_degree": 39
         },
         {
           "node": "tests",
-          "total_degree": 55,
-          "in_degree": 55,
+          "total_degree": 56,
+          "in_degree": 56,
           "out_degree": 0
         },
         {
@@ -320,7 +325,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 190,
+      "total_sccs": 193,
       "problematic_sccs": [],
       "problematic_count": 0
     },
