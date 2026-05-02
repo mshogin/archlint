@@ -11,7 +11,7 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 193,
+    "nodes": 194,
     "edges": 279
   },
   "checks": [
@@ -315,17 +315,18 @@
         "src::ports::executor",
         "build",
         "tests::crash_recovery",
+        "tests::diag_publish",
         "tests::budget_enforcement",
         "tests::schedule_to_worker",
         "tests::agent_lifecycle"
       ],
-      "orphans_count": 9
+      "orphans_count": 10
     },
     {
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 193,
+      "total_sccs": 194,
       "problematic_sccs": [],
       "problematic_count": 0
     },
