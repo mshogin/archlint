@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.58,
+      "modularity": 0.575,
       "threshold": 0.3,
-      "communities_count": 16
+      "communities_count": 15
     },
     {
       "name": "abstractness",
@@ -616,66 +616,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::export::csv",
-            "src::export::json",
-            "src::benchmark::benchmark_result",
-            "src::timer::unix_timer"
+            "src::benchmark::scheduler",
+            "src::timer::unix_timer",
+            "src::export::orgmode",
+            "src::output::format",
+            "src::timer::wall_clock_timer"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::export::csv",
-            "src::export::json",
-            "src::benchmark::benchmark_result",
-            "src::timer::unix_timer"
+            "src::benchmark::scheduler",
+            "src::timer::unix_timer",
+            "src::export::orgmode",
+            "src::output::format",
+            "src::timer::wall_clock_timer"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::export::csv",
-            "src::export::json",
-            "src::benchmark::benchmark_result",
-            "src::timer::unix_timer"
+            "src::benchmark::scheduler",
+            "src::timer::unix_timer",
+            "src::export::orgmode",
+            "src::output::format",
+            "src::timer::wall_clock_timer"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::export::csv",
-            "src::export::json",
-            "src::benchmark::benchmark_result",
-            "src::timer::unix_timer"
+            "src::benchmark::scheduler",
+            "src::timer::unix_timer",
+            "src::export::orgmode",
+            "src::output::format",
+            "src::timer::wall_clock_timer"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::export::csv",
-            "src::export::json",
-            "src::benchmark::benchmark_result",
-            "src::timer::unix_timer"
+            "src::benchmark::scheduler",
+            "src::timer::unix_timer",
+            "src::export::orgmode",
+            "src::output::format",
+            "src::timer::wall_clock_timer"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::export::csv",
-            "src::export::json",
-            "src::benchmark::benchmark_result",
-            "src::timer::unix_timer"
+            "src::benchmark::scheduler",
+            "src::timer::unix_timer",
+            "src::export::orgmode",
+            "src::output::format",
+            "src::timer::wall_clock_timer"
           ]
         }
       ],

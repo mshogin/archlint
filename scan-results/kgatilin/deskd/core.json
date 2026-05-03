@@ -12,7 +12,7 @@
   },
   "graph": {
     "nodes": 194,
-    "edges": 279
+    "edges": 281
   },
   "checks": [
     {
@@ -100,7 +100,7 @@
         },
         {
           "node": "src::infra",
-          "afferent_coupling": 12,
+          "afferent_coupling": 14,
           "efferent_coupling": 11,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -195,7 +195,7 @@
           "from": "src::config",
           "to": "src::infra",
           "from_instability": 0.111,
-          "to_instability": 0.478,
+          "to_instability": 0.44,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
       ],
@@ -285,8 +285,8 @@
         },
         {
           "node": "src::infra",
-          "total_degree": 23,
-          "in_degree": 12,
+          "total_degree": 25,
+          "in_degree": 14,
           "out_degree": 11
         },
         {
