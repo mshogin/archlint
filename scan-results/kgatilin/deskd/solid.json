@@ -12,7 +12,7 @@
   },
   "graph": {
     "nodes": 194,
-    "edges": 279
+    "edges": 281
   },
   "checks": [
     {
@@ -25,48 +25,48 @@
           "package": "src::app",
           "domains_count": 39,
           "domains": [
-            "context_size",
-            "a2a_server",
-            "statemachine",
-            "cli",
-            "context_log",
-            "acp",
-            "task",
-            "schedule",
-            "bus_api",
-            "doctor"
+            "timeout_sweep",
+            "unified_inbox",
+            "agent_components",
+            "a2a",
+            "context",
+            "scope",
+            "tasklog",
+            "worker",
+            "a2a_jwt",
+            "cli"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "upgrade",
-            "restart",
+            "tui",
             "tests",
-            "graph",
-            "usage",
             "agent",
-            "status",
-            "dashboard",
             "task",
-            "tui"
+            "schedule",
+            "context",
+            "a2a",
+            "bus",
+            "restart",
+            "upgrade"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "memory_bus",
-            "memory_store",
             "sm_store",
-            "agent_file",
-            "context_store",
-            "paths",
-            "task_store",
-            "bus_server",
             "diag",
-            "dto"
+            "task_store",
+            "context_store",
+            "agent_file",
+            "paths",
+            "memory_store",
+            "memory_bus",
+            "unix_bus",
+            "bus_server"
           ]
         },
         {
@@ -74,13 +74,13 @@
           "domains_count": 8,
           "domains": [
             "config_types",
-            "statemachine",
-            "events",
             "agent",
-            "message",
             "task",
-            "workitem",
-            "context"
+            "message",
+            "context",
+            "events",
+            "statemachine",
+            "workitem"
           ]
         },
         {
@@ -88,11 +88,11 @@
           "domains_count": 6,
           "domains": [
             "config",
+            "ports",
             "app",
-            "domain",
             "infra",
-            "test_support",
-            "ports"
+            "domain",
+            "test_support"
           ]
         },
         {
@@ -101,8 +101,8 @@
           "domains": [
             "src::agent_registry",
             "tests",
-            "src::domain",
             "src::config",
+            "src::domain",
             "src::context_size"
           ]
         },
@@ -110,20 +110,20 @@
           "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "src::app",
             "tests",
+            "src::app",
             "src::infra",
-            "src::domain",
-            "src::ports"
+            "src::ports",
+            "src::domain"
           ]
         },
         {
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
-            "src::agent_process",
             "src::agent_registry",
             "tests",
+            "src::agent_process",
             "src::process_builder",
             "src::ports"
           ]
@@ -133,25 +133,25 @@
           "domains_count": 5,
           "domains": [
             "src::app",
-            "src::domain",
             "src::config",
-            "restart_tests",
-            "src::ports"
+            "src::ports",
+            "src::domain",
+            "restart_tests"
           ]
         },
         {
           "package": "src::app::mcp_tools",
           "domains_count": 5,
           "domains": [
+            "tests",
             "src::app",
             "src::infra",
-            "tests",
             "src::config",
             "src::ports"
           ]
         }
       ],
-      "violations_count": 20
+      "violations_count": 21
     },
     {
       "name": "open_closed",
