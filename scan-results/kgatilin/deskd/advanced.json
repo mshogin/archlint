@@ -35,7 +35,7 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.501,
+      "modularity": 0.499,
       "threshold": 0.3,
       "communities_count": 21
     },
@@ -626,110 +626,110 @@
           "component": "tests",
           "impact_radius": 67,
           "sample_dependents": [
+            "src::app::config_changeset",
+            "src::app::commands::tui",
+            "src::infra::task_store",
             "src::app::a2a",
-            "src::infra::dto::config",
-            "src::config",
-            "src::app::context",
-            "src::app::adapters"
+            "src::infra::dto::config"
           ]
         },
         {
           "component": "context",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::app::doctor",
+            "src::infra::task_store"
           ]
         },
         {
           "component": "task",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::app::doctor",
+            "src::infra::task_store"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 59,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::app::doctor",
+            "src::infra::task_store"
           ]
         },
         {
           "component": "message",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::app::doctor",
+            "src::infra::task_store"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::app::doctor",
+            "src::infra::task_store"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::infra::task_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "events",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::infra::task_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::domain",
-            "src::app::bus",
-            "src::infra::dto::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::infra::task_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 48,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::app::a2a",
-            "src::app::bus",
-            "src::infra::dto::config",
-            "src::config"
+            "src::app::config_changeset",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::infra::task_store",
+            "src::app::commands::schedule"
           ]
         }
       ],
