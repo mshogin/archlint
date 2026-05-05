@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.499,
+      "modularity": 0.502,
       "threshold": 0.3,
-      "communities_count": 21
+      "communities_count": 22
     },
     {
       "name": "abstractness",
@@ -626,110 +626,110 @@
           "component": "tests",
           "impact_radius": 67,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::commands::tui",
-            "src::infra::task_store",
-            "src::app::a2a",
-            "src::infra::dto::config"
+            "src::app::acp",
+            "src::app::adapters::telegram::attachments",
+            "src::infra::bus_server",
+            "src::app::config_watcher",
+            "src::domain::statemachine"
           ]
         },
         {
           "component": "context",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::app::doctor",
-            "src::infra::task_store"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::commands::task"
           ]
         },
         {
           "component": "task",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::app::doctor",
-            "src::infra::task_store"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::commands::task"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 59,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::app::doctor",
-            "src::infra::task_store"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::commands::task"
           ]
         },
         {
           "component": "message",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::app::doctor",
-            "src::infra::task_store"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::commands::task"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::app::doctor",
-            "src::infra::task_store"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::commands::task"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::infra::task_store",
-            "src::app::commands::schedule"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::schedule"
           ]
         },
         {
           "component": "events",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::infra::task_store",
-            "src::app::commands::schedule"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::schedule"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::infra::task_store",
-            "src::app::commands::schedule"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::schedule"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 48,
           "sample_dependents": [
-            "src::app::config_changeset",
-            "src::app::bus_api",
-            "src::app::commands::tui",
-            "src::infra::task_store",
-            "src::app::commands::schedule"
+            "src::app::message",
+            "src::app::acp",
+            "src::app::commands::remind",
+            "src::infra::bus_server",
+            "src::app::schedule"
           ]
         }
       ],
