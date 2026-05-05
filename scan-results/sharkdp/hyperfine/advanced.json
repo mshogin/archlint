@@ -616,66 +616,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::export::csv",
-            "src::export::tests",
+            "src::export::asciidoc",
+            "src::export::markdown",
+            "src::parameter::range_step",
             "src::options",
-            "src::benchmark::scheduler"
+            "src::parameter"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::export::csv",
-            "src::export::tests",
+            "src::export::asciidoc",
+            "src::export::markdown",
+            "src::parameter::range_step",
             "src::options",
-            "src::benchmark::scheduler"
+            "src::parameter"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::export::csv",
-            "src::export::tests",
+            "src::export::asciidoc",
+            "src::export::markdown",
+            "src::parameter::range_step",
             "src::options",
-            "src::benchmark::scheduler"
+            "src::parameter"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::export::csv",
-            "src::export::tests",
+            "src::export::asciidoc",
+            "src::export::markdown",
+            "src::parameter::range_step",
             "src::options",
-            "src::benchmark::scheduler"
+            "src::parameter"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::export::csv",
-            "src::export::tests",
+            "src::export::asciidoc",
+            "src::export::markdown",
+            "src::parameter::range_step",
             "src::options",
-            "src::benchmark::scheduler"
+            "src::parameter"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::command",
-            "src::export::csv",
-            "src::export::tests",
+            "src::export::asciidoc",
+            "src::export::markdown",
+            "src::parameter::range_step",
             "src::options",
-            "src::benchmark::scheduler"
+            "src::parameter"
           ]
         }
       ],
