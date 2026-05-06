@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.502,
+      "modularity": 0.504,
       "threshold": 0.3,
-      "communities_count": 22
+      "communities_count": 21
     },
     {
       "name": "abstractness",
@@ -626,110 +626,110 @@
           "component": "tests",
           "impact_radius": 67,
           "sample_dependents": [
-            "src::app::acp",
-            "src::app::adapters::telegram::attachments",
-            "src::infra::bus_server",
-            "src::app::config_watcher",
-            "src::domain::statemachine"
+            "src::app::agent",
+            "src::app::bus_api",
+            "src::app::commands::a2a",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "context",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::commands::task"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "task",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::commands::task"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 59,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::commands::task"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "message",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::commands::task"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::commands::task"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::schedule"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "events",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::schedule"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::schedule"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 48,
           "sample_dependents": [
-            "src::app::message",
-            "src::app::acp",
-            "src::app::commands::remind",
-            "src::infra::bus_server",
-            "src::app::schedule"
+            "src::app::commands::a2a",
+            "src::app::bus_api",
+            "src::app::context",
+            "src::app::alerts",
+            "src::app::serve"
           ]
         }
       ],
