@@ -3,7 +3,7 @@ title: "Scan Results"
 description: "Nightly architecture analysis of open-source projects"
 ---
 
-Last scan: 2026-05-06
+Last scan: 2026-05-07
 Repositories monitored: 15
 
 ## Health Dashboard

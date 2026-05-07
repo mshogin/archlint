@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.504,
+      "modularity": 0.499,
       "threshold": 0.3,
-      "communities_count": 21
+      "communities_count": 23
     },
     {
       "name": "abstractness",
@@ -626,110 +626,110 @@
           "component": "tests",
           "impact_radius": 67,
           "sample_dependents": [
-            "src::app::agent",
-            "src::app::bus_api",
-            "src::app::commands::a2a",
-            "src::app::alerts",
-            "src::app::serve"
+            "src::domain::config_types",
+            "src::app::commands::schedule",
+            "src::app::graph",
+            "src::app::adapters::telegram",
+            "src::app::context"
           ]
         },
         {
           "component": "context",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "task",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 59,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "message",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "events",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 48,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::bus_api",
-            "src::app::context",
+            "src::app::commands::agent",
+            "src::app::workflow",
             "src::app::alerts",
-            "src::app::serve"
+            "src::infra::context_store",
+            "src::app::commands::schedule"
           ]
         }
       ],

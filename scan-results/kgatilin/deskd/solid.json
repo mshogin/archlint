@@ -25,74 +25,74 @@
           "package": "src::app",
           "domains_count": 39,
           "domains": [
-            "unified_inbox",
-            "context_log",
+            "bus",
+            "cli",
             "context_size",
-            "mcp_protocol",
-            "mcp_tools",
-            "schedule",
-            "scope",
-            "worker",
-            "agent_components",
-            "graph"
+            "a2a_jwt",
+            "config_changeset",
+            "statemachine",
+            "a2a_server",
+            "unified_inbox",
+            "timeout_sweep",
+            "commands"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "task",
+            "upgrade",
+            "doctor",
+            "bus",
             "agent",
             "tests",
             "sm",
-            "status",
-            "context",
-            "upgrade",
-            "a2a",
-            "usage",
-            "bus"
+            "schedule",
+            "remind",
+            "tui",
+            "status"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "memory_store",
             "paths",
-            "memory_bus",
-            "diag",
-            "unix_bus",
             "context_store",
-            "sm_store",
+            "memory_bus",
+            "unix_bus",
+            "diag",
             "task_store",
-            "dto",
-            "bus_server"
+            "sm_store",
+            "agent_file",
+            "bus_server",
+            "memory_store"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "workitem",
-            "config_types",
-            "task",
             "agent",
             "message",
-            "context",
+            "events",
+            "task",
             "statemachine",
-            "events"
+            "workitem",
+            "config_types",
+            "context"
           ]
         },
         {
           "package": "src::lib",
           "domains_count": 6,
           "domains": [
-            "infra",
-            "config",
-            "app",
-            "domain",
             "ports",
-            "test_support"
+            "app",
+            "infra",
+            "test_support",
+            "domain",
+            "config"
           ]
         },
         {
@@ -100,10 +100,10 @@
           "domains_count": 5,
           "domains": [
             "tests",
-            "src::domain",
-            "src::config",
+            "src::agent_registry",
             "src::context_size",
-            "src::agent_registry"
+            "src::domain",
+            "src::config"
           ]
         },
         {
@@ -112,8 +112,8 @@
           "domains": [
             "tests",
             "src::domain",
-            "src::ports",
             "src::infra",
+            "src::ports",
             "src::app"
           ]
         },
@@ -121,11 +121,11 @@
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
-            "src::agent_process",
-            "src::process_builder",
             "tests",
             "src::agent_registry",
-            "src::ports"
+            "src::agent_process",
+            "src::ports",
+            "src::process_builder"
           ]
         },
         {
@@ -133,10 +133,10 @@
           "domains_count": 5,
           "domains": [
             "src::domain",
-            "src::config",
-            "restart_tests",
             "src::ports",
-            "src::app"
+            "src::app",
+            "restart_tests",
+            "src::config"
           ]
         },
         {
@@ -144,10 +144,10 @@
           "domains_count": 5,
           "domains": [
             "tests",
-            "src::config",
-            "src::ports",
             "src::infra",
-            "src::app"
+            "src::ports",
+            "src::app",
+            "src::config"
           ]
         }
       ],
