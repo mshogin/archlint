@@ -484,9 +484,9 @@
       "large_cliques": [
         [
           "src::to_curl",
+          "src::utils",
           "src::request_items",
           "src::cli",
-          "src::utils",
           "tests"
         ]
       ],
