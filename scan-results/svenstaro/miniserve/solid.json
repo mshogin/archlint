@@ -25,61 +25,61 @@
           "package": "src::main",
           "domains_count": 17,
           "domains": [
-            "listing",
-            "auth",
+            "src::webdav_fs",
             "renderer",
-            "src::config",
-            "src::file_op",
-            "pipe",
-            "file_utils",
-            "src::errors",
+            "listing",
             "src::args",
-            "consts"
+            "auth",
+            "file_op",
+            "consts",
+            "archive",
+            "file_utils",
+            "src::config"
           ]
         },
         {
           "package": "src::args",
           "domains_count": 7,
           "domains": [
-            "auth",
-            "RequiredAuthPassword",
-            "AuthParseError",
             "src::listing",
-            "src::renderer",
+            "RequiredAuthPassword",
+            "auth",
+            "tests",
             "src::auth",
-            "tests"
+            "src::renderer",
+            "AuthParseError"
           ]
         },
         {
           "package": "src::listing",
           "domains_count": 6,
           "domains": [
-            "src::archive",
-            "src::errors",
-            "percent_encode_sets",
-            "src::renderer",
             "src::percent_encode_sets",
-            "src::auth"
+            "src::auth",
+            "src::errors",
+            "src::archive",
+            "percent_encode_sets",
+            "src::renderer"
           ]
         },
         {
           "package": "src::renderer",
           "domains_count": 4,
           "domains": [
+            "tests",
             "src::listing",
-            "src::auth",
             "src::consts",
-            "tests"
+            "src::auth"
           ]
         },
         {
           "package": "tests::navigation",
           "domains_count": 4,
           "domains": [
-            "fixtures",
+            "tests::utils",
             "tests::fixtures",
             "utils",
-            "tests::utils"
+            "fixtures"
           ]
         }
       ],

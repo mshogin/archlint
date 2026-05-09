@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.507,
+      "modularity": 0.505,
       "threshold": 0.3,
-      "communities_count": 21
+      "communities_count": 22
     },
     {
       "name": "abstractness",
@@ -626,110 +626,110 @@
           "component": "tests",
           "impact_radius": 67,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::bin::session2graph",
-            "src::app::adapters::telegram::attachments",
-            "src::infra::context_store",
-            "src::infra::dto::bus"
+            "src::app::timeout_sweep",
+            "src::domain::context",
+            "src::app::commands::remind",
+            "src::app::doctor",
+            "src::app::commands::dashboard"
           ]
         },
         {
           "component": "context",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::app::a2a_server",
-            "src::infra::context_store",
-            "src::infra::dto::bus"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "task",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::app::a2a_server",
-            "src::infra::context_store",
-            "src::infra::dto::bus"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 59,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::app::a2a_server",
-            "src::infra::context_store",
-            "src::infra::dto::bus"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "message",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::app::a2a_server",
-            "src::infra::context_store",
-            "src::infra::dto::bus"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 58,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::app::a2a_server",
-            "src::infra::context_store",
-            "src::infra::dto::bus"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::infra::context_store",
-            "src::infra::dto::bus",
-            "src::app::commands::tui"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "events",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::infra::context_store",
-            "src::infra::dto::bus",
-            "src::app::commands::tui"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 49,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::infra::context_store",
-            "src::infra::dto::bus",
-            "src::app::commands::tui"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 48,
           "sample_dependents": [
-            "src::app::bus_api",
-            "src::app::agent_process",
-            "src::infra::context_store",
-            "src::infra::dto::bus",
-            "src::app::commands::tui"
+            "src::app::context",
+            "src::app::timeout_sweep",
+            "src::infra::task_store",
+            "src::app::commands::remind",
+            "src::ports::bus_wire"
           ]
         }
       ],

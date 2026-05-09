@@ -616,66 +616,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::timer::wall_clock_timer",
-            "src::output::progress_bar",
+            "src::parameter",
             "src::export::markup",
-            "src::export::tests"
+            "src::export::json",
+            "src::output::format",
+            "src::timer"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::timer::wall_clock_timer",
-            "src::output::progress_bar",
+            "src::parameter",
             "src::export::markup",
-            "src::export::tests"
+            "src::export::json",
+            "src::output::format",
+            "src::timer"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::timer::wall_clock_timer",
-            "src::output::progress_bar",
+            "src::parameter",
             "src::export::markup",
-            "src::export::tests"
+            "src::export::json",
+            "src::output::format",
+            "src::timer"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::timer::wall_clock_timer",
-            "src::output::progress_bar",
+            "src::parameter",
             "src::export::markup",
-            "src::export::tests"
+            "src::export::json",
+            "src::output::format",
+            "src::timer"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::timer::wall_clock_timer",
-            "src::output::progress_bar",
+            "src::parameter",
             "src::export::markup",
-            "src::export::tests"
+            "src::export::json",
+            "src::output::format",
+            "src::timer"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::timer::windows_timer",
-            "src::timer::wall_clock_timer",
-            "src::output::progress_bar",
+            "src::parameter",
             "src::export::markup",
-            "src::export::tests"
+            "src::export::json",
+            "src::output::format",
+            "src::timer"
           ]
         }
       ],

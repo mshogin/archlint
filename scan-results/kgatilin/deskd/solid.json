@@ -25,48 +25,48 @@
           "package": "src::app",
           "domains_count": 39,
           "domains": [
-            "schedule",
-            "cli",
-            "jsonrpc",
-            "workflow",
-            "doctor",
-            "commands",
+            "bus",
+            "mcp_protocol",
+            "graph",
             "serve",
-            "bus_api",
-            "alerts",
-            "context"
+            "a2a",
+            "config_reload",
+            "task",
+            "statemachine",
+            "message",
+            "config_changeset"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "schedule",
-            "context",
-            "usage",
-            "status",
-            "dashboard",
-            "agent",
-            "a2a",
             "sm",
+            "context",
+            "tui",
+            "bus",
+            "doctor",
+            "graph",
             "restart",
-            "upgrade"
+            "upgrade",
+            "a2a",
+            "agent"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "context_store",
-            "agent_file",
             "sm_store",
+            "diag",
+            "dto",
+            "agent_file",
+            "unix_bus",
             "bus_server",
+            "context_store",
             "memory_bus",
             "task_store",
-            "unix_bus",
-            "memory_store",
-            "paths",
-            "dto"
+            "paths"
           ]
         },
         {
@@ -75,79 +75,79 @@
           "domains": [
             "context",
             "config_types",
-            "agent",
-            "statemachine",
             "workitem",
+            "agent",
+            "task",
+            "statemachine",
             "message",
-            "events",
-            "task"
+            "events"
           ]
         },
         {
           "package": "src::lib",
           "domains_count": 6,
           "domains": [
-            "infra",
-            "app",
-            "config",
             "test_support",
-            "domain",
-            "ports"
+            "ports",
+            "app",
+            "infra",
+            "config",
+            "domain"
           ]
         },
         {
           "package": "src::app::process_builder",
           "domains_count": 5,
           "domains": [
-            "src::domain",
-            "tests",
-            "src::context_size",
+            "src::agent_registry",
             "src::config",
-            "src::agent_registry"
+            "src::domain",
+            "src::context_size",
+            "tests"
           ]
         },
         {
           "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "src::app",
-            "src::domain",
-            "tests",
             "src::ports",
-            "src::infra"
+            "src::infra",
+            "src::domain",
+            "src::app",
+            "tests"
           ]
         },
         {
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
-            "tests",
-            "src::ports",
             "src::process_builder",
             "src::agent_registry",
-            "src::agent_process"
+            "src::ports",
+            "src::agent_process",
+            "tests"
           ]
         },
         {
           "package": "src::app::mcp_service",
           "domains_count": 5,
           "domains": [
-            "src::app",
-            "src::domain",
             "src::ports",
+            "src::config",
+            "src::domain",
             "restart_tests",
-            "src::config"
+            "src::app"
           ]
         },
         {
           "package": "src::app::mcp_tools",
           "domains_count": 5,
           "domains": [
-            "src::app",
-            "tests",
             "src::ports",
+            "src::infra",
             "src::config",
-            "src::infra"
+            "src::app",
+            "tests"
           ]
         }
       ],

@@ -12,7 +12,7 @@
   },
   "graph": {
     "nodes": 71,
-    "edges": 96
+    "edges": 97
   },
   "checks": [
     {
@@ -69,7 +69,7 @@
         },
         {
           "node": "tests",
-          "afferent_coupling": 15,
+          "afferent_coupling": 16,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -110,7 +110,7 @@
           "node": "src::generation",
           "instability": 1.0,
           "ca": 0,
-          "ce": 1
+          "ce": 2
         }
       ],
       "most_stable": [
@@ -229,8 +229,8 @@
         },
         {
           "node": "tests",
-          "total_degree": 15,
-          "in_degree": 15,
+          "total_degree": 16,
+          "in_degree": 16,
           "out_degree": 0
         },
         {
