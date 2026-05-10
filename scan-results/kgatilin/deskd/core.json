@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 194,
-    "edges": 281
+    "nodes": 237,
+    "edges": 322
   },
   "checks": [
     {
@@ -44,6 +44,11 @@
           "threshold": 5
         },
         {
+          "node": "src::app::adapters::web",
+          "fan_out": 9,
+          "threshold": 5
+        },
+        {
           "node": "src::app::commands",
           "fan_out": 17,
           "threshold": 5
@@ -54,7 +59,7 @@
           "threshold": 5
         }
       ],
-      "violations_count": 5
+      "violations_count": 6
     },
     {
       "name": "coupling",
@@ -65,7 +70,7 @@
       "violations": [
         {
           "node": "src::config",
-          "afferent_coupling": 24,
+          "afferent_coupling": 26,
           "efferent_coupling": 3,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -79,7 +84,7 @@
         },
         {
           "node": "src::app",
-          "afferent_coupling": 26,
+          "afferent_coupling": 29,
           "efferent_coupling": 39,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -100,14 +105,14 @@
         },
         {
           "node": "src::infra",
-          "afferent_coupling": 14,
+          "afferent_coupling": 15,
           "efferent_coupling": 11,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "tests",
-          "afferent_coupling": 56,
+          "afferent_coupling": 64,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -187,15 +192,15 @@
         {
           "from": "src::config",
           "to": "src::domain",
-          "from_instability": 0.111,
+          "from_instability": 0.103,
           "to_instability": 0.229,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         },
         {
           "from": "src::config",
           "to": "src::infra",
-          "from_instability": 0.111,
-          "to_instability": 0.44,
+          "from_instability": 0.103,
+          "to_instability": 0.423,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
       ],
@@ -261,14 +266,14 @@
       "hubs": [
         {
           "node": "src::app",
-          "total_degree": 65,
-          "in_degree": 26,
+          "total_degree": 68,
+          "in_degree": 29,
           "out_degree": 39
         },
         {
           "node": "tests",
-          "total_degree": 56,
-          "in_degree": 56,
+          "total_degree": 64,
+          "in_degree": 64,
           "out_degree": 0
         },
         {
@@ -279,14 +284,14 @@
         },
         {
           "node": "src::config",
-          "total_degree": 27,
-          "in_degree": 24,
+          "total_degree": 29,
+          "in_degree": 26,
           "out_degree": 3
         },
         {
           "node": "src::infra",
-          "total_degree": 25,
-          "in_degree": 14,
+          "total_degree": 26,
+          "in_degree": 15,
           "out_degree": 11
         },
         {
@@ -310,6 +315,8 @@
       "status": "ERROR",
       "orphans": [
         "src::domain::message",
+        "src::app::adapters::web::routes::health",
+        "src::app::adapters::web::middleware::headers",
         "src::app::commands::restart",
         "src::app::cli",
         "src::ports::executor",
@@ -320,13 +327,13 @@
         "tests::schedule_to_worker",
         "tests::agent_lifecycle"
       ],
-      "orphans_count": 10
+      "orphans_count": 12
     },
     {
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 194,
+      "total_sccs": 237,
       "problematic_sccs": [],
       "problematic_count": 0
     },
