@@ -21,8 +21,8 @@
       "status": "FAILED",
       "cycles": [
         [
-          "src::cli",
-          "src::request_items"
+          "src::request_items",
+          "src::cli"
         ]
       ],
       "cycles_count": 1
@@ -267,8 +267,8 @@
       "total_sccs": 70,
       "problematic_sccs": [
         [
-          "src::cli",
-          "src::request_items"
+          "src::request_items",
+          "src::cli"
         ]
       ],
       "problematic_count": 1

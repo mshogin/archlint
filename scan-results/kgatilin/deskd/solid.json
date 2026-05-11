@@ -25,77 +25,77 @@
           "package": "src::app",
           "domains_count": 39,
           "domains": [
-            "tasklog",
-            "timeout_sweep",
-            "bus",
-            "a2a_jwt",
             "mcp_service",
+            "config_reload",
+            "a2a_jwt",
             "a2a_server",
-            "config_watcher",
-            "cli",
-            "workflow",
-            "unified_inbox"
+            "agent_registry",
+            "agent_process",
+            "context_size",
+            "a2a",
+            "commands",
+            "jsonrpc"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "doctor",
             "restart",
-            "tests",
+            "a2a",
             "remind",
-            "graph",
-            "schedule",
-            "tui",
+            "sm",
+            "usage",
+            "doctor",
             "task",
-            "status",
-            "context"
+            "tests",
+            "agent",
+            "schedule"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "diag",
             "paths",
+            "memory_store",
+            "dto",
             "bus_server",
             "unix_bus",
             "memory_bus",
-            "agent_file",
+            "task_store",
             "sm_store",
             "context_store",
-            "memory_store",
-            "dto"
+            "diag"
           ]
         },
         {
           "package": "src::app::adapters::web",
           "domains_count": 9,
           "domains": [
+            "audit",
+            "dispatch",
+            "auth",
             "middleware",
             "src::config",
-            "auth",
-            "state",
-            "router",
-            "dispatch",
             "routes",
-            "audit",
-            "templates"
+            "state",
+            "templates",
+            "router"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "statemachine",
-            "task",
+            "config_types",
             "events",
+            "statemachine",
             "workitem",
+            "agent",
             "context",
             "message",
-            "agent",
-            "config_types"
+            "task"
           ]
         },
         {
@@ -103,32 +103,32 @@
           "domains_count": 6,
           "domains": [
             "domain",
-            "infra",
-            "ports",
             "app",
+            "test_support",
             "config",
-            "test_support"
+            "ports",
+            "infra"
           ]
         },
         {
           "package": "src::app::process_builder",
           "domains_count": 5,
           "domains": [
-            "tests",
             "src::domain",
-            "src::config",
+            "tests",
+            "src::context_size",
             "src::agent_registry",
-            "src::context_size"
+            "src::config"
           ]
         },
         {
           "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "tests",
             "src::domain",
-            "src::ports",
             "src::infra",
+            "src::ports",
+            "tests",
             "src::app"
           ]
         },
@@ -136,11 +136,11 @@
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
+            "src::process_builder",
+            "src::ports",
             "tests",
             "src::agent_process",
-            "src::agent_registry",
-            "src::ports",
-            "src::process_builder"
+            "src::agent_registry"
           ]
         },
         {
@@ -148,9 +148,9 @@
           "domains_count": 5,
           "domains": [
             "src::domain",
+            "src::ports",
             "src::config",
             "restart_tests",
-            "src::ports",
             "src::app"
           ]
         }
