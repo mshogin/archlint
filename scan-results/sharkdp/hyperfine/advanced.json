@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.58,
+      "modularity": 0.572,
       "threshold": 0.3,
-      "communities_count": 16
+      "communities_count": 15
     },
     {
       "name": "abstractness",
@@ -616,10 +616,10 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::util",
-            "src::export::orgmode",
-            "src::export::tests",
-            "src::export::asciidoc",
+            "src::parameter",
+            "src::benchmark::executor",
+            "src::export::markdown",
+            "src::output::warnings",
             "src::parameter::range_step"
           ]
         },
@@ -627,10 +627,10 @@
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::util",
-            "src::export::orgmode",
-            "src::export::tests",
-            "src::export::asciidoc",
+            "src::parameter",
+            "src::benchmark::executor",
+            "src::export::markdown",
+            "src::output::warnings",
             "src::parameter::range_step"
           ]
         },
@@ -638,10 +638,10 @@
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::util",
-            "src::export::orgmode",
-            "src::export::tests",
-            "src::export::asciidoc",
+            "src::parameter",
+            "src::benchmark::executor",
+            "src::export::markdown",
+            "src::output::warnings",
             "src::parameter::range_step"
           ]
         },
@@ -649,10 +649,10 @@
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::util",
-            "src::export::orgmode",
-            "src::export::tests",
-            "src::export::asciidoc",
+            "src::parameter",
+            "src::benchmark::executor",
+            "src::export::markdown",
+            "src::output::warnings",
             "src::parameter::range_step"
           ]
         },
@@ -660,10 +660,10 @@
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::util",
-            "src::export::orgmode",
-            "src::export::tests",
-            "src::export::asciidoc",
+            "src::parameter",
+            "src::benchmark::executor",
+            "src::export::markdown",
+            "src::output::warnings",
             "src::parameter::range_step"
           ]
         },
@@ -671,11 +671,11 @@
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::export::orgmode",
-            "src::export::tests",
-            "src::export::asciidoc",
-            "src::parameter::range_step",
-            "src::export::json"
+            "src::parameter",
+            "src::benchmark::executor",
+            "src::export::markdown",
+            "src::output::warnings",
+            "src::parameter::range_step"
           ]
         }
       ],
