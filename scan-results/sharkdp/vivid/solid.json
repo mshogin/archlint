@@ -25,40 +25,40 @@
           "package": "src::main",
           "domains_count": 11,
           "domains": [
-            "theme",
-            "src::color",
-            "error",
             "color",
-            "util",
-            "font_style",
-            "filetypes",
-            "src::error",
+            "error",
+            "src::color",
+            "theme",
+            "types",
             "src::filetypes",
-            "src::theme"
+            "src::error",
+            "src::theme",
+            "filetypes",
+            "util"
           ]
         },
         {
           "package": "src::theme",
           "domains_count": 7,
           "domains": [
-            "src::color",
-            "src::Theme",
-            "src::util",
+            "tests",
             "src::font_style",
-            "src::error",
             "src::types",
-            "tests"
+            "src::Theme",
+            "src::error",
+            "src::util",
+            "src::color"
           ]
         },
         {
           "package": "src::filetypes",
           "domains_count": 5,
           "domains": [
-            "src::util",
-            "src::error",
-            "src::types",
             "tests",
-            "src::FileTypes"
+            "src::types",
+            "src::FileTypes",
+            "src::error",
+            "src::util"
           ]
         }
       ],

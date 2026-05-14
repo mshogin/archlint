@@ -25,48 +25,48 @@
           "package": "git-cliff-core::src::lib",
           "domains_count": 17,
           "domains": [
-            "command",
-            "commit",
-            "tracing_indicatif",
-            "config",
-            "process",
             "error",
-            "repo",
+            "command",
             "release",
+            "template",
+            "contributor",
+            "tracing",
+            "tracing_indicatif",
             "summary",
-            "statistics"
+            "embed",
+            "changelog"
           ]
         },
         {
           "package": "git-cliff-core::src::remote",
           "domains_count": 16,
           "domains": [
-            "reqwest_middleware",
-            "etcetera",
-            "http_cache_reqwest",
-            "git-cliff-core::config",
-            "dyn_clone",
+            "github",
+            "git-cliff-core::error",
             "bitbucket",
-            "gitlab",
-            "reqwest",
             "time",
-            "github"
+            "http_cache_reqwest",
+            "dyn_clone",
+            "azure_devops",
+            "etcetera",
+            "reqwest",
+            "secrecy"
           ]
         },
         {
           "package": "git-cliff-core::src::config",
           "domains_count": 11,
           "domains": [
-            "temp_dir",
-            "etcetera",
-            "glob",
             "pretty_assertions",
-            "regex",
             "git-cliff-core::error",
-            "test",
+            "regex",
+            "serde_pattern",
+            "glob",
             "serde",
+            "etcetera",
             "secrecy",
-            "serde_pattern"
+            "test",
+            "git-cliff-core::embed"
           ]
         },
         {
@@ -74,107 +74,107 @@
           "domains_count": 11,
           "domains": [
             "git-cliff-core::statistics",
-            "git-cliff-core::config",
             "pretty_assertions",
-            "git-cliff-core::remote",
             "git-cliff-core::error",
+            "git-cliff-core::remote",
+            "serde_json",
             "semver",
-            "test",
+            "git-cliff-core::commit",
             "serde",
-            "next_version",
-            "serde_json"
+            "git-cliff-core::config",
+            "test"
           ]
         },
         {
           "package": "git-cliff-core::src::changelog",
           "domains_count": 11,
           "domains": [
-            "git-cliff-core::config",
             "git-cliff-core::template",
-            "git-cliff-core::process",
+            "git-cliff-core::error",
+            "git-cliff-core::summary",
             "git-cliff-core::remote",
             "pretty_assertions",
-            "git-cliff-core::commit",
-            "git-cliff-core::error",
-            "test",
             "regex",
-            "git-cliff-core::release"
+            "git-cliff-core::commit",
+            "git-cliff-core::release",
+            "git-cliff-core::config",
+            "test"
           ]
         },
         {
           "package": "git-cliff-core::src::repo",
           "domains_count": 11,
           "domains": [
-            "temp_dir",
-            "indexmap",
-            "git-cliff-core::config",
-            "glob",
-            "regex",
-            "url",
             "git-cliff-core::error",
+            "regex",
+            "git-cliff-core::tag",
+            "glob",
+            "url",
+            "git-cliff-core::commit",
+            "git-cliff-core::config",
+            "indexmap",
             "test",
-            "git2",
-            "git-cliff-core::tag"
+            "git2"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::azure_devops",
           "domains_count": 9,
           "domains": [
-            "reqwest_middleware",
-            "git-cliff-core::config",
-            "async_stream",
             "pretty_assertions",
-            "git-cliff-core::remote",
             "git-cliff-core::error",
-            "test",
+            "git-cliff-core::remote",
+            "async_stream",
             "serde",
-            "futures"
+            "git-cliff-core::config",
+            "futures",
+            "reqwest_middleware",
+            "test"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::bitbucket",
           "domains_count": 9,
           "domains": [
-            "reqwest_middleware",
-            "git-cliff-core::config",
-            "async_stream",
             "pretty_assertions",
-            "git-cliff-core::remote",
             "git-cliff-core::error",
-            "test",
+            "git-cliff-core::remote",
+            "async_stream",
             "serde",
-            "futures"
+            "git-cliff-core::config",
+            "futures",
+            "reqwest_middleware",
+            "test"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::github",
           "domains_count": 9,
           "domains": [
-            "reqwest_middleware",
-            "git-cliff-core::config",
-            "async_stream",
             "pretty_assertions",
-            "git-cliff-core::remote",
             "git-cliff-core::error",
-            "test",
+            "git-cliff-core::remote",
+            "async_stream",
             "serde",
-            "futures"
+            "git-cliff-core::config",
+            "futures",
+            "reqwest_middleware",
+            "test"
           ]
         },
         {
           "package": "git-cliff-core::src::remote::gitea",
           "domains_count": 9,
           "domains": [
-            "reqwest_middleware",
-            "git-cliff-core::config",
-            "async_stream",
             "pretty_assertions",
-            "git-cliff-core::remote",
             "git-cliff-core::error",
-            "test",
+            "git-cliff-core::remote",
+            "async_stream",
             "serde",
-            "futures"
+            "git-cliff-core::config",
+            "futures",
+            "reqwest_middleware",
+            "test"
           ]
         }
       ],
