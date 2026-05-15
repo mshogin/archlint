@@ -21,8 +21,8 @@
       "status": "FAILED",
       "cycles": [
         [
-          "src::listing",
-          "src::renderer"
+          "src::renderer",
+          "src::listing"
         ]
       ],
       "cycles_count": 1
@@ -34,11 +34,6 @@
       "threshold": 5,
       "violations": [
         {
-          "node": "src::args",
-          "fan_out": 7,
-          "threshold": 5
-        },
-        {
           "node": "src::listing",
           "fan_out": 6,
           "threshold": 5
@@ -46,6 +41,11 @@
         {
           "node": "src::main",
           "fan_out": 17,
+          "threshold": 5
+        },
+        {
+          "node": "src::args",
+          "fan_out": 7,
           "threshold": 5
         }
       ],
@@ -94,25 +94,25 @@
           "ce": 17
         },
         {
-          "node": "tests::bind",
+          "node": "tests::cli",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
         },
         {
-          "node": "tests::tls",
+          "node": "tests::create_directories",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
         },
         {
-          "node": "tests::auth",
+          "node": "tests::rm_files",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
         },
         {
-          "node": "tests::upload_files",
+          "node": "tests::raw",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
@@ -120,13 +120,13 @@
       ],
       "most_stable": [
         {
-          "node": "renderer",
+          "node": "webdav_fs",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "webdav_fs",
+          "node": "AuthParseError",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -138,13 +138,13 @@
           "ce": 0
         },
         {
-          "node": "utils",
+          "node": "fake_tty",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "fake_tty",
+          "node": "utils",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -248,8 +248,8 @@
       "total_sccs": 52,
       "problematic_sccs": [
         [
-          "src::listing",
-          "src::renderer"
+          "src::renderer",
+          "src::listing"
         ]
       ],
       "problematic_count": 1

@@ -33,12 +33,22 @@
       "threshold": 5,
       "violations": [
         {
+          "node": "src::export",
+          "fan_out": 15,
+          "threshold": 5
+        },
+        {
+          "node": "src::timer",
+          "fan_out": 6,
+          "threshold": 5
+        },
+        {
           "node": "src::main",
           "fan_out": 11,
           "threshold": 5
         },
         {
-          "node": "src::timer",
+          "node": "src::benchmark::scheduler",
           "fan_out": 6,
           "threshold": 5
         },
@@ -50,16 +60,6 @@
         {
           "node": "src::benchmark",
           "fan_out": 13,
-          "threshold": 5
-        },
-        {
-          "node": "src::benchmark::scheduler",
-          "fan_out": 6,
-          "threshold": 5
-        },
-        {
-          "node": "src::export",
-          "fan_out": 15,
           "threshold": 5
         }
       ],
@@ -73,13 +73,6 @@
       "ce_threshold": 10,
       "violations": [
         {
-          "node": "src::main",
-          "afferent_coupling": 0,
-          "efferent_coupling": 11,
-          "ca_threshold": 10,
-          "ce_threshold": 10
-        },
-        {
           "node": "src::util",
           "afferent_coupling": 18,
           "efferent_coupling": 5,
@@ -87,16 +80,23 @@
           "ce_threshold": 10
         },
         {
-          "node": "src::benchmark",
-          "afferent_coupling": 7,
-          "efferent_coupling": 13,
+          "node": "src::export",
+          "afferent_coupling": 5,
+          "efferent_coupling": 15,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
-          "node": "src::export",
-          "afferent_coupling": 5,
-          "efferent_coupling": 15,
+          "node": "src::main",
+          "afferent_coupling": 0,
+          "efferent_coupling": 11,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::benchmark",
+          "afferent_coupling": 7,
+          "efferent_coupling": 13,
           "ca_threshold": 10,
           "ce_threshold": 10
         }
@@ -109,57 +109,57 @@
       "status": "ERROR",
       "most_unstable": [
         {
-          "node": "src::output::warnings",
+          "node": "src::export::tests",
           "instability": 1.0,
           "ca": 0,
-          "ce": 3
+          "ce": 4
         },
         {
-          "node": "src::output::format",
+          "node": "src::export::csv",
           "instability": 1.0,
           "ca": 0,
-          "ce": 1
+          "ce": 4
         },
         {
-          "node": "src::output::progress_bar",
+          "node": "src::export::json",
           "instability": 1.0,
           "ca": 0,
-          "ce": 1
+          "ce": 4
         },
         {
-          "node": "src::main",
+          "node": "src::export::asciidoc",
           "instability": 1.0,
           "ca": 0,
-          "ce": 11
+          "ce": 2
         },
         {
-          "node": "src::timer::unix_timer",
+          "node": "src::export::orgmode",
           "instability": 1.0,
           "ca": 0,
-          "ce": 3
+          "ce": 2
         }
       ],
       "most_stable": [
         {
-          "node": "src::csv",
+          "node": "scheduler",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "src::json",
+          "node": "timing_result",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "src::markdown",
+          "node": "range_step",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "src::orgmode",
+          "node": "tokenize",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -247,28 +247,28 @@
           "out_degree": 5
         },
         {
-          "node": "src::benchmark",
-          "total_degree": 20,
-          "in_degree": 7,
-          "out_degree": 13
-        },
-        {
           "node": "src::export",
           "total_degree": 20,
           "in_degree": 5,
           "out_degree": 15
         },
         {
-          "node": "src::main",
-          "total_degree": 11,
-          "in_degree": 0,
-          "out_degree": 11
+          "node": "src::benchmark",
+          "total_degree": 20,
+          "in_degree": 7,
+          "out_degree": 13
         },
         {
           "node": "src::options",
           "total_degree": 11,
           "in_degree": 8,
           "out_degree": 3
+        },
+        {
+          "node": "src::main",
+          "total_degree": 11,
+          "in_degree": 0,
+          "out_degree": 11
         }
       ],
       "hubs_count": 5
@@ -280,12 +280,12 @@
       "orphans": [
         "src::util::randomized_environment_offset",
         "src::util::min_max",
-        "src::util::units",
-        "src::util::exit_code",
         "src::util::number",
+        "src::util::exit_code",
+        "src::util::units",
         "src::parameter::tokenize",
-        "build",
-        "tests::common"
+        "tests::common",
+        "build"
       ],
       "orphans_count": 8
     },

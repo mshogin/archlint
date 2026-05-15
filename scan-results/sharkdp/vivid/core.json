@@ -100,6 +100,12 @@
       ],
       "most_stable": [
         {
+          "node": "filetypes",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
           "node": "font_style",
           "instability": 0.0,
           "ca": 1,
@@ -119,12 +125,6 @@
         },
         {
           "node": "util",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "src::FileTypes",
           "instability": 0.0,
           "ca": 1,
           "ce": 0

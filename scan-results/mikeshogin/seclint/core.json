@@ -63,13 +63,13 @@
           "ce": 0
         },
         {
-          "node": "pkg::config::config_test",
+          "node": "pkg::threat::threat",
           "instability": 0.5,
           "ca": 0,
           "ce": 0
         },
         {
-          "node": "pkg::config::config",
+          "node": "pkg::threat::threat_test",
           "instability": 0.5,
           "ca": 0,
           "ce": 0
@@ -176,13 +176,13 @@
       "status": "ERROR",
       "orphans": [
         "pkg::audit::audit",
-        "pkg::config::config_test",
-        "pkg::config::config",
         "pkg::threat::threat",
         "pkg::threat::threat_test",
-        "pkg::classifier::classifier_test",
         "pkg::report::report_test",
-        "pkg::report::report"
+        "pkg::report::report",
+        "pkg::config::config_test",
+        "pkg::config::config",
+        "pkg::classifier::classifier_test"
       ],
       "orphans_count": 8
     },

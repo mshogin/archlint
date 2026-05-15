@@ -25,133 +25,133 @@
           "package": "src::app",
           "domains_count": 39,
           "domains": [
-            "cli",
-            "context_log",
-            "bus",
-            "agent",
-            "jsonrpc",
+            "task",
+            "config_watcher",
+            "alerts",
+            "schedule",
             "serve",
-            "a2a_server",
-            "statemachine",
-            "worker",
-            "unified_inbox"
+            "doctor",
+            "timeout_sweep",
+            "acp",
+            "a2a_jwt",
+            "message"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "context",
-            "tui",
-            "tests",
-            "status",
-            "bus",
-            "doctor",
-            "remind",
-            "agent",
+            "task",
+            "schedule",
             "usage",
-            "sm"
+            "tests",
+            "doctor",
+            "restart",
+            "sm",
+            "upgrade",
+            "dashboard",
+            "graph"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "task_store",
+            "agent_file",
+            "unix_bus",
             "paths",
             "sm_store",
-            "bus_server",
-            "unix_bus",
-            "dto",
             "context_store",
+            "dto",
+            "memory_bus",
+            "task_store",
             "memory_store",
-            "agent_file",
-            "diag"
+            "bus_server"
           ]
         },
         {
           "package": "src::app::adapters::web",
           "domains_count": 9,
           "domains": [
-            "routes",
             "templates",
+            "src::config",
             "audit",
+            "routes",
+            "router",
             "auth",
-            "dispatch",
             "state",
             "middleware",
-            "src::config",
-            "router"
+            "dispatch"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "statemachine",
-            "context",
             "workitem",
-            "agent",
+            "task",
             "message",
-            "events",
             "config_types",
-            "task"
+            "events",
+            "agent",
+            "statemachine",
+            "context"
           ]
         },
         {
           "package": "src::lib",
           "domains_count": 6,
           "domains": [
-            "test_support",
-            "infra",
-            "domain",
-            "app",
+            "ports",
             "config",
-            "ports"
+            "infra",
+            "test_support",
+            "domain",
+            "app"
           ]
         },
         {
-          "package": "src::app::process_builder",
+          "package": "src::infra::dto",
           "domains_count": 5,
           "domains": [
-            "src::context_size",
-            "tests",
-            "src::agent_registry",
-            "src::domain",
-            "src::config"
-          ]
-        },
-        {
-          "package": "src::app::workflow",
-          "domains_count": 5,
-          "domains": [
-            "src::ports",
-            "tests",
-            "src::app",
-            "src::domain",
-            "src::infra"
+            "task",
+            "instance",
+            "config",
+            "context",
+            "bus"
           ]
         },
         {
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
-            "tests",
-            "src::agent_registry",
             "src::agent_process",
+            "tests",
             "src::process_builder",
+            "src::agent_registry",
             "src::ports"
           ]
         },
         {
-          "package": "src::app::mcp_service",
+          "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "src::app",
-            "src::domain",
-            "restart_tests",
+            "src::infra",
+            "tests",
             "src::ports",
-            "src::config"
+            "src::app",
+            "src::domain"
+          ]
+        },
+        {
+          "package": "src::app::adapters::web::routes",
+          "domains_count": 5,
+          "domains": [
+            "logout",
+            "tests",
+            "health",
+            "dashboard",
+            "login"
           ]
         }
       ],

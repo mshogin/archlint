@@ -30,7 +30,11 @@
       "threshold": 0.1,
       "critical_components": [
         {
-          "node": "error",
+          "node": "env_tomap",
+          "pagerank": 0.125
+        },
+        {
+          "node": "env",
           "pagerank": 0.125
         },
         {
@@ -38,7 +42,15 @@
           "pagerank": 0.125
         },
         {
-          "node": "env_tomap",
+          "node": "env_tomap_windows",
+          "pagerank": 0.125
+        },
+        {
+          "node": "error",
+          "pagerank": 0.125
+        },
+        {
+          "node": "env_tomap_test",
           "pagerank": 0.125
         },
         {
@@ -47,18 +59,6 @@
         },
         {
           "node": "env_tomap_windows_test",
-          "pagerank": 0.125
-        },
-        {
-          "node": "env_tomap_windows",
-          "pagerank": 0.125
-        },
-        {
-          "node": "env",
-          "pagerank": 0.125
-        },
-        {
-          "node": "env_tomap_test",
           "pagerank": 0.125
         }
       ],
@@ -88,7 +88,14 @@
       "status": "PASSED",
       "packages": [
         {
-          "package": "error",
+          "package": "env_tomap",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "env",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -102,7 +109,21 @@
           "nodes_count": 1
         },
         {
-          "package": "env_tomap",
+          "package": "env_tomap_windows",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "error",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "env_tomap_test",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -117,27 +138,6 @@
         },
         {
           "package": "env_tomap_windows_test",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "env_tomap_windows",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "env",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "env_tomap_test",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -203,7 +203,11 @@
       "central_nodes": [],
       "peripheral_nodes": [
         {
-          "node": "error",
+          "node": "env_tomap",
+          "closeness": 0.0
+        },
+        {
+          "node": "env",
           "closeness": 0.0
         },
         {
@@ -211,7 +215,15 @@
           "closeness": 0.0
         },
         {
-          "node": "env_tomap",
+          "node": "env_tomap_windows",
+          "closeness": 0.0
+        },
+        {
+          "node": "error",
+          "closeness": 0.0
+        },
+        {
+          "node": "env_tomap_test",
           "closeness": 0.0
         },
         {
@@ -220,18 +232,6 @@
         },
         {
           "node": "env_tomap_windows_test",
-          "closeness": 0.0
-        },
-        {
-          "node": "env_tomap_windows",
-          "closeness": 0.0
-        },
-        {
-          "node": "env",
-          "closeness": 0.0
-        },
-        {
-          "node": "env_tomap_test",
           "closeness": 0.0
         }
       ],
@@ -244,27 +244,7 @@
       "threshold": 0.3,
       "influential_nodes": [
         {
-          "node": "error",
-          "eigenvector": 0.354
-        },
-        {
-          "node": "env_test",
-          "eigenvector": 0.354
-        },
-        {
           "node": "env_tomap",
-          "eigenvector": 0.354
-        },
-        {
-          "node": "example_test",
-          "eigenvector": 0.354
-        },
-        {
-          "node": "env_tomap_windows_test",
-          "eigenvector": 0.354
-        },
-        {
-          "node": "env_tomap_windows",
           "eigenvector": 0.354
         },
         {
@@ -272,22 +252,19 @@
           "eigenvector": 0.354
         },
         {
-          "node": "env_tomap_test",
+          "node": "env_test",
           "eigenvector": 0.354
-        }
-      ],
-      "influential_count": 8,
-      "top_5": [
+        },
+        {
+          "node": "env_tomap_windows",
+          "eigenvector": 0.354
+        },
         {
           "node": "error",
           "eigenvector": 0.354
         },
         {
-          "node": "env_test",
-          "eigenvector": 0.354
-        },
-        {
-          "node": "env_tomap",
+          "node": "env_tomap_test",
           "eigenvector": 0.354
         },
         {
@@ -296,6 +273,29 @@
         },
         {
           "node": "env_tomap_windows_test",
+          "eigenvector": 0.354
+        }
+      ],
+      "influential_count": 8,
+      "top_5": [
+        {
+          "node": "env_tomap",
+          "eigenvector": 0.354
+        },
+        {
+          "node": "env",
+          "eigenvector": 0.354
+        },
+        {
+          "node": "env_test",
+          "eigenvector": 0.354
+        },
+        {
+          "node": "env_tomap_windows",
+          "eigenvector": 0.354
+        },
+        {
+          "node": "error",
           "eigenvector": 0.354
         }
       ]
@@ -385,7 +385,11 @@
       "max_impact": 0,
       "top_impact": [
         {
-          "node": "error",
+          "node": "env_tomap",
+          "impact": 0
+        },
+        {
+          "node": "env",
           "impact": 0
         },
         {
@@ -393,15 +397,11 @@
           "impact": 0
         },
         {
-          "node": "env_tomap",
+          "node": "env_tomap_windows",
           "impact": 0
         },
         {
-          "node": "example_test",
-          "impact": 0
-        },
-        {
-          "node": "env_tomap_windows_test",
+          "node": "error",
           "impact": 0
         }
       ],

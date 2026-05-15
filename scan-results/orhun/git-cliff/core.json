@@ -29,23 +29,28 @@
       "threshold": 5,
       "violations": [
         {
-          "node": "git-cliff::src::args",
-          "fan_out": 8,
-          "threshold": 5
-        },
-        {
-          "node": "git-cliff::src::lib",
-          "fan_out": 6,
-          "threshold": 5
-        },
-        {
-          "node": "git-cliff::src::logger",
-          "fan_out": 6,
-          "threshold": 5
-        },
-        {
           "node": "git-cliff-core::src::lib",
           "fan_out": 17,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::release",
+          "fan_out": 11,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::changelog",
+          "fan_out": 11,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::repo",
+          "fan_out": 11,
+          "threshold": 5
+        },
+        {
+          "node": "git-cliff-core::src::statistics",
+          "fan_out": 9,
           "threshold": 5
         },
         {
@@ -59,17 +64,12 @@
           "threshold": 5
         },
         {
-          "node": "git-cliff-core::src::config",
-          "fan_out": 11,
-          "threshold": 5
-        },
-        {
           "node": "git-cliff-core::src::process",
           "fan_out": 6,
           "threshold": 5
         },
         {
-          "node": "git-cliff-core::src::release",
+          "node": "git-cliff-core::src::config",
           "fan_out": 11,
           "threshold": 5
         },
@@ -96,23 +96,9 @@
           "ce_threshold": 10
         },
         {
-          "node": "git-cliff-core::src::config",
-          "afferent_coupling": 0,
-          "efferent_coupling": 11,
-          "ca_threshold": 10,
-          "ce_threshold": 10
-        },
-        {
           "node": "git-cliff-core::src::release",
           "afferent_coupling": 0,
           "efferent_coupling": 11,
-          "ca_threshold": 10,
-          "ce_threshold": 10
-        },
-        {
-          "node": "git-cliff-core::src::remote",
-          "afferent_coupling": 0,
-          "efferent_coupling": 16,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -131,8 +117,22 @@
           "ce_threshold": 10
         },
         {
-          "node": "serde",
-          "afferent_coupling": 13,
+          "node": "git-cliff-core::src::config",
+          "afferent_coupling": 0,
+          "efferent_coupling": 11,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::src::remote",
+          "afferent_coupling": 0,
+          "efferent_coupling": 16,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "git-cliff-core::config",
+          "afferent_coupling": 14,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -145,15 +145,15 @@
           "ce_threshold": 10
         },
         {
-          "node": "test",
-          "afferent_coupling": 17,
+          "node": "serde",
+          "afferent_coupling": 13,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
-          "node": "git-cliff-core::config",
-          "afferent_coupling": 14,
+          "node": "test",
+          "afferent_coupling": 17,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -167,63 +167,63 @@
       "status": "PASSED",
       "most_unstable": [
         {
-          "node": "git-cliff::src::args",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 8
-        },
-        {
-          "node": "git-cliff::src::lib",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 6
-        },
-        {
-          "node": "git-cliff::src::bin::completions",
+          "node": "git-cliff-core::src::embed",
           "instability": 1.0,
           "ca": 0,
           "ce": 3
         },
         {
-          "node": "git-cliff::src::bin::mangen",
+          "node": "git-cliff-core::src::lib",
           "instability": 1.0,
           "ca": 0,
-          "ce": 3
+          "ce": 17
         },
         {
-          "node": "git-cliff::src::profiler",
+          "node": "git-cliff-core::src::contributor",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
+        },
+        {
+          "node": "git-cliff-core::src::tag",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 1
+        },
+        {
+          "node": "git-cliff-core::src::release",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 11
         }
       ],
       "most_stable": [
         {
-          "node": "git-cliff-core::contributor",
+          "node": "indicatif",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "git-cliff-core::process",
+          "node": "owo_colors",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "git-cliff-core::template",
+          "node": "tracing_subscriber",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "chrono",
+          "node": "tests",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "git-cliff-core::tag",
+          "node": "serial_test",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -327,12 +327,6 @@
           "out_degree": 0
         },
         {
-          "node": "git-cliff-core::src::config",
-          "total_degree": 11,
-          "in_degree": 0,
-          "out_degree": 11
-        },
-        {
           "node": "git-cliff-core::src::release",
           "total_degree": 11,
           "in_degree": 0,
@@ -346,6 +340,12 @@
         },
         {
           "node": "git-cliff-core::src::repo",
+          "total_degree": 11,
+          "in_degree": 0,
+          "out_degree": 11
+        },
+        {
+          "node": "git-cliff-core::src::config",
           "total_degree": 11,
           "in_degree": 0,
           "out_degree": 11
@@ -375,8 +375,8 @@
       "depth": 1,
       "max_depth": 10,
       "longest_path": [
-        "git-cliff::src::args",
-        "tests"
+        "git-cliff-core::src::embed",
+        "rust_embed"
       ]
     },
     {

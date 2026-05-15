@@ -51,6 +51,12 @@
       "status": "PASSED",
       "most_unstable": [
         {
+          "node": "pkg::predict::predict",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
           "node": "pkg::daily::daily",
           "instability": 1.0,
           "ca": 0,
@@ -64,12 +70,6 @@
         },
         {
           "node": "pkg::reporter::reporter",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 1
-        },
-        {
-          "node": "pkg::ab::ab",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
@@ -181,13 +181,13 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
+        "pkg::cache::cache",
+        "pkg::perf::perf",
+        "pkg::telemetry::telemetry",
         "pkg::pricing::subscription",
         "pkg::pricing::pricing",
         "pkg::counter::tiktoken",
-        "pkg::counter::counter",
-        "pkg::perf::perf",
-        "pkg::telemetry::telemetry",
-        "pkg::cache::cache"
+        "pkg::counter::counter"
       ],
       "orphans_count": 7
     },

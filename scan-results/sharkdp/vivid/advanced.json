@@ -40,9 +40,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.333,
+      "modularity": 0.327,
       "threshold": 0.3,
-      "communities_count": 4
+      "communities_count": 5
     },
     {
       "name": "abstractness",
@@ -62,15 +62,6 @@
       "status": "ERROR",
       "packages": [
         {
-          "package": "src::error",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
           "package": "src::types",
           "abstractness": 0.0,
           "instability": 0.0,
@@ -89,7 +80,25 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
+          "package": "src::error",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
           "package": "tests",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::FileTypes",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -141,27 +150,9 @@
           "nodes_count": 1,
           "zone": "pain",
           "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
-          "package": "theme",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
         }
       ],
       "violations": [
-        {
-          "package": "src::error",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
         {
           "package": "src::types",
           "abstractness": 0.0,
@@ -188,6 +179,15 @@
           "nodes_count": 1
         },
         {
+          "package": "src::error",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
           "package": "tests",
           "abstractness": 0.0,
           "instability": 0.0,
@@ -207,12 +207,12 @@
       "threshold": 0.1,
       "low_clustering_nodes": [
         {
-          "node": "src::main",
-          "coefficient": 0.073
-        },
-        {
           "node": "src::types",
           "coefficient": 0.0
+        },
+        {
+          "node": "src::main",
+          "coefficient": 0.073
         }
       ],
       "low_clustering_count": 2
@@ -231,9 +231,9 @@
       "description": "Критические узлы (удаление разбивает граф)",
       "status": "WARNING",
       "articulation_points": [
+        "src::theme",
         "src::main",
-        "src::filetypes",
-        "src::theme"
+        "src::filetypes"
       ],
       "count": 3,
       "recommendation": "Уменьшить зависимость от критических узлов"
@@ -244,8 +244,12 @@
       "status": "INFO",
       "bridges": [
         {
-          "from": "src::theme",
-          "to": "src::font_style"
+          "from": "src::filetypes",
+          "to": "src::FileTypes"
+        },
+        {
+          "from": "src::font_style",
+          "to": "src::theme"
         },
         {
           "from": "src::theme",
@@ -278,10 +282,6 @@
         {
           "from": "src::main",
           "to": "util"
-        },
-        {
-          "from": "src::filetypes",
-          "to": "src::FileTypes"
         }
       ],
       "count": 10
@@ -328,19 +328,19 @@
           "closeness": 0.074
         },
         {
-          "node": "src::Theme",
-          "closeness": 0.074
-        },
-        {
           "node": "src::FileTypes",
           "closeness": 0.074
         },
         {
-          "node": "src::theme",
-          "closeness": 0.056
+          "node": "src::Theme",
+          "closeness": 0.074
         },
         {
           "node": "src::filetypes",
+          "closeness": 0.056
+        },
+        {
+          "node": "src::theme",
           "closeness": 0.056
         },
         {
