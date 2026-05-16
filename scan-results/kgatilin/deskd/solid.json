@@ -25,122 +25,122 @@
           "package": "src::app",
           "domains_count": 39,
           "domains": [
-            "task",
-            "config_watcher",
+            "config_changeset",
             "alerts",
-            "schedule",
-            "serve",
-            "doctor",
-            "timeout_sweep",
-            "acp",
-            "a2a_jwt",
-            "message"
+            "mcp",
+            "mcp_service",
+            "process_builder",
+            "context_log",
+            "context_size",
+            "cli",
+            "bus_api",
+            "a2a"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "task",
-            "schedule",
-            "usage",
-            "tests",
-            "doctor",
+            "agent",
+            "remind",
+            "a2a",
             "restart",
-            "sm",
+            "context",
             "upgrade",
-            "dashboard",
-            "graph"
+            "status",
+            "bus",
+            "sm",
+            "dashboard"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "agent_file",
-            "unix_bus",
-            "paths",
-            "sm_store",
-            "context_store",
-            "dto",
-            "memory_bus",
-            "task_store",
             "memory_store",
-            "bus_server"
+            "sm_store",
+            "diag",
+            "agent_file",
+            "dto",
+            "paths",
+            "bus_server",
+            "task_store",
+            "unix_bus",
+            "context_store"
           ]
         },
         {
           "package": "src::app::adapters::web",
           "domains_count": 9,
           "domains": [
-            "templates",
-            "src::config",
-            "audit",
-            "routes",
-            "router",
             "auth",
-            "state",
+            "audit",
+            "templates",
             "middleware",
-            "dispatch"
+            "router",
+            "src::config",
+            "dispatch",
+            "routes",
+            "state"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "workitem",
-            "task",
-            "message",
-            "config_types",
-            "events",
             "agent",
+            "message",
+            "events",
+            "workitem",
+            "context",
             "statemachine",
-            "context"
+            "config_types",
+            "task"
           ]
         },
         {
           "package": "src::lib",
           "domains_count": 6,
           "domains": [
-            "ports",
-            "config",
             "infra",
             "test_support",
+            "ports",
             "domain",
-            "app"
+            "app",
+            "config"
           ]
         },
         {
           "package": "src::infra::dto",
           "domains_count": 5,
           "domains": [
-            "task",
+            "context",
+            "bus",
             "instance",
             "config",
-            "context",
-            "bus"
+            "task"
           ]
         },
         {
           "package": "src::app::agent",
           "domains_count": 5,
           "domains": [
-            "src::agent_process",
             "tests",
+            "src::agent_process",
+            "src::ports",
             "src::process_builder",
-            "src::agent_registry",
-            "src::ports"
+            "src::agent_registry"
           ]
         },
         {
           "package": "src::app::workflow",
           "domains_count": 5,
           "domains": [
-            "src::infra",
             "tests",
+            "src::infra",
             "src::ports",
-            "src::app",
-            "src::domain"
+            "src::domain",
+            "src::app"
           ]
         },
         {
@@ -149,9 +149,9 @@
           "domains": [
             "logout",
             "tests",
-            "health",
+            "login",
             "dashboard",
-            "login"
+            "health"
           ]
         }
       ],
