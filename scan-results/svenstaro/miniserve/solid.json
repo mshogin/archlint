@@ -25,61 +25,61 @@
           "package": "src::main",
           "domains_count": 17,
           "domains": [
-            "src::config",
-            "archive",
-            "src::errors",
-            "pipe",
-            "config",
-            "file_op",
-            "auth",
             "file_utils",
-            "webdav_fs",
-            "listing"
+            "renderer",
+            "src::file_op",
+            "consts",
+            "src::errors",
+            "listing",
+            "archive",
+            "config",
+            "src::config",
+            "src::webdav_fs"
           ]
         },
         {
           "package": "src::args",
           "domains_count": 7,
           "domains": [
-            "auth",
-            "AuthParseError",
-            "src::renderer",
-            "src::auth",
-            "RequiredAuthPassword",
             "tests",
-            "src::listing"
+            "RequiredAuthPassword",
+            "src::auth",
+            "auth",
+            "src::renderer",
+            "src::listing",
+            "AuthParseError"
           ]
         },
         {
           "package": "src::listing",
           "domains_count": 6,
           "domains": [
-            "src::renderer",
-            "percent_encode_sets",
-            "src::auth",
-            "src::archive",
             "src::errors",
-            "src::percent_encode_sets"
+            "src::auth",
+            "src::percent_encode_sets",
+            "src::renderer",
+            "src::archive",
+            "percent_encode_sets"
           ]
         },
         {
           "package": "src::renderer",
           "domains_count": 4,
           "domains": [
+            "src::listing",
             "src::consts",
-            "tests",
             "src::auth",
-            "src::listing"
+            "tests"
           ]
         },
         {
           "package": "tests::navigation",
           "domains_count": 4,
           "domains": [
-            "utils",
-            "tests::utils",
+            "fixtures",
             "tests::fixtures",
-            "fixtures"
+            "utils",
+            "tests::utils"
           ]
         }
       ],
