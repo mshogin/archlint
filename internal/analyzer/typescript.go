@@ -20,9 +20,17 @@ import (
 // TypeScriptAnalyzer analyzes TypeScript/JavaScript/React projects and builds
 // dependency graphs using regex-based parsing (MVP approach).
 type TypeScriptAnalyzer struct {
-	packages map[string]*TSPackage
-	nodes    []model.Node
-	edges    []model.Edge
+	packages    map[string]*TSPackage
+	nodes       []model.Node
+	edges       []model.Edge
+	excludeDirs []string
+}
+
+// WithExcludeDirs sets additional directory basenames to skip during the walk.
+// Additive on top of built-in defaults (node_modules, .git, dist, build, .next).
+func (ta *TypeScriptAnalyzer) WithExcludeDirs(dirs []string) *TypeScriptAnalyzer {
+	ta.excludeDirs = dirs
+	return ta
 }
 
 // TSPackage represents a folder-based package in a TS/JS project.
@@ -109,6 +117,9 @@ func (ta *TypeScriptAnalyzer) Analyze(dir string) (*model.Graph, error) {
 		if info.IsDir() {
 			name := info.Name()
 			if name == "node_modules" || name == ".git" || name == "dist" || name == "build" || name == ".next" {
+				return filepath.SkipDir
+			}
+			if MatchesExclude(name, ta.excludeDirs) {
 				return filepath.SkipDir
 			}
 			return nil

@@ -21,6 +21,7 @@ var (
 	scanThreshold  int
 	scanConfigFile string
 	scanStdin      bool
+	scanExclude    []string
 )
 
 var scanCmd = &cobra.Command{
@@ -55,6 +56,7 @@ func init() {
 	scanCmd.Flags().IntVar(&scanThreshold, "threshold", -1, "Max violations before failing gate (-1 = any violation fails)")
 	scanCmd.Flags().StringVar(&scanConfigFile, "config", "", "Path to .archlint.yaml config file (default: <directory>/.archlint.yaml)")
 	scanCmd.Flags().BoolVar(&scanStdin, "stdin", false, "Read architecture YAML graph from stdin instead of analyzing a directory")
+	scanCmd.Flags().StringSliceVar(&scanExclude, "exclude", nil, "Directory basenames to skip during the source walk (additive on top of built-in defaults). Repeatable.")
 	rootCmd.AddCommand(scanCmd)
 }
 
@@ -122,8 +124,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 			}
 		}
 
+		excludes := mergeExcludes(cfg.ExcludePaths, scanExclude)
+
 		if analyzer.DetectRustProject(codeDir) {
-			rustAnalyzer := analyzer.NewRustAnalyzer()
+			rustAnalyzer := analyzer.NewRustAnalyzer().WithExcludeDirs(excludes)
 			g, err := rustAnalyzer.Analyze(codeDir)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
@@ -131,7 +135,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			}
 			graph = g
 		} else if analyzer.DetectTypeScriptProject(codeDir) {
-			tsAnalyzer := analyzer.NewTypeScriptAnalyzer()
+			tsAnalyzer := analyzer.NewTypeScriptAnalyzer().WithExcludeDirs(excludes)
 			g, err := tsAnalyzer.Analyze(codeDir)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)
@@ -139,7 +143,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			}
 			graph = g
 		} else {
-			a = analyzer.NewGoAnalyzer()
+			a = analyzer.NewGoAnalyzer().WithExcludeDirs(excludes)
 			g, err := a.Analyze(codeDir)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "analysis error: %v\n", err)

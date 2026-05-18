@@ -14,6 +14,7 @@ import (
 var (
 	collectOutputFile string
 	collectLanguage   string
+	collectExclude    []string
 )
 
 var (
@@ -37,6 +38,7 @@ Example:
 func init() {
 	collectCmd.Flags().StringVarP(&collectOutputFile, "output", "o", "architecture.yaml", "Output YAML file")
 	collectCmd.Flags().StringVarP(&collectLanguage, "language", "l", "go", "Programming language (go, typescript, rust) - auto-detected for TypeScript and Rust projects")
+	collectCmd.Flags().StringSliceVar(&collectExclude, "exclude", nil, "Directory basenames to skip during the source walk (additive on top of built-in defaults). Repeatable.")
 	rootCmd.AddCommand(collectCmd)
 }
 
@@ -85,9 +87,11 @@ func runCollect(cmd *cobra.Command, args []string) error {
 }
 
 func analyzeCode(codeDir string) (*model.Graph, error) {
+	excludes := mergeExcludes(nil, collectExclude)
+
 	switch collectLanguage {
 	case "go":
-		goAnalyzer := analyzer.NewGoAnalyzer()
+		goAnalyzer := analyzer.NewGoAnalyzer().WithExcludeDirs(excludes)
 
 		graph, err := goAnalyzer.Analyze(codeDir)
 		if err != nil {
@@ -96,7 +100,7 @@ func analyzeCode(codeDir string) (*model.Graph, error) {
 
 		return graph, nil
 	case "typescript", "ts", "tsx", "javascript", "js":
-		tsAnalyzer := analyzer.NewTypeScriptAnalyzer()
+		tsAnalyzer := analyzer.NewTypeScriptAnalyzer().WithExcludeDirs(excludes)
 
 		graph, err := tsAnalyzer.Analyze(codeDir)
 		if err != nil {
@@ -105,7 +109,7 @@ func analyzeCode(codeDir string) (*model.Graph, error) {
 
 		return graph, nil
 	case "rust", "rs":
-		rustAnalyzer := analyzer.NewRustAnalyzer()
+		rustAnalyzer := analyzer.NewRustAnalyzer().WithExcludeDirs(excludes)
 
 		graph, err := rustAnalyzer.Analyze(codeDir)
 		if err != nil {

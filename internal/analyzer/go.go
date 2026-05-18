@@ -13,12 +13,13 @@ import (
 // GoAnalyzer analyzes Go code and builds a dependency graph.
 // It orchestrates GoParser and GoGraphBuilder while preserving the public API.
 type GoAnalyzer struct {
-	packages  map[string]*PackageInfo
-	types     map[string]*TypeInfo
-	functions map[string]*FunctionInfo
-	methods   map[string]*MethodInfo
-	nodes     []model.Node
-	edges     []model.Edge
+	packages    map[string]*PackageInfo
+	types       map[string]*TypeInfo
+	functions   map[string]*FunctionInfo
+	methods     map[string]*MethodInfo
+	nodes       []model.Node
+	edges       []model.Edge
+	excludeDirs []string
 }
 
 // PackageInfo holds information about a package.
@@ -59,6 +60,13 @@ func NewGoAnalyzer() *GoAnalyzer {
 	}
 }
 
+// WithExcludeDirs sets additional directory basenames to skip during the walk.
+// Additive on top of built-in defaults (vendor, node_modules, .git, bin).
+func (a *GoAnalyzer) WithExcludeDirs(dirs []string) *GoAnalyzer {
+	a.excludeDirs = dirs
+	return a
+}
+
 // Analyze analyzes a directory containing Go code.
 func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 	parser := newGoParser(a.packages, a.types, a.functions, a.methods)
@@ -71,6 +79,9 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 		if info.IsDir() {
 			name := info.Name()
 			if name == "vendor" || name == "node_modules" || name == ".git" || name == "bin" {
+				return filepath.SkipDir
+			}
+			if MatchesExclude(name, a.excludeDirs) {
 				return filepath.SkipDir
 			}
 

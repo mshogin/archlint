@@ -99,6 +99,11 @@ type Config struct {
 	// ExternalContracts lists external API boundaries implemented by modules in
 	// the graph. Used by `archlint contracts` for cross-graph analysis.
 	ExternalContracts []ExternalContract `yaml:"external_contracts,omitempty"`
+	// ExcludePaths lists directory basenames the analyzer must skip during
+	// the source walk. Matched against directory names at any depth.
+	// Additive on top of language-specific built-in defaults
+	// (e.g. Go: vendor, node_modules, .git, bin).
+	ExcludePaths []string `yaml:"exclude_paths,omitempty"`
 }
 
 // Default thresholds matching archlint-rs defaults.

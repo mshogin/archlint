@@ -20,10 +20,18 @@ import (
 
 // RustAnalyzer analyzes Rust projects and builds dependency graphs.
 type RustAnalyzer struct {
-	modules map[string]*RustModule
-	crates  map[string]*CrateInfo
-	nodes   []model.Node
-	edges   []model.Edge
+	modules     map[string]*RustModule
+	crates      map[string]*CrateInfo
+	nodes       []model.Node
+	edges       []model.Edge
+	excludeDirs []string
+}
+
+// WithExcludeDirs sets additional directory basenames to skip during the walk.
+// Additive on top of built-in defaults (target, .git).
+func (ra *RustAnalyzer) WithExcludeDirs(dirs []string) *RustAnalyzer {
+	ra.excludeDirs = dirs
+	return ra
 }
 
 // RustModule represents a Rust module (file or directory).
@@ -102,6 +110,9 @@ func (ra *RustAnalyzer) Analyze(dir string) (*model.Graph, error) {
 		if info.IsDir() {
 			name := info.Name()
 			if name == "target" || name == ".git" {
+				return filepath.SkipDir
+			}
+			if MatchesExclude(name, ra.excludeDirs) {
 				return filepath.SkipDir
 			}
 			return nil
