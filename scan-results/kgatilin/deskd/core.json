@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 256,
-    "edges": 345
+    "nodes": 284,
+    "edges": 381
   },
   "checks": [
     {
@@ -59,12 +59,22 @@
           "threshold": 5
         },
         {
+          "node": "src::app::adapters::federation",
+          "fan_out": 8,
+          "threshold": 5
+        },
+        {
+          "node": "src::app::adapters::federation::hub",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
           "node": "src::app",
           "fan_out": 40,
           "threshold": 5
         }
       ],
-      "violations_count": 7
+      "violations_count": 9
     },
     {
       "name": "coupling",
@@ -103,14 +113,14 @@
         },
         {
           "node": "src::app",
-          "afferent_coupling": 33,
+          "afferent_coupling": 35,
           "efferent_coupling": 40,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::ports",
-          "afferent_coupling": 18,
+          "afferent_coupling": 20,
           "efferent_coupling": 4,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -124,7 +134,7 @@
         },
         {
           "node": "tests",
-          "afferent_coupling": 71,
+          "afferent_coupling": 79,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -196,7 +206,7 @@
         {
           "node": "deskd",
           "instability": 0.0,
-          "ca": 8,
+          "ca": 10,
           "ce": 0
         }
       ],
@@ -277,16 +287,16 @@
       "threshold": 10,
       "hubs": [
         {
-          "node": "src::app",
-          "total_degree": 73,
-          "in_degree": 33,
-          "out_degree": 40
+          "node": "tests",
+          "total_degree": 79,
+          "in_degree": 79,
+          "out_degree": 0
         },
         {
-          "node": "tests",
-          "total_degree": 71,
-          "in_degree": 71,
-          "out_degree": 0
+          "node": "src::app",
+          "total_degree": 75,
+          "in_degree": 35,
+          "out_degree": 40
         },
         {
           "node": "src::domain",
@@ -308,8 +318,8 @@
         },
         {
           "node": "src::ports",
-          "total_degree": 22,
-          "in_degree": 18,
+          "total_degree": 24,
+          "in_degree": 20,
           "out_degree": 4
         },
         {
@@ -353,7 +363,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 256,
+      "total_sccs": 284,
       "problematic_sccs": [],
       "problematic_count": 0
     },
