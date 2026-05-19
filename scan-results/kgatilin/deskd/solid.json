@@ -25,48 +25,48 @@
           "package": "src::app",
           "domains_count": 40,
           "domains": [
-            "a2a_jwt",
-            "process_builder",
-            "mcp_service",
-            "config_reload",
-            "context_size",
-            "timeout_sweep",
-            "context_log",
+            "a2a",
+            "adapters",
+            "jsonrpc",
+            "mcp_tools",
+            "tasklog",
+            "agent_state",
             "scope",
-            "statemachine",
-            "agent_process"
+            "graph",
+            "timeout_sweep",
+            "config_watcher"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 17,
           "domains": [
-            "context",
-            "graph",
-            "task",
-            "usage",
+            "a2a",
             "sm",
-            "bus",
-            "tests",
-            "remind",
+            "dashboard",
             "tui",
-            "status"
+            "restart",
+            "status",
+            "upgrade",
+            "bus",
+            "graph",
+            "schedule"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "dto",
-            "sm_store",
-            "unix_bus",
-            "task_store",
-            "memory_bus",
-            "context_store",
-            "memory_store",
             "bus_server",
+            "context_store",
+            "dto",
+            "memory_bus",
+            "sm_store",
+            "diag",
+            "unix_bus",
+            "paths",
             "agent_file",
-            "diag"
+            "memory_store"
           ]
         },
         {
@@ -74,80 +74,80 @@
           "domains_count": 11,
           "domains": [
             "view",
-            "templates",
-            "audit",
             "dispatch",
-            "state",
-            "routes",
-            "auth",
-            "router",
             "data",
-            "src::config"
+            "router",
+            "routes",
+            "state",
+            "src::config",
+            "auth",
+            "audit",
+            "templates"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "context",
-            "task",
-            "config_types",
-            "statemachine",
             "workitem",
-            "message",
             "agent",
-            "events"
+            "context",
+            "events",
+            "config_types",
+            "message",
+            "statemachine",
+            "task"
           ]
         },
         {
           "package": "src::app::adapters::federation",
           "domains_count": 8,
           "domains": [
-            "frame",
-            "registry",
-            "glob",
             "forward",
+            "glob",
             "hub",
-            "preflight",
+            "peer",
             "routing",
-            "peer"
+            "frame",
+            "preflight",
+            "registry"
           ]
         },
         {
           "package": "src::app::adapters::web::routes",
           "domains_count": 7,
           "domains": [
+            "dashboard",
             "login",
             "logout",
-            "dashboard",
-            "sse",
-            "tests",
+            "health",
             "static_assets",
-            "health"
+            "tests",
+            "sse"
           ]
         },
         {
           "package": "src::app::adapters::federation::hub",
           "domains_count": 7,
           "domains": [
-            "src::registry",
             "src::frame",
-            "src::routing",
-            "tests",
-            "src::forward",
             "src::preflight",
-            "src::app"
+            "src::registry",
+            "src::forward",
+            "src::app",
+            "src::routing",
+            "tests"
           ]
         },
         {
           "package": "src::lib",
           "domains_count": 6,
           "domains": [
-            "ports",
-            "infra",
-            "app",
             "config",
+            "ports",
             "test_support",
+            "app",
+            "infra",
             "domain"
           ]
         },
@@ -155,11 +155,11 @@
           "package": "src::infra::dto",
           "domains_count": 5,
           "domains": [
-            "context",
-            "task",
+            "config",
             "bus",
+            "context",
             "instance",
-            "config"
+            "task"
           ]
         }
       ],

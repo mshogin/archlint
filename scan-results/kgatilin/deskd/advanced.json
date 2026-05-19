@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.58,
+      "modularity": 0.575,
       "threshold": 0.3,
-      "communities_count": 31
+      "communities_count": 33
     },
     {
       "name": "abstractness",
@@ -628,110 +628,110 @@
           "component": "tests",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app::adapters::web::auth::session",
-            "src::app::a2a_server",
-            "src::app::adapters::web::state",
-            "src::infra::dto::instance"
+            "src::app::adapters::web::auth::secret",
+            "src::infra::dto::config",
+            "src::app::commands::dashboard",
+            "src::app::context_log",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "context",
           "impact_radius": 72,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app",
-            "src::app::a2a_server",
-            "src::app::adapters::web::state",
-            "src::infra::dto::instance"
+            "src::infra::dto::config",
+            "src::app::commands::dashboard",
+            "src::app::commands::a2a",
+            "src::infra::context_store",
+            "src::app::schedule"
           ]
         },
         {
           "component": "task",
           "impact_radius": 72,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app",
-            "src::app::a2a_server",
-            "src::app::adapters::web::state",
-            "src::infra::dto::instance"
+            "src::infra::dto::config",
+            "src::app::commands::dashboard",
+            "src::app::commands::a2a",
+            "src::infra::context_store",
+            "src::app::schedule"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 71,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app",
-            "src::app::a2a_server",
-            "src::app::adapters::web::state",
-            "src::infra::dto::instance"
+            "src::infra::dto::config",
+            "src::app::commands::dashboard",
+            "src::app::commands::a2a",
+            "src::infra::context_store",
+            "src::app::schedule"
           ]
         },
         {
           "component": "message",
           "impact_radius": 70,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app",
-            "src::app::a2a_server",
-            "src::app::adapters::web::state",
-            "src::infra::dto::instance"
+            "src::infra::dto::config",
+            "src::app::commands::dashboard",
+            "src::app::commands::a2a",
+            "src::infra::context_store",
+            "src::app::schedule"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 70,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app",
-            "src::app::a2a_server",
-            "src::app::adapters::web::state",
-            "src::infra::dto::instance"
+            "src::infra::dto::config",
+            "src::app::commands::dashboard",
+            "src::app::commands::a2a",
+            "src::infra::context_store",
+            "src::app::schedule"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 53,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app::schedule",
-            "src::app::message",
-            "src::app::adapters::web::state",
-            "src::app::adapters::telegram"
+            "src::config",
+            "src::infra::dto::config",
+            "src::infra::dto::bus",
+            "src::app::commands::bus",
+            "src::app::commands::a2a"
           ]
         },
         {
           "component": "events",
           "impact_radius": 53,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app::schedule",
-            "src::app::message",
-            "src::app::adapters::web::state",
-            "src::app::adapters::telegram"
+            "src::config",
+            "src::infra::dto::config",
+            "src::infra::dto::bus",
+            "src::app::commands::bus",
+            "src::app::commands::a2a"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 53,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app::schedule",
-            "src::app::message",
-            "src::app::adapters::web::state",
-            "src::app::adapters::telegram"
+            "src::config",
+            "src::infra::dto::config",
+            "src::infra::dto::bus",
+            "src::app::commands::bus",
+            "src::app::commands::a2a"
           ]
         },
         {
           "component": "src::domain",
           "impact_radius": 52,
           "sample_dependents": [
-            "src::app::worker",
-            "src::app::schedule",
-            "src::app::message",
-            "src::app::adapters::web::state",
-            "src::app::adapters::telegram"
+            "src::config",
+            "src::infra::dto::config",
+            "src::infra::dto::bus",
+            "src::app::commands::bus",
+            "src::app::commands::a2a"
           ]
         }
       ],
