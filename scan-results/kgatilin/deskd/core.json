@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 296,
-    "edges": 405
+    "nodes": 316,
+    "edges": 443
   },
   "checks": [
     {
@@ -45,22 +45,22 @@
         },
         {
           "node": "src::app::commands",
-          "fan_out": 17,
+          "fan_out": 19,
           "threshold": 5
         },
         {
           "node": "src::app::adapters::web",
-          "fan_out": 12,
+          "fan_out": 13,
           "threshold": 5
         },
         {
           "node": "src::app::adapters::web::routes",
-          "fan_out": 10,
+          "fan_out": 13,
           "threshold": 5
         },
         {
           "node": "src::app::adapters::web::state",
-          "fan_out": 7,
+          "fan_out": 8,
           "threshold": 5
         },
         {
@@ -75,7 +75,7 @@
         },
         {
           "node": "src::app",
-          "fan_out": 41,
+          "fan_out": 45,
           "threshold": 5
         }
       ],
@@ -97,7 +97,7 @@
         },
         {
           "node": "src::domain",
-          "afferent_coupling": 28,
+          "afferent_coupling": 29,
           "efferent_coupling": 8,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -105,21 +105,28 @@
         {
           "node": "src::app::commands",
           "afferent_coupling": 0,
-          "efferent_coupling": 17,
+          "efferent_coupling": 19,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::app::adapters::web",
           "afferent_coupling": 0,
-          "efferent_coupling": 12,
+          "efferent_coupling": 13,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::app::adapters::web::routes",
+          "afferent_coupling": 0,
+          "efferent_coupling": 13,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::app",
-          "afferent_coupling": 41,
-          "efferent_coupling": 41,
+          "afferent_coupling": 48,
+          "efferent_coupling": 45,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -132,27 +139,27 @@
         },
         {
           "node": "src::config",
-          "afferent_coupling": 29,
+          "afferent_coupling": 34,
           "efferent_coupling": 3,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "tests",
-          "afferent_coupling": 84,
+          "afferent_coupling": 94,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "deskd",
-          "afferent_coupling": 11,
+          "afferent_coupling": 12,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
         }
       ],
-      "violations_count": 9
+      "violations_count": 10
     },
     {
       "name": "instability",
@@ -218,7 +225,7 @@
         {
           "node": "deskd",
           "instability": 0.0,
-          "ca": 11,
+          "ca": 12,
           "ce": 0
         }
       ],
@@ -226,14 +233,14 @@
         {
           "from": "src::config",
           "to": "src::domain",
-          "from_instability": 0.094,
-          "to_instability": 0.222,
+          "from_instability": 0.081,
+          "to_instability": 0.216,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         },
         {
           "from": "src::config",
           "to": "src::infra",
-          "from_instability": 0.094,
+          "from_instability": 0.081,
           "to_instability": 0.423,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
@@ -300,26 +307,26 @@
       "hubs": [
         {
           "node": "tests",
-          "total_degree": 84,
-          "in_degree": 84,
+          "total_degree": 94,
+          "in_degree": 94,
           "out_degree": 0
         },
         {
           "node": "src::app",
-          "total_degree": 82,
-          "in_degree": 41,
-          "out_degree": 41
+          "total_degree": 93,
+          "in_degree": 48,
+          "out_degree": 45
         },
         {
           "node": "src::domain",
-          "total_degree": 36,
-          "in_degree": 28,
+          "total_degree": 37,
+          "in_degree": 29,
           "out_degree": 8
         },
         {
           "node": "src::config",
-          "total_degree": 32,
-          "in_degree": 29,
+          "total_degree": 37,
+          "in_degree": 34,
           "out_degree": 3
         },
         {
@@ -336,24 +343,30 @@
         },
         {
           "node": "src::app::commands",
-          "total_degree": 17,
+          "total_degree": 19,
           "in_degree": 0,
-          "out_degree": 17
+          "out_degree": 19
         },
         {
           "node": "src::app::adapters::web",
-          "total_degree": 12,
+          "total_degree": 13,
           "in_degree": 0,
-          "out_degree": 12
+          "out_degree": 13
+        },
+        {
+          "node": "src::app::adapters::web::routes",
+          "total_degree": 13,
+          "in_degree": 0,
+          "out_degree": 13
         },
         {
           "node": "deskd",
-          "total_degree": 11,
-          "in_degree": 11,
+          "total_degree": 12,
+          "in_degree": 12,
           "out_degree": 0
         }
       ],
-      "hubs_count": 9
+      "hubs_count": 10
     },
     {
       "name": "orphan_nodes",
@@ -381,7 +394,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 296,
+      "total_sccs": 316,
       "problematic_sccs": [],
       "problematic_count": 0
     },

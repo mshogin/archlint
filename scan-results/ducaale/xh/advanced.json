@@ -483,11 +483,11 @@
       "threshold": 4,
       "large_cliques": [
         [
-          "src::to_curl",
           "tests",
+          "src::utils",
           "src::cli",
-          "src::request_items",
-          "src::utils"
+          "src::to_curl",
+          "src::request_items"
         ]
       ],
       "large_cliques_count": 1,

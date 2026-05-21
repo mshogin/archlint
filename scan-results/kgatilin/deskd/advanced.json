@@ -11,8 +11,8 @@
     "errors": 7
   },
   "graph": {
-    "nodes": 296,
-    "edges": 405
+    "nodes": 316,
+    "edges": 443
   },
   "checks": [
     {
@@ -35,18 +35,18 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.57,
+      "modularity": 0.567,
       "threshold": 0.3,
-      "communities_count": 31
+      "communities_count": 30
     },
     {
       "name": "abstractness",
       "description": "Абстрактность должна быть между 0.1 и 0.8",
       "status": "ERROR",
-      "abstractness": 0.024,
+      "abstractness": 0.022,
       "abstract_count": 7,
-      "concrete_count": 289,
-      "total_count": 296,
+      "concrete_count": 309,
+      "total_count": 316,
       "min_threshold": 0.1,
       "max_threshold": 0.8,
       "issue": "Слишком мало абстракций (< 0.1)"
@@ -158,8 +158,15 @@
         {
           "package": "src::domain",
           "abstractness": 0.0,
-          "instability": 0.222,
-          "distance": 0.778,
+          "instability": 0.216,
+          "distance": 0.784,
+          "nodes_count": 1
+        },
+        {
+          "package": "src::app",
+          "abstractness": 0.0,
+          "instability": 0.484,
+          "distance": 0.516,
           "nodes_count": 1
         },
         {
@@ -179,24 +186,15 @@
           "nodes_count": 1,
           "zone": "uselessness",
           "issue": "Зона бесполезности: абстрактный и нестабильный"
-        },
-        {
-          "package": "src::ports::store",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
         }
       ],
-      "violations_count": 149
+      "violations_count": 159
     },
     {
       "name": "clustering_coefficient",
       "description": "Средний коэффициент кластеризации >= 0.1",
       "status": "WARNING",
-      "avg_clustering": 0.028,
+      "avg_clustering": 0.036,
       "threshold": 0.1,
       "low_clustering_nodes": [
         {
@@ -240,16 +238,16 @@
           "coefficient": 0.009
         }
       ],
-      "low_clustering_count": 90
+      "low_clustering_count": 95
     },
     {
       "name": "edge_density",
       "description": "Плотность графа между 0.01 и 0.3",
       "status": "INFO",
-      "density": 0.0046,
-      "nodes": 296,
-      "edges": 405,
-      "max_possible_edges": 87320,
+      "density": 0.0045,
+      "nodes": 316,
+      "edges": 443,
+      "max_possible_edges": 99540,
       "issue": "Низкая плотность (фрагментация) < 0.01"
     },
     {
@@ -263,7 +261,6 @@
         "src::app::agent",
         "src::app::process_builder",
         "src::config",
-        "src::app::commands::schedule",
         "src::app::commands::remind",
         "src::app::adapters::telegram",
         "src::app::adapters::web",
@@ -276,9 +273,10 @@
         "src::app::adapters::federation::peer",
         "src::ports",
         "tests",
-        "src::domain::config_types"
+        "src::domain::config_types",
+        "src::app::commands::usage"
       ],
-      "count": 36,
+      "count": 35,
       "recommendation": "Уменьшить зависимость от критических узлов"
     },
     {
@@ -367,20 +365,20 @@
           "to": "task_store"
         }
       ],
-      "count": 181
+      "count": 191
     },
     {
       "name": "graph_diameter",
       "description": "Диаметр графа",
       "status": "INFO",
       "diameter": "infinity",
-      "reason": "Граф не связан (20 компонент)"
+      "reason": "Граф не связан (19 компонент)"
     },
     {
       "name": "avg_path_length",
       "description": "Средняя длина пути <= 5.0",
       "status": "PASSED",
-      "avg_path_length": 3.529,
+      "avg_path_length": 3.503,
       "threshold": 5.0,
       "note": "Вычислено для наибольшей связной компоненты"
     },
@@ -392,46 +390,46 @@
       "peripheral_nodes": [
         {
           "node": "src::app",
-          "closeness": 0.139
+          "closeness": 0.152
         },
         {
           "node": "context",
-          "closeness": 0.126
+          "closeness": 0.13
         },
         {
           "node": "task",
-          "closeness": 0.126
+          "closeness": 0.13
+        },
+        {
+          "node": "agent",
+          "closeness": 0.127
+        },
+        {
+          "node": "message",
+          "closeness": 0.125
+        },
+        {
+          "node": "statemachine",
+          "closeness": 0.125
         },
         {
           "node": "src::domain",
           "closeness": 0.124
         },
         {
-          "node": "agent",
-          "closeness": 0.123
-        },
-        {
-          "node": "message",
-          "closeness": 0.121
-        },
-        {
-          "node": "statemachine",
-          "closeness": 0.121
+          "node": "src::config",
+          "closeness": 0.108
         },
         {
           "node": "bus",
-          "closeness": 0.102
-        },
-        {
-          "node": "src::config",
-          "closeness": 0.098
+          "closeness": 0.106
         },
         {
           "node": "src::infra",
-          "closeness": 0.085
+          "closeness": 0.087
         }
       ],
-      "avg_closeness": 0.018
+      "avg_closeness": 0.019
     },
     {
       "name": "eigenvector_centrality",
@@ -471,10 +469,10 @@
       "threshold": 5,
       "core_distribution": {
         "0": 14,
-        "1": 186,
-        "2": 47,
-        "3": 34,
-        "4": 15
+        "1": 195,
+        "2": 54,
+        "3": 37,
+        "4": 16
       },
       "high_core_nodes": [],
       "high_core_count": 0
@@ -487,36 +485,34 @@
       "threshold": 4,
       "large_cliques": [],
       "large_cliques_count": 0,
-      "total_cliques": 398
+      "total_cliques": 429
     },
     {
       "name": "degree_distribution",
       "description": "Распределение степеней узлов",
       "status": "INFO",
-      "mean_degree": 2.74,
-      "std_degree": 7.6,
-      "max_degree": 84,
+      "mean_degree": 2.8,
+      "std_degree": 8.2,
+      "max_degree": 94,
       "min_degree": 0,
       "distribution": {
         "0": 14,
-        "1": 174,
-        "2": 41,
-        "3": 29,
+        "1": 183,
+        "2": 46,
+        "3": 33,
         "4": 16,
-        "5": 8,
+        "5": 10,
         "6": 1,
-        "7": 2,
-        "8": 1,
-        "10": 1,
-        "11": 1,
+        "7": 1,
+        "8": 2,
         "12": 1,
-        "17": 1,
+        "13": 2,
+        "19": 1,
         "25": 1,
         "26": 1,
-        "32": 1,
-        "36": 1,
-        "82": 1,
-        "84": 1
+        "37": 2,
+        "93": 1,
+        "94": 1
       },
       "is_scale_free": true,
       "interpretation": "Scale-free сеть (hub-dominated)"
@@ -525,15 +521,15 @@
       "name": "dependency_entropy",
       "description": "Энтропия распределения зависимостей",
       "status": "PASSED",
-      "entropy": 6.477,
-      "max_entropy": 8.209,
-      "normalized_entropy": 0.789
+      "entropy": 6.558,
+      "max_entropy": 8.304,
+      "normalized_entropy": 0.79
     },
     {
       "name": "gini_coefficient",
       "description": "Коэффициент Джини <= 0.6",
       "status": "PASSED",
-      "gini": 0.586,
+      "gini": 0.59,
       "threshold": 0.6,
       "interpretation": "Неравномерно"
     },
@@ -544,33 +540,28 @@
       "outliers": [
         {
           "node": "tests",
-          "degree": 84,
-          "z_score": 10.69
+          "degree": 94,
+          "z_score": 11.12
         },
         {
           "node": "src::app",
-          "degree": 82,
-          "z_score": 10.43
+          "degree": 93,
+          "z_score": 10.99
         },
         {
           "node": "src::domain",
-          "degree": 36,
-          "z_score": 4.38
+          "degree": 37,
+          "z_score": 4.17
         },
         {
           "node": "src::config",
-          "degree": 32,
-          "z_score": 3.85
-        },
-        {
-          "node": "src::infra",
-          "degree": 26,
-          "z_score": 3.06
+          "degree": 37,
+          "z_score": 4.17
         }
       ],
-      "outliers_count": 5,
-      "mean_degree": 2.74,
-      "std_degree": 7.6,
+      "outliers_count": 4,
+      "mean_degree": 2.8,
+      "std_degree": 8.2,
       "z_threshold": 3.0
     },
     {
@@ -584,7 +575,7 @@
       "description": "Спектральный радиус матрицы смежности",
       "status": "INFO",
       "spectral_radius": 0.0,
-      "max_degree": 84,
+      "max_degree": 94,
       "interpretation": "Коррелирует с максимальной степенью"
     },
     {
@@ -600,143 +591,143 @@
       "description": "Радиус изменений <= 20 компонентов",
       "status": "ERROR",
       "threshold": 20,
-      "avg_impact": 10.14,
-      "max_impact": 97,
+      "avg_impact": 11.39,
+      "max_impact": 107,
       "top_impact": [
         {
           "node": "tests",
-          "impact": 97
+          "impact": 107
         },
         {
           "node": "context",
-          "impact": 77
+          "impact": 85
         },
         {
           "node": "task",
-          "impact": 77
+          "impact": 85
         },
         {
           "node": "agent",
-          "impact": 76
+          "impact": 84
         },
         {
           "node": "message",
-          "impact": 75
+          "impact": 83
         }
       ],
       "violations": [
         {
           "component": "tests",
-          "impact_radius": 97,
+          "impact_radius": 107,
           "sample_dependents": [
-            "src::app::adapters::web::routes",
-            "src::app::agent_components",
-            "src::infra::memory_store",
-            "src::app::adapters::federation::preflight",
-            "src::app::worker"
+            "src::app::context_log",
+            "src::main",
+            "src::app::commands::usage",
+            "src::app::mcp",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "context",
-          "impact_radius": 77,
+          "impact_radius": 85,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
-            "src::infra::dto::config",
-            "src::app::a2a_server"
+            "src::app::commands::usage",
+            "src::app::mcp",
+            "src::app::config_reload",
+            "src::app::message",
+            "src::app::adapters::discord"
           ]
         },
         {
           "component": "task",
-          "impact_radius": 77,
+          "impact_radius": 85,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
-            "src::infra::dto::config",
-            "src::app::a2a_server"
+            "src::app::commands::usage",
+            "src::app::mcp",
+            "src::app::config_reload",
+            "src::app::message",
+            "src::app::adapters::discord"
           ]
         },
         {
           "component": "agent",
-          "impact_radius": 76,
+          "impact_radius": 84,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
-            "src::infra::dto::config",
-            "src::app::a2a_server"
+            "src::app::commands::usage",
+            "src::app::mcp",
+            "src::app::config_reload",
+            "src::app::message",
+            "src::app::adapters::discord"
           ]
         },
         {
           "component": "message",
-          "impact_radius": 75,
+          "impact_radius": 83,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
-            "src::infra::dto::config",
-            "src::app::a2a_server"
+            "src::app::commands::usage",
+            "src::app::mcp",
+            "src::app::config_reload",
+            "src::app::message",
+            "src::app::adapters::discord"
           ]
         },
         {
           "component": "statemachine",
-          "impact_radius": 75,
+          "impact_radius": 83,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
-            "src::infra::dto::config",
-            "src::app::a2a_server"
+            "src::app::commands::usage",
+            "src::app::mcp",
+            "src::app::config_reload",
+            "src::app::message",
+            "src::app::adapters::discord"
           ]
         },
         {
           "component": "bus",
-          "impact_radius": 58,
+          "impact_radius": 65,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::app::adapters::web::routes::sse",
-            "src::app::worker",
-            "src::app::context_size",
-            "src::app::commands::context"
+            "src::app::commands::usage",
+            "src::app::mcp",
+            "src::app::config_reload",
+            "src::app::commands::session",
+            "src::app::session_discover"
           ]
         },
         {
           "component": "config_types",
-          "impact_radius": 55,
+          "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
+            "src::app::commands::tui",
+            "src::app::mcp",
+            "src::app::config_reload",
             "src::infra::dto::config",
-            "src::app::config_changeset"
+            "src::app::message"
           ]
         },
         {
           "component": "events",
-          "impact_radius": 55,
+          "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
+            "src::app::commands::tui",
+            "src::app::mcp",
+            "src::app::config_reload",
             "src::infra::dto::config",
-            "src::app::config_changeset"
+            "src::app::message"
           ]
         },
         {
           "component": "workitem",
-          "impact_radius": 55,
+          "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::memory_store",
-            "src::ports::bus",
-            "src::app::worker",
+            "src::app::commands::tui",
+            "src::app::mcp",
+            "src::app::config_reload",
             "src::infra::dto::config",
-            "src::app::config_changeset"
+            "src::app::message"
           ]
         }
       ],
-      "violations_count": 64
+      "violations_count": 68
     },
     {
       "name": "blast_radius",
@@ -754,31 +745,31 @@
       "hotspots": [
         {
           "component": "tests",
-          "in_degree": 84,
+          "in_degree": 94,
           "out_degree": 0,
-          "total_degree": 84,
-          "hotspot_score": 4.2
+          "total_degree": 94,
+          "hotspot_score": 4.7
         },
         {
           "component": "src::app",
-          "in_degree": 41,
-          "out_degree": 41,
-          "total_degree": 82,
-          "hotspot_score": 4.1
+          "in_degree": 48,
+          "out_degree": 45,
+          "total_degree": 93,
+          "hotspot_score": 4.65
         },
         {
           "component": "src::domain",
-          "in_degree": 28,
+          "in_degree": 29,
           "out_degree": 8,
-          "total_degree": 36,
-          "hotspot_score": 1.8
+          "total_degree": 37,
+          "hotspot_score": 1.85
         },
         {
           "component": "src::config",
-          "in_degree": 29,
+          "in_degree": 34,
           "out_degree": 3,
-          "total_degree": 32,
-          "hotspot_score": 1.6
+          "total_degree": 37,
+          "hotspot_score": 1.85
         },
         {
           "component": "src::infra",
@@ -813,10 +804,10 @@
       "violations": [
         {
           "source": "src::config",
-          "source_instability": 0.09,
+          "source_instability": 0.08,
           "target": "src::infra",
           "target_instability": 0.42,
-          "delta": 0.33
+          "delta": 0.34
         }
       ],
       "violations_count": 1
@@ -838,52 +829,52 @@
       "violations": [
         {
           "component": "src::app",
-          "complexity": 206.92,
-          "in_degree": 41,
-          "out_degree": 41,
-          "betweenness": 0.019
+          "complexity": 233.16,
+          "in_degree": 48,
+          "out_degree": 45,
+          "betweenness": 0.022
         },
         {
           "component": "tests",
-          "complexity": 168.0,
-          "in_degree": 84,
+          "complexity": 188.0,
+          "in_degree": 94,
           "out_degree": 0,
           "betweenness": 0.0
         },
         {
           "component": "src::domain",
-          "complexity": 80.39,
-          "in_degree": 28,
+          "complexity": 82.36,
+          "in_degree": 29,
           "out_degree": 8,
           "betweenness": 0.004
         },
         {
           "component": "src::config",
-          "complexity": 67.55,
-          "in_degree": 29,
+          "complexity": 77.57,
+          "in_degree": 34,
           "out_degree": 3,
           "betweenness": 0.006
         },
         {
           "component": "src::infra",
-          "complexity": 63.52,
+          "complexity": 63.51,
           "in_degree": 15,
           "out_degree": 11,
           "betweenness": 0.005
         },
         {
+          "component": "src::app::commands",
+          "complexity": 57.0,
+          "in_degree": 0,
+          "out_degree": 19,
+          "betweenness": 0.0
+        },
+        {
           "component": "src::ports",
-          "complexity": 54.09,
+          "complexity": 54.08,
           "in_degree": 21,
           "out_degree": 4,
           "betweenness": 0.001
-        },
-        {
-          "component": "src::app::commands",
-          "complexity": 51.0,
-          "in_degree": 0,
-          "out_degree": 17,
-          "betweenness": 0.0
         }
       ],
       "violations_count": 7
