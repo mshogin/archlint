@@ -620,66 +620,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::parameter",
-            "src::timer::windows_timer",
-            "src::export",
-            "src::output::warnings",
-            "src::export::markup"
+            "src::output::format",
+            "src::export::orgmode",
+            "src::util",
+            "src::export::csv",
+            "src::parameter::range_step"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::parameter",
-            "src::timer::windows_timer",
-            "src::export",
-            "src::output::warnings",
-            "src::export::markup"
+            "src::output::format",
+            "src::export::orgmode",
+            "src::util",
+            "src::export::csv",
+            "src::parameter::range_step"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::parameter",
-            "src::timer::windows_timer",
-            "src::export",
-            "src::output::warnings",
-            "src::export::markup"
+            "src::output::format",
+            "src::export::orgmode",
+            "src::util",
+            "src::export::csv",
+            "src::parameter::range_step"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::parameter",
-            "src::timer::windows_timer",
-            "src::export",
-            "src::output::warnings",
-            "src::export::markup"
+            "src::output::format",
+            "src::export::orgmode",
+            "src::util",
+            "src::export::csv",
+            "src::parameter::range_step"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::parameter",
-            "src::timer::windows_timer",
-            "src::export",
-            "src::output::warnings",
-            "src::export::markup"
+            "src::output::format",
+            "src::export::orgmode",
+            "src::util",
+            "src::export::csv",
+            "src::parameter::range_step"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::parameter",
-            "src::timer::windows_timer",
-            "src::export",
-            "src::output::warnings",
-            "src::export::markup"
+            "src::output::format",
+            "src::export::orgmode",
+            "src::export::csv",
+            "src::parameter::range_step",
+            "src::timer"
           ]
         }
       ],
