@@ -35,7 +35,7 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.575,
+      "modularity": 0.574,
       "threshold": 0.3,
       "communities_count": 15
     },
@@ -620,66 +620,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::output::format",
+            "src::timer::unix_timer",
             "src::export::orgmode",
-            "src::util",
-            "src::export::csv",
-            "src::parameter::range_step"
+            "src::export::tests",
+            "src::parameter",
+            "src::export"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::output::format",
+            "src::timer::unix_timer",
             "src::export::orgmode",
-            "src::util",
-            "src::export::csv",
-            "src::parameter::range_step"
+            "src::export::tests",
+            "src::parameter",
+            "src::export"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::output::format",
+            "src::timer::unix_timer",
             "src::export::orgmode",
-            "src::util",
-            "src::export::csv",
-            "src::parameter::range_step"
+            "src::export::tests",
+            "src::parameter",
+            "src::export"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::output::format",
+            "src::timer::unix_timer",
             "src::export::orgmode",
-            "src::util",
-            "src::export::csv",
-            "src::parameter::range_step"
+            "src::export::tests",
+            "src::parameter",
+            "src::export"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::output::format",
+            "src::timer::unix_timer",
             "src::export::orgmode",
-            "src::util",
-            "src::export::csv",
-            "src::parameter::range_step"
+            "src::export::tests",
+            "src::parameter",
+            "src::export"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::output::format",
+            "src::timer::unix_timer",
             "src::export::orgmode",
-            "src::export::csv",
-            "src::parameter::range_step",
-            "src::timer"
+            "src::export::tests",
+            "src::parameter",
+            "src::export"
           ]
         }
       ],

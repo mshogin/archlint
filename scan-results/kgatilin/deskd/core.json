@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 332,
-    "edges": 468
+    "nodes": 345,
+    "edges": 485
   },
   "checks": [
     {
@@ -49,6 +49,11 @@
           "threshold": 5
         },
         {
+          "node": "src::app::transcript_extractor",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
           "node": "src::app::adapters::web::view",
           "fan_out": 9,
           "threshold": 5
@@ -72,14 +77,9 @@
           "node": "src::app::adapters::federation",
           "fan_out": 8,
           "threshold": 5
-        },
-        {
-          "node": "src::app::adapters::federation::hub",
-          "fan_out": 7,
-          "threshold": 5
         }
       ],
-      "violations_count": 11
+      "violations_count": 12
     },
     {
       "name": "coupling",
@@ -90,7 +90,7 @@
       "violations": [
         {
           "node": "src::infra",
-          "afferent_coupling": 15,
+          "afferent_coupling": 16,
           "efferent_coupling": 11,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -126,7 +126,7 @@
         {
           "node": "src::app",
           "afferent_coupling": 54,
-          "efferent_coupling": 45,
+          "efferent_coupling": 46,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -146,7 +146,7 @@
         },
         {
           "node": "tests",
-          "afferent_coupling": 101,
+          "afferent_coupling": 107,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -241,7 +241,7 @@
           "from": "src::config",
           "to": "src::infra",
           "from_instability": 0.081,
-          "to_instability": 0.423,
+          "to_instability": 0.407,
           "issue": "Зависимость направлена к менее стабильному компоненту"
         }
       ],
@@ -307,15 +307,15 @@
       "hubs": [
         {
           "node": "tests",
-          "total_degree": 101,
-          "in_degree": 101,
+          "total_degree": 107,
+          "in_degree": 107,
           "out_degree": 0
         },
         {
           "node": "src::app",
-          "total_degree": 99,
+          "total_degree": 100,
           "in_degree": 54,
-          "out_degree": 45
+          "out_degree": 46
         },
         {
           "node": "src::domain",
@@ -331,8 +331,8 @@
         },
         {
           "node": "src::infra",
-          "total_degree": 26,
-          "in_degree": 15,
+          "total_degree": 27,
+          "in_degree": 16,
           "out_degree": 11
         },
         {
@@ -394,7 +394,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 332,
+      "total_sccs": 345,
       "problematic_sccs": [],
       "problematic_count": 0
     },

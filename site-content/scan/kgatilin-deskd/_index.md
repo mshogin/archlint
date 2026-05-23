@@ -46,6 +46,7 @@ description: "Architecture analysis of kgatilin/deskd"
 | hotspot_detection | ERROR |  | 20 |
 | stability_violations | ERROR |  |  |
 | component_complexity | ERROR |  | 50 |
+| pagerank | INFO |  | 0.1 |
 | edge_density | INFO |  |  |
 | bridge_edges | INFO |  |  |
 | graph_diameter | INFO |  |  |
@@ -54,7 +55,6 @@ description: "Architecture analysis of kgatilin/deskd"
 | algebraic_connectivity | INFO |  |  |
 | spectral_radius | INFO |  |  |
 | betweenness_centrality | PASSED |  | 0.3 |
-| pagerank | PASSED |  | 0.1 |
 | modularity | PASSED |  | 0.3 |
 | avg_path_length | PASSED |  | 5.0 |
 | eigenvector_centrality | PASSED |  | 0.3 |
