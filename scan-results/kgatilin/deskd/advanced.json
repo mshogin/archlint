@@ -40,9 +40,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.571,
+      "modularity": 0.574,
       "threshold": 0.3,
-      "communities_count": 30
+      "communities_count": 29
     },
     {
       "name": "abstractness",
@@ -626,110 +626,110 @@
           "component": "tests",
           "impact_radius": 120,
           "sample_dependents": [
-            "src::app::config_watcher",
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::context_size",
-            "src::app::tasklog",
-            "src::app::commands::usage"
+            "src::app::adapters::federation::glob",
+            "src::app::mcp_protocol"
           ]
         },
         {
           "component": "task",
           "impact_radius": 92,
           "sample_dependents": [
+            "src::app::commands::graph",
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::context_size",
-            "src::app::commands::usage",
-            "src::ports::bus_wire",
-            "src::app::commands::reload"
+            "src::app::config_reload"
           ]
         },
         {
           "component": "context",
           "impact_radius": 91,
           "sample_dependents": [
+            "src::app::commands::graph",
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::context_size",
-            "src::app::commands::usage",
-            "src::ports::bus_wire",
-            "src::app::commands::reload"
+            "src::app::config_reload"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 90,
           "sample_dependents": [
+            "src::app::commands::graph",
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::context_size",
-            "src::app::commands::usage",
-            "src::ports::bus_wire",
-            "src::app::commands::reload"
+            "src::app::config_reload"
           ]
         },
         {
           "component": "message",
           "impact_radius": 89,
           "sample_dependents": [
+            "src::app::commands::graph",
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::context_size",
-            "src::app::commands::usage",
-            "src::ports::bus_wire",
-            "src::app::commands::reload"
+            "src::app::config_reload"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 89,
           "sample_dependents": [
+            "src::app::commands::graph",
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::context_size",
-            "src::app::commands::usage",
-            "src::ports::bus_wire",
-            "src::app::commands::reload"
+            "src::app::config_reload"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 71,
           "sample_dependents": [
-            "src::app::context_size",
-            "src::app::commands::usage",
-            "src::app::commands::a2a",
-            "src::app::adapters::web::view::detail",
-            "src::app::adapters::web::routes::cost_feed"
+            "src::infra::unix_bus",
+            "src::app::commands::graph",
+            "src::app::commands::schedule",
+            "src::app::serve",
+            "src::app::mcp_protocol"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::commands::tui",
-            "src::app::commands::sm",
-            "src::app::schedule",
-            "src::ports::bus_wire"
+            "src::app::adapters::discord",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::commands::tui",
-            "src::app::commands::sm",
-            "src::app::schedule",
-            "src::ports::bus_wire"
+            "src::app::adapters::discord",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
+            "src::app::commands::schedule",
+            "src::app::serve",
             "src::app::config_changeset",
-            "src::app::commands::tui",
-            "src::app::commands::sm",
-            "src::app::schedule",
-            "src::ports::bus_wire"
+            "src::app::adapters::discord",
+            "src::app::config_reload"
           ]
         }
       ],
