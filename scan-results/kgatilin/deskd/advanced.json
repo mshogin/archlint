@@ -40,9 +40,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.574,
+      "modularity": 0.568,
       "threshold": 0.3,
-      "communities_count": 29
+      "communities_count": 31
     },
     {
       "name": "abstractness",
@@ -626,77 +626,77 @@
           "component": "tests",
           "impact_radius": 120,
           "sample_dependents": [
-            "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::adapters::federation::glob",
-            "src::app::mcp_protocol"
+            "src::app::adapters::federation::routing",
+            "src::main",
+            "src::app::workflow",
+            "src::app::doctor",
+            "src::app::adapters::web::routes::github_webhook"
           ]
         },
         {
           "component": "task",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::commands::graph",
-            "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::app::commands::task",
+            "src::app::workflow",
+            "src::app::doctor",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "context",
           "impact_radius": 91,
           "sample_dependents": [
-            "src::app::commands::graph",
-            "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::app::commands::task",
+            "src::app::workflow",
+            "src::app::doctor",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 90,
           "sample_dependents": [
-            "src::app::commands::graph",
-            "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::app::commands::task",
+            "src::app::workflow",
+            "src::app::doctor",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "message",
           "impact_radius": 89,
           "sample_dependents": [
-            "src::app::commands::graph",
-            "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::app::commands::task",
+            "src::app::workflow",
+            "src::app::doctor",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 89,
           "sample_dependents": [
-            "src::app::commands::graph",
-            "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::app::commands::task",
+            "src::app::workflow",
+            "src::app::doctor",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 71,
           "sample_dependents": [
-            "src::infra::unix_bus",
-            "src::app::commands::graph",
-            "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::mcp_protocol"
+            "src::app::commands::task",
+            "src::app::workflow",
+            "src::app::doctor",
+            "src::infra::context_store",
+            "src::app::acp"
           ]
         },
         {
@@ -704,10 +704,10 @@
           "impact_radius": 61,
           "sample_dependents": [
             "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::adapters::discord",
-            "src::app::config_reload"
+            "src::app::workflow",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store",
+            "src::infra::sm_store"
           ]
         },
         {
@@ -715,10 +715,10 @@
           "impact_radius": 60,
           "sample_dependents": [
             "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::adapters::discord",
-            "src::app::config_reload"
+            "src::app::workflow",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store",
+            "src::infra::sm_store"
           ]
         },
         {
@@ -726,10 +726,10 @@
           "impact_radius": 60,
           "sample_dependents": [
             "src::app::commands::schedule",
-            "src::app::serve",
-            "src::app::config_changeset",
-            "src::app::adapters::discord",
-            "src::app::config_reload"
+            "src::app::workflow",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::infra::context_store",
+            "src::infra::sm_store"
           ]
         }
       ],
