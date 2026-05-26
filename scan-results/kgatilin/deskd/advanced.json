@@ -11,7 +11,7 @@
     "errors": 7
   },
   "graph": {
-    "nodes": 345,
+    "nodes": 344,
     "edges": 485
   },
   "checks": [
@@ -40,9 +40,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.568,
+      "modularity": 0.569,
       "threshold": 0.3,
-      "communities_count": 31
+      "communities_count": 29
     },
     {
       "name": "abstractness",
@@ -50,8 +50,8 @@
       "status": "ERROR",
       "abstractness": 0.02,
       "abstract_count": 7,
-      "concrete_count": 338,
-      "total_count": 345,
+      "concrete_count": 337,
+      "total_count": 344,
       "min_threshold": 0.1,
       "max_threshold": 0.8,
       "issue": "Слишком мало абстракций (< 0.1)"
@@ -250,9 +250,9 @@
       "description": "Плотность графа между 0.01 и 0.3",
       "status": "INFO",
       "density": 0.0041,
-      "nodes": 345,
+      "nodes": 344,
       "edges": 485,
-      "max_possible_edges": 118680,
+      "max_possible_edges": 117992,
       "issue": "Низкая плотность (фрагментация) < 0.01"
     },
     {
@@ -377,7 +377,7 @@
       "description": "Диаметр графа",
       "status": "INFO",
       "diameter": "infinity",
-      "reason": "Граф не связан (19 компонент)"
+      "reason": "Граф не связан (18 компонент)"
     },
     {
       "name": "avg_path_length",
@@ -399,15 +399,15 @@
         },
         {
           "node": "task",
-          "closeness": 0.129
+          "closeness": 0.13
         },
         {
           "node": "context",
-          "closeness": 0.127
+          "closeness": 0.128
         },
         {
           "node": "agent",
-          "closeness": 0.125
+          "closeness": 0.126
         },
         {
           "node": "message",
@@ -473,7 +473,7 @@
       "max_k_core": 4,
       "threshold": 5,
       "core_distribution": {
-        "0": 14,
+        "0": 13,
         "1": 212,
         "2": 61,
         "3": 42,
@@ -490,18 +490,18 @@
       "threshold": 4,
       "large_cliques": [],
       "large_cliques_count": 0,
-      "total_cliques": 471
+      "total_cliques": 470
     },
     {
       "name": "degree_distribution",
       "description": "Распределение степеней узлов",
       "status": "INFO",
-      "mean_degree": 2.81,
-      "std_degree": 8.58,
+      "mean_degree": 2.82,
+      "std_degree": 8.59,
       "max_degree": 107,
       "min_degree": 0,
       "distribution": {
-        "0": 14,
+        "0": 13,
         "1": 200,
         "2": 52,
         "3": 37,
@@ -528,14 +528,14 @@
       "description": "Энтропия распределения зависимостей",
       "status": "PASSED",
       "entropy": 6.695,
-      "max_entropy": 8.43,
-      "normalized_entropy": 0.794
+      "max_entropy": 8.426,
+      "normalized_entropy": 0.795
     },
     {
       "name": "gini_coefficient",
       "description": "Коэффициент Джини <= 0.6",
       "status": "PASSED",
-      "gini": 0.589,
+      "gini": 0.587,
       "threshold": 0.6,
       "interpretation": "Неравномерно"
     },
@@ -547,27 +547,27 @@
         {
           "node": "tests",
           "degree": 107,
-          "z_score": 12.14
+          "z_score": 12.13
         },
         {
           "node": "src::app",
           "degree": 100,
-          "z_score": 11.33
+          "z_score": 11.31
         },
         {
           "node": "src::domain",
           "degree": 37,
-          "z_score": 3.99
+          "z_score": 3.98
         },
         {
           "node": "src::config",
           "degree": 37,
-          "z_score": 3.99
+          "z_score": 3.98
         }
       ],
       "outliers_count": 4,
-      "mean_degree": 2.81,
-      "std_degree": 8.58,
+      "mean_degree": 2.82,
+      "std_degree": 8.59,
       "z_threshold": 3.0
     },
     {
@@ -597,7 +597,7 @@
       "description": "Радиус изменений <= 20 компонентов",
       "status": "ERROR",
       "threshold": 20,
-      "avg_impact": 11.53,
+      "avg_impact": 11.56,
       "max_impact": 120,
       "top_impact": [
         {
@@ -626,110 +626,110 @@
           "component": "tests",
           "impact_radius": 120,
           "sample_dependents": [
-            "src::app::adapters::federation::routing",
-            "src::main",
+            "src::app::adapters::web::data_chart",
             "src::app::workflow",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::github_webhook"
+            "src::app::context_size",
+            "src::app::adapters::web::data",
+            "src::app::config_changeset"
           ]
         },
         {
           "component": "task",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::commands::task",
-            "src::app::workflow",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store"
+            "src::ports::bus_wire",
+            "src::infra::dto",
+            "src::app::adapters::web::data_chart",
+            "src::app::adapters::web::routes::metrics",
+            "src::app::workflow"
           ]
         },
         {
           "component": "context",
           "impact_radius": 91,
           "sample_dependents": [
-            "src::app::commands::task",
-            "src::app::workflow",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store"
+            "src::ports::bus_wire",
+            "src::infra::dto",
+            "src::app::adapters::web::data_chart",
+            "src::app::adapters::web::routes::metrics",
+            "src::app::workflow"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 90,
           "sample_dependents": [
-            "src::app::commands::task",
+            "src::ports::bus_wire",
+            "src::app::adapters::web::data_chart",
+            "src::app::adapters::web::routes::metrics",
             "src::app::workflow",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store"
+            "src::app::context_size"
           ]
         },
         {
           "component": "message",
           "impact_radius": 89,
           "sample_dependents": [
-            "src::app::commands::task",
+            "src::ports::bus_wire",
+            "src::app::adapters::web::data_chart",
+            "src::app::adapters::web::routes::metrics",
             "src::app::workflow",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store"
+            "src::app::context_size"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 89,
           "sample_dependents": [
-            "src::app::commands::task",
+            "src::ports::bus_wire",
+            "src::app::adapters::web::data_chart",
+            "src::app::adapters::web::routes::metrics",
             "src::app::workflow",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store"
+            "src::app::context_size"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 71,
           "sample_dependents": [
-            "src::app::commands::task",
+            "src::infra::dto",
+            "src::app::adapters::web::data_chart",
+            "src::app::adapters::web::routes::metrics",
             "src::app::workflow",
-            "src::app::doctor",
-            "src::infra::context_store",
-            "src::app::acp"
+            "src::app::context_size"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
-            "src::app::commands::schedule",
-            "src::app::workflow",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store",
-            "src::infra::sm_store"
+            "src::domain::workitem",
+            "src::app::commands::agent",
+            "src::infra::dto::config",
+            "src::ports::bus_wire",
+            "src::app::transcript_extractor"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::commands::schedule",
-            "src::app::workflow",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store",
-            "src::infra::sm_store"
+            "src::domain::workitem",
+            "src::app::commands::agent",
+            "src::infra::dto::config",
+            "src::ports::bus_wire",
+            "src::app::workflow"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::commands::schedule",
-            "src::app::workflow",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::infra::context_store",
-            "src::infra::sm_store"
+            "src::domain::workitem",
+            "src::app::commands::agent",
+            "src::infra::dto::config",
+            "src::ports::bus_wire",
+            "src::app::workflow"
           ]
         }
       ],
@@ -835,7 +835,7 @@
       "violations": [
         {
           "component": "src::app",
-          "complexity": 248.09,
+          "complexity": 248.1,
           "in_degree": 54,
           "out_degree": 46,
           "betweenness": 0.021
@@ -849,14 +849,14 @@
         },
         {
           "component": "src::domain",
-          "complexity": 82.3,
+          "complexity": 82.31,
           "in_degree": 29,
           "out_degree": 8,
           "betweenness": 0.003
         },
         {
           "component": "src::config",
-          "complexity": 77.47,
+          "complexity": 77.48,
           "in_degree": 34,
           "out_degree": 3,
           "betweenness": 0.005
