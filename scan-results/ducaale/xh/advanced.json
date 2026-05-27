@@ -484,10 +484,10 @@
       "large_cliques": [
         [
           "src::to_curl",
-          "src::utils",
-          "src::request_items",
           "src::cli",
-          "tests"
+          "src::utils",
+          "tests",
+          "src::request_items"
         ]
       ],
       "large_cliques_count": 1,
