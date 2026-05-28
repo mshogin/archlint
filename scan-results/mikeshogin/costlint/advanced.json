@@ -80,14 +80,21 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "pkg::cache::cache",
+          "package": "pkg::counter::counter",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "pkg::perf::perf",
+          "package": "pkg::counter::tiktoken",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::cache::cache",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -115,21 +122,14 @@
           "nodes_count": 1
         },
         {
-          "package": "pkg::counter::tiktoken",
+          "package": "pkg::perf::perf",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "pkg::counter::counter",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "pkg::predict::predict",
+          "package": "cmd::costlint::main",
           "abstractness": 0.0,
           "instability": 1.0,
           "distance": 0.0,
@@ -166,11 +166,11 @@
       "threshold": 0.1,
       "low_clustering_nodes": [
         {
-          "node": "pkg::predict::predict",
+          "node": "cmd::costlint::main",
           "coefficient": 0.0
         },
         {
-          "node": "cmd::costlint::main",
+          "node": "pkg::predict::predict",
           "coefficient": 0.0
         },
         {
@@ -202,9 +202,9 @@
       "description": "Критические узлы (удаление разбивает граф)",
       "status": "WARNING",
       "articulation_points": [
-        "cmd::costlint::main",
         "pkg/pricing",
-        "pkg/telemetry"
+        "pkg/telemetry",
+        "cmd::costlint::main"
       ],
       "count": 3,
       "recommendation": "Уменьшить зависимость от критических узлов"
@@ -214,26 +214,6 @@
       "description": "Критические рёбра (удаление разбивает граф)",
       "status": "INFO",
       "bridges": [
-        {
-          "from": "pkg::daily::daily",
-          "to": "pkg/telemetry"
-        },
-        {
-          "from": "pkg::feature::feature",
-          "to": "pkg/pricing"
-        },
-        {
-          "from": "pkg::reporter::reporter",
-          "to": "pkg/pricing"
-        },
-        {
-          "from": "pkg::budget::budget",
-          "to": "pkg/pricing"
-        },
-        {
-          "from": "pkg::ab::ab",
-          "to": "pkg/pricing"
-        },
         {
           "from": "cmd::costlint::main",
           "to": "pkg/ab"
@@ -265,6 +245,26 @@
         {
           "from": "cmd::costlint::main",
           "to": "pkg/telemetry"
+        },
+        {
+          "from": "pkg::feature::feature",
+          "to": "pkg/pricing"
+        },
+        {
+          "from": "pkg::daily::daily",
+          "to": "pkg/telemetry"
+        },
+        {
+          "from": "pkg::budget::budget",
+          "to": "pkg/pricing"
+        },
+        {
+          "from": "pkg::reporter::reporter",
+          "to": "pkg/pricing"
+        },
+        {
+          "from": "pkg::ab::ab",
+          "to": "pkg/pricing"
         }
       ],
       "count": 13
@@ -327,7 +327,7 @@
           "closeness": 0.043
         },
         {
-          "node": "pkg::predict::predict",
+          "node": "cmd::costlint::main",
           "closeness": 0.0
         }
       ],

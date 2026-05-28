@@ -35,9 +35,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.523,
+      "modularity": 0.525,
       "threshold": 0.3,
-      "communities_count": 7
+      "communities_count": 6
     },
     {
       "name": "abstractness",
@@ -57,7 +57,7 @@
       "status": "ERROR",
       "packages": [
         {
-          "package": "rust_embed",
+          "package": "args",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -66,7 +66,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "git-cliff-core::config",
+          "package": "logger",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -75,7 +75,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "git-cliff-core::error",
+          "package": "clap",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -84,7 +84,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "changelog",
+          "package": "git_cliff_core",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -93,7 +93,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "command",
+          "package": "glob",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -102,7 +102,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "commit",
+          "package": "update_informer",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -111,7 +111,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "config",
+          "package": "regex",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -120,7 +120,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "contributor",
+          "package": "secrecy",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -129,7 +129,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "embed",
+          "package": "url",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -138,7 +138,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "error",
+          "package": "tests",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -149,7 +149,7 @@
       ],
       "violations": [
         {
-          "package": "rust_embed",
+          "package": "args",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -158,7 +158,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "git-cliff-core::config",
+          "package": "logger",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -167,7 +167,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "git-cliff-core::error",
+          "package": "clap",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -176,7 +176,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "changelog",
+          "package": "git_cliff_core",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -185,7 +185,7 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "command",
+          "package": "glob",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -204,35 +204,31 @@
       "threshold": 0.1,
       "low_clustering_nodes": [
         {
-          "node": "git-cliff-core::src::embed",
+          "node": "git-cliff::src::lib",
           "coefficient": 0.0
         },
         {
-          "node": "git-cliff-core::src::lib",
+          "node": "git-cliff::src::args",
           "coefficient": 0.0
         },
         {
-          "node": "git-cliff-core::src::release",
+          "node": "git-cliff::src::logger",
           "coefficient": 0.0
         },
         {
-          "node": "git-cliff-core::src::changelog",
+          "node": "git-cliff::src::bin::completions",
           "coefficient": 0.0
         },
         {
-          "node": "git-cliff-core::src::summary",
+          "node": "git-cliff::src::bin::mangen",
           "coefficient": 0.0
         },
         {
-          "node": "git-cliff-core::src::repo",
+          "node": "git-cliff::src::main",
           "coefficient": 0.0
         },
         {
-          "node": "git-cliff-core::src::statistics",
-          "coefficient": 0.0
-        },
-        {
-          "node": "git-cliff-core::src::template",
+          "node": "git-cliff::examples::basic",
           "coefficient": 0.0
         },
         {
@@ -240,7 +236,11 @@
           "coefficient": 0.0
         },
         {
-          "node": "git-cliff-core::src::process",
+          "node": "git-cliff-core::src::remote::github",
+          "coefficient": 0.0
+        },
+        {
+          "node": "git-cliff-core::src::remote::gitlab",
           "coefficient": 0.0
         }
       ],
@@ -260,25 +260,25 @@
       "description": "Критические узлы (удаление разбивает граф)",
       "status": "WARNING",
       "articulation_points": [
-        "git-cliff-core::src::release",
-        "serde",
-        "git-cliff-core::src::error",
-        "test",
-        "git-cliff-core::src::statistics",
-        "git-cliff-core::src::remote",
-        "git-cliff::src::lib",
-        "git-cliff::src::bin::mangen",
-        "git-cliff::src::bin::completions",
-        "git-cliff::src::main",
-        "git-cliff::src::args",
-        "git_cliff_core",
         "git-cliff::src::logger",
         "git-cliff-core::src::lib",
-        "git-cliff-core::src::config",
-        "git-cliff-core::src::template",
+        "git_cliff_core",
+        "git-cliff::src::bin::completions",
+        "git-cliff::src::bin::mangen",
+        "git-cliff::src::main",
+        "git-cliff-core::src::remote",
+        "git-cliff-core::src::embed",
+        "git-cliff-core::src::statistics",
         "git-cliff-core::src::changelog",
+        "git-cliff-core::src::release",
+        "git-cliff-core::src::error",
+        "test",
+        "git-cliff-core::src::template",
+        "git-cliff-core::src::config",
         "git-cliff-core::src::repo",
-        "git-cliff-core::src::embed"
+        "serde",
+        "git-cliff::src::args",
+        "git-cliff::src::lib"
       ],
       "count": 19,
       "recommendation": "Уменьшить зависимость от критических узлов"
@@ -289,84 +289,84 @@
       "status": "INFO",
       "bridges": [
         {
-          "from": "git-cliff-core::src::embed",
-          "to": "rust_embed"
+          "from": "git-cliff::src::lib",
+          "to": "args"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "changelog"
+          "from": "git-cliff::src::lib",
+          "to": "logger"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "command"
+          "from": "git-cliff::src::lib",
+          "to": "update_informer"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "commit"
+          "from": "git-cliff::src::args",
+          "to": "tests"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "config"
+          "from": "git-cliff::src::args",
+          "to": "serial_test"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "contributor"
+          "from": "git-cliff::src::logger",
+          "to": "git_cliff_core"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "embed"
+          "from": "git-cliff::src::logger",
+          "to": "indicatif"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "error"
+          "from": "git-cliff::src::logger",
+          "to": "owo_colors"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "process"
+          "from": "git-cliff::src::logger",
+          "to": "tracing_subscriber"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "release"
+          "from": "git-cliff::src::bin::completions",
+          "to": "clap_complete"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "remote"
+          "from": "git-cliff::src::bin::mangen",
+          "to": "clap_mangen"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "repo"
+          "from": "git-cliff::src::profiler",
+          "to": "git_cliff_core"
         },
         {
-          "from": "git-cliff-core::src::lib",
-          "to": "statistics"
-        },
-        {
-          "from": "git-cliff-core::src::lib",
-          "to": "summary"
-        },
-        {
-          "from": "git-cliff-core::src::lib",
-          "to": "tag"
-        },
-        {
-          "from": "git-cliff-core::src::lib",
-          "to": "template"
+          "from": "git-cliff::src::main",
+          "to": "profiler"
         },
         {
           "from": "git-cliff-core::src::contributor",
           "to": "serde"
         },
         {
-          "from": "git-cliff-core::src::tag",
-          "to": "test"
+          "from": "git-cliff-core::src::remote",
+          "to": "github"
         },
         {
-          "from": "git-cliff-core::src::release",
-          "to": "next_version"
+          "from": "git-cliff-core::src::remote",
+          "to": "gitlab"
         },
         {
-          "from": "git-cliff-core::src::release",
-          "to": "semver"
+          "from": "git-cliff-core::src::remote",
+          "to": "bitbucket"
+        },
+        {
+          "from": "git-cliff-core::src::remote",
+          "to": "gitea"
+        },
+        {
+          "from": "git-cliff-core::src::remote",
+          "to": "azure_devops"
+        },
+        {
+          "from": "git-cliff-core::src::remote",
+          "to": "dyn_clone"
         }
       ],
       "count": 52
@@ -420,15 +420,15 @@
           "closeness": 0.067
         },
         {
-          "node": "git-cliff-core::commit",
-          "closeness": 0.058
-        },
-        {
-          "node": "git-cliff-core::remote",
+          "node": "clap",
           "closeness": 0.058
         },
         {
           "node": "reqwest_middleware",
+          "closeness": 0.058
+        },
+        {
+          "node": "git-cliff-core::remote",
           "closeness": 0.058
         }
       ],
@@ -495,26 +495,26 @@
         "5": 24
       },
       "high_core_nodes": [
-        "git-cliff-core::src::release",
-        "git-cliff-core::src::changelog",
-        "git-cliff-core::src::repo",
-        "git-cliff-core::src::statistics",
-        "git-cliff-core::src::template",
         "git-cliff-core::src::commit",
-        "git-cliff-core::src::process",
-        "git-cliff-core::src::config",
+        "git-cliff-core::src::remote::github",
+        "git-cliff-core::src::remote::gitlab",
+        "git-cliff-core::src::remote::gitea",
         "git-cliff-core::src::remote::azure_devops",
         "git-cliff-core::src::remote::bitbucket",
-        "git-cliff-core::src::remote::gitlab",
-        "git-cliff-core::src::remote::github",
-        "git-cliff-core::src::remote::gitea",
+        "git-cliff-core::src::template",
+        "git-cliff-core::src::release",
+        "git-cliff-core::src::statistics",
+        "git-cliff-core::src::config",
+        "git-cliff-core::src::repo",
+        "git-cliff-core::src::changelog",
+        "git-cliff-core::src::process",
+        "regex",
+        "serde",
         "git-cliff-core::config",
         "git-cliff-core::error",
-        "serde",
         "test",
-        "git-cliff-core::commit",
-        "pretty_assertions",
-        "git-cliff-core::remote"
+        "async_stream",
+        "futures"
       ],
       "high_core_count": 24
     },

@@ -21,10 +21,10 @@
       "status": "FAILED",
       "cycles": [
         [
-          "errors"
+          "context"
         ],
         [
-          "context"
+          "errors"
         ]
       ],
       "cycles_count": 2
@@ -36,13 +36,23 @@
       "threshold": 5,
       "violations": [
         {
-          "node": "_tools::src::golang.org::x::sys::execabs::execabs",
+          "node": "license_test",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
+          "node": "example::cmd::client::main",
           "fan_out": 6,
           "threshold": 5
         },
         {
-          "node": "_tools::src::golang.org::x::tools::go::loader::loader",
-          "fan_out": 15,
+          "node": "example::cmd::server::main",
+          "fan_out": 8,
+          "threshold": 5
+        },
+        {
+          "node": "_tools::src::golang.org::x::sys::execabs::execabs",
+          "fan_out": 6,
           "threshold": 5
         },
         {
@@ -51,18 +61,8 @@
           "threshold": 5
         },
         {
-          "node": "_tools::src::golang.org::x::tools::go::buildutil::allpackages",
-          "fan_out": 6,
-          "threshold": 5
-        },
-        {
-          "node": "_tools::src::golang.org::x::tools::go::buildutil::fakecontext",
-          "fan_out": 10,
-          "threshold": 5
-        },
-        {
-          "node": "_tools::src::golang.org::x::tools::go::buildutil::overlay",
-          "fan_out": 9,
+          "node": "_tools::src::golang.org::x::tools::go::loader::loader",
+          "fan_out": 15,
           "threshold": 5
         },
         {
@@ -71,18 +71,18 @@
           "threshold": 5
         },
         {
-          "node": "_tools::src::golang.org::x::tools::go::internal::cgo::cgo",
-          "fan_out": 12,
+          "node": "_tools::src::golang.org::x::tools::go::buildutil::allpackages",
+          "fan_out": 6,
           "threshold": 5
         },
         {
-          "node": "_tools::src::github.com::kisielk::errcheck::main",
+          "node": "_tools::src::golang.org::x::tools::go::buildutil::overlay",
+          "fan_out": 9,
+          "threshold": 5
+        },
+        {
+          "node": "_tools::src::golang.org::x::tools::go::buildutil::fakecontext",
           "fan_out": 10,
-          "threshold": 5
-        },
-        {
-          "node": "_tools::src::github.com::kisielk::errcheck::internal::errcheck::errcheck",
-          "fan_out": 13,
           "threshold": 5
         }
       ],
@@ -124,9 +124,9 @@
           "ce_threshold": 10
         },
         {
-          "node": "_tools::src::google.golang.org::protobuf::encoding::prototext::encode",
+          "node": "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
           "afferent_coupling": 0,
-          "efferent_coupling": 15,
+          "efferent_coupling": 17,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -138,16 +138,16 @@
           "ce_threshold": 10
         },
         {
-          "node": "_tools::src::google.golang.org::protobuf::compiler::protogen::protogen",
+          "node": "_tools::src::google.golang.org::protobuf::encoding::prototext::encode",
           "afferent_coupling": 0,
-          "efferent_coupling": 24,
+          "efferent_coupling": 15,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
-          "node": "_tools::src::google.golang.org::protobuf::cmd::protoc-gen-go::internal_gengo::main",
+          "node": "_tools::src::google.golang.org::protobuf::internal::filedesc::desc",
           "afferent_coupling": 0,
-          "efferent_coupling": 17,
+          "efferent_coupling": 13,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -174,34 +174,34 @@
       "status": "PASSED",
       "most_unstable": [
         {
-          "node": "_tools::src::golang.org::x::sys::execabs::execabs",
+          "node": "license_test",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 7
+        },
+        {
+          "node": "client_options_test",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 4
+        },
+        {
+          "node": "example::cmd::client::main",
           "instability": 1.0,
           "ca": 0,
           "ce": 6
         },
         {
-          "node": "_tools::src::golang.org::x::tools::go::ast::astutil::rewrite",
+          "node": "example::cmd::server::main",
           "instability": 1.0,
           "ca": 0,
-          "ce": 4
+          "ce": 8
         },
         {
-          "node": "_tools::src::golang.org::x::tools::go::ast::astutil::enclosing",
+          "node": "example::cmd::server::statter",
           "instability": 1.0,
           "ca": 0,
-          "ce": 4
-        },
-        {
-          "node": "_tools::src::golang.org::x::tools::go::ast::astutil::imports",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 5
-        },
-        {
-          "node": "_tools::src::golang.org::x::tools::go::loader::loader",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 15
+          "ce": 3
         }
       ],
       "most_stable": [
@@ -212,25 +212,25 @@
           "ce": 0
         },
         {
-          "node": "no_package_name",
+          "node": "url",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "assert",
+          "node": "y",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "require",
+          "node": "emptypb",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "twirptest",
+          "node": "wrapperspb",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -365,26 +365,26 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
+        "example::gen",
+        "example::service.twirp",
         "_tools::src::golang.org::x::tools::go::ast::astutil::util",
         "_tools::src::golang.org::x::tools::go::loader::doc",
         "_tools::src::golang.org::x::tools::go::buildutil::tags",
         "_tools::src::github.com::kisielk::gotool::tool",
-        "_tools::src::github.com::twitchtv::retool::add",
         "_tools::src::github.com::twitchtv::retool::sync",
-        "_tools::src::github.com::twitchtv::retool::upgrade",
+        "_tools::src::github.com::twitchtv::retool::add",
         "_tools::src::github.com::twitchtv::retool::build",
         "_tools::src::github.com::twitchtv::retool::remove",
+        "_tools::src::github.com::twitchtv::retool::upgrade",
+        "_tools::src::google.golang.org::protobuf::encoding::prototext::doc",
         "_tools::src::google.golang.org::protobuf::proto::doc",
         "_tools::src::google.golang.org::protobuf::proto::wrappers",
-        "_tools::src::google.golang.org::protobuf::reflect::protoreflect::type",
-        "_tools::src::google.golang.org::protobuf::reflect::protoreflect::value_pure",
-        "_tools::src::google.golang.org::protobuf::reflect::protoreflect::value",
-        "_tools::src::google.golang.org::protobuf::reflect::protoreflect::source_gen",
-        "_tools::src::google.golang.org::protobuf::encoding::prototext::doc",
         "_tools::src::google.golang.org::protobuf::runtime::protoiface::legacy",
-        "_tools::src::google.golang.org::protobuf::internal::descopts::options",
+        "_tools::src::google.golang.org::protobuf::internal::strs::strings_pure",
+        "_tools::src::google.golang.org::protobuf::internal::pragma::pragma",
         "_tools::src::google.golang.org::protobuf::internal::errors::is_go112",
-        "_tools::src::google.golang.org::protobuf::internal::errors::is_go113"
+        "_tools::src::google.golang.org::protobuf::internal::errors::is_go113",
+        "_tools::src::google.golang.org::protobuf::internal::encoding::text::doc"
       ],
       "orphans_count": 81
     },

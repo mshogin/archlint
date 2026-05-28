@@ -43,11 +43,6 @@
           "threshold": 5
         },
         {
-          "node": "src::main",
-          "fan_out": 11,
-          "threshold": 5
-        },
-        {
           "node": "src::benchmark::scheduler",
           "fan_out": 6,
           "threshold": 5
@@ -61,6 +56,11 @@
           "node": "src::benchmark",
           "fan_out": 13,
           "threshold": 5
+        },
+        {
+          "node": "src::main",
+          "fan_out": 11,
+          "threshold": 5
         }
       ],
       "violations_count": 6
@@ -73,13 +73,6 @@
       "ce_threshold": 10,
       "violations": [
         {
-          "node": "src::util",
-          "afferent_coupling": 18,
-          "efferent_coupling": 5,
-          "ca_threshold": 10,
-          "ce_threshold": 10
-        },
-        {
           "node": "src::export",
           "afferent_coupling": 5,
           "efferent_coupling": 15,
@@ -87,9 +80,9 @@
           "ce_threshold": 10
         },
         {
-          "node": "src::main",
-          "afferent_coupling": 0,
-          "efferent_coupling": 11,
+          "node": "src::util",
+          "afferent_coupling": 18,
+          "efferent_coupling": 5,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -97,6 +90,13 @@
           "node": "src::benchmark",
           "afferent_coupling": 7,
           "efferent_coupling": 13,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::main",
+          "afferent_coupling": 0,
+          "efferent_coupling": 11,
           "ca_threshold": 10,
           "ce_threshold": 10
         }
@@ -109,22 +109,10 @@
       "status": "ERROR",
       "most_unstable": [
         {
-          "node": "src::export::tests",
+          "node": "src::parameter::range_step",
           "instability": 1.0,
           "ca": 0,
-          "ce": 4
-        },
-        {
-          "node": "src::export::csv",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 4
-        },
-        {
-          "node": "src::export::json",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 4
+          "ce": 3
         },
         {
           "node": "src::export::asciidoc",
@@ -133,33 +121,45 @@
           "ce": 2
         },
         {
-          "node": "src::export::orgmode",
+          "node": "src::export::markdown",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
+        },
+        {
+          "node": "src::export::markup",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 5
+        },
+        {
+          "node": "src::export::csv",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 4
         }
       ],
       "most_stable": [
         {
-          "node": "scheduler",
+          "node": "output",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "timing_result",
+          "node": "parameter",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "range_step",
+          "node": "timer",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "tokenize",
+          "node": "util",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -278,14 +278,14 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
-        "src::util::randomized_environment_offset",
-        "src::util::min_max",
-        "src::util::number",
-        "src::util::exit_code",
-        "src::util::units",
+        "build",
         "src::parameter::tokenize",
-        "tests::common",
-        "build"
+        "src::util::randomized_environment_offset",
+        "src::util::number",
+        "src::util::units",
+        "src::util::min_max",
+        "src::util::exit_code",
+        "tests::common"
       ],
       "orphans_count": 8
     },

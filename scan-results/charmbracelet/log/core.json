@@ -45,13 +45,51 @@
       "status": "PASSED",
       "most_unstable": [
         {
-          "node": "logger_no121",
+          "node": "pkg_test",
           "instability": 0.5,
           "ca": 0,
           "ce": 0
         },
         {
-          "node": "logger_121_test",
+          "node": "text_test",
+          "instability": 0.5,
+          "ca": 0,
+          "ce": 0
+        },
+        {
+          "node": "context",
+          "instability": 0.5,
+          "ca": 0,
+          "ce": 0
+        },
+        {
+          "node": "doc",
+          "instability": 0.5,
+          "ca": 0,
+          "ce": 0
+        },
+        {
+          "node": "stdlog",
+          "instability": 0.5,
+          "ca": 0,
+          "ce": 0
+        }
+      ],
+      "most_stable": [
+        {
+          "node": "stdlog_test",
+          "instability": 0.5,
+          "ca": 0,
+          "ce": 0
+        },
+        {
+          "node": "styles",
+          "instability": 0.5,
+          "ca": 0,
+          "ce": 0
+        },
+        {
+          "node": "context_test",
           "instability": 0.5,
           "ca": 0,
           "ce": 0
@@ -63,45 +101,7 @@
           "ce": 0
         },
         {
-          "node": "pkg_test",
-          "instability": 0.5,
-          "ca": 0,
-          "ce": 0
-        },
-        {
-          "node": "doc",
-          "instability": 0.5,
-          "ca": 0,
-          "ce": 0
-        }
-      ],
-      "most_stable": [
-        {
-          "node": "examples::chocolate-chips::chocolate-chips",
-          "instability": 0.5,
-          "ca": 0,
-          "ce": 0
-        },
-        {
-          "node": "examples::oven::oven",
-          "instability": 0.5,
-          "ca": 0,
-          "ce": 0
-        },
-        {
-          "node": "examples::slog::main",
-          "instability": 0.5,
-          "ca": 0,
-          "ce": 0
-        },
-        {
-          "node": "examples::log::log",
-          "instability": 0.5,
-          "ca": 0,
-          "ce": 0
-        },
-        {
-          "node": "logfmt",
+          "node": "formatter",
           "instability": 0.5,
           "ca": 0,
           "ce": 0
@@ -175,26 +175,26 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
-        "logger_no121",
-        "logger_121_test",
-        "logger_test",
         "pkg_test",
-        "doc",
-        "options",
-        "json_test",
-        "context",
-        "pkg",
-        "logfmt_test",
-        "json",
-        "stdlog_test",
-        "level",
-        "styles",
-        "logger_121",
-        "text",
-        "context_test",
         "text_test",
-        "formatter",
-        "options_test"
+        "context",
+        "doc",
+        "stdlog",
+        "level_test",
+        "options",
+        "level",
+        "pkg",
+        "logger",
+        "logger_121",
+        "logfmt",
+        "logfmt_test",
+        "logger_121_test",
+        "options_test",
+        "logger_no121",
+        "json",
+        "json_test",
+        "text",
+        "examples::oven::oven"
       ],
       "orphans_count": 37
     },

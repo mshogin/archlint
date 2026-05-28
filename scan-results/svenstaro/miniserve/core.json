@@ -21,8 +21,8 @@
       "status": "FAILED",
       "cycles": [
         [
-          "src::renderer",
-          "src::listing"
+          "src::listing",
+          "src::renderer"
         ]
       ],
       "cycles_count": 1
@@ -34,6 +34,11 @@
       "threshold": 5,
       "violations": [
         {
+          "node": "src::args",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
           "node": "src::listing",
           "fan_out": 6,
           "threshold": 5
@@ -41,11 +46,6 @@
         {
           "node": "src::main",
           "fan_out": 17,
-          "threshold": 5
-        },
-        {
-          "node": "src::args",
-          "fan_out": 7,
           "threshold": 5
         }
       ],
@@ -94,25 +94,25 @@
           "ce": 17
         },
         {
-          "node": "tests::cli",
+          "node": "tests::serve_request",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
         },
         {
-          "node": "tests::create_directories",
+          "node": "tests::upload_files",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
         },
         {
-          "node": "tests::rm_files",
+          "node": "tests::archive",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
         },
         {
-          "node": "tests::raw",
+          "node": "tests::paste",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
@@ -120,13 +120,13 @@
       ],
       "most_stable": [
         {
-          "node": "webdav_fs",
+          "node": "renderer",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "AuthParseError",
+          "node": "webdav_fs",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -248,8 +248,8 @@
       "total_sccs": 52,
       "problematic_sccs": [
         [
-          "src::renderer",
-          "src::listing"
+          "src::listing",
+          "src::renderer"
         ]
       ],
       "problematic_count": 1

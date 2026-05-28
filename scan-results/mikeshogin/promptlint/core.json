@@ -51,10 +51,16 @@
       "status": "PASSED",
       "most_unstable": [
         {
-          "node": "pkg::router::router",
+          "node": "cmd::promptlint::main",
           "instability": 1.0,
           "ca": 0,
-          "ce": 2
+          "ce": 9
+        },
+        {
+          "node": "pkg::analyzer::analyzer",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 3
         },
         {
           "node": "pkg::middleware::middleware",
@@ -63,13 +69,7 @@
           "ce": 1
         },
         {
-          "node": "pkg::abtest::abtest",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 2
-        },
-        {
-          "node": "pkg::analyzer::analyzer",
+          "node": "pkg::server::server",
           "instability": 1.0,
           "ca": 0,
           "ce": 3
@@ -83,24 +83,6 @@
       ],
       "most_stable": [
         {
-          "node": "pkg/abtest",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "pkg/perf",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "pkg/server",
-          "instability": 0.0,
-          "ca": 1,
-          "ce": 0
-        },
-        {
           "node": "pkg/template",
           "instability": 0.0,
           "ca": 1,
@@ -108,6 +90,24 @@
         },
         {
           "node": "pkg/trend",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "pkg/validator",
+          "instability": 0.0,
+          "ca": 3,
+          "ce": 0
+        },
+        {
+          "node": "pkg/metrics",
+          "instability": 0.0,
+          "ca": 3,
+          "ce": 0
+        },
+        {
+          "node": "pkg/score",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -181,16 +181,16 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
-        "pkg::trend::trend_test",
-        "pkg::trend::trend",
-        "pkg::validator::validator",
-        "pkg::template::template",
         "pkg::template::template_test",
+        "pkg::template::template",
         "pkg::analyzer::analyzer_test",
-        "pkg::metrics::domain",
-        "pkg::metrics::basic",
+        "pkg::validator::validator",
+        "pkg::config::config",
         "pkg::metrics::nlp",
-        "pkg::config::config"
+        "pkg::metrics::basic",
+        "pkg::metrics::domain",
+        "pkg::trend::trend_test",
+        "pkg::trend::trend"
       ],
       "orphans_count": 10
     },
@@ -209,8 +209,8 @@
       "depth": 1,
       "max_depth": 10,
       "longest_path": [
-        "pkg::analyzer::analyzer",
-        "pkg/score"
+        "cmd::promptlint::main",
+        "pkg/abtest"
       ]
     },
     {

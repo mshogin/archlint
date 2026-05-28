@@ -83,25 +83,13 @@
       "status": "ERROR",
       "most_unstable": [
         {
-          "node": "src::generation",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 2
-        },
-        {
           "node": "src::message_signature",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
         },
         {
-          "node": "src::formatting::headers",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 2
-        },
-        {
-          "node": "src::formatting::palette",
+          "node": "src::generation",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
@@ -111,6 +99,18 @@
           "instability": 1.0,
           "ca": 0,
           "ce": 4
+        },
+        {
+          "node": "src::formatting::palette",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
+          "node": "src::formatting::headers",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
         }
       ],
       "most_stable": [
@@ -253,10 +253,10 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
+        "build",
         "src::error_reporting",
-        "tests::cases::auth_message_signature",
         "tests::server",
-        "build"
+        "tests::cases::auth_message_signature"
       ],
       "orphans_count": 4
     },
