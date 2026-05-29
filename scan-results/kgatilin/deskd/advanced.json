@@ -628,110 +628,110 @@
           "component": "tests",
           "impact_radius": 121,
           "sample_dependents": [
-            "src::app::commands::sm",
-            "src::app::tmux_launcher",
-            "src::app::adapters::web::view::breadcrumb",
-            "src::app::adapters",
-            "src::app::context"
+            "src::app::mcp_service",
+            "src::app::adapters::web::routes::agent_task",
+            "src::app::adapters::web::routes",
+            "src::infra::dto::config",
+            "src::app::jsonrpc"
           ]
         },
         {
           "component": "task",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::adapters::web::routes::dashboard",
-            "src::app::commands::sm",
-            "src::app::adapters",
-            "src::app::context",
-            "src::ports::bus"
+            "src::app::mcp_service",
+            "src::app::adapters::web::routes::agent_task",
+            "src::app::adapters::web::routes",
+            "src::app::adapters::web::routes::metrics",
+            "src::infra::dto::config"
           ]
         },
         {
           "component": "context",
           "impact_radius": 91,
           "sample_dependents": [
-            "src::app::adapters::web::routes::dashboard",
-            "src::app::commands::sm",
-            "src::app::adapters",
-            "src::app::context",
-            "src::ports::bus"
+            "src::app::mcp_service",
+            "src::app::adapters::web::routes::agent_task",
+            "src::app::adapters::web::routes",
+            "src::app::adapters::web::routes::metrics",
+            "src::infra::dto::config"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 90,
           "sample_dependents": [
-            "src::app::adapters::web::routes::dashboard",
-            "src::app::commands::sm",
-            "src::app::adapters",
-            "src::app::context",
-            "src::ports::bus"
+            "src::app::mcp_service",
+            "src::app::adapters::web::routes::agent_task",
+            "src::app::adapters::web::routes",
+            "src::app::adapters::web::routes::metrics",
+            "src::infra::dto::config"
           ]
         },
         {
           "component": "message",
           "impact_radius": 89,
           "sample_dependents": [
-            "src::app::adapters::web::routes::dashboard",
-            "src::app::commands::sm",
-            "src::app::adapters",
-            "src::app::context",
-            "src::ports::bus"
+            "src::app::mcp_service",
+            "src::app::adapters::web::routes::agent_task",
+            "src::app::adapters::web::routes",
+            "src::app::adapters::web::routes::metrics",
+            "src::infra::dto::config"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 89,
           "sample_dependents": [
-            "src::app::adapters::web::routes::dashboard",
-            "src::app::commands::sm",
-            "src::app::adapters",
-            "src::app::context",
-            "src::ports::bus"
+            "src::app::mcp_service",
+            "src::app::adapters::web::routes::agent_task",
+            "src::app::adapters::web::routes",
+            "src::app::adapters::web::routes::metrics",
+            "src::infra::dto::config"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 71,
           "sample_dependents": [
-            "src::app::adapters::web::routes::dashboard",
-            "src::app::commands::sm",
-            "src::app::context",
-            "src::app::a2a_server",
-            "src::app::adapters::web::data"
+            "src::app::mcp_service",
+            "src::app::adapters::web::routes::agent_task",
+            "src::app::adapters::web::routes",
+            "src::app::adapters::web::routes::metrics",
+            "src::app::adapters::federation::peer"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::commands::remind",
-            "src::infra::memory_store",
-            "src::app::commands::sm",
-            "src::infra::dto::instance"
+            "src::app::mcp_service",
+            "src::app::adapters::web::data",
+            "src::infra::dto::config",
+            "src::app::commands::bus",
+            "src::app::acp"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::commands::remind",
-            "src::infra::memory_store",
-            "src::app::commands::sm",
-            "src::infra::dto::instance"
+            "src::app::mcp_service",
+            "src::app::adapters::web::data",
+            "src::infra::dto::config",
+            "src::app::commands::bus",
+            "src::app::acp"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::commands::a2a",
-            "src::app::commands::remind",
-            "src::infra::memory_store",
-            "src::app::commands::sm",
-            "src::infra::dto::instance"
+            "src::app::mcp_service",
+            "src::app::adapters::web::data",
+            "src::infra::dto::config",
+            "src::app::commands::bus",
+            "src::app::acp"
           ]
         }
       ],
