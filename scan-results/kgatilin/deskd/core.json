@@ -11,8 +11,8 @@
     "errors": 5
   },
   "graph": {
-    "nodes": 350,
-    "edges": 492
+    "nodes": 359,
+    "edges": 504
   },
   "checks": [
     {
@@ -65,12 +65,12 @@
         },
         {
           "node": "src::app::adapters::web::routes",
-          "fan_out": 15,
+          "fan_out": 16,
           "threshold": 5
         },
         {
           "node": "src::app::adapters::web",
-          "fan_out": 15,
+          "fan_out": 18,
           "threshold": 5
         },
         {
@@ -118,7 +118,7 @@
         },
         {
           "node": "src::app",
-          "afferent_coupling": 54,
+          "afferent_coupling": 57,
           "efferent_coupling": 47,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -133,27 +133,27 @@
         {
           "node": "src::app::adapters::web::routes",
           "afferent_coupling": 0,
-          "efferent_coupling": 15,
+          "efferent_coupling": 16,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "src::app::adapters::web",
           "afferent_coupling": 0,
-          "efferent_coupling": 15,
+          "efferent_coupling": 18,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "tests",
-          "afferent_coupling": 108,
+          "afferent_coupling": 111,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
         {
           "node": "deskd",
-          "afferent_coupling": 15,
+          "afferent_coupling": 17,
           "efferent_coupling": 0,
           "ca_threshold": 10,
           "ce_threshold": 10
@@ -225,7 +225,7 @@
         {
           "node": "deskd",
           "instability": 0.0,
-          "ca": 15,
+          "ca": 17,
           "ce": 0
         }
       ],
@@ -307,14 +307,14 @@
       "hubs": [
         {
           "node": "tests",
-          "total_degree": 108,
-          "in_degree": 108,
+          "total_degree": 111,
+          "in_degree": 111,
           "out_degree": 0
         },
         {
           "node": "src::app",
-          "total_degree": 101,
-          "in_degree": 54,
+          "total_degree": 104,
+          "in_degree": 57,
           "out_degree": 47
         },
         {
@@ -348,22 +348,22 @@
           "out_degree": 19
         },
         {
-          "node": "src::app::adapters::web::routes",
-          "total_degree": 15,
-          "in_degree": 0,
-          "out_degree": 15
-        },
-        {
           "node": "src::app::adapters::web",
-          "total_degree": 15,
+          "total_degree": 18,
           "in_degree": 0,
-          "out_degree": 15
+          "out_degree": 18
         },
         {
           "node": "deskd",
-          "total_degree": 15,
-          "in_degree": 15,
+          "total_degree": 17,
+          "in_degree": 17,
           "out_degree": 0
+        },
+        {
+          "node": "src::app::adapters::web::routes",
+          "total_degree": 16,
+          "in_degree": 0,
+          "out_degree": 16
         }
       ],
       "hubs_count": 10
@@ -393,7 +393,7 @@
       "name": "strongly_connected_components",
       "description": "Группы с взаимными зависимостями (размер > 1)",
       "status": "PASSED",
-      "total_sccs": 350,
+      "total_sccs": 359,
       "problematic_sccs": [],
       "problematic_count": 0
     },

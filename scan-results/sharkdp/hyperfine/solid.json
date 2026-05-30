@@ -28,45 +28,45 @@
             "src::util",
             "csv",
             "src::benchmark",
+            "src::markdown",
             "markup",
-            "orgmode",
-            "src::csv",
-            "src::orgmode",
+            "src::asciidoc",
             "json",
-            "asciidoc",
-            "src::options"
+            "orgmode",
+            "tests",
+            "src::json"
           ]
         },
         {
           "package": "src::benchmark",
           "domains_count": 12,
           "domains": [
-            "timing_result",
-            "executor",
             "src::util",
-            "src::output",
-            "src::executor",
+            "src::outlier_detection",
+            "relative_speed",
+            "benchmark_result",
+            "timing_result",
             "src::command",
             "src::parameter",
+            "src::executor",
             "scheduler",
-            "relative_speed",
-            "benchmark_result"
+            "src::output"
           ]
         },
         {
           "package": "src::main",
           "domains_count": 11,
           "domains": [
-            "outlier_detection",
-            "command",
-            "export",
-            "parameter",
-            "error",
-            "benchmark",
             "cli",
-            "timer",
+            "error",
+            "parameter",
+            "export",
+            "benchmark",
             "util",
-            "options"
+            "command",
+            "options",
+            "outlier_detection",
+            "output"
           ]
         },
         {
@@ -74,23 +74,23 @@
           "domains_count": 6,
           "domains": [
             "src::util",
-            "windows_timer",
-            "windows_sys",
-            "wall_clock_timer",
             "unix_timer",
-            "nix"
+            "windows_sys",
+            "nix",
+            "wall_clock_timer",
+            "windows_timer"
           ]
         },
         {
           "package": "src::benchmark::scheduler",
           "domains_count": 6,
           "domains": [
-            "src::executor",
+            "src::cli",
             "src::command",
             "src::benchmark_result",
-            "src::options",
-            "src::cli",
-            "src::export"
+            "src::export",
+            "src::executor",
+            "src::options"
           ]
         },
         {
@@ -98,10 +98,10 @@
           "domains_count": 6,
           "domains": [
             "src::util",
-            "src::output",
-            "src::timing_result",
             "src::command",
+            "src::timing_result",
             "src::timer",
+            "src::output",
             "src::options"
           ]
         },
@@ -111,8 +111,8 @@
           "domains": [
             "src::util",
             "src::benchmark",
-            "src::Exporter",
             "src::output",
+            "src::Exporter",
             "src::options"
           ]
         },
@@ -120,20 +120,20 @@
           "package": "src::util",
           "domains_count": 5,
           "domains": [
+            "units",
             "number",
             "exit_code",
-            "min_max",
             "randomized_environment_offset",
-            "units"
+            "min_max"
           ]
         },
         {
           "package": "src::export::csv",
           "domains_count": 4,
           "domains": [
-            "src::options",
             "src::util",
             "src::benchmark",
+            "src::options",
             "src::Exporter"
           ]
         },
@@ -141,10 +141,10 @@
           "package": "src::export::tests",
           "domains_count": 4,
           "domains": [
+            "src::export",
             "src::util",
             "src::benchmark",
-            "src::Exporter",
-            "src::export"
+            "src::Exporter"
           ]
         }
       ],

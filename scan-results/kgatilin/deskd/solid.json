@@ -11,8 +11,8 @@
     "errors": 1
   },
   "graph": {
-    "nodes": 350,
-    "edges": 492
+    "nodes": 359,
+    "edges": 504
   },
   "checks": [
     {
@@ -25,150 +25,150 @@
           "package": "src::app",
           "domains_count": 47,
           "domains": [
-            "worker",
-            "context_log",
-            "config_remotes",
-            "a2a_jwt",
-            "alerts",
-            "adapters",
+            "task",
+            "jsonrpc",
+            "bus",
+            "doctor",
             "graph",
             "context",
-            "scope",
-            "agent_registry"
+            "mcp_tools",
+            "message",
+            "mcp_service",
+            "commands"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 19,
           "domains": [
+            "task",
             "status",
-            "upgrade",
-            "remind",
+            "bus",
+            "doctor",
             "graph",
-            "dashboard",
+            "session",
+            "restart",
             "context",
-            "agent",
-            "sm",
-            "tests",
-            "tui"
-          ]
-        },
-        {
-          "package": "src::app::adapters::web::routes",
-          "domains_count": 15,
-          "domains": [
-            "agent_log",
-            "health",
-            "login",
-            "logout",
-            "sse",
-            "tests",
-            "cost",
-            "src::app",
-            "cost_feed",
-            "github_webhook"
+            "a2a",
+            "agent"
           ]
         },
         {
           "package": "src::app::adapters::web",
-          "domains_count": 15,
+          "domains_count": 18,
           "domains": [
-            "data_log",
-            "state",
-            "data",
+            "src::app",
             "audit",
-            "templates",
-            "src::config",
-            "data_cost",
+            "data_log",
             "view",
-            "data_chart",
-            "dispatch"
+            "src::config",
+            "routes",
+            "middleware",
+            "state",
+            "auth",
+            "data_cost"
+          ]
+        },
+        {
+          "package": "src::app::adapters::web::routes",
+          "domains_count": 16,
+          "domains": [
+            "login",
+            "agent_log",
+            "panel",
+            "src::app",
+            "tests",
+            "health",
+            "sse",
+            "dashboard",
+            "metrics",
+            "cost_feed"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
-            "agent_file",
+            "diag",
+            "context_store",
             "dto",
-            "sm_store",
             "memory_store",
-            "bus_server",
             "unix_bus",
             "paths",
-            "diag",
-            "task_store",
-            "context_store"
+            "bus_server",
+            "agent_file",
+            "memory_bus",
+            "sm_store"
           ]
         },
         {
           "package": "src::app::adapters::web::view",
           "domains_count": 9,
           "domains": [
-            "detail",
-            "log",
-            "strip",
             "task",
             "tests",
-            "breadcrumb",
-            "cost",
+            "chart",
+            "strip",
+            "log",
+            "detail",
             "cards",
-            "chart"
+            "breadcrumb",
+            "cost"
           ]
         },
         {
           "package": "src::domain",
           "domains_count": 8,
           "domains": [
-            "events",
-            "agent",
+            "statemachine",
             "task",
             "workitem",
-            "message",
             "config_types",
-            "statemachine",
-            "context"
+            "context",
+            "message",
+            "events",
+            "agent"
           ]
         },
         {
           "package": "src::app::adapters::web::state",
           "domains_count": 8,
           "domains": [
-            "src::auth",
+            "src::app",
             "src::dispatch",
+            "src::auth",
             "src::config",
-            "src::audit",
             "src::routes",
             "src::data_cost",
             "src::middleware",
-            "src::app"
+            "src::audit"
           ]
         },
         {
           "package": "src::app::adapters::federation",
           "domains_count": 8,
           "domains": [
-            "forward",
             "hub",
-            "preflight",
+            "forward",
             "peer",
-            "glob",
-            "registry",
+            "preflight",
             "routing",
-            "frame"
+            "frame",
+            "registry",
+            "glob"
           ]
         },
         {
           "package": "src::app::transcript_extractor",
           "domains_count": 7,
           "domains": [
-            "src::infra",
-            "event_store",
-            "events",
-            "parser",
             "tests",
+            "parser",
+            "src::infra",
             "patterns",
-            "cursors"
+            "cursors",
+            "event_store",
+            "events"
           ]
         }
       ],
@@ -179,10 +179,10 @@
       "description": "Соотношение абстракций >= 20% (OCP)",
       "status": "WARNING",
       "abstractions": 7,
-      "implementations": 343,
-      "ratio": 0.02,
+      "implementations": 352,
+      "ratio": 0.019,
       "threshold": 0.2,
-      "issue": "Низкое соотношение абстракций (2.00%) - плохая расширяемость"
+      "issue": "Низкое соотношение абстракций (1.95%) - плохая расширяемость"
     },
     {
       "name": "liskov_substitution",

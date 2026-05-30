@@ -621,10 +621,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::warnings",
-            "src::parameter",
-            "src::benchmark::executor",
-            "src::benchmark::benchmark_result",
-            "src::command"
+            "src::output::progress_bar",
+            "src::export::orgmode",
+            "src::export::asciidoc",
+            "src::timer::unix_timer"
           ]
         },
         {
@@ -632,10 +632,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::warnings",
-            "src::parameter",
-            "src::benchmark::executor",
-            "src::benchmark::benchmark_result",
-            "src::command"
+            "src::output::progress_bar",
+            "src::export::orgmode",
+            "src::export::asciidoc",
+            "src::timer::unix_timer"
           ]
         },
         {
@@ -643,10 +643,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::warnings",
-            "src::parameter",
-            "src::benchmark::executor",
-            "src::benchmark::benchmark_result",
-            "src::command"
+            "src::output::progress_bar",
+            "src::export::orgmode",
+            "src::export::asciidoc",
+            "src::timer::unix_timer"
           ]
         },
         {
@@ -654,10 +654,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::warnings",
-            "src::parameter",
-            "src::benchmark::executor",
-            "src::benchmark::benchmark_result",
-            "src::command"
+            "src::output::progress_bar",
+            "src::export::orgmode",
+            "src::export::asciidoc",
+            "src::timer::unix_timer"
           ]
         },
         {
@@ -665,10 +665,10 @@
           "impact_radius": 25,
           "sample_dependents": [
             "src::output::warnings",
-            "src::parameter",
-            "src::benchmark::executor",
-            "src::benchmark::benchmark_result",
-            "src::command"
+            "src::output::progress_bar",
+            "src::export::orgmode",
+            "src::export::asciidoc",
+            "src::timer::unix_timer"
           ]
         },
         {
@@ -676,10 +676,10 @@
           "impact_radius": 24,
           "sample_dependents": [
             "src::output::warnings",
-            "src::parameter",
-            "src::benchmark::executor",
-            "src::benchmark::benchmark_result",
-            "src::command"
+            "src::output::progress_bar",
+            "src::export::orgmode",
+            "src::export::asciidoc",
+            "src::timer::unix_timer"
           ]
         }
       ],
