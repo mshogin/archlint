@@ -25,61 +25,61 @@
           "package": "src::main",
           "domains_count": 17,
           "domains": [
-            "src::file_op",
-            "src::errors",
-            "auth",
-            "errors",
-            "file_op",
-            "pipe",
-            "src::webdav_fs",
-            "file_utils",
             "webdav_fs",
-            "consts"
+            "pipe",
+            "config",
+            "src::webdav_fs",
+            "renderer",
+            "auth",
+            "src::file_op",
+            "listing",
+            "src::errors",
+            "archive"
           ]
         },
         {
           "package": "src::args",
           "domains_count": 7,
           "domains": [
-            "tests",
+            "src::listing",
             "auth",
             "AuthParseError",
-            "RequiredAuthPassword",
-            "src::auth",
             "src::renderer",
-            "src::listing"
+            "tests",
+            "RequiredAuthPassword",
+            "src::auth"
           ]
         },
         {
           "package": "src::listing",
           "domains_count": 6,
           "domains": [
-            "src::errors",
-            "src::auth",
-            "src::archive",
             "percent_encode_sets",
+            "src::errors",
+            "src::renderer",
             "src::percent_encode_sets",
-            "src::renderer"
+            "src::archive",
+            "src::auth"
           ]
         },
         {
           "package": "src::renderer",
           "domains_count": 4,
           "domains": [
-            "src::auth",
+            "src::listing",
             "tests",
-            "src::consts",
-            "src::listing"
+            "src::auth",
+            "src::consts"
           ]
         },
         {
           "package": "tests::navigation",
           "domains_count": 4,
           "domains": [
-            "tests::utils",
             "tests::fixtures",
             "fixtures",
-            "utils"
+            "utils",
+            "tests::utils"
           ]
         }
       ],
