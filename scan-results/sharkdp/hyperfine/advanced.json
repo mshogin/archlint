@@ -620,66 +620,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::benchmark::timing_result",
-            "src::export::markdown",
-            "src::timer::windows_timer",
-            "src::export::json"
+            "src::timer::wall_clock_timer",
+            "src::output::warnings",
+            "src::timer::unix_timer",
+            "src::export::tests",
+            "src::output::format"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::benchmark::timing_result",
-            "src::export::markdown",
-            "src::timer::windows_timer",
-            "src::export::json"
+            "src::timer::wall_clock_timer",
+            "src::output::warnings",
+            "src::timer::unix_timer",
+            "src::export::tests",
+            "src::output::format"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::benchmark::timing_result",
-            "src::export::markdown",
-            "src::timer::windows_timer",
-            "src::export::json"
+            "src::timer::wall_clock_timer",
+            "src::output::warnings",
+            "src::timer::unix_timer",
+            "src::export::tests",
+            "src::output::format"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::benchmark::timing_result",
-            "src::export::markdown",
-            "src::timer::windows_timer",
-            "src::export::json"
+            "src::timer::wall_clock_timer",
+            "src::output::warnings",
+            "src::timer::unix_timer",
+            "src::export::tests",
+            "src::output::format"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::command",
-            "src::benchmark::timing_result",
-            "src::export::markdown",
-            "src::timer::windows_timer",
-            "src::export::json"
+            "src::timer::wall_clock_timer",
+            "src::output::warnings",
+            "src::timer::unix_timer",
+            "src::export::tests",
+            "src::output::format"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::command",
-            "src::benchmark::timing_result",
-            "src::export::markdown",
-            "src::timer::windows_timer",
-            "src::export::json"
+            "src::timer::wall_clock_timer",
+            "src::output::warnings",
+            "src::timer::unix_timer",
+            "src::export::tests",
+            "src::output::format"
           ]
         }
       ],

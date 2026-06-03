@@ -630,110 +630,110 @@
           "component": "tests",
           "impact_radius": 124,
           "sample_dependents": [
-            "src::app::adapters::federation::frame",
-            "src::app::tasklog",
-            "src::app::adapters::web::view::cards",
-            "src::app::adapters::web::templates",
-            "src::app::adapters::web::routes::sse"
+            "src::app::jsonrpc",
+            "src::app::adapters::web::audit",
+            "src::app::adapters::federation::registry",
+            "src::app::a2a_jwt",
+            "src::app::commands::remind"
           ]
         },
         {
           "component": "task",
           "impact_radius": 95,
           "sample_dependents": [
-            "src::app::adapters::web::view::cards",
-            "src::app::adapters::web::routes::sse",
-            "src::app::config_reload",
-            "src::app::serve",
-            "src::app::bus_api"
+            "src::app::commands::remind",
+            "src::app::adapters::web::view::strip",
+            "src::infra::dto::context",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::app::process_builder"
           ]
         },
         {
           "component": "context",
           "impact_radius": 94,
           "sample_dependents": [
-            "src::app::adapters::web::view::cards",
-            "src::app::adapters::web::routes::sse",
-            "src::app::config_reload",
-            "src::app::serve",
-            "src::app::bus_api"
+            "src::app::commands::remind",
+            "src::app::adapters::web::view::strip",
+            "src::infra::dto::context",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::app::process_builder"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 93,
           "sample_dependents": [
-            "src::app::adapters::web::view::cards",
-            "src::app::adapters::web::routes::sse",
-            "src::app::config_reload",
-            "src::app::serve",
-            "src::app::bus_api"
+            "src::app::commands::remind",
+            "src::app::adapters::web::view::strip",
+            "src::infra::dto::context",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::app::process_builder"
           ]
         },
         {
           "component": "message",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::adapters::web::view::cards",
-            "src::app::adapters::web::routes::sse",
-            "src::app::config_reload",
-            "src::app::serve",
-            "src::app::bus_api"
+            "src::app::commands::remind",
+            "src::app::adapters::web::view::strip",
+            "src::infra::dto::context",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::app::process_builder"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::adapters::web::view::cards",
-            "src::app::adapters::web::routes::sse",
-            "src::app::config_reload",
-            "src::app::serve",
-            "src::app::bus_api"
+            "src::app::commands::remind",
+            "src::app::adapters::web::view::strip",
+            "src::infra::dto::context",
+            "src::app::adapters::web::routes::github_webhook",
+            "src::app::process_builder"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 74,
           "sample_dependents": [
-            "src::app::adapters::federation::frame",
-            "src::app::adapters::web::view::cards",
-            "src::app::adapters::web::routes::sse",
-            "src::app::config_reload",
-            "src::app::serve"
+            "src::app::adapters::web::view::strip",
+            "src::app::commands::session",
+            "src::app::adapters::web",
+            "src::app::adapters::web::state",
+            "src::app::commands::agent"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
-            "src::infra::bus_server",
-            "src::app::metrics",
-            "src::infra::dto::config",
-            "src::app::config_reload",
-            "src::infra::sm_store"
+            "src::app::adapters::discord",
+            "src::app::commands::remind",
+            "src::infra::dto::context",
+            "src::app::commands::a2a",
+            "src::app::context"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::bus_server",
-            "src::app::metrics",
-            "src::infra::dto::config",
-            "src::app::config_reload",
-            "src::infra::sm_store"
+            "src::app::adapters::discord",
+            "src::app::commands::remind",
+            "src::infra::dto::context",
+            "src::app::commands::a2a",
+            "src::app::context"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::bus_server",
-            "src::app::metrics",
-            "src::infra::dto::config",
-            "src::app::config_reload",
-            "src::infra::sm_store"
+            "src::app::adapters::discord",
+            "src::app::commands::remind",
+            "src::infra::dto::context",
+            "src::app::commands::a2a",
+            "src::app::context"
           ]
         }
       ],
