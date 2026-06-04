@@ -630,110 +630,110 @@
           "component": "tests",
           "impact_radius": 124,
           "sample_dependents": [
-            "src::app::jsonrpc",
-            "src::app::adapters::web::audit",
-            "src::app::adapters::federation::registry",
-            "src::app::a2a_jwt",
-            "src::app::commands::remind"
+            "src::app::adapters::federation::glob",
+            "src::app::scope",
+            "src::infra::agent_file",
+            "src::infra::context_store",
+            "src::app::serve"
           ]
         },
         {
           "component": "task",
           "impact_radius": 95,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::adapters::web::view::strip",
-            "src::infra::dto::context",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::app::process_builder"
+            "src::infra::agent_file",
+            "src::infra::context_store",
+            "src::app::serve",
+            "src::ports::store",
+            "src::app::agent_registry"
           ]
         },
         {
           "component": "context",
           "impact_radius": 94,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::adapters::web::view::strip",
-            "src::infra::dto::context",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::app::process_builder"
+            "src::infra::agent_file",
+            "src::infra::context_store",
+            "src::app::serve",
+            "src::ports::store",
+            "src::app::agent_registry"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 93,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::adapters::web::view::strip",
-            "src::infra::dto::context",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::app::process_builder"
+            "src::infra::agent_file",
+            "src::infra::context_store",
+            "src::app::serve",
+            "src::ports::store",
+            "src::app::agent_registry"
           ]
         },
         {
           "component": "message",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::adapters::web::view::strip",
-            "src::infra::dto::context",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::app::process_builder"
+            "src::infra::agent_file",
+            "src::infra::context_store",
+            "src::app::serve",
+            "src::ports::store",
+            "src::app::agent_registry"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::commands::remind",
-            "src::app::adapters::web::view::strip",
-            "src::infra::dto::context",
-            "src::app::adapters::web::routes::github_webhook",
-            "src::app::process_builder"
+            "src::infra::agent_file",
+            "src::infra::context_store",
+            "src::app::serve",
+            "src::ports::store",
+            "src::app::agent_registry"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 74,
           "sample_dependents": [
-            "src::app::adapters::web::view::strip",
-            "src::app::commands::session",
-            "src::app::adapters::web",
-            "src::app::adapters::web::state",
-            "src::app::commands::agent"
+            "src::infra::context_store",
+            "src::app::serve",
+            "src::app::mcp_tools",
+            "src::app::worker",
+            "src::app::adapters::telegram"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
-            "src::app::adapters::discord",
-            "src::app::commands::remind",
-            "src::infra::dto::context",
-            "src::app::commands::a2a",
-            "src::app::context"
+            "src::infra::dto::bus",
+            "src::app::bus_api",
+            "src::ports::bus",
+            "src::ports::store",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::adapters::discord",
-            "src::app::commands::remind",
-            "src::infra::dto::context",
-            "src::app::commands::a2a",
-            "src::app::context"
+            "src::infra::dto::bus",
+            "src::app::bus_api",
+            "src::ports::bus",
+            "src::ports::store",
+            "src::infra::context_store"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::adapters::discord",
-            "src::app::commands::remind",
-            "src::infra::dto::context",
-            "src::app::commands::a2a",
-            "src::app::context"
+            "src::infra::dto::bus",
+            "src::app::bus_api",
+            "src::ports::bus",
+            "src::ports::store",
+            "src::infra::context_store"
           ]
         }
       ],

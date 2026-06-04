@@ -620,66 +620,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::output::warnings",
-            "src::timer::unix_timer",
             "src::export::tests",
-            "src::output::format"
+            "src::benchmark",
+            "src::timer::wall_clock_timer",
+            "src::command",
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::output::warnings",
-            "src::timer::unix_timer",
             "src::export::tests",
-            "src::output::format"
+            "src::benchmark",
+            "src::timer::wall_clock_timer",
+            "src::command",
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::output::warnings",
-            "src::timer::unix_timer",
             "src::export::tests",
-            "src::output::format"
+            "src::benchmark",
+            "src::timer::wall_clock_timer",
+            "src::command",
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::output::warnings",
-            "src::timer::unix_timer",
             "src::export::tests",
-            "src::output::format"
+            "src::benchmark",
+            "src::timer::wall_clock_timer",
+            "src::command",
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::output::warnings",
-            "src::timer::unix_timer",
             "src::export::tests",
-            "src::output::format"
+            "src::benchmark",
+            "src::timer::wall_clock_timer",
+            "src::command",
+            "src::benchmark::executor"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::timer::wall_clock_timer",
-            "src::output::warnings",
-            "src::timer::unix_timer",
             "src::export::tests",
-            "src::output::format"
+            "src::benchmark",
+            "src::timer::wall_clock_timer",
+            "src::command",
+            "src::benchmark::executor"
           ]
         }
       ],
