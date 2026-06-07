@@ -42,7 +42,7 @@
       "status": "PASSED",
       "modularity": 0.578,
       "threshold": 0.3,
-      "communities_count": 29
+      "communities_count": 30
     },
     {
       "name": "abstractness",
@@ -630,110 +630,110 @@
           "component": "tests",
           "impact_radius": 124,
           "sample_dependents": [
-            "src::app::mcp_protocol",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::cost",
-            "src::app::adapters::web::routes::login",
-            "src::app::config_remotes"
+            "src::app::mcp",
+            "src::config",
+            "src::app::a2a_jwt",
+            "src::app::config_changeset",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "task",
           "impact_radius": 95,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::cost",
-            "src::app::adapters::web::routes::login",
-            "src::infra::memory_store"
+            "src::app::bus",
+            "src::app::mcp",
+            "src::config",
+            "src::app::config_changeset",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "context",
           "impact_radius": 94,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::cost",
-            "src::app::adapters::web::routes::login",
-            "src::infra::memory_store"
+            "src::app::bus",
+            "src::app::mcp",
+            "src::config",
+            "src::app::config_changeset",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 93,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::cost",
-            "src::app::adapters::web::routes::login",
-            "src::infra::memory_store"
+            "src::app::bus",
+            "src::app::mcp",
+            "src::config",
+            "src::app::config_changeset",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "message",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::cost",
-            "src::app::adapters::web::routes::login",
-            "src::infra::memory_store"
+            "src::app::bus",
+            "src::app::mcp",
+            "src::config",
+            "src::app::config_changeset",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::cost",
-            "src::app::adapters::web::routes::login",
-            "src::infra::memory_store"
+            "src::app::bus",
+            "src::app::mcp",
+            "src::config",
+            "src::app::config_changeset",
+            "src::app::config_reload"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 74,
           "sample_dependents": [
-            "src::app::mcp_protocol",
-            "src::app::doctor",
-            "src::app::adapters::web::routes::cost",
+            "src::app::bus",
+            "src::app::mcp",
             "src::app::adapters::web::routes::login",
-            "src::infra::memory_store"
+            "src::app::config_reload",
+            "src::app::adapters::web::routes::agent_detail"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::agent_registry",
             "src::app::bus",
-            "src::app::adapters::web::routes::cost",
-            "src::app::worker"
+            "src::app::mcp",
+            "src::infra::context_store",
+            "src::config",
+            "src::app::context"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::agent_registry",
             "src::app::bus",
-            "src::app::adapters::web::routes::cost",
-            "src::app::worker"
+            "src::app::mcp",
+            "src::infra::context_store",
+            "src::config",
+            "src::app::context"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::ports::store",
-            "src::app::agent_registry",
             "src::app::bus",
-            "src::app::adapters::web::routes::cost",
-            "src::app::worker"
+            "src::app::mcp",
+            "src::infra::context_store",
+            "src::config",
+            "src::app::context"
           ]
         }
       ],
