@@ -40,9 +40,9 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.578,
+      "modularity": 0.577,
       "threshold": 0.3,
-      "communities_count": 30
+      "communities_count": 28
     },
     {
       "name": "abstractness",
@@ -630,110 +630,110 @@
           "component": "tests",
           "impact_radius": 124,
           "sample_dependents": [
-            "src::app::mcp",
-            "src::config",
-            "src::app::a2a_jwt",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::infra::dto::bus",
+            "src::app::config_reload",
+            "src::app::bus_api",
+            "src::app::adapters::web::audit",
+            "src::app::commands::tui"
           ]
         },
         {
           "component": "task",
           "impact_radius": 95,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::config",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::infra::dto",
+            "src::infra::dto::bus",
+            "src::app::config_reload",
+            "src::app::bus_api",
+            "src::app::commands::tui"
           ]
         },
         {
           "component": "context",
           "impact_radius": 94,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::config",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::infra::dto",
+            "src::infra::dto::bus",
+            "src::app::config_reload",
+            "src::app::bus_api",
+            "src::app::commands::tui"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 93,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::config",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::infra::dto::bus",
+            "src::app::config_reload",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::infra::agent_file"
           ]
         },
         {
           "component": "message",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::config",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::infra::dto::bus",
+            "src::app::config_reload",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::infra::agent_file"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::config",
-            "src::app::config_changeset",
-            "src::app::config_reload"
+            "src::infra::dto::bus",
+            "src::app::config_reload",
+            "src::app::bus_api",
+            "src::app::commands::tui",
+            "src::infra::agent_file"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 74,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::app::adapters::web::routes::login",
+            "src::infra::dto",
+            "src::infra::dto::bus",
+            "src::app::bus_api",
             "src::app::config_reload",
-            "src::app::adapters::web::routes::agent_detail"
+            "src::app::adapters::web::data_cost"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::infra::context_store",
-            "src::config",
-            "src::app::context"
+            "src::infra::dto::task",
+            "src::app::config_changeset",
+            "src::app::adapters::web::view::cost",
+            "src::app::workflow",
+            "src::infra::dto::bus"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::infra::context_store",
-            "src::config",
-            "src::app::context"
+            "src::infra::dto::task",
+            "src::app::config_changeset",
+            "src::app::adapters::web::view::cost",
+            "src::app::workflow",
+            "src::infra::dto::bus"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::app::bus",
-            "src::app::mcp",
-            "src::infra::context_store",
-            "src::config",
-            "src::app::context"
+            "src::infra::dto::task",
+            "src::app::config_changeset",
+            "src::app::adapters::web::view::cost",
+            "src::app::workflow",
+            "src::infra::dto::bus"
           ]
         }
       ],
