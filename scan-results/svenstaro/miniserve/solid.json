@@ -25,28 +25,28 @@
           "package": "src::main",
           "domains_count": 17,
           "domains": [
-            "file_utils",
-            "renderer",
-            "src::args",
-            "errors",
-            "listing",
-            "args",
-            "config",
+            "file_op",
+            "auth",
+            "pipe",
+            "webdav_fs",
             "src::config",
-            "src::file_op",
-            "src::webdav_fs"
+            "config",
+            "src::errors",
+            "archive",
+            "args",
+            "file_utils"
           ]
         },
         {
           "package": "src::args",
           "domains_count": 7,
           "domains": [
-            "tests",
-            "RequiredAuthPassword",
-            "src::auth",
-            "src::renderer",
-            "src::listing",
             "auth",
+            "src::renderer",
+            "RequiredAuthPassword",
+            "src::listing",
+            "src::auth",
+            "tests",
             "AuthParseError"
           ]
         },
@@ -54,22 +54,22 @@
           "package": "src::listing",
           "domains_count": 6,
           "domains": [
-            "percent_encode_sets",
-            "src::auth",
-            "src::renderer",
             "src::archive",
-            "src::errors",
-            "src::percent_encode_sets"
+            "src::renderer",
+            "percent_encode_sets",
+            "src::percent_encode_sets",
+            "src::auth",
+            "src::errors"
           ]
         },
         {
           "package": "src::renderer",
           "domains_count": 4,
           "domains": [
+            "tests",
             "src::listing",
             "src::auth",
-            "src::consts",
-            "tests"
+            "src::consts"
           ]
         },
         {
@@ -78,8 +78,8 @@
           "domains": [
             "tests::utils",
             "utils",
-            "fixtures",
-            "tests::fixtures"
+            "tests::fixtures",
+            "fixtures"
           ]
         }
       ],
