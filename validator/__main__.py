@@ -24,6 +24,7 @@ Source modes:
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -65,6 +66,83 @@ def load_graph_with_source(filename: str, source: Optional[str] = None):
         return graph, source
 
     return graph, detected_source
+
+
+# ---------------------------------------------------------------------------
+# Tier / profile system — ОДИН источник истины: какие группы метрик в каком профиле.
+# Группы маппятся на cost-tier'ы (подтверждено реальным замером, см.
+# Short-Term-Memory/Research/archlint-metrics-audit):
+#   fast     = O(V+E) практичные метрики (SOLID / архитектура / граф) — мс на любом графе.
+#   slow     = центральности / pagerank / community detection (группа advanced) — секунды.
+#   research = спектр / топология(TDA) / NP-hard / теория категорий — "миллиард времени"
+#              (5 TDA-метрик O(V^3): alpha_complex, cech_complex, vietoris_rips,
+#              path_homology, nerve_complex — до ~20 мин на 1000 узлов).
+# ДЕФОЛТ = fast: research (и advanced) НЕ запускаются без явного --profile/--group.
+# research-метрики НЕ удалены — доступны по требованию (ценность для исследований).
+# ---------------------------------------------------------------------------
+# Базовый tier группы (по реальному замеру: fast-группы O(V+E) — мс; advanced —
+# центральности/pagerank/community, секунды; research — спектр/TDA/NP-hard, "миллиард").
+ALL_GROUPS = ['core', 'solid', 'patterns', 'architecture', 'quality', 'advanced', 'research']
+GROUP_TIER = {
+    'core': 'fast', 'solid': 'fast', 'patterns': 'fast', 'architecture': 'fast',
+    'quality': 'fast', 'advanced': 'slow', 'research': 'research',
+}
+# Профиль -> какие tier'ы запускать (маска). default=fast.
+PROFILE_TIERS = {
+    'fast':     {'fast'},
+    'extended': {'fast', 'slow'},
+    'research': {'fast', 'slow', 'research'},
+}
+PROFILE_TIERS['all'] = PROFILE_TIERS['research']
+DEFAULT_PROFILE = 'fast'
+# Guard: research-tier на гигантском графе вешает процесс. Skip+warn если V больше
+# порога без --force (план Мудреца п.4). Промотированные (slow/fast) метрики не трогаются.
+RESEARCH_NODE_GUARD = 2000
+
+# TIER_OVERRIDE — per-metric классификация ПОВЕРХ группового tier (источник: Мудрец,
+# archlint-metrics-audit). Поднимает дешёвые-и-архитектурно-полезные метрики из
+# research-модулей в дефолт/extended; тяжёлое и семантически-шумное остаётся research.
+TIER_OVERRIDE = {
+    # SOLID-добор (LSP/OCP/тестируемость) — дёшево, прямая семантика -> в дефолт.
+    'liskov_substitution': 'fast',
+    'open_closed': 'fast',
+    'mockability': 'fast',
+    # Дёшево сейчас, но семантика вторичная ИЛИ растёт по V (спектр O(V^3)) -> extended.
+    'vertex_cover': 'slow',
+    'independence_number': 'slow',
+    'treewidth': 'slow',
+    'chromatic_number': 'slow',
+    'k_core_decomposition': 'slow',
+    'persistent_homology': 'slow',
+    'dominating_set': 'slow',
+    'graph_fourier': 'slow',
+    'spectral_filtering': 'slow',
+    'laplacian_smoothness': 'slow',
+    'dirichlet_energy': 'slow',
+    'wavelet_decomposition': 'slow',
+}
+
+
+def metric_tier(func_name: str, group: str) -> str:
+    """Эффективный tier метрики: per-metric override > базовый tier группы."""
+    rule = func_name.removeprefix('validate_')
+    return TIER_OVERRIDE.get(rule, GROUP_TIER.get(group, 'research'))
+
+
+def collect_validators(getter, group: Optional[str], allowed_tiers: set) -> List:
+    """Собрать валидаторы по эффективному tier'у. Явный --group побеждает (вся группа
+    как есть, обратная совместимость). Иначе — по всем группам, фильтр по allowed_tiers."""
+    if group:
+        return getter(group)
+    out, seen = [], set()
+    for g in ALL_GROUPS:
+        for v in getter(g):
+            if v.__name__ in seen:
+                continue
+            if metric_tier(v.__name__, g) in allowed_tiers:
+                seen.add(v.__name__)
+                out.append(v)
+    return out
 
 
 def get_structure_validators(group: Optional[str] = None) -> List:
@@ -215,6 +293,9 @@ def run_validation(
     behavior_only: bool = False,
     config_file: Optional[str] = None,
     source: Optional[str] = None,
+    profile: Optional[str] = None,
+    force: bool = False,
+    timing: bool = False,
 ) -> Dict[str, Any]:
     """Run validation and return results
 
@@ -267,9 +348,26 @@ def run_validation(
         if stats:
             results['graph']['stats'] = stats
 
+    # Resolve which cost-tiers run (profile mask; explicit --group wins inside collect).
+    allowed_tiers = set(PROFILE_TIERS.get(profile or DEFAULT_PROFILE, PROFILE_TIERS[DEFAULT_PROFILE]))
+    # Size-guard: research-tier на гигантском графе = "миллиард времени". Skip+warn
+    # если узлов больше порога без --force. Промотированные slow/fast метрики остаются.
+    node_count = len(graph.nodes())
+    if 'research' in allowed_tiers and node_count > RESEARCH_NODE_GUARD and not force:
+        allowed_tiers.discard('research')
+        results['warnings'] = results.get('warnings', [])
+        results['warnings'].append(
+            f"research tier skipped: graph has {node_count} nodes (> {RESEARCH_NODE_GUARD}); "
+            f"rerun with --force to include it"
+        )
+    results['profile'] = group or (profile or DEFAULT_PROFILE)
+    results['tiers'] = sorted(allowed_tiers)
+    if timing:
+        results['timing_ms'] = {}
+
     # Run structure validators (works on both structural and behavioral graphs)
     if not behavior_only:
-        validators = get_structure_validators(group)
+        validators = collect_validators(get_structure_validators, group, allowed_tiers)
         for validator in validators:
             try:
                 # Extract per-rule config from the Config object.
@@ -279,7 +377,12 @@ def run_validation(
                     func_name = validator.__name__
                     rule_name = func_name.removeprefix('validate_')
                     rule_config = getattr(config, rule_name, None)
-                result = validator(graph, config=rule_config)
+                if timing:
+                    _t0 = time.perf_counter()
+                    result = validator(graph, config=rule_config)
+                    results['timing_ms'][validator.__name__] = round((time.perf_counter() - _t0) * 1000, 1)
+                else:
+                    result = validator(graph, config=rule_config)
                 results['checks'].append(result)
                 _update_summary(results, result)
             except Exception as e:
@@ -297,7 +400,7 @@ def run_validation(
         or (detected_source == SOURCE_BEHAVIOR and not structure_only)
     )
     if run_behavior:
-        validators = get_behavior_validators(group)
+        validators = collect_validators(get_behavior_validators, group, allowed_tiers)
         for validator in validators:
             try:
                 result = validator(graph, contexts, config=config)
@@ -358,7 +461,16 @@ def main():
     validate_parser.add_argument('-g', '--group',
                                  choices=['core', 'solid', 'patterns', 'architecture',
                                          'quality', 'advanced', 'research'],
-                                 help='Validator group')
+                                 help='Validator group (explicit single group; overrides --profile)')
+    validate_parser.add_argument('-p', '--profile',
+                                 choices=['fast', 'extended', 'research', 'all'],
+                                 default='fast',
+                                 help='Cost-tier profile: fast (default, ms), extended (+slow), '
+                                      'research/all (+research math, big graphs only)')
+    validate_parser.add_argument('--force', action='store_true',
+                                 help='Run research tier even on large graphs (> node guard)')
+    validate_parser.add_argument('--timing', action='store_true',
+                                 help='Record per-metric execution time (ms) in results')
     validate_parser.add_argument('-f', '--format', choices=['yaml', 'json'],
                                  default='yaml', help='Output format')
     validate_parser.add_argument('-o', '--output', help='Output file')
@@ -386,6 +498,9 @@ def main():
             behavior_only=args.behavior_only,
             config_file=args.config,
             source=args.source,
+            profile=args.profile,
+            force=args.force,
+            timing=args.timing,
         )
 
         # Convert numpy types to native Python for serialization

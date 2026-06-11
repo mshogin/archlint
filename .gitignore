@@ -50,3 +50,6 @@ __pycache__/
 *.egg
 .archlint.yaml.bak
 .env
+
+# Артефакты прогонов (гуляют между машинами, не трекать)
+scan-results/
