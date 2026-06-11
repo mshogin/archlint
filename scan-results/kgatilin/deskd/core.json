@@ -29,11 +29,6 @@
       "threshold": 5,
       "violations": [
         {
-          "node": "src::infra",
-          "fan_out": 11,
-          "threshold": 5
-        },
-        {
           "node": "src::domain",
           "fan_out": 8,
           "threshold": 5
@@ -44,13 +39,8 @@
           "threshold": 5
         },
         {
-          "node": "src::app",
-          "fan_out": 47,
-          "threshold": 5
-        },
-        {
-          "node": "src::app::agent_process",
-          "fan_out": 6,
+          "node": "src::infra",
+          "fan_out": 11,
           "threshold": 5
         },
         {
@@ -59,13 +49,13 @@
           "threshold": 5
         },
         {
-          "node": "src::app::transcript_extractor",
-          "fan_out": 7,
+          "node": "src::app::adapters::web::state",
+          "fan_out": 8,
           "threshold": 5
         },
         {
-          "node": "src::app::adapters::web::routes",
-          "fan_out": 16,
+          "node": "src::app::adapters::web::view",
+          "fan_out": 9,
           "threshold": 5
         },
         {
@@ -74,8 +64,18 @@
           "threshold": 5
         },
         {
-          "node": "src::app::adapters::web::view",
-          "fan_out": 9,
+          "node": "src::app::adapters::web::routes",
+          "fan_out": 16,
+          "threshold": 5
+        },
+        {
+          "node": "src::app::adapters::federation::hub",
+          "fan_out": 7,
+          "threshold": 5
+        },
+        {
+          "node": "src::app::adapters::federation",
+          "fan_out": 8,
           "threshold": 5
         }
       ],
@@ -88,20 +88,6 @@
       "ca_threshold": 10,
       "ce_threshold": 10,
       "violations": [
-        {
-          "node": "src::ports",
-          "afferent_coupling": 21,
-          "efferent_coupling": 4,
-          "ca_threshold": 10,
-          "ce_threshold": 10
-        },
-        {
-          "node": "src::infra",
-          "afferent_coupling": 16,
-          "efferent_coupling": 11,
-          "ca_threshold": 10,
-          "ce_threshold": 10
-        },
         {
           "node": "src::domain",
           "afferent_coupling": 30,
@@ -117,9 +103,9 @@
           "ce_threshold": 10
         },
         {
-          "node": "src::app",
-          "afferent_coupling": 57,
-          "efferent_coupling": 47,
+          "node": "src::infra",
+          "afferent_coupling": 16,
+          "efferent_coupling": 11,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -131,6 +117,13 @@
           "ce_threshold": 10
         },
         {
+          "node": "src::app::adapters::web",
+          "afferent_coupling": 0,
+          "efferent_coupling": 18,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
           "node": "src::app::adapters::web::routes",
           "afferent_coupling": 0,
           "efferent_coupling": 16,
@@ -138,9 +131,16 @@
           "ce_threshold": 10
         },
         {
-          "node": "src::app::adapters::web",
-          "afferent_coupling": 0,
-          "efferent_coupling": 18,
+          "node": "src::app",
+          "afferent_coupling": 57,
+          "efferent_coupling": 47,
+          "ca_threshold": 10,
+          "ce_threshold": 10
+        },
+        {
+          "node": "src::ports",
+          "afferent_coupling": 21,
+          "efferent_coupling": 4,
           "ca_threshold": 10,
           "ce_threshold": 10
         },
@@ -167,65 +167,65 @@
       "status": "ERROR",
       "most_unstable": [
         {
-          "node": "src::ports::store",
+          "node": "src::domain::context",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
         },
         {
-          "node": "src::ports::bus",
+          "node": "src::domain::config_types",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 3
+        },
+        {
+          "node": "src::domain::agent",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
         },
         {
-          "node": "src::ports::bus_wire",
+          "node": "src::domain::statemachine",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
         },
         {
-          "node": "src::infra::context_store",
+          "node": "src::domain::workitem",
           "instability": 1.0,
           "ca": 0,
-          "ce": 4
-        },
-        {
-          "node": "src::infra::dto::config",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 2
+          "ce": 1
         }
       ],
       "most_stable": [
         {
-          "node": "registry",
+          "node": "patterns",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "routing",
+          "node": "src::patterns",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "src::glob",
+          "node": "bus_wire",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "attachments",
+          "node": "executor",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "deskd",
+          "node": "store",
           "instability": 0.0,
-          "ca": 17,
+          "ca": 1,
           "ce": 0
         }
       ],
@@ -373,19 +373,19 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
-        "build",
-        "src::ports::executor",
         "src::domain::message",
-        "src::app::cli",
         "src::app::commands::restart",
-        "src::app::adapters::web::routes::health",
         "src::app::adapters::web::middleware::headers",
-        "tests::agent_state_mcp",
+        "src::app::adapters::web::routes::health",
+        "src::app::cli",
+        "src::ports::executor",
+        "build",
+        "tests::agent_lifecycle",
+        "tests::mcp_channel_subprocess",
         "tests::schedule_to_worker",
         "tests::diag_publish",
         "tests::crash_recovery",
-        "tests::mcp_channel_subprocess",
-        "tests::agent_lifecycle"
+        "tests::agent_state_mcp"
       ],
       "orphans_count": 13
     },

@@ -42,7 +42,7 @@
       "status": "PASSED",
       "modularity": 0.578,
       "threshold": 0.3,
-      "communities_count": 29
+      "communities_count": 30
     },
     {
       "name": "abstractness",
@@ -62,15 +62,6 @@
       "status": "ERROR",
       "packages": [
         {
-          "package": "src::ports::store",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
-        },
-        {
           "package": "src::ports::bus",
           "abstractness": 1.0,
           "instability": 1.0,
@@ -89,40 +80,13 @@
           "issue": "Зона бесполезности: абстрактный и нестабильный"
         },
         {
-          "package": "bus",
-          "abstractness": 0.0,
-          "instability": 0.0,
+          "package": "src::ports::store",
+          "abstractness": 1.0,
+          "instability": 1.0,
           "distance": 1.0,
           "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
-          "package": "bus_wire",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
-          "package": "executor",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
-          "package": "store",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
         },
         {
           "package": "tests",
@@ -134,7 +98,34 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "config",
+          "package": "src::agent",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "src::context",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "agent",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "config_types",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -150,35 +141,33 @@
           "nodes_count": 1,
           "zone": "pain",
           "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "events",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
         }
       ],
       "violations": [
         {
-          "package": "src::ports::store",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
+          "package": "src::domain",
+          "abstractness": 0.0,
+          "instability": 0.211,
+          "distance": 0.789,
+          "nodes_count": 1
         },
         {
-          "package": "src::ports::bus",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
+          "package": "src::config",
+          "abstractness": 0.0,
+          "instability": 0.081,
+          "distance": 0.919,
           "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
-        },
-        {
-          "package": "src::ports::bus_wire",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
         },
         {
           "package": "src::infra",
@@ -188,11 +177,20 @@
           "nodes_count": 1
         },
         {
-          "package": "src::domain",
+          "package": "src::app",
           "abstractness": 0.0,
-          "instability": 0.211,
-          "distance": 0.789,
+          "instability": 0.452,
+          "distance": 0.548,
           "nodes_count": 1
+        },
+        {
+          "package": "src::ports::bus",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
         }
       ],
       "violations_count": 179
@@ -205,31 +203,23 @@
       "threshold": 0.1,
       "low_clustering_nodes": [
         {
-          "node": "src::ports",
+          "node": "src::domain::config_types",
           "coefficient": 0.0
         },
         {
-          "node": "src::infra::context_store",
+          "node": "src::domain",
+          "coefficient": 0.007
+        },
+        {
+          "node": "src::config",
+          "coefficient": 0.044
+        },
+        {
+          "node": "src::lib",
           "coefficient": 0.0
         },
         {
-          "node": "src::infra::dto::config",
-          "coefficient": 0.0
-        },
-        {
-          "node": "src::infra::dto::instance",
-          "coefficient": 0.0
-        },
-        {
-          "node": "src::infra::dto::bus",
-          "coefficient": 0.0
-        },
-        {
-          "node": "src::infra::dto",
-          "coefficient": 0.0
-        },
-        {
-          "node": "src::infra::dto::task",
+          "node": "src::main",
           "coefficient": 0.0
         },
         {
@@ -237,12 +227,20 @@
           "coefficient": 0.0
         },
         {
-          "node": "src::infra",
-          "coefficient": 0.009
+          "node": "src::infra::sm_store",
+          "coefficient": 0.0
         },
         {
-          "node": "src::infra::unix_bus",
+          "node": "src::infra::memory_store",
           "coefficient": 0.0
+        },
+        {
+          "node": "src::infra::context_store",
+          "coefficient": 0.0
+        },
+        {
+          "node": "src::infra",
+          "coefficient": 0.009
         }
       ],
       "low_clustering_count": 110
@@ -262,26 +260,26 @@
       "description": "Критические узлы (удаление разбивает граф)",
       "status": "WARNING",
       "articulation_points": [
-        "src::domain",
-        "src::infra",
-        "src::lib",
-        "config",
-        "src::infra::dto",
+        "src::domain::config_types",
         "tests",
+        "src::infra",
+        "src::app::transcript_extractor",
+        "src::infra::diag",
         "src::app::mcp_service",
         "src::app::agent",
         "src::app::agent_process",
         "src::app::process_builder",
-        "src::app::commands::remind",
-        "src::config",
-        "src::app::adapters::web::routes::github_webhook",
-        "src::app::adapters::web",
-        "src::app::adapters::web::routes",
+        "src::app::adapters::federation::hub",
+        "src::app::adapters::federation::peer",
+        "src::lib",
+        "config",
+        "src::infra::dto",
         "src::app::adapters::web::view",
-        "src::app::commands",
-        "src::app::adapters::web::auth",
-        "session",
-        "src::app::adapters::web::state"
+        "src::app::adapters::web::routes",
+        "src::app::adapters::web",
+        "src::ports",
+        "src::app",
+        "src::app::commands::usage"
       ],
       "count": 38,
       "recommendation": "Уменьшить зависимость от критических узлов"
@@ -292,84 +290,84 @@
       "status": "INFO",
       "bridges": [
         {
-          "from": "src::ports::store",
-          "to": "src::domain"
+          "from": "src::domain::context",
+          "to": "tests"
         },
         {
-          "from": "src::ports::bus",
-          "to": "src::domain"
+          "from": "src::domain::config_types",
+          "to": "src::agent"
         },
         {
-          "from": "src::ports",
-          "to": "bus_wire"
+          "from": "src::domain::config_types",
+          "to": "src::context"
         },
         {
-          "from": "src::ports",
-          "to": "executor"
+          "from": "src::domain::config_types",
+          "to": "tests"
         },
         {
-          "from": "src::ports",
-          "to": "store"
+          "from": "src::domain::agent",
+          "to": "tests"
         },
         {
-          "from": "src::ports::bus_wire",
-          "to": "src::domain"
+          "from": "src::domain::statemachine",
+          "to": "tests"
         },
         {
-          "from": "src::infra::dto::context",
-          "to": "src::domain"
+          "from": "src::domain",
+          "to": "config_types"
         },
         {
-          "from": "src::infra::dto",
-          "to": "config"
+          "from": "src::domain",
+          "to": "workitem"
         },
         {
-          "from": "src::infra::dto",
-          "to": "instance"
+          "from": "src::domain",
+          "to": "src::domain::workitem"
         },
         {
-          "from": "src::infra",
-          "to": "agent_file"
+          "from": "src::domain",
+          "to": "src::infra::dto::context"
         },
         {
-          "from": "src::infra",
-          "to": "bus_server"
+          "from": "src::domain",
+          "to": "src::app::message"
         },
         {
-          "from": "src::infra",
-          "to": "context_store"
+          "from": "src::domain",
+          "to": "src::ports::bus"
         },
         {
-          "from": "src::infra",
-          "to": "diag"
+          "from": "src::domain",
+          "to": "src::ports::bus_wire"
         },
         {
-          "from": "src::infra",
-          "to": "dto"
+          "from": "src::domain",
+          "to": "src::ports::store"
         },
         {
-          "from": "src::infra",
-          "to": "memory_bus"
+          "from": "src::domain::task",
+          "to": "tests"
         },
         {
-          "from": "src::infra",
-          "to": "memory_store"
+          "from": "src::domain::events",
+          "to": "tests"
         },
         {
-          "from": "src::infra",
-          "to": "paths"
+          "from": "src::config",
+          "to": "src::app::commands::remind"
         },
         {
-          "from": "src::infra",
-          "to": "sm_store"
+          "from": "src::config",
+          "to": "src::app::commands::tui"
         },
         {
-          "from": "src::infra",
-          "to": "task_store"
+          "from": "src::config",
+          "to": "src::app::adapters::discord"
         },
         {
-          "from": "src::infra",
-          "to": "unix_bus"
+          "from": "src::config",
+          "to": "src::app::adapters"
         }
       ],
       "count": 220
@@ -630,110 +628,110 @@
           "component": "tests",
           "impact_radius": 124,
           "sample_dependents": [
-            "src::infra::paths",
-            "src::infra::bus_server",
-            "src::app::session_discover",
-            "src::app::timeout_sweep",
-            "src::app::mcp_tools"
+            "src::app::adapters::web::auth::session",
+            "src::app::reload_state",
+            "src::domain::context",
+            "src::app::mcp_protocol",
+            "src::infra::dto::task"
           ]
         },
         {
           "component": "task",
           "impact_radius": 95,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::bus_server",
-            "src::app::commands::task",
-            "src::app::session_discover",
-            "src::app::timeout_sweep"
+            "src::app::adapters::web::routes::logout",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::app::context",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "context",
           "impact_radius": 94,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::bus_server",
-            "src::app::commands::task",
-            "src::app::session_discover",
-            "src::app::timeout_sweep"
+            "src::app::adapters::web::routes::logout",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::app::context",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "agent",
           "impact_radius": 93,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::bus_server",
-            "src::app::commands::task",
-            "src::app::session_discover",
-            "src::app::timeout_sweep"
+            "src::app::adapters::web::routes::logout",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::app::context",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "message",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::bus_server",
-            "src::app::commands::task",
-            "src::app::session_discover",
-            "src::app::timeout_sweep"
+            "src::app::adapters::web::routes::logout",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::app::context",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "statemachine",
           "impact_radius": 92,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::bus_server",
-            "src::app::commands::task",
-            "src::app::session_discover",
-            "src::app::timeout_sweep"
+            "src::app::adapters::web::routes::logout",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::app::context",
+            "src::app::commands::schedule"
           ]
         },
         {
           "component": "bus",
           "impact_radius": 74,
           "sample_dependents": [
-            "src::app::commands::task",
-            "src::app::session_discover",
-            "src::app::timeout_sweep",
-            "src::app::mcp_tools",
-            "src::app::adapters::web::view::cards"
+            "src::app::adapters::web::routes::logout",
+            "src::app::adapters::telegram",
+            "src::app::mcp_protocol",
+            "src::app::commands::schedule",
+            "src::app::adapters::web::routes"
           ]
         },
         {
           "component": "events",
           "impact_radius": 61,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::dto::instance",
-            "src::infra::bus_server",
-            "src::app::mcp_service",
-            "src::app::timeout_sweep"
+            "src::app::commands::bus",
+            "src::domain::workitem",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::domain"
           ]
         },
         {
           "component": "config_types",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::dto::instance",
-            "src::infra::bus_server",
-            "src::app::mcp_service",
-            "src::app::timeout_sweep"
+            "src::app::commands::bus",
+            "src::domain::workitem",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::domain"
           ]
         },
         {
           "component": "workitem",
           "impact_radius": 60,
           "sample_dependents": [
-            "src::infra::dto::context",
-            "src::infra::dto::instance",
-            "src::infra::bus_server",
-            "src::app::mcp_service",
-            "src::app::timeout_sweep"
+            "src::app::commands::bus",
+            "src::domain::workitem",
+            "src::infra::dto::task",
+            "src::app::adapters::telegram",
+            "src::domain"
           ]
         }
       ],

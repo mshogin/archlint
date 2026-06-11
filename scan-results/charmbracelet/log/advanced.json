@@ -55,35 +55,42 @@
       "status": "PASSED",
       "packages": [
         {
-          "package": "pkg_test",
+          "package": "formatter",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "text_test",
+          "package": "logger_121_test",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "context",
+          "package": "text",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "doc",
+          "package": "json_test",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "stdlog",
+          "package": "logfmt_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "context_test",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -97,14 +104,14 @@
           "nodes_count": 1
         },
         {
-          "package": "options",
+          "package": "json",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "level",
+          "package": "options_test",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -112,13 +119,6 @@
         },
         {
           "package": "pkg",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "logger",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -184,23 +184,27 @@
       "central_nodes": [],
       "peripheral_nodes": [
         {
-          "node": "pkg_test",
+          "node": "formatter",
           "closeness": 0.0
         },
         {
-          "node": "text_test",
+          "node": "logger_121_test",
           "closeness": 0.0
         },
         {
-          "node": "context",
+          "node": "text",
           "closeness": 0.0
         },
         {
-          "node": "doc",
+          "node": "json_test",
           "closeness": 0.0
         },
         {
-          "node": "stdlog",
+          "node": "logfmt_test",
+          "closeness": 0.0
+        },
+        {
+          "node": "context_test",
           "closeness": 0.0
         },
         {
@@ -208,19 +212,15 @@
           "closeness": 0.0
         },
         {
-          "node": "options",
+          "node": "json",
           "closeness": 0.0
         },
         {
-          "node": "level",
+          "node": "options_test",
           "closeness": 0.0
         },
         {
           "node": "pkg",
-          "closeness": 0.0
-        },
-        {
-          "node": "logger",
           "closeness": 0.0
         }
       ],
@@ -235,23 +235,23 @@
       "influential_count": 0,
       "top_5": [
         {
-          "node": "pkg_test",
+          "node": "formatter",
           "eigenvector": 0.164
         },
         {
-          "node": "text_test",
+          "node": "logger_121_test",
           "eigenvector": 0.164
         },
         {
-          "node": "context",
+          "node": "text",
           "eigenvector": 0.164
         },
         {
-          "node": "doc",
+          "node": "json_test",
           "eigenvector": 0.164
         },
         {
-          "node": "stdlog",
+          "node": "logfmt_test",
           "eigenvector": 0.164
         }
       ]
@@ -341,23 +341,23 @@
       "max_impact": 0,
       "top_impact": [
         {
-          "node": "pkg_test",
+          "node": "formatter",
           "impact": 0
         },
         {
-          "node": "text_test",
+          "node": "logger_121_test",
           "impact": 0
         },
         {
-          "node": "context",
+          "node": "text",
           "impact": 0
         },
         {
-          "node": "doc",
+          "node": "json_test",
           "impact": 0
         },
         {
-          "node": "stdlog",
+          "node": "logfmt_test",
           "impact": 0
         }
       ],

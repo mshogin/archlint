@@ -21,8 +21,8 @@
       "status": "FAILED",
       "cycles": [
         [
-          "src::renderer",
-          "src::listing"
+          "src::listing",
+          "src::renderer"
         ]
       ],
       "cycles_count": 1
@@ -34,13 +34,13 @@
       "threshold": 5,
       "violations": [
         {
-          "node": "src::args",
-          "fan_out": 7,
+          "node": "src::listing",
+          "fan_out": 6,
           "threshold": 5
         },
         {
-          "node": "src::listing",
-          "fan_out": 6,
+          "node": "src::args",
+          "fan_out": 7,
           "threshold": 5
         },
         {
@@ -94,6 +94,18 @@
           "ce": 17
         },
         {
+          "node": "tests::readme",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
+          "node": "tests::paste",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 2
+        },
+        {
           "node": "tests::serve_request",
           "instability": 1.0,
           "ca": 0,
@@ -101,18 +113,6 @@
         },
         {
           "node": "tests::upload_files",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 2
-        },
-        {
-          "node": "tests::archive",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 2
-        },
-        {
-          "node": "tests::paste",
           "instability": 1.0,
           "ca": 0,
           "ce": 2
@@ -138,13 +138,13 @@
           "ce": 0
         },
         {
-          "node": "fake_tty",
+          "node": "utils",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
         },
         {
-          "node": "utils",
+          "node": "fake_tty",
           "instability": 0.0,
           "ca": 1,
           "ce": 0
@@ -248,8 +248,8 @@
       "total_sccs": 52,
       "problematic_sccs": [
         [
-          "src::renderer",
-          "src::listing"
+          "src::listing",
+          "src::renderer"
         ]
       ],
       "problematic_count": 1

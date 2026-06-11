@@ -40,7 +40,7 @@
       "name": "modularity",
       "description": "Модульность графа должна быть >= 0.3",
       "status": "PASSED",
-      "modularity": 0.528,
+      "modularity": 0.527,
       "threshold": 0.3,
       "communities_count": 11
     },
@@ -62,15 +62,6 @@
       "status": "ERROR",
       "packages": [
         {
-          "package": "src::middleware",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
           "package": "src::redacted",
           "abstractness": 0.0,
           "instability": 0.0,
@@ -80,25 +71,16 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
+          "package": "src::middleware",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
           "package": "tests",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
-          "package": "RequestItem",
-          "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
-        },
-        {
-          "package": "util",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -117,6 +99,24 @@
         },
         {
           "package": "palette",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "util",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
+          "package": "imp",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -154,11 +154,13 @@
       ],
       "violations": [
         {
-          "package": "src::cli",
+          "package": "src::redacted",
           "abstractness": 0.0,
-          "instability": 0.455,
-          "distance": 0.545,
-          "nodes_count": 1
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
         },
         {
           "package": "src::utils",
@@ -170,16 +172,14 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "src::middleware",
+          "package": "src::cli",
           "abstractness": 0.0,
-          "instability": 0.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "pain",
-          "issue": "Зона боли: конкретный и стабильный"
+          "instability": 0.455,
+          "distance": 0.545,
+          "nodes_count": 1
         },
         {
-          "package": "src::redacted",
+          "package": "src::middleware",
           "abstractness": 0.0,
           "instability": 0.0,
           "distance": 1.0,
@@ -207,11 +207,11 @@
       "threshold": 0.1,
       "low_clustering_nodes": [
         {
-          "node": "src::formatting::palette",
+          "node": "src::formatting",
           "coefficient": 0.0
         },
         {
-          "node": "src::formatting",
+          "node": "src::formatting::palette",
           "coefficient": 0.0
         },
         {
@@ -251,17 +251,17 @@
       "description": "Критические узлы (удаление разбивает граф)",
       "status": "WARNING",
       "articulation_points": [
-        "src::formatting::palette",
-        "src::formatting",
-        "tests",
         "src::main",
         "tests::cases",
         "download",
-        "src::buffer",
+        "src::formatting",
+        "src::formatting::palette",
+        "src::printer",
+        "tests",
         "src::nested_json",
+        "src::buffer",
         "src::request_items",
         "src::cli",
-        "src::printer",
         "tests::cli",
         "tests::prelude"
       ],
@@ -274,28 +274,8 @@
       "status": "INFO",
       "bridges": [
         {
-          "from": "src::printer",
-          "to": "src::formatting"
-        },
-        {
-          "from": "src::message_signature",
-          "to": "tests"
-        },
-        {
-          "from": "src::cli",
-          "to": "src::redacted"
-        },
-        {
-          "from": "src::request_items",
-          "to": "RequestItem"
-        },
-        {
-          "from": "src::formatting::palette",
-          "to": "util"
-        },
-        {
-          "from": "src::formatting::palette",
-          "to": "src::formatting"
+          "from": "src::redacted",
+          "to": "src::cli"
         },
         {
           "from": "src::formatting",
@@ -304,6 +284,26 @@
         {
           "from": "src::formatting",
           "to": "palette"
+        },
+        {
+          "from": "src::formatting",
+          "to": "src::formatting::palette"
+        },
+        {
+          "from": "src::formatting",
+          "to": "src::printer"
+        },
+        {
+          "from": "src::formatting::palette",
+          "to": "util"
+        },
+        {
+          "from": "src::buffer",
+          "to": "imp"
+        },
+        {
+          "from": "src::message_signature",
+          "to": "tests"
         },
         {
           "from": "src::main",
@@ -406,11 +406,11 @@
           "closeness": 0.048
         },
         {
-          "node": "src::middleware",
+          "node": "src::nested_json",
           "closeness": 0.046
         },
         {
-          "node": "src::nested_json",
+          "node": "src::middleware",
           "closeness": 0.046
         },
         {

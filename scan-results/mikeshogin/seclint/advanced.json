@@ -63,6 +63,41 @@
           "nodes_count": 5
         },
         {
+          "package": "pkg::classifier::classifier_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::report::report",
+          "abstractness": 1.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::report::report_test",
+          "abstractness": 1.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::config::config_test",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
+          "package": "pkg::config::config",
+          "abstractness": 0.0,
+          "instability": 0.5,
+          "distance": 0.5,
+          "nodes_count": 1
+        },
+        {
           "package": "pkg::audit::audit",
           "abstractness": 0.0,
           "instability": 0.5,
@@ -84,42 +119,7 @@
           "nodes_count": 1
         },
         {
-          "package": "pkg::config::config",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "pkg::config::config_test",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "pkg::classifier::classifier_test",
-          "abstractness": 0.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "pkg::report::report_test",
-          "abstractness": 1.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "pkg::report::report",
-          "abstractness": 1.0,
-          "instability": 0.5,
-          "distance": 0.5,
-          "nodes_count": 1
-        },
-        {
-          "package": "cmd::seclint::main",
+          "package": "pkg::classifier::classifier",
           "abstractness": 0.0,
           "instability": 1.0,
           "distance": 0.0,
@@ -145,11 +145,11 @@
       "threshold": 0.1,
       "low_clustering_nodes": [
         {
-          "node": "cmd::seclint::main",
+          "node": "pkg::classifier::classifier",
           "coefficient": 0.0
         },
         {
-          "node": "pkg::classifier::classifier",
+          "node": "cmd::seclint::main",
           "coefficient": 0.0
         },
         {
@@ -244,23 +244,23 @@
           "closeness": 0.071
         },
         {
-          "node": "cmd::seclint::main",
+          "node": "pkg::classifier::classifier_test",
           "closeness": 0.0
         },
         {
-          "node": "pkg::audit::audit",
+          "node": "pkg::classifier::classifier",
           "closeness": 0.0
         },
         {
-          "node": "pkg::threat::threat_test",
+          "node": "pkg::report::report",
           "closeness": 0.0
         },
         {
-          "node": "pkg::threat::threat",
+          "node": "pkg::report::report_test",
           "closeness": 0.0
         },
         {
-          "node": "pkg::config::config",
+          "node": "pkg::config::config_test",
           "closeness": 0.0
         }
       ],

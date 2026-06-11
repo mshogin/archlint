@@ -51,19 +51,19 @@
       "status": "PASSED",
       "most_unstable": [
         {
-          "node": "cmd::costlint::main",
-          "instability": 1.0,
-          "ca": 0,
-          "ce": 10
-        },
-        {
-          "node": "pkg::feature::feature",
+          "node": "pkg::ab::ab",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
         },
         {
-          "node": "pkg::daily::daily",
+          "node": "pkg::reporter::reporter",
+          "instability": 1.0,
+          "ca": 0,
+          "ce": 1
+        },
+        {
+          "node": "pkg::budget::budget",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
@@ -75,13 +75,25 @@
           "ce": 2
         },
         {
-          "node": "pkg::budget::budget",
+          "node": "pkg::feature::feature",
           "instability": 1.0,
           "ca": 0,
           "ce": 1
         }
       ],
       "most_stable": [
+        {
+          "node": "pkg/cache",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
+        {
+          "node": "pkg/daily",
+          "instability": 0.0,
+          "ca": 1,
+          "ce": 0
+        },
         {
           "node": "pkg/feature",
           "instability": 0.0,
@@ -95,21 +107,9 @@
           "ce": 0
         },
         {
-          "node": "pkg/pricing",
-          "instability": 0.0,
-          "ca": 6,
-          "ce": 0
-        },
-        {
           "node": "pkg/reporter",
           "instability": 0.0,
           "ca": 1,
-          "ce": 0
-        },
-        {
-          "node": "pkg/telemetry",
-          "instability": 0.0,
-          "ca": 2,
           "ce": 0
         }
       ],
@@ -181,13 +181,13 @@
       "description": "Компоненты без связей (возможно мертвый код)",
       "status": "ERROR",
       "orphans": [
-        "pkg::counter::counter",
-        "pkg::counter::tiktoken",
-        "pkg::cache::cache",
-        "pkg::telemetry::telemetry",
         "pkg::pricing::subscription",
         "pkg::pricing::pricing",
-        "pkg::perf::perf"
+        "pkg::perf::perf",
+        "pkg::telemetry::telemetry",
+        "pkg::counter::tiktoken",
+        "pkg::counter::counter",
+        "pkg::cache::cache"
       ],
       "orphans_count": 7
     },

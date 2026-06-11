@@ -56,6 +56,15 @@
       "status": "ERROR",
       "packages": [
         {
+          "package": "src::outlier_detection",
+          "abstractness": 0.0,
+          "instability": 0.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "pain",
+          "issue": "Зона боли: конкретный и стабильный"
+        },
+        {
           "package": "src::cli",
           "abstractness": 0.0,
           "instability": 0.0,
@@ -65,7 +74,25 @@
           "issue": "Зона боли: конкретный и стабильный"
         },
         {
-          "package": "src::export::asciidoc",
+          "package": "src::export::orgmode",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "src::export::json",
+          "abstractness": 1.0,
+          "instability": 1.0,
+          "distance": 1.0,
+          "nodes_count": 1,
+          "zone": "uselessness",
+          "issue": "Зона бесполезности: абстрактный и нестабильный"
+        },
+        {
+          "package": "src::export::tests",
           "abstractness": 1.0,
           "instability": 1.0,
           "distance": 1.0,
@@ -101,25 +128,7 @@
           "issue": "Зона бесполезности: абстрактный и нестабильный"
         },
         {
-          "package": "src::export::tests",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
-        },
-        {
-          "package": "src::export::json",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
-        },
-        {
-          "package": "src::export::orgmode",
+          "package": "src::export::asciidoc",
           "abstractness": 1.0,
           "instability": 1.0,
           "distance": 1.0,
@@ -135,7 +144,9 @@
           "nodes_count": 1,
           "zone": "pain",
           "issue": "Зона боли: конкретный и стабильный"
-        },
+        }
+      ],
+      "violations": [
         {
           "package": "src::outlier_detection",
           "abstractness": 0.0,
@@ -144,9 +155,21 @@
           "nodes_count": 1,
           "zone": "pain",
           "issue": "Зона боли: конкретный и стабильный"
-        }
-      ],
-      "violations": [
+        },
+        {
+          "package": "src::output",
+          "abstractness": 0.0,
+          "instability": 0.429,
+          "distance": 0.571,
+          "nodes_count": 1
+        },
+        {
+          "package": "src::util",
+          "abstractness": 0.0,
+          "instability": 0.217,
+          "distance": 0.783,
+          "nodes_count": 1
+        },
         {
           "package": "src::cli",
           "abstractness": 0.0,
@@ -162,33 +185,6 @@
           "instability": 0.273,
           "distance": 0.727,
           "nodes_count": 1
-        },
-        {
-          "package": "src::export::asciidoc",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
-        },
-        {
-          "package": "src::export::markdown",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
-        },
-        {
-          "package": "src::export::markup",
-          "abstractness": 1.0,
-          "instability": 1.0,
-          "distance": 1.0,
-          "nodes_count": 1,
-          "zone": "uselessness",
-          "issue": "Зона бесполезности: абстрактный и нестабильный"
         }
       ],
       "violations_count": 64
@@ -205,22 +201,6 @@
           "coefficient": 0.0
         },
         {
-          "node": "src::export::asciidoc",
-          "coefficient": 0.0
-        },
-        {
-          "node": "src::export::markdown",
-          "coefficient": 0.0
-        },
-        {
-          "node": "src::export",
-          "coefficient": 0.032
-        },
-        {
-          "node": "src::export::orgmode",
-          "coefficient": 0.0
-        },
-        {
           "node": "src::output",
           "coefficient": 0.095
         },
@@ -229,15 +209,31 @@
           "coefficient": 0.063
         },
         {
+          "node": "src::export::orgmode",
+          "coefficient": 0.0
+        },
+        {
+          "node": "src::export",
+          "coefficient": 0.032
+        },
+        {
+          "node": "src::export::markdown",
+          "coefficient": 0.0
+        },
+        {
+          "node": "src::export::asciidoc",
+          "coefficient": 0.0
+        },
+        {
+          "node": "src::main",
+          "coefficient": 0.0
+        },
+        {
           "node": "src::timer",
           "coefficient": 0.071
         },
         {
           "node": "src::timer::windows_timer",
-          "coefficient": 0.0
-        },
-        {
-          "node": "src::error",
           "coefficient": 0.0
         }
       ],
@@ -257,18 +253,18 @@
       "description": "Критические узлы (удаление разбивает граф)",
       "status": "WARNING",
       "articulation_points": [
-        "src::export",
+        "src::output",
         "src::benchmark_result",
         "src::benchmark::scheduler",
-        "src::output",
+        "src::export",
+        "src::options",
+        "src::parameter",
+        "src::util",
         "src::timer",
         "src::timer::windows_timer",
         "src::timer::unix_timer",
         "src::benchmark::executor",
         "src::benchmark",
-        "src::util",
-        "src::parameter",
-        "src::options",
         "src::main",
         "common"
       ],
@@ -281,60 +277,16 @@
       "status": "INFO",
       "bridges": [
         {
+          "from": "src::outlier_detection",
+          "to": "src::benchmark"
+        },
+        {
           "from": "src::parameter",
           "to": "range_step"
         },
         {
           "from": "src::parameter",
           "to": "tokenize"
-        },
-        {
-          "from": "src::options",
-          "to": "src::output::progress_bar"
-        },
-        {
-          "from": "src::export",
-          "to": "asciidoc"
-        },
-        {
-          "from": "src::export",
-          "to": "csv"
-        },
-        {
-          "from": "src::export",
-          "to": "json"
-        },
-        {
-          "from": "src::export",
-          "to": "markdown"
-        },
-        {
-          "from": "src::export",
-          "to": "markup"
-        },
-        {
-          "from": "src::export",
-          "to": "orgmode"
-        },
-        {
-          "from": "src::export",
-          "to": "src::asciidoc"
-        },
-        {
-          "from": "src::export",
-          "to": "src::csv"
-        },
-        {
-          "from": "src::export",
-          "to": "src::json"
-        },
-        {
-          "from": "src::export",
-          "to": "src::markdown"
-        },
-        {
-          "from": "src::export",
-          "to": "src::orgmode"
         },
         {
           "from": "src::output::format",
@@ -351,6 +303,50 @@
         {
           "from": "src::output",
           "to": "warnings"
+        },
+        {
+          "from": "src::output::progress_bar",
+          "to": "src::options"
+        },
+        {
+          "from": "src::benchmark::timing_result",
+          "to": "src::util"
+        },
+        {
+          "from": "src::benchmark::relative_speed",
+          "to": "src::benchmark_result"
+        },
+        {
+          "from": "src::benchmark::benchmark_result",
+          "to": "src::util"
+        },
+        {
+          "from": "src::benchmark",
+          "to": "benchmark_result"
+        },
+        {
+          "from": "src::benchmark",
+          "to": "executor"
+        },
+        {
+          "from": "src::benchmark",
+          "to": "relative_speed"
+        },
+        {
+          "from": "src::benchmark",
+          "to": "scheduler"
+        },
+        {
+          "from": "src::benchmark",
+          "to": "timing_result"
+        },
+        {
+          "from": "src::benchmark::executor",
+          "to": "src::timing_result"
+        },
+        {
+          "from": "src::benchmark::scheduler",
+          "to": "src::benchmark_result"
         },
         {
           "from": "src::util",
@@ -549,12 +545,12 @@
           "z_score": 5.14
         },
         {
-          "node": "src::export",
+          "node": "src::benchmark",
           "degree": 20,
           "z_score": 4.39
         },
         {
-          "node": "src::benchmark",
+          "node": "src::export",
           "degree": 20,
           "z_score": 4.39
         }
@@ -620,66 +616,66 @@
           "component": "exit_code",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::unix_timer",
-            "src::benchmark::executor",
+            "src::export::orgmode",
+            "src::export::json",
             "src::export",
-            "src::export::asciidoc",
-            "src::parameter::range_step"
+            "src::parameter::range_step",
+            "src::output::warnings"
           ]
         },
         {
           "component": "min_max",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::unix_timer",
-            "src::benchmark::executor",
+            "src::export::orgmode",
+            "src::export::json",
             "src::export",
-            "src::export::asciidoc",
-            "src::parameter::range_step"
+            "src::parameter::range_step",
+            "src::output::warnings"
           ]
         },
         {
           "component": "number",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::unix_timer",
-            "src::benchmark::executor",
+            "src::export::orgmode",
+            "src::export::json",
             "src::export",
-            "src::export::asciidoc",
-            "src::parameter::range_step"
+            "src::parameter::range_step",
+            "src::output::warnings"
           ]
         },
         {
           "component": "randomized_environment_offset",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::unix_timer",
-            "src::benchmark::executor",
+            "src::export::orgmode",
+            "src::export::json",
             "src::export",
-            "src::export::asciidoc",
-            "src::parameter::range_step"
+            "src::parameter::range_step",
+            "src::output::warnings"
           ]
         },
         {
           "component": "units",
           "impact_radius": 25,
           "sample_dependents": [
-            "src::timer::unix_timer",
-            "src::benchmark::executor",
+            "src::export::orgmode",
+            "src::export::json",
             "src::export",
-            "src::export::asciidoc",
-            "src::parameter::range_step"
+            "src::parameter::range_step",
+            "src::output::warnings"
           ]
         },
         {
           "component": "src::util",
           "impact_radius": 24,
           "sample_dependents": [
-            "src::timer::unix_timer",
-            "src::benchmark::executor",
+            "src::export::orgmode",
+            "src::export::json",
             "src::export",
-            "src::export::asciidoc",
-            "src::parameter::range_step"
+            "src::parameter::range_step",
+            "src::output::warnings"
           ]
         }
       ],

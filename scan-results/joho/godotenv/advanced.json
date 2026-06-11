@@ -30,7 +30,7 @@
       "threshold": 0.1,
       "critical_components": [
         {
-          "node": "cmd::godotenv::cmd",
+          "node": "godotenv",
           "pagerank": 0.2
         },
         {
@@ -42,11 +42,11 @@
           "pagerank": 0.2
         },
         {
-          "node": "autoload::autoload",
+          "node": "cmd::godotenv::cmd",
           "pagerank": 0.2
         },
         {
-          "node": "godotenv",
+          "node": "autoload::autoload",
           "pagerank": 0.2
         }
       ],
@@ -76,7 +76,7 @@
       "status": "PASSED",
       "packages": [
         {
-          "package": "cmd::godotenv::cmd",
+          "package": "godotenv",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -97,14 +97,14 @@
           "nodes_count": 1
         },
         {
-          "package": "autoload::autoload",
+          "package": "cmd::godotenv::cmd",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
           "nodes_count": 1
         },
         {
-          "package": "godotenv",
+          "package": "autoload::autoload",
           "abstractness": 0.0,
           "instability": 0.5,
           "distance": 0.5,
@@ -170,7 +170,7 @@
       "central_nodes": [],
       "peripheral_nodes": [
         {
-          "node": "cmd::godotenv::cmd",
+          "node": "godotenv",
           "closeness": 0.0
         },
         {
@@ -182,11 +182,11 @@
           "closeness": 0.0
         },
         {
-          "node": "autoload::autoload",
+          "node": "cmd::godotenv::cmd",
           "closeness": 0.0
         },
         {
-          "node": "godotenv",
+          "node": "autoload::autoload",
           "closeness": 0.0
         }
       ],
@@ -199,7 +199,7 @@
       "threshold": 0.3,
       "influential_nodes": [
         {
-          "node": "cmd::godotenv::cmd",
+          "node": "godotenv",
           "eigenvector": 0.447
         },
         {
@@ -211,18 +211,18 @@
           "eigenvector": 0.447
         },
         {
-          "node": "autoload::autoload",
+          "node": "cmd::godotenv::cmd",
           "eigenvector": 0.447
         },
         {
-          "node": "godotenv",
+          "node": "autoload::autoload",
           "eigenvector": 0.447
         }
       ],
       "influential_count": 5,
       "top_5": [
         {
-          "node": "cmd::godotenv::cmd",
+          "node": "godotenv",
           "eigenvector": 0.447
         },
         {
@@ -234,11 +234,11 @@
           "eigenvector": 0.447
         },
         {
-          "node": "autoload::autoload",
+          "node": "cmd::godotenv::cmd",
           "eigenvector": 0.447
         },
         {
-          "node": "godotenv",
+          "node": "autoload::autoload",
           "eigenvector": 0.447
         }
       ]
@@ -328,7 +328,7 @@
       "max_impact": 0,
       "top_impact": [
         {
-          "node": "cmd::godotenv::cmd",
+          "node": "godotenv",
           "impact": 0
         },
         {
@@ -340,11 +340,11 @@
           "impact": 0
         },
         {
-          "node": "autoload::autoload",
+          "node": "cmd::godotenv::cmd",
           "impact": 0
         },
         {
-          "node": "godotenv",
+          "node": "autoload::autoload",
           "impact": 0
         }
       ],

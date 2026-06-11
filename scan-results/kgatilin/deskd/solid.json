@@ -25,80 +25,80 @@
           "package": "src::app",
           "domains_count": 47,
           "domains": [
-            "a2a_jwt",
-            "acp",
+            "agent_state",
+            "agent",
+            "graph",
+            "adapters",
+            "a2a",
+            "workflow",
+            "commands",
             "doctor",
-            "bus",
-            "context_size",
-            "agent_process",
-            "agent_registry",
-            "context_log",
-            "config_watcher",
-            "config_remotes"
+            "tasklog",
+            "unified_inbox"
           ]
         },
         {
           "package": "src::app::commands",
           "domains_count": 19,
           "domains": [
+            "usage",
+            "sm",
+            "agent",
+            "graph",
+            "status",
+            "a2a",
             "doctor",
             "bus",
-            "a2a",
             "reload",
-            "task",
-            "dashboard",
-            "status",
-            "context",
-            "tests",
-            "schedule"
+            "tui"
           ]
         },
         {
           "package": "src::app::adapters::web",
           "domains_count": 18,
           "domains": [
-            "view",
-            "middleware",
-            "router",
+            "src::app",
+            "data",
             "data_chart",
-            "routes",
+            "view",
             "dispatch",
+            "panel",
             "auth",
-            "transcript_view",
-            "event_query",
-            "src::app"
+            "middleware",
+            "routes",
+            "audit"
           ]
         },
         {
           "package": "src::app::adapters::web::routes",
           "domains_count": 16,
           "domains": [
+            "metrics",
+            "logout",
             "cost",
-            "sse",
-            "agent_detail",
-            "panel",
-            "tests",
-            "cost_feed",
-            "github_webhook",
             "src::app",
-            "static_assets",
-            "login"
+            "agent_detail",
+            "github_webhook",
+            "panel",
+            "cost_feed",
+            "sse",
+            "static_assets"
           ]
         },
         {
           "package": "src::infra",
           "domains_count": 11,
           "domains": [
+            "dto",
+            "diag",
+            "agent_file",
+            "sm_store",
             "memory_bus",
             "paths",
-            "sm_store",
-            "task_store",
-            "memory_store",
+            "bus_server",
             "unix_bus",
-            "agent_file",
-            "context_store",
-            "dto",
-            "diag"
+            "memory_store",
+            "context_store"
           ]
         },
         {
@@ -106,14 +106,14 @@
           "domains_count": 9,
           "domains": [
             "cost",
-            "strip",
-            "tests",
-            "cards",
-            "log",
-            "chart",
             "task",
-            "detail",
-            "breadcrumb"
+            "log",
+            "strip",
+            "chart",
+            "tests",
+            "breadcrumb",
+            "cards",
+            "detail"
           ]
         },
         {
@@ -121,12 +121,12 @@
           "domains_count": 8,
           "domains": [
             "context",
-            "config_types",
             "agent",
-            "workitem",
             "message",
-            "events",
+            "config_types",
             "task",
+            "events",
+            "workitem",
             "statemachine"
           ]
         },
@@ -134,41 +134,41 @@
           "package": "src::app::adapters::web::state",
           "domains_count": 8,
           "domains": [
-            "src::data_cost",
             "src::app",
-            "src::dispatch",
-            "src::config",
             "src::middleware",
-            "src::routes",
+            "src::data_cost",
             "src::auth",
-            "src::audit"
+            "src::dispatch",
+            "src::audit",
+            "src::routes",
+            "src::config"
           ]
         },
         {
           "package": "src::app::adapters::federation",
           "domains_count": 8,
           "domains": [
-            "frame",
-            "registry",
-            "routing",
-            "forward",
-            "hub",
             "peer",
+            "glob",
             "preflight",
-            "glob"
+            "routing",
+            "registry",
+            "hub",
+            "frame",
+            "forward"
           ]
         },
         {
-          "package": "src::app::transcript_extractor",
+          "package": "src::app::adapters::federation::hub",
           "domains_count": 7,
           "domains": [
-            "event_store",
+            "src::app",
+            "src::registry",
+            "src::forward",
             "tests",
-            "patterns",
-            "cursors",
-            "parser",
-            "events",
-            "src::infra"
+            "src::frame",
+            "src::preflight",
+            "src::routing"
           ]
         }
       ],
