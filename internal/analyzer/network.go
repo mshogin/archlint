@@ -285,34 +285,42 @@ func detectCommunities(nodes []string, adj map[string]map[string]bool, degrees m
 		}
 	}
 
-	// Compute modularity Q for directed graph:
+	// Compute modularity Q for directed graph, O(V+E):
 	// Q = (1/m) * Σ_{ij} [A_ij - k_i_out * k_j_in / m] * δ(c_i, c_j)
-	// where k_i_out = out-degree, k_j_in = in-degree.
-	q := 0.0
+	// Reformulated by community sums (algebraically identical to the per-pair double
+	// sum, but linear instead of O(V^3)):
+	//   Q = intra/m - Σ_c (Σ_{i∈c} k_i_out)(Σ_{j∈c} k_j_in) / m^2
+	// where intra = # edges whose endpoints share a community.
 	mf := float64(m)
+	if mf == 0 {
+		return community, 0.0
+	}
+	// In-degree precomputed once (was recomputed inline per (u,v) -> the O(V^3) bug).
+	inDeg := make(map[string]int, len(nodes))
 	for _, u := range nodes {
-		kOutU := float64(len(adj[u]))
-		for _, v := range nodes {
-			kInV := 0.0
-			// Build in-degree inline.
-			inDeg := 0
-			for _, w := range nodes {
-				if adj[w][v] {
-					inDeg++
-				}
-			}
-			kInV = float64(inDeg)
-			aij := 0.0
-			if adj[u][v] {
-				aij = 1.0
-			}
-			expected := kOutU * kInV / mf
-			if community[u] == community[v] {
-				q += aij - expected
+		for v := range adj[u] {
+			inDeg[v]++
+		}
+	}
+	// Per-community out/in degree sums and intra-community edge count.
+	sumOut := make(map[int]float64)
+	sumIn := make(map[int]float64)
+	intra := 0.0
+	for _, u := range nodes {
+		cu := community[u]
+		sumOut[cu] += float64(len(adj[u]))
+		sumIn[cu] += float64(inDeg[u])
+		for v := range adj[u] {
+			if community[v] == cu {
+				intra++
 			}
 		}
 	}
-	q /= mf
+	expectedSum := 0.0
+	for c, so := range sumOut {
+		expectedSum += so * sumIn[c]
+	}
+	q := intra/mf - expectedSum/(mf*mf)
 
 	return community, q
 }
