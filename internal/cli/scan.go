@@ -181,6 +181,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Inactive when no layers are configured.
 	violations = append(violations, mcp.LayerBackedge(graph, &cfg)...)
 
+	// NB: gauntlet candidates (articulation/bridge/stability) are implemented in
+	// internal/mcp but NOT wired here — they fire heavily on healthy code (intent-laden,
+	// DIP-risk) and their severity is pending the soundness gauntlet review. They will
+	// be surfaced (as WARNING/signals or ERROR) only after that verdict.
+
 	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
 	// НОВЫЙ мёртвый узел vs baseline = регрессия (блок + удаление human-in-loop).
 	if a != nil {
