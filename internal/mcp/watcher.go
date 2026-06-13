@@ -63,7 +63,7 @@ func NewWatcher(rootDir string, handler FileChangeHandler, logger *log.Logger) (
 		return nil
 	})
 	if err != nil {
-		fsw.Close()
+		_ = fsw.Close()
 
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (w *Watcher) Start() {
 // Stop stops the file watcher and waits for the background goroutine to finish.
 func (w *Watcher) Stop() {
 	close(w.stopCh)
-	w.watcher.Close()
+	_ = w.watcher.Close()
 	w.wg.Wait()
 }
 

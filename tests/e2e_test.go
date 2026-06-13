@@ -136,13 +136,20 @@ func TestE2EScanClean(t *testing.T) {
 	}
 }
 
-// TestE2EScanWithViolations verifies that scan fails when a layer violation is injected.
+// TestE2EScanWithViolations verifies the DELTA gate (Фаза 5, DR-0034): a layer
+// violation that is NEW relative to a clean baseline blocks the gate. Layer/cycle/
+// dead-code are ERROR-class and gated by delta — without a baseline they audit (no
+// block); with a clean baseline a newly-introduced violation is a regression -> block.
 func TestE2EScanWithViolations(t *testing.T) {
 	bin := e2eBinary(t)
 	demo := demoDir(t)
 
 	orderHandlerPath := filepath.Join(demo, "internal", "handler", "order.go")
 	violationStep := filepath.Join(demo, "demo-scenario", "step1-quick-fix.go")
+
+	internalDir := filepath.Join(demo, "internal")
+	configFile := filepath.Join(demo, ".archlint.yaml")
+	baselinePath := filepath.Join(t.TempDir(), "baseline.json")
 
 	// Back up the original file.
 	origContent, err := os.ReadFile(orderHandlerPath)
@@ -154,6 +161,11 @@ func TestE2EScanWithViolations(t *testing.T) {
 			t.Errorf("restore handler: %v", err)
 		}
 	})
+
+	// Snapshot the CLEAN demo as the delta baseline (floor) BEFORE injecting.
+	if out, code := run(t, bin, "baseline", internalDir, "--config", configFile, "-o", baselinePath); code != 0 {
+		t.Fatalf("baseline exited %d on clean code\noutput:\n%s", code, out)
+	}
 
 	// Read step1 file. It starts with //go:build ignore - remove that line.
 	stepContent, err := os.ReadFile(violationStep)
@@ -169,12 +181,10 @@ func TestE2EScanWithViolations(t *testing.T) {
 		t.Fatalf("write step1 to handler: %v", err)
 	}
 
-	internalDir := filepath.Join(demo, "internal")
-	configFile := filepath.Join(demo, ".archlint.yaml")
-
-	out, code := run(t, bin, "scan", internalDir, "--config", configFile)
+	// Scan against the clean baseline: injected layer violation is NEW -> regression -> block.
+	out, code := run(t, bin, "scan", internalDir, "--config", configFile, "--baseline", baselinePath)
 	if code == 0 {
-		t.Fatalf("scan exited 0 on violating code (expected non-zero)\noutput:\n%s", out)
+		t.Fatalf("scan exited 0 on NEW violating code vs baseline (expected non-zero)\noutput:\n%s", out)
 	}
 
 	if !strings.Contains(out, "FAILED") {
@@ -185,7 +195,7 @@ func TestE2EScanWithViolations(t *testing.T) {
 		t.Errorf("expected 'layer-violation' in scan output\noutput:\n%s", out)
 	}
 
-	t.Logf("scan detected violation: exit=%d", code)
+	t.Logf("delta gate blocked NEW layer violation: exit=%d", code)
 }
 
 // TestE2ECollect verifies that collect produces a valid architecture.yaml.

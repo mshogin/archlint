@@ -49,7 +49,7 @@ func (s *LocalScanner) Scan(ctx context.Context, repoURL string) (*ScanResult, e
 	if err != nil {
 		return nil, fmt.Errorf("create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	cloneDir := filepath.Join(tmpDir, "repo")
 	if err := gitClone(ctx, repoURL, cloneDir); err != nil {

@@ -39,11 +39,11 @@ func TestCollectWorkflow(t *testing.T) {
 	// Use the cli package itself as source - always a valid Go directory.
 	runErr := runCollect(nil, []string{"."})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	if runErr != nil {
 		t.Fatalf("runCollect failed: %v", runErr)
@@ -148,11 +148,11 @@ metadata:
 
 	runErr := runValidate(nil, nil)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if runErr != nil {
@@ -204,11 +204,11 @@ metadata:
 
 	runErr := runValidate(nil, nil)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	if runErr != nil {
 		t.Fatalf("runValidate json failed: %v", runErr)
@@ -246,11 +246,11 @@ func TestCheckWorkflow(t *testing.T) {
 
 	runErr := runCheck(nil, []string{sampleDir})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	if runErr != nil {
 		t.Fatalf("runCheck failed: %v", runErr)
@@ -285,11 +285,11 @@ func TestMetricsWorkflow(t *testing.T) {
 
 	runErr := runMetrics(nil, []string{"."})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	if runErr != nil {
 		t.Fatalf("runMetrics failed: %v", runErr)

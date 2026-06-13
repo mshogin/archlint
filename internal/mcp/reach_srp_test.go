@@ -8,35 +8,6 @@ import (
 	"github.com/mshogin/archlint/internal/analyzer"
 )
 
-// writeAndAnalyze is a helper that writes Go source to a temp file, analyzes
-// it, and returns the analyzer + graph.  The returned typeID is for the named
-// struct inside the written code.
-func writeAndAnalyze(t *testing.T, code string) (*analyzer.GoAnalyzer, interface{ Nodes() int }, string) {
-	t.Helper()
-	return nil, nil, ""
-}
-
-// analyzeCode is the real helper used by all reach-SRP tests.
-func analyzeCode(t *testing.T, code string, typeName string) (string, *analyzer.GoAnalyzer, interface{}) {
-	t.Helper()
-
-	tmpDir := t.TempDir()
-	goFile := filepath.Join(tmpDir, "code.go")
-
-	if err := os.WriteFile(goFile, []byte(code), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	a := analyzer.NewGoAnalyzer()
-	graph, err := a.Analyze(tmpDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	typeID := findTypeID(t, a, typeName)
-	return typeID, a, graph
-}
-
 // TestReachSRPDataClass: struct with 5 getters, no external calls → ρ=1
 // (all methods are pure → unified into one class).
 func TestReachSRPDataClass(t *testing.T) {

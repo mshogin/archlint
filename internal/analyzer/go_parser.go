@@ -15,6 +15,9 @@ type GoParser struct {
 	types     map[string]*TypeInfo
 	functions map[string]*FunctionInfo
 	methods   map[string]*MethodInfo
+	// pkgRefs — package-level function-value-use по пакетам (а)-фикс. Делится с
+	// builder через analyzer (go.go выставляет parser.pkgRefs = a.pkgRefs).
+	pkgRefs map[string][]CallInfo
 }
 
 // newGoParser создает новый парсер, работающий с переданными хранилищами данных.
@@ -69,8 +72,13 @@ func (p *GoParser) parseFile(filename string) error {
 	for _, decl := range node.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
-			if d.Tok == token.TYPE {
+			switch d.Tok {
+			case token.TYPE:
 				p.parseTypeDecl(d, pkgID, filename, fset)
+			case token.VAR, token.CONST:
+				// (а)-фикс: package-level var/const инициализаторы тоже несут
+				// function-value-use (cobra `var c=&Command{RunE:H}`, slices, maps).
+				p.collectPackageLevelRefs(d, pkgID)
 			}
 		case *ast.FuncDecl:
 			p.parseFuncDecl(d, pkgID, filename, fset)
@@ -97,24 +105,27 @@ func (p *GoParser) parseTypeDecl(decl *ast.GenDecl, pkgID, filename string, fset
 
 		var embeds []string
 
+		var methodSigs []InterfaceMethodSig
+
 		switch t := typeSpec.Type.(type) {
 		case *ast.StructType:
 			kind = "struct"
 			fields, embeds = p.parseStructFields(t)
 		case *ast.InterfaceType:
 			kind = "interface"
-			embeds = p.parseInterfaceEmbeds(t)
+			embeds, methodSigs = p.parseInterfaceEmbeds(t)
 		}
 
 		pos := fset.Position(typeSpec.Pos())
 		p.types[typeID] = &TypeInfo{
-			Name:    typeName,
-			Package: pkgID,
-			Kind:    kind,
-			File:    filename,
-			Line:    pos.Line,
-			Fields:  fields,
-			Embeds:  embeds,
+			Name:       typeName,
+			Package:    pkgID,
+			Kind:       kind,
+			File:       filename,
+			Line:       pos.Line,
+			Fields:     fields,
+			Embeds:     embeds,
+			MethodSigs: methodSigs,
 		}
 	}
 }
@@ -144,22 +155,33 @@ func (p *GoParser) parseStructFields(structType *ast.StructType) (fields []Field
 	return fields, embeds
 }
 
-// parseInterfaceEmbeds извлекает встроенные интерфейсы.
-func (p *GoParser) parseInterfaceEmbeds(iface *ast.InterfaceType) []string {
-	var embeds []string
-
+// parseInterfaceEmbeds извлекает встроенные интерфейсы (method.Names==0) И
+// ПОЛНЫЕ сигнатуры собственных методов интерфейса (method.Names!=0): имя +
+// param/return type-refs. Имена -> method-set implements; param/return -> рёбра
+// usesType/returns ОТ интерфейса (DIP по типовому уровню).
+func (p *GoParser) parseInterfaceEmbeds(iface *ast.InterfaceType) (embeds []string, methodSigs []InterfaceMethodSig) {
 	if iface.Methods == nil {
-		return embeds
+		return embeds, methodSigs
 	}
 
 	for _, method := range iface.Methods.List {
 		if len(method.Names) == 0 {
 			typeName, _ := p.getTypeName(method.Type)
 			embeds = append(embeds, typeName)
+
+			continue
+		}
+
+		// method.Type для метода интерфейса — *ast.FuncType (та же сигнатура).
+		ft, _ := method.Type.(*ast.FuncType)
+		params, results := p.parseSignature(ft)
+
+		for _, name := range method.Names {
+			methodSigs = append(methodSigs, InterfaceMethodSig{Name: name.Name, Params: params, Results: results})
 		}
 	}
 
-	return embeds
+	return embeds, methodSigs
 }
 
 // getTypeName извлекает имя типа из AST выражения.
@@ -190,12 +212,132 @@ func (p *GoParser) getTypeName(expr ast.Expr) (typeName, typePkg string) {
 	return "", ""
 }
 
+// parseSignature извлекает type-refs параметров и возвратов из сигнатуры (Фаза 1).
+// Имя параметра не важно для type-ref. Нерезолвимые/примитивы отсеются позже в
+// билдере (resolveTypeDependency) -> ребро только на известный тип (соундность).
+func (p *GoParser) parseSignature(ft *ast.FuncType) (params, results []FieldInfo) {
+	collect := func(list *ast.FieldList) []FieldInfo {
+		var out []FieldInfo
+		if list == nil {
+			return out
+		}
+
+		for _, f := range list.List {
+			typeName, typePkg := p.getTypeName(f.Type)
+			if typeName == "" {
+				continue
+			}
+
+			out = append(out, FieldInfo{TypeName: typeName, TypePkg: typePkg})
+		}
+
+		return out
+	}
+
+	if ft == nil {
+		return params, results
+	}
+
+	return collect(ft.Params), collect(ft.Results)
+}
+
+// collectPackageLevelRefs собирает function-value-use из package-level var/const
+// инициализаторов (вложенные composite-literals/slices/maps раскрываются ast.Inspect)
+// и складывает в p.pkgRefs[pkgID]. Билдер атрибутирует их узлу <pkg>.init (var-init
+// выполняется при загрузке пакета ДО main; если пакет активен — ссылки живые), а
+// при отсутствии init — package-узлу. Это (а)-фикс: видимый синтаксис регистрации
+// (cobra RunE и т.п.) -> достижимость, БЕЗ config-whitelist (полнота сохраняется).
+func (p *GoParser) collectPackageLevelRefs(d *ast.GenDecl, pkgID string) {
+	if p.pkgRefs == nil {
+		return
+	}
+
+	for _, spec := range d.Specs {
+		vs, ok := spec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
+
+		for _, val := range vs.Values {
+			if refs := p.collectValueRefs(val); len(refs) > 0 {
+				p.pkgRefs[pkgID] = append(p.pkgRefs[pkgID], refs...)
+			}
+		}
+	}
+}
+
+// collectFuncRefs собирает использования функции/метода как ЗНАЧЕНИЯ (callback) в
+// ТЕЛЕ функции: Ident/SelectorExpr ВНЕ call-позиции. Принцип направления ошибки:
+// пропуск ссылки = ложно-мёртвый код (дорого) -> собираем щедро; лишнее отсеется
+// over-approx-резолвом по имени (ложно-живой = дёшево).
+func (p *GoParser) collectFuncRefs(body *ast.BlockStmt) []CallInfo {
+	if body == nil {
+		return nil
+	}
+
+	return p.collectValueRefs(body)
+}
+
+// collectValueRefs — общий сбор function-value-use по ПРОИЗВОЛЬНОМУ узлу AST
+// (тело функции ИЛИ инициализатор package-level var/const). Используется и для
+// (а)-фикса cobra: `var c = &cobra.Command{RunE: H}` -> H собран отсюда.
+func (p *GoParser) collectValueRefs(root ast.Node) []CallInfo {
+	if root == nil {
+		return nil
+	}
+
+	callFuns := make(map[ast.Expr]bool)
+
+	ast.Inspect(root, func(n ast.Node) bool {
+		switch s := n.(type) {
+		case *ast.CallExpr:
+			callFuns[s.Fun] = true
+		case *ast.GoStmt:
+			if s.Call != nil {
+				callFuns[s.Call.Fun] = true
+			}
+		case *ast.DeferStmt:
+			if s.Call != nil {
+				callFuns[s.Call.Fun] = true
+			}
+		}
+
+		return true
+	})
+
+	var refs []CallInfo
+
+	ast.Inspect(root, func(n ast.Node) bool {
+		expr, ok := n.(ast.Expr)
+		if !ok || callFuns[expr] {
+			return true // не выражение ИЛИ это call-fun (вызов, не значение)
+		}
+
+		switch x := expr.(type) {
+		case *ast.SelectorExpr:
+			if id, ok := x.X.(*ast.Ident); ok {
+				refs = append(refs, CallInfo{Target: id.Name + "." + x.Sel.Name, IsMethod: true, Receiver: id.Name})
+			}
+
+			return false // не спускаемся в X/Sel (иначе двойной учёт)
+		case *ast.Ident:
+			refs = append(refs, CallInfo{Target: x.Name})
+		}
+
+		return true
+	})
+
+	return refs
+}
+
 // parseFuncDecl парсит объявления функций и методов.
 func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fset *token.FileSet) {
 	funcName := decl.Name.Name
 	pos := fset.Position(decl.Pos())
 
 	calls := p.collectCalls(decl.Body, pkgID, fset)
+	params, results := p.parseSignature(decl.Type)
+	refs := p.collectFuncRefs(decl.Body)
 
 	if decl.Recv != nil && len(decl.Recv.List) > 0 {
 		receiverType := p.getReceiverType(decl.Recv.List[0].Type)
@@ -219,6 +361,9 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			Line:        pos.Line,
 			Calls:       calls,
 			FieldAccess: fieldAccess,
+			Params:      params,
+			Results:     results,
+			Refs:        refs,
 		}
 	} else {
 		funcID := pkgID + "." + funcName
@@ -229,6 +374,9 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			File:    filename,
 			Line:    pos.Line,
 			Calls:   calls,
+			Params:  params,
+			Results: results,
+			Refs:    refs,
 		}
 	}
 }

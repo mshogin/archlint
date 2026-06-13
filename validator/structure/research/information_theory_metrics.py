@@ -255,10 +255,9 @@ def validate_channel_capacity(
 
         avg_capacity = float(np.mean([c['capacity'] for c in capacities])) if capacities else 0
 
-        if violations:
-            status = _get_violation_status(error_on_violation)
-        else:
-            status = 'PASSED'
+        # DR-0005: пропускная способность узла (in*out) — дескриптор связности, жёсткого
+        # арх-порога-принципа нет. Severity всегда INFO (вне боевого гейта).
+        status = 'INFO'
 
         return {
             'name': 'channel_capacity',

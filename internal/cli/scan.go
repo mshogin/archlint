@@ -17,11 +17,12 @@ import (
 )
 
 var (
-	scanFormat     string
-	scanThreshold  int
-	scanConfigFile string
-	scanStdin      bool
-	scanExclude    []string
+	scanFormat       string
+	scanThreshold    int
+	scanConfigFile   string
+	scanStdin        bool
+	scanExclude      []string
+	scanBaselineFile string
 )
 
 var scanCmd = &cobra.Command{
@@ -57,6 +58,7 @@ func init() {
 	scanCmd.Flags().StringVar(&scanConfigFile, "config", "", "Path to .archlint.yaml config file (default: <directory>/.archlint.yaml)")
 	scanCmd.Flags().BoolVar(&scanStdin, "stdin", false, "Read architecture YAML graph from stdin instead of analyzing a directory")
 	scanCmd.Flags().StringSliceVar(&scanExclude, "exclude", nil, "Directory basenames to skip during the source walk (additive on top of built-in defaults). Repeatable.")
+	scanCmd.Flags().StringVar(&scanBaselineFile, "baseline", "", "Path to .archlint-baseline.json for delta gating (default: <directory>/.archlint-baseline.json). Absent baseline -> audit mode (no block on ERROR patterns).")
 	rootCmd.AddCommand(scanCmd)
 }
 
@@ -65,9 +67,11 @@ type scanGateResult struct {
 	Passed     bool            `json:"passed"`
 	Violations int             `json:"violations"`
 	Threshold  int             `json:"threshold"`
+	Blocking   int             `json:"blocking"` // НОВЫЕ ERROR-class паттерны vs baseline (регрессии)
 	Categories map[string]int  `json:"categories"`
 	Details    []mcp.Violation `json:"details"`
 	ConfigFile string          `json:"config_file,omitempty"`
+	Baseline   string          `json:"baseline,omitempty"` // путь к загруженному snapshot ("" = audit-режим)
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -77,6 +81,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	var graph *model.Graph
 	var a *analyzer.GoAnalyzer
+	var baselineDir string // каталог для дефолтного пути baseline (пусто в stdin-режиме)
 
 	if scanStdin {
 		// Read YAML graph from stdin.
@@ -103,6 +108,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			os.Exit(2)
 		}
 		codeDir := args[0]
+		baselineDir = codeDir
 
 		if _, err := os.Stat(codeDir); os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "error: %v: %s\n", errDirNotExist, codeDir)
@@ -155,6 +161,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Structural violations (coupling, cycles) — config-aware.
 	violations := mcp.DetectAllViolationsWithConfig(graph, &cfg)
+
+	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
+	// НОВЫЙ мёртвый узел vs baseline = регрессия (блок + удаление human-in-loop).
+	if a != nil {
+		violations = append(violations, mcp.DeadCode(graph, cfg.EntryPoints)...)
+	}
 
 	// Per-file SOLID and smell violations (Go projects only).
 	var allMetrics map[string]*mcp.FileMetrics
@@ -236,14 +248,59 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return violations[i].Target < violations[j].Target
 	})
 
-	// Determine threshold: -1 means any violation fails (equivalent to threshold 0).
+	// --- Delta gate (Фаза 5, DR-0034) ---
+	// Загружаем baseline-снимок: отсутствует -> nil -> ERROR-class паттерны
+	// деградируют в audit (NO-BASELINE -> NO-BLOCK). Дельта-гейт блокирует ТОЛЬКО
+	// НОВЫЕ vs baseline ERROR-class паттерны (SCC/layer/dead-code); магнитуды
+	// (WARNING/INFO) дельта-гейтом не блокируются (Ось-1).
+	baselinePath := scanBaselineFile
+	if baselinePath == "" && baselineDir != "" {
+		baselinePath = filepath.Join(baselineDir, defaultBaselineName)
+	}
+	var baseline *mcp.Baseline
+	if baselinePath != "" {
+		b, err := loadBaseline(baselinePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(2)
+		}
+		baseline = b
+	}
+
+	// Threshold count gate applies ТОЛЬКО к не-ERROR-class нарушениям (магнитуды/
+	// WARNING): ERROR-class управляются дельта-гейтом, не абсолютным счётом.
 	threshold := scanThreshold
 	if threshold < 0 {
 		threshold = 0
 	}
 
+	isErrorClass := func(kind string) bool {
+		c, ok := mcp.ClassOf(kind)
+		return ok && c.Class == "ERROR"
+	}
+
+	blocking := 0      // НОВЫЕ ERROR-class паттерны (регрессия) -> блок
+	nonErrorCount := 0 // не-ERROR нарушения -> подлежат threshold-гейту
+	for _, v := range violations {
+		if mcp.EffectiveLevel(v, &cfg, baseline) == archlintcfg.LevelTaboo {
+			blocking++
+		}
+		if !isErrorClass(v.Kind) {
+			nonErrorCount++
+		}
+	}
+
+	countPassed := nonErrorCount <= threshold
+	passed := countPassed && blocking == 0
+
 	total := len(violations)
-	passed := total <= threshold
+
+	// Путь baseline для отчёта: показываем только при реально загруженном снимке
+	// (nil = audit-режим, no-baseline -> no-block).
+	loadedBaseline := ""
+	if baseline != nil {
+		loadedBaseline = baselinePath
+	}
 
 	// Build categories map.
 	categories := make(map[string]int)
@@ -257,9 +314,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 			Passed:     passed,
 			Violations: total,
 			Threshold:  threshold,
+			Blocking:   blocking,
 			Categories: categories,
 			Details:    violations,
 			ConfigFile: configFile,
+			Baseline:   loadedBaseline,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -271,6 +330,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if configFile != "" {
 			fmt.Printf("config: %s\n", configFile)
 		}
+		if loadedBaseline != "" {
+			fmt.Printf("baseline: %s (delta gate)\n", loadedBaseline)
+		} else {
+			fmt.Printf("baseline: none (audit mode — ERROR patterns reported, not blocked)\n")
+		}
 		if total == 0 {
 			fmt.Printf("PASSED: No violations found (threshold: %d)\n", threshold)
 		} else {
@@ -278,10 +342,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 			if !passed {
 				status = "FAILED"
 			}
-			fmt.Printf("%s: %d violations found (threshold: %d)\n\n", status, total, threshold)
+			fmt.Printf("%s: %d violations found (threshold: %d, blocking regressions: %d)\n\n", status, total, threshold, blocking)
 
 			for _, v := range violations {
-				level := mcp.ViolationLevel(v, &cfg)
+				// Дельта-уровень: НОВЫЙ ERROR-паттерн -> [ERROR]; существующий/без
+				// baseline -> аудит; магнитуды -> их обычный уровень.
+				level := mcp.EffectiveLevel(v, &cfg, baseline)
 				prefix := mcp.LevelPrefix(level)
 				fmt.Printf("%s [%s] %s\n", prefix, v.Kind, v.Message)
 				if v.Target != "" {

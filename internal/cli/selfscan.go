@@ -119,15 +119,9 @@ func runSelfScan(_ *cobra.Command, _ []string) error {
 		totalHealth += m.HealthScore
 
 		// Collect SOLID + smell violations for display.
-		for _, v := range m.SRPViolations {
-			violations = append(violations, v)
-		}
-		for _, v := range m.DIPViolations {
-			violations = append(violations, v)
-		}
-		for _, v := range m.ISPViolations {
-			violations = append(violations, v)
-		}
+		violations = append(violations, m.SRPViolations...)
+		violations = append(violations, m.DIPViolations...)
+		violations = append(violations, m.ISPViolations...)
 	}
 
 	// Average health score per package.

@@ -14,6 +14,9 @@ type GoGraphBuilder struct {
 	methods   map[string]*MethodInfo
 	nodes     *[]model.Node
 	edges     *[]model.Edge
+	// pkgRefs — package-level function-value-use (cobra RunE и т.п.), (а)-фикс.
+	// Выставляется go.go (= a.pkgRefs). nil у тест-билдеров -> обрабатывается мягко.
+	pkgRefs map[string][]CallInfo
 }
 
 // newGoGraphBuilder создает новый построитель графа.
@@ -45,8 +48,242 @@ func (g *GoGraphBuilder) buildGraph() {
 	g.buildFunctionCallEdges()
 	g.buildMethodCallEdges()
 	g.buildTypeDependencyEdges()
+	g.buildImplementsEdges()
+	g.buildSignatureEdges()
+	g.buildReferenceEdges()
 	g.buildFieldAccessNodes()
 	g.buildFieldAccessEdges()
+}
+
+// buildReferenceEdges материализует ребро owner -> функция/метод, использованные
+// как ЗНАЧЕНИЕ (callback): символ в НЕ-call позиции (assigned/passed/address-taken),
+// собранный парсером (collectFuncRefs).
+//
+// Резолв цели = ИСТИННАЯ OVER-APPROXIMATION ПО ИМЕНИ: символ с именем N (последний
+// сегмент) -> ребро на ВСЕ функции/методы с этим именем, без var-type inference
+// (value-flow ниже арх-уровня, исключён). Это ДОБАВЛЯЕТ достижимость -> ложно-живой
+// (дёшево), ложно-мёртвый НЕВОЗМОЖЕН (тот же линчпин, что implements; destruction-
+// безопасно для dead-code Фазы 3). Имена, не совпадающие ни с одной функцией/методом
+// (локальные переменные dir/err/...), просто не дают рёбер.
+func (g *GoGraphBuilder) buildReferenceEdges() {
+	// индекс: имя (последний сегмент ID) -> все функции/методы с этим именем.
+	byName := make(map[string][]string)
+	index := func(id string) {
+		byName[lastSegment(id)] = append(byName[lastSegment(id)], id)
+	}
+
+	for id := range g.functions {
+		index(id)
+	}
+	for id := range g.methods {
+		index(id)
+	}
+
+	seen := make(map[[2]string]bool)
+	emit := func(from, to string) {
+		if from == "" || to == "" || from == to {
+			return
+		}
+
+		k := [2]string{from, to}
+		if seen[k] {
+			return
+		}
+
+		seen[k] = true
+		*g.edges = append(*g.edges, model.Edge{From: from, To: to, Type: model.EdgeReferences})
+	}
+
+	link := func(ownerID string, refs []CallInfo) {
+		for _, ref := range refs {
+			for _, target := range byName[lastSegment(ref.Target)] {
+				emit(ownerID, target)
+			}
+		}
+	}
+
+	for funcID, fi := range g.functions {
+		link(funcID, fi.Refs)
+	}
+	for methodID, mi := range g.methods {
+		link(methodID, mi.Refs)
+	}
+
+	// (а)-фикс: package-level var/const function-value-use. Источник = <pkg>.init
+	// (выполняется при загрузке пакета, default-entry в R), а если init нет —
+	// package-узел (ссылка не теряется). g.pkgRefs nil у тест-билдеров -> пропуск.
+	for pkgID, refs := range g.pkgRefs {
+		src := pkgID
+		if _, ok := g.functions[pkgID+".init"]; ok {
+			src = pkgID + ".init"
+		}
+
+		link(src, refs)
+	}
+}
+
+// lastSegment возвращает имя после последней точки (символ из ID или ref.Target).
+func lastSegment(s string) string {
+	if i := strings.LastIndex(s, "."); i >= 0 {
+		return s[i+1:]
+	}
+
+	return s
+}
+
+// buildSignatureEdges материализует type-refs из СИГНАТУР функций/методов (Фаза 1):
+//   - usesType (model.EdgeUses): owner -> тип ПАРАМЕТРА (расширяет "uses", который
+//     раньше покрывал только типы полей struct). Ключ полноты DIP: у интерфейса нет
+//     тела -> param-типы единственный сигнал param-нарушений.
+//   - returns (model.EdgeReturns): owner -> тип ВОЗВРАТА (type-flow).
+//
+// Соундность приоритетна: resolveTypeDependency эмитит ребро ТОЛЬКО на известный
+// тип-узел (примитивы/внешние/нерезолвимые -> нет ребра), поэтому ложного ребра на
+// легальном коде не будет. Неполнота (пропуск нерезолвимого) — в дешёвую сторону.
+func (g *GoGraphBuilder) buildSignatureEdges() {
+	seen := make(map[[3]string]bool)
+
+	emit := func(from, to, etype string) {
+		if from == "" || to == "" || from == to {
+			return
+		}
+
+		k := [3]string{from, to, etype}
+		if seen[k] {
+			return
+		}
+
+		seen[k] = true
+		*g.edges = append(*g.edges, model.Edge{From: from, To: to, Type: etype})
+	}
+
+	sig := func(ownerID, pkg string, params, results []model.FieldInfo) {
+		for _, p := range params {
+			emit(ownerID, g.resolveTypeDependency(p.TypeName, p.TypePkg, pkg), model.EdgeUses)
+		}
+
+		for _, r := range results {
+			emit(ownerID, g.resolveTypeDependency(r.TypeName, r.TypePkg, pkg), model.EdgeReturns)
+		}
+	}
+
+	for funcID, fi := range g.functions {
+		sig(funcID, fi.Package, fi.Params, fi.Results)
+	}
+
+	for methodID, mi := range g.methods {
+		sig(methodID, mi.Package, mi.Params, mi.Results)
+	}
+
+	// Сигнатуры методов ИНТЕРФЕЙСА: ребро ОТ интерфейса (абстракция) к типу в
+	// param/return метода. DIP по типовому уровню: интерфейс, ссылающийся на
+	// КОНКРЕТ в сигнатуре своего метода = нарушение (источник=абстракция,
+	// цель=деталь). resolveTypeDependency -> только известный тип (соундность).
+	for ifaceID, ti := range g.types {
+		if ti.Kind != "interface" {
+			continue
+		}
+
+		for _, ms := range ti.MethodSigs {
+			sig(ifaceID, ti.Package, ms.Params, ms.Results)
+		}
+	}
+}
+
+// buildImplementsEdges материализует ребро concrete-type -> interface по
+// method-set сатисфакции, ПОЛНО с embeds-промоушеном (Go-embedding промоутит
+// методы встроенного типа/интерфейса). Критерий: requiredMethods(I) ⊆
+// providedMethods(T), где оба множества раскрывают embeds рекурсивно.
+//
+// Сопоставление ПО ИМЕНИ метода (не по полной сигнатуре — сигнатуры пока не в
+// модели). Это КОНСЕРВАТИВНАЯ over-approximation: может дать лишние implements,
+// но НЕ пропустит реальную реализацию -> для dead-code reach (Фаза 3) это
+// БЕЗОПАСНАЯ сторона (не удалит живую реализацию интерфейса). DR-0005: полнота
+// implements — критерий, неполнота рушит reach в дорогую сторону.
+func (g *GoGraphBuilder) buildImplementsEdges() {
+	// methodSet(typeID) — множество имён методов типа с раскрытием embeds-промоушена.
+	// memo + placeholder-guard от циклов (в Go embedding-циклов нет, но безопасно).
+	memo := make(map[string]map[string]bool)
+
+	var methodSet func(typeID string) map[string]bool
+	methodSet = func(typeID string) map[string]bool {
+		if m, ok := memo[typeID]; ok {
+			return m
+		}
+
+		memo[typeID] = map[string]bool{} // placeholder: рвём возможный цикл
+
+		ti := g.types[typeID]
+		if ti == nil {
+			return memo[typeID]
+		}
+
+		m := make(map[string]bool)
+
+		// собственные методы интерфейса (имена из сигнатур)
+		for _, ms := range ti.MethodSigs {
+			m[ms.Name] = true
+		}
+
+		// собственные receiver-методы конкретного типа
+		for _, mi := range g.methods {
+			if mi.Package == ti.Package && mi.Receiver == ti.Name {
+				m[mi.Name] = true
+			}
+		}
+
+		// промоушен: методы встроенных типов/интерфейсов (рекурсивно)
+		for _, emb := range ti.Embeds {
+			embID := g.resolveTypeDependency(emb, "", ti.Package)
+			if embID == "" || embID == typeID {
+				continue
+			}
+
+			for name := range methodSet(embID) {
+				m[name] = true
+			}
+		}
+
+		memo[typeID] = m
+
+		return m
+	}
+
+	for ifaceID, iface := range g.types {
+		if iface.Kind != "interface" {
+			continue
+		}
+
+		req := methodSet(ifaceID)
+		if len(req) == 0 {
+			continue // пустой интерфейс (any) — не плодим тривиальные рёбра
+		}
+
+		for typeID, t := range g.types {
+			if t.Kind != "struct" || typeID == ifaceID {
+				continue
+			}
+
+			prov := methodSet(typeID)
+
+			implementsAll := true
+			for name := range req {
+				if !prov[name] {
+					implementsAll = false
+
+					break
+				}
+			}
+
+			if implementsAll {
+				*g.edges = append(*g.edges, model.Edge{
+					From: typeID,
+					To:   ifaceID,
+					Type: model.EdgeImplements,
+				})
+			}
+		}
+	}
 }
 
 func (g *GoGraphBuilder) buildPackageNodes() {
@@ -61,10 +298,18 @@ func (g *GoGraphBuilder) buildPackageNodes() {
 
 func (g *GoGraphBuilder) buildTypeNodes() {
 	for typeID, typeInfo := range g.types {
+		// Attrs.kind — ось абстрактности (interface|concrete) для DIP. Entity
+		// оставляем как было (struct/interface) для обратной совместимости.
+		kind := model.KindConcrete
+		if typeInfo.Kind == "interface" {
+			kind = model.KindInterface
+		}
+
 		*g.nodes = append(*g.nodes, model.Node{
 			ID:     typeID,
 			Title:  typeInfo.Name,
 			Entity: typeInfo.Kind,
+			Attrs:  map[string]any{"kind": kind},
 		})
 
 		*g.edges = append(*g.edges, model.Edge{

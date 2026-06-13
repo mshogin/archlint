@@ -67,7 +67,7 @@ func (c *HTTPGitHubClient) ListOpenIssues(ctx context.Context, owner, repo strin
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("github list issues: status %d", resp.StatusCode)
@@ -109,7 +109,7 @@ func (c *HTTPGitHubClient) PostComment(ctx context.Context, owner, repo string, 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("github post comment: status %d", resp.StatusCode)
 	}
@@ -124,7 +124,7 @@ func (c *HTTPGitHubClient) CloseIssue(ctx context.Context, owner, repo string, n
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("github close issue: status %d", resp.StatusCode)
 	}

@@ -164,11 +164,11 @@ func TestRunMonitorList_Empty(t *testing.T) {
 
 	err := runMonitorList(nil, nil)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -201,11 +201,11 @@ func TestRunMonitorList_WithRepos(t *testing.T) {
 
 	err := runMonitorList(nil, nil)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if err != nil {
@@ -241,10 +241,10 @@ func TestRunMonitorAdd_NewRepo(t *testing.T) {
 
 	err := runMonitorAdd(nil, []string{"https://github.com/example/myrepo"})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -321,10 +321,10 @@ func TestRunMonitorRemove_Existing(t *testing.T) {
 
 	err := runMonitorRemove(nil, []string{"https://github.com/example/myrepo"})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

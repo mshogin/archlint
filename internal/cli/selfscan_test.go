@@ -18,11 +18,11 @@ func TestSelfScanText(t *testing.T) {
 
 	err = runSelfScan(nil, nil)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if err != nil {
@@ -57,11 +57,11 @@ func TestSelfScanMarkdown(t *testing.T) {
 
 	err = runSelfScan(nil, nil)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if err != nil {

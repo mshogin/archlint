@@ -26,7 +26,7 @@ func TestFullCycle(t *testing.T) {
 		t.Fatalf("Failed to create output dir: %v", err)
 	}
 
-	defer os.RemoveAll(outputDir)
+	defer func() { _ = os.RemoveAll(outputDir) }()
 
 	t.Logf("Output directory: %s", outputDir)
 
@@ -45,11 +45,11 @@ func TestFullCycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create arch file: %v", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	encoder := yaml.NewEncoder(file)
 	encoder.SetIndent(2)
-	defer encoder.Close()
+	defer func() { _ = encoder.Close() }()
 
 	if err := encoder.Encode(graph); err != nil {
 		t.Fatalf("Failed to save architecture: %v", err)

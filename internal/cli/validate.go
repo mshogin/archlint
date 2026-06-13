@@ -283,7 +283,7 @@ func runPythonValidator(archFile string) error {
 // printPythonResults formats and prints Python validator output.
 func printPythonResults(data []byte, format string) {
 	if format == "json" || format == "yaml" {
-		os.Stdout.Write(data)
+		_, _ = os.Stdout.Write(data)
 		return
 	}
 
@@ -291,7 +291,7 @@ func printPythonResults(data []byte, format string) {
 	var results map[string]interface{}
 	if err := yaml.Unmarshal(data, &results); err != nil {
 		// Fall back to raw output
-		os.Stdout.Write(data)
+		_, _ = os.Stdout.Write(data)
 		return
 	}
 

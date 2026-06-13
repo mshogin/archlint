@@ -96,10 +96,10 @@ PROFILE_TIERS = {
 PROFILE_TIERS['all'] = PROFILE_TIERS['research']
 DEFAULT_PROFILE = 'fast'
 # Guard: research-tier на гигантском графе вешает процесс. Skip+warn если V больше
-# порога без --force (план Мудреца п.4). Промотированные (slow/fast) метрики не трогаются.
+# порога без --force (дизайн-решение п.4). Промотированные (slow/fast) метрики не трогаются.
 RESEARCH_NODE_GUARD = 2000
 
-# TIER_OVERRIDE — per-metric классификация ПОВЕРХ группового tier (источник: Мудрец,
+# TIER_OVERRIDE — per-metric классификация ПОВЕРХ группового tier (источник: дизайн-решение,
 # archlint-metrics-audit). Поднимает дешёвые-и-архитектурно-полезные метрики из
 # research-модулей в дефолт/extended; тяжёлое и семантически-шумное остаётся research.
 TIER_OVERRIDE = {

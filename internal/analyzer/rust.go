@@ -160,7 +160,7 @@ func (ra *RustAnalyzer) parseRustFile(path, srcDir string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck // rust.go is frozen; close error intentionally ignored
 
 	scanner := bufio.NewScanner(file)
 	inBlockComment := false
@@ -260,7 +260,7 @@ func (ra *RustAnalyzer) parseCargo(path string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck // rust.go is frozen; close error intentionally ignored
 
 	crate := &CrateInfo{Path: path}
 	scanner := bufio.NewScanner(file)
@@ -307,7 +307,7 @@ func (ra *RustAnalyzer) parseWorkspace(cargoPath, rootDir string) {
 	if err != nil {
 		return
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck // rust.go is frozen; close error intentionally ignored
 
 	scanner := bufio.NewScanner(file)
 	inWorkspace := false
@@ -511,7 +511,7 @@ func pathToModuleName(relPath string) string {
 	name := strings.TrimSuffix(relPath, ".rs")
 	name = strings.ReplaceAll(name, string(filepath.Separator), "::")
 	// Remove mod suffix: auth::mod -> auth
-	if strings.HasSuffix(name, "::mod") {
+	if strings.HasSuffix(name, "::mod") { //nolint:staticcheck // rust.go is frozen; SA4017 false-positive or intended guard
 		name = strings.TrimSuffix(name, "::mod")
 	}
 	return name

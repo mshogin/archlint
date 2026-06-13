@@ -37,10 +37,10 @@ func captureStdout(t *testing.T, f func()) string {
 	old := os.Stdout
 	os.Stdout = w
 	f()
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	return buf.String()
 }
 

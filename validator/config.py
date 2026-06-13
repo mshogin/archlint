@@ -549,10 +549,8 @@ class Config:
     ))
 
     # Homotopy Theory
-    fundamental_group: RuleConfig = field(default_factory=lambda: RuleConfig(
-        threshold=10,  # Максимальный rank π₁
-        error_on_violation=True
-    ))
+    # DR-0003/DR-0008: fundamental_group снесён (тождественный алиас β₁, см. betti_numbers).
+    # Мёртвый конфиг — ровно то, с чем archlint борется, поэтому удалён, а не оставлен.
     covering_space: RuleConfig = field(default_factory=lambda: RuleConfig(
         enabled=True,  # INFO метрика
         error_on_violation=False
