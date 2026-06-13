@@ -40,6 +40,9 @@ const (
 type Graph struct {
 	Nodes []Node `yaml:"components"`
 	Edges []Edge `yaml:"links"`
+	// Attrs — граф-уровневые атрибуты (как nx.DiGraph.graph): entry_point, stats для
+	// callgraph-формата. In-memory (не часть archlint-схемы YAML). Аддитивно.
+	Attrs map[string]any `yaml:"-" json:"graphAttrs,omitempty"`
 }
 
 // Node представляет узел графа (компонент).

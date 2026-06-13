@@ -1,0 +1,52 @@
+{
+  "edges": [
+    {
+      "extra": {
+        "properties": {}
+      },
+      "from": "a",
+      "method": "",
+      "to": "b",
+      "type": "calls"
+    },
+    {
+      "extra": {
+        "properties": {}
+      },
+      "from": "b",
+      "method": "Foo",
+      "to": "c",
+      "type": "import"
+    }
+  ],
+  "graph_attrs": {},
+  "nodes": [
+    {
+      "entity": "package",
+      "extra": {
+        "properties": {}
+      },
+      "id": "a",
+      "title": "Alpha"
+    },
+    {
+      "entity": "package",
+      "extra": {
+        "properties": {}
+      },
+      "id": "b",
+      "title": ""
+    },
+    {
+      "entity": "package",
+      "extra": {
+        "properties": {
+          "team": "core"
+        }
+      },
+      "id": "c",
+      "title": "Gamma"
+    }
+  ],
+  "source": "structure"
+}

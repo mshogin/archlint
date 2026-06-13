@@ -1,0 +1,33 @@
+{
+  "edges": [
+    {
+      "extra": {
+        "properties": {}
+      },
+      "from": "svc",
+      "method": "query",
+      "to": "db",
+      "type": "uses"
+    }
+  ],
+  "graph_attrs": {},
+  "nodes": [
+    {
+      "entity": "datastore",
+      "extra": {
+        "properties": {}
+      },
+      "id": "db",
+      "title": "Database"
+    },
+    {
+      "entity": "component",
+      "extra": {
+        "properties": {}
+      },
+      "id": "svc",
+      "title": "Service"
+    }
+  ],
+  "source": "structure"
+}

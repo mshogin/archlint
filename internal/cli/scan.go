@@ -10,10 +10,10 @@ import (
 
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/archlintcfg"
+	"github.com/mshogin/archlint/internal/graphloader"
 	"github.com/mshogin/archlint/internal/mcp"
 	"github.com/mshogin/archlint/internal/model"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -90,12 +90,14 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(os.Stderr, "error reading stdin: %v\n", err)
 			os.Exit(2)
 		}
-		var g model.Graph
-		if err := yaml.Unmarshal(data, &g); err != nil {
+		// Универсальный загрузчик (порт graph_loader.py): archlint/DocHub/callgraph
+		// форматы + автоопределение. Заменяет наивный Unmarshal (только archlint).
+		g, err := graphloader.ParseYAML(data)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "error parsing YAML from stdin: %v\n", err)
 			os.Exit(2)
 		}
-		graph = &g
+		graph = g
 
 		// Load config from --config flag if provided; otherwise use defaults.
 		if scanConfigFile != "" {

@@ -1,0 +1,67 @@
+{
+  "edges": [
+    {
+      "extra": {
+        "call_type": "deferred",
+        "line": 15
+      },
+      "from": "pkg.Main",
+      "method": "",
+      "to": "pkg.External",
+      "type": "deferred"
+    },
+    {
+      "extra": {
+        "call_type": "direct",
+        "line": 12
+      },
+      "from": "pkg.Main",
+      "method": "",
+      "to": "pkg.Helper",
+      "type": "direct"
+    }
+  ],
+  "graph_attrs": {
+    "entry_point": "pkg.Main",
+    "stats": {
+      "total": 3
+    }
+  },
+  "nodes": [
+    {
+      "entity": "unknown",
+      "extra": {},
+      "id": "pkg.External",
+      "title": "pkg.External"
+    },
+    {
+      "entity": "function",
+      "extra": {
+        "depth": 1,
+        "file": "",
+        "function": "Helper",
+        "line": 20,
+        "package": "pkg",
+        "receiver": "",
+        "type": "function"
+      },
+      "id": "pkg.Helper",
+      "title": "Helper"
+    },
+    {
+      "entity": "function",
+      "extra": {
+        "depth": 0,
+        "file": "main.go",
+        "function": "Main",
+        "line": 10,
+        "package": "pkg",
+        "receiver": "",
+        "type": "function"
+      },
+      "id": "pkg.Main",
+      "title": "Main"
+    }
+  ],
+  "source": "behavior"
+}
