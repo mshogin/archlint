@@ -2,6 +2,10 @@
 """
 archlint validator CLI
 
+DEPRECATED (Tier-3 museum, ADR-0002): research/museum only, run by hand. NOT part
+of the boevoy gate or agent loop — production gating is 'archlint scan' (native Go
+detectors). Kept for research; structural metrics are being ported to Go.
+
 Usage:
     python -m validator validate <architecture.yaml> [options]
     python -m validator validate <architecture.yaml> -c <contexts.yaml> [options]

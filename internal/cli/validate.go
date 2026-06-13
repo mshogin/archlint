@@ -79,17 +79,22 @@ type GraphExportViolation struct {
 
 var validateCmd = &cobra.Command{
 	Use:   "validate [directory|architecture.yaml]",
-	Short: "Validate architecture: collect graph and run 229 metrics via Python validator",
-	Long: `Validate architecture graph using the Python validator with 229 metrics.
+	Short: "Validate architecture via the built-in Go engine (--python = DEPRECATED research/museum)",
+	Long: `Validate an architecture graph with the built-in Go rule engine (default).
+
+The production/boevoy path is the native Go detectors (see 'archlint scan'):
+SCC/cycles, dead-code, ISP, layering — soundness-gated, used in the agent loop
+and CI gate. This command's default (no --python) runs that Go engine.
+
+DEPRECATED: --python runs the Python validator (validator/, Tier-3 museum per
+ADR-0002). Research/museum only — manual run, NOT in the boevoy gate. Its
+structural, provable metrics are being ported to Go; magnitude/experimental
+metrics stay in the museum. Prefer 'archlint scan' for gating.
 
 If input is a directory, first runs archlint collect to generate architecture.yaml,
-then runs the Python validator on it.
+then runs the selected engine on it. If input is a .yaml file, runs directly on it.
 
-If input is a .yaml file, runs the Python validator directly on it.
-
-Without --python flag, runs the built-in Go rule engine only.
-
-Validator groups (--group):
+Validator groups (--group, apply to the --python museum only):
   core         - DAG, cycles, fan-out, coupling, hub nodes
   solid        - SOLID principles (SRP, OCP, LSP, ISP, DIP)
   patterns     - Design smells (god class, shotgun surgery, ...)
@@ -114,7 +119,7 @@ func init() {
 	validateCmd.Flags().StringVar(&validateFormat, "format", "text", "Output format: text, json, or yaml")
 	validateCmd.Flags().StringVar(&validateConfigFile, "config", "", "Path to .archlint.yaml config file (default: ./.archlint.yaml)")
 	validateCmd.Flags().StringVar(&validateGroup, "group", "", "Validator group: core, solid, patterns, architecture, quality, advanced, research")
-	validateCmd.Flags().BoolVar(&validatePython, "python", false, "Run Python validator (229 metrics) instead of built-in Go engine")
+	validateCmd.Flags().BoolVar(&validatePython, "python", false, "DEPRECATED (research/museum, not boevoy): run the Python validator instead of the Go engine")
 	rootCmd.AddCommand(validateCmd)
 }
 
