@@ -78,3 +78,31 @@ func TestCompute_RealGraph(t *testing.T) {
 		t.Logf("  note: %s", n)
 	}
 }
+
+// TestArchmotifProvider_NamedSignals — SUB-1 (DR-0055): ComputeMetricsNamed выводит
+// modularity+motif_redundancy как graph-метрики; modularity численно совпадает с
+// archmotif-движком на 3-цикле p1->p2->p3->p1 (эталон -1/3). Сигналы, не гейт.
+func TestArchmotifProvider_NamedSignals(t *testing.T) {
+	pkg := func(id string) model.Node { return model.Node{ID: id, Title: id, Entity: model.EntityPackage} }
+	imp := func(a, b string) model.Edge { return model.Edge{From: a, To: b, Type: model.EdgeImport} }
+	g := &model.Graph{
+		Nodes: []model.Node{pkg("p1"), pkg("p2"), pkg("p3")},
+		Edges: []model.Edge{imp("p1", "p2"), imp("p2", "p3"), imp("p3", "p1")},
+	}
+
+	rep := archmotifbridge.Compute(g)
+	if rep.Source != "archmotif" {
+		t.Fatalf("provider=%s, want archmotif; notes=%v", rep.Source, rep.Notes)
+	}
+	if _, ok := rep.GraphMetrics["modularity"]; !ok {
+		t.Fatalf("modularity not in GraphMetrics: %v", rep.GraphMetrics)
+	}
+	if _, ok := rep.GraphMetrics["motif_redundancy"]; !ok {
+		t.Fatalf("motif_redundancy not in GraphMetrics: %v", rep.GraphMetrics)
+	}
+	// Эталон archmotif для одного 3-цикла: Q = -1/3.
+	q := rep.GraphMetrics["modularity"]
+	if q < -0.3334 || q > -0.3332 {
+		t.Errorf("modularity Q=%.6f, want ~-0.3333 (archmotif reference)", q)
+	}
+}

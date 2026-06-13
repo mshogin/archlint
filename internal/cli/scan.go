@@ -10,6 +10,7 @@ import (
 
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/archlintcfg"
+	"github.com/mshogin/archlint/internal/archmotifbridge"
 	"github.com/mshogin/archlint/internal/graphloader"
 	"github.com/mshogin/archlint/internal/mcp"
 	"github.com/mshogin/archlint/internal/model"
@@ -77,6 +78,10 @@ type scanGateResult struct {
 	// Signals — структурные магнитудные дескрипторы (--signals, audit/slow). Не часть
 	// гейта: магнитуды НЕ блокируют (DR-0049). omitempty -> быстрый гейт их не несёт.
 	Signals *mcp.Descriptors `json:"signals,omitempty"`
+	// ArchmotifSignals — research-метрики archmotif (modularity, motif_redundancy,
+	// spectral/symmetry детекторы) под --signals. Сигналы/наблюдаемость, НИКОГДА ERROR
+	// (спектр != proof, DR-0048/DR-0055).
+	ArchmotifSignals *archmotifbridge.Report `json:"archmotifSignals,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -181,10 +186,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Inactive when no layers are configured.
 	violations = append(violations, mcp.LayerBackedge(graph, &cfg)...)
 
-	// NB: gauntlet candidates (articulation/bridge/stability) are implemented in
-	// internal/mcp but NOT wired here — they fire heavily on healthy code (intent-laden,
-	// DIP-risk) and their severity is pending the soundness gauntlet review. They will
-	// be surfaced (as WARNING/signals or ERROR) only after that verdict.
+	// NB: gauntlet candidates (articulation/bridge/stability) are NOT gate violations —
+	// the soundness gauntlet demoted all three to signals (DIP-class confound). They are
+	// surfaced under --signals via ComputeDescriptors, never in severity_class/ the gate.
 
 	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
 	// НОВЫЙ мёртвый узел vs baseline = регрессия (блок + удаление human-in-loop).
@@ -341,23 +345,30 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Магнитудные дескрипторы — только в audit/slow (--signals); НЕ в быстром гейте.
 	var signals *mcp.Descriptors
+
+	var archmotifSignals *archmotifbridge.Report
+
 	if scanSignals {
 		dd := mcp.ComputeDescriptors(graph)
 		signals = &dd
+
+		rep := archmotifbridge.Compute(graph)
+		archmotifSignals = &rep
 	}
 
 	switch scanFormat {
 	case "json":
 		result := scanGateResult{
-			Passed:     passed,
-			Violations: total,
-			Threshold:  threshold,
-			Blocking:   blocking,
-			Categories: categories,
-			Details:    violations,
-			ConfigFile: configFile,
-			Baseline:   loadedBaseline,
-			Signals:    signals,
+			Passed:           passed,
+			Violations:       total,
+			Threshold:        threshold,
+			Blocking:         blocking,
+			Categories:       categories,
+			Details:          violations,
+			ConfigFile:       configFile,
+			Baseline:         loadedBaseline,
+			Signals:          signals,
+			ArchmotifSignals: archmotifSignals,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
