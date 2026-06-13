@@ -41,6 +41,13 @@ type Descriptors struct {
 	Gini              float64 `json:"gini"`              // Джини по total-degree
 	AvgClustering     float64 `json:"avgClustering"`     // средний clustering (undirected-проекция)
 	Betti1            int     `json:"betti1"`            // β₁ = E - V + C (C = слабые компоненты)
+
+	// --- БАТЧ 3: связностно-дистанционная группа ---
+	Closeness     map[string]float64 `json:"closeness"`     // nx.closeness_centrality (входящие, wf_improved)
+	Harmonic      map[string]float64 `json:"harmonic"`      // nx.harmonic_centrality (входящие, Σ1/d)
+	Eigenvector   map[string]float64 `json:"eigenvector"`   // nx.eigenvector_centrality (power, I+Aᵀ, L2)
+	Diameter      int                `json:"diameter"`      // диаметр undirected-проекции; -1 если несвязно
+	AvgPathLength float64            `json:"avgPathLength"` // средняя длина пути (undirected, наибольшая компонента)
 }
 
 // descriptorGraph — промежуточное представление: упорядоченные узлы + дедуплицированные
@@ -195,7 +202,223 @@ func ComputeDescriptors(g *model.Graph) Descriptors {
 	d.AvgClustering = avgClustering(dg)
 	d.Betti1 = dg.edgeCount - n + weaklyConnectedComponents(dg)
 
+	// --- БАТЧ 3 ---
+	d.Closeness, d.Harmonic = closenessHarmonic(dg)
+	d.Eigenvector = eigenvectorCentrality(dg)
+	d.Diameter, d.AvgPathLength = diameterAvgPath(dg)
+
 	return d
+}
+
+// inAdjacency — предшественники (для входящих расстояний и eigenvector).
+func inAdjacency(dg *descriptorGraph) map[string]map[string]bool {
+	in := make(map[string]map[string]bool, len(dg.nodes))
+	for _, id := range dg.nodes {
+		in[id] = make(map[string]bool)
+	}
+
+	for from, tos := range dg.outAdj {
+		for to := range tos {
+			in[to][from] = true
+		}
+	}
+
+	return in
+}
+
+// bfsIncoming — расстояния ДО target (BFS по предшественникам); как distance(u,target)
+// в исходном directed-графе. Включает сам target (0).
+func bfsIncoming(in map[string]map[string]bool, target string) map[string]int {
+	dist := map[string]int{target: 0}
+	queue := []string{target}
+
+	for len(queue) > 0 {
+		u := queue[0]
+		queue = queue[1:]
+
+		for p := range in[u] {
+			if _, seen := dist[p]; !seen {
+				dist[p] = dist[u] + 1
+				queue = append(queue, p)
+			}
+		}
+	}
+
+	return dist
+}
+
+// closenessHarmonic — nx.closeness_centrality (wf_improved) и nx.harmonic_centrality
+// (обе по ВХОДЯЩИМ расстояниям для directed).
+func closenessHarmonic(dg *descriptorGraph) (closeness, harmonic map[string]float64) {
+	in := inAdjacency(dg)
+	n := len(dg.nodes)
+	closeness = make(map[string]float64, n)
+	harmonic = make(map[string]float64, n)
+
+	for _, v := range dg.nodes {
+		dist := bfsIncoming(in, v)
+
+		totsp := 0
+		var harm float64
+
+		for u, dd := range dist {
+			if u == v {
+				continue
+			}
+
+			totsp += dd
+			harm += 1.0 / float64(dd)
+		}
+
+		harmonic[v] = harm
+
+		reachers := len(dist) // включая v
+		if totsp > 0 && n > 1 {
+			cl := float64(reachers-1) / float64(totsp)
+			cl *= float64(reachers-1) / float64(n-1) // wf_improved
+			closeness[v] = cl
+		} else {
+			closeness[v] = 0.0
+		}
+	}
+
+	return closeness, harmonic
+}
+
+// eigenvectorCentrality — power iteration как nx.eigenvector_centrality:
+// x_v <- x_v + Σ_{p->v} x_p  (т.е. (I+Aᵀ)x), L2-нормировка, tol=1e-6, max_iter=1000.
+func eigenvectorCentrality(dg *descriptorGraph) map[string]float64 {
+	n := len(dg.nodes)
+	x := make(map[string]float64, n)
+
+	if n == 0 {
+		return x
+	}
+
+	in := inAdjacency(dg)
+	for _, id := range dg.nodes {
+		x[id] = 1.0 / float64(n)
+	}
+
+	const tol = 1e-6
+
+	const maxIter = 1000
+
+	for iter := 0; iter < maxIter; iter++ {
+		xlast := make(map[string]float64, n)
+		for k, v := range x {
+			xlast[k] = v
+		}
+
+		// x = xlast.copy(); x[v] += Σ predecessors
+		for _, v := range dg.nodes {
+			sum := xlast[v]
+			for p := range in[v] {
+				sum += xlast[p]
+			}
+
+			x[v] = sum
+		}
+
+		norm := 0.0
+		for _, v := range x {
+			norm += v * v
+		}
+
+		norm = math.Sqrt(norm)
+		if norm == 0 {
+			norm = 1
+		}
+
+		for k := range x {
+			x[k] /= norm
+		}
+
+		diff := 0.0
+		for _, id := range dg.nodes {
+			diff += math.Abs(x[id] - xlast[id])
+		}
+
+		if diff < float64(n)*tol {
+			break
+		}
+	}
+
+	return x
+}
+
+// diameterAvgPath — диаметр и средняя длина пути на UNDIRECTED-проекции.
+// Диаметр: -1 если граф несвязен (как nx -> infinity). avg_path_length считается на
+// наибольшей связной компоненте (как Python validate_avg_path_length).
+func diameterAvgPath(dg *descriptorGraph) (diameter int, avgPath float64) {
+	n := len(dg.nodes)
+	if n < 2 {
+		return 0, 0
+	}
+
+	adj := undirectedAdj(dg)
+
+	ecc := make(map[string]int, n)
+	connected := true
+	diameter = 0
+
+	var pathSum, pathPairs float64
+
+	for _, s := range dg.nodes {
+		dist := bfsUndirected(adj, s)
+		if len(dist) < n {
+			connected = false
+		}
+
+		maxd := 0
+		for u, dd := range dist {
+			if u == s {
+				continue
+			}
+
+			pathSum += float64(dd)
+			pathPairs++
+
+			if dd > maxd {
+				maxd = dd
+			}
+		}
+
+		ecc[s] = maxd
+		if maxd > diameter {
+			diameter = maxd
+		}
+	}
+
+	if !connected {
+		diameter = -1 // несвязный граф: диаметр не определён (nx -> infinity)
+	}
+
+	if pathPairs > 0 {
+		avgPath = pathSum / pathPairs
+	}
+
+	return diameter, avgPath
+}
+
+// bfsUndirected — расстояния от s по неориентированной смежности.
+func bfsUndirected(adj map[string]map[string]bool, s string) map[string]int {
+	dist := map[string]int{s: 0}
+	queue := []string{s}
+
+	for len(queue) > 0 {
+		u := queue[0]
+		queue = queue[1:]
+
+		for nb := range adj[u] {
+			if _, seen := dist[nb]; !seen {
+				dist[nb] = dist[u] + 1
+				queue = append(queue, nb)
+			}
+		}
+	}
+
+	return dist
 }
 
 // maxFanOut — максимальная out-степень (0 при пустом графе).

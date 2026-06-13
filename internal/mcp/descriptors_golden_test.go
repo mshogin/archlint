@@ -136,6 +136,42 @@ func TestDescriptors_Batch2_vsPython(t *testing.T) {
 	almost(t, "avgClustering", d.AvgClustering, 0.277777778)
 }
 
+// --- БАТЧ 3: связностно-дистанционная группа (эталон networkx на A-F) ---
+
+func TestDescriptors_Batch3_vsPython(t *testing.T) {
+	d := ComputeDescriptors(refGraph())
+
+	closeness := map[string]float64{
+		"A": 0.45, "B": 0.36, "C": 0.45, "D": 0.555555556, "E": 0.384615385, "F": 0.0,
+	}
+	for id, w := range closeness {
+		almost(t, "closeness["+id+"]", d.Closeness[id], w)
+	}
+
+	harmonic := map[string]float64{
+		"A": 2.5, "B": 2.0, "C": 2.5, "D": 3.333333333, "E": 2.416666667, "F": 0.0,
+	}
+	for id, w := range harmonic {
+		almost(t, "harmonic["+id+"]", d.Harmonic[id], w)
+	}
+
+	if d.Diameter != 4 {
+		t.Errorf("diameter: got %d, want 4", d.Diameter)
+	}
+	almost(t, "avgPathLength", d.AvgPathLength, 1.933333333)
+
+	// eigenvector: power-iteration (nx tol 1e-6) -> сравнение с epsilon 1e-6.
+	eig := map[string]float64{
+		"A": 0.291011543, "B": 0.219678115, "C": 0.385508217,
+		"D": 0.676500517, "E": 0.510670415, "F": 0.0,
+	}
+	for id, w := range eig {
+		if math.Abs(d.Eigenvector[id]-w) > 1e-6 {
+			t.Errorf("eigenvector[%s]: got %.9f, want %.9f (Python)", id, d.Eigenvector[id], w)
+		}
+	}
+}
+
 // graph_depth на АЦИКЛИЧЕСКОМ графе: A->B->C->D -> depth=3 (рёбер в longest-path), isDAG.
 func TestDescriptors_GraphDepth_DAG(t *testing.T) {
 	n := func(id string) model.Node { return model.Node{ID: id, Entity: "package"} }
