@@ -107,6 +107,28 @@ principles:
     delta: "generic дельта-гейт (блок НОВОГО использования deprecated)"
     whitelist: []
 
+  - id: articulation-points
+    metric: articulation-point
+    status: demoted           # ВЕРДИКТ ГОРНИЛА: WARNING-сигнал, НЕ ERROR
+    severity_class: WARNING   # семантический конфаунд класса DIP
+    self_gauntlet: "44 срабатываний на здоровом archlint = легитимная структура
+      (единый вход парсинга, фасады, тест-моки); фасад=articulation по определению"
+    verdict: "интент синтаксически неотделим -> демотация (как DIP); под --signals, не гейт"
+
+  - id: bridge-edges
+    metric: bridge-edge
+    status: demoted           # WARNING/INFO loose-coupling дескриптор
+    severity_class: INFO      # мост чаще = здоровая модульность, не дефект
+    self_gauntlet: "70 на здоровом self; bridge = признак слабой связанности (здоровье)"
+    verdict: "дескриптор связанности под --signals, не ERROR"
+
+  - id: stability-violations
+    metric: stability-violation
+    status: demoted           # INFO-дескриптор + регрессия-WARNING в дельте
+    severity_class: INFO      # чистая магнитуда SDP (I=ратио+произвольный порог)
+    self_gauntlet: "85 на здоровом self; класс instability/coupling (магнитуда, не паттерн)"
+    verdict: "INFO-дескриптор под --signals; регрессия-WARNING в дельте; не ERROR"
+
   - id: dead-code
     metric: reach-from-entrypoints
     status: implemented       # ПРОМОТИРОВАН в ERROR; первый open-world ERROR

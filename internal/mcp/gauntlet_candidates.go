@@ -9,11 +9,17 @@ import (
 
 // Горнило-кандидаты (DR-0051): articulation_points / bridge_edges / stability_violations.
 // INTENT-LADEN: срабатывание НЕ всегда дефект (легитимный единый вход/фасад = articulation
-// point; мост часто нормален — Python сам метит bridges как INFO). DIP-РИСК.
+// point; мост часто = здоровая модульность). DIP-РИСК.
 //
-// ★SEVERITY НЕ РЕШЁН: эти Kind'ы НЕ зарегистрированы в severity_class. Решение ERROR vs
-// демотация-в-WARNING — ТОЛЬКО после чистого self-горнила соундности (парный вердикт ревью).
-// Ложный ERROR на здоровом archlint -> демотация (как DIP). До вердикта — аудит, не блок.
+// ★ВЕРДИКТ ГОРНИЛА (парный, соундность): ВСЕ ТРИ ДЕМОТИРОВАНЫ, НИ ОДИН не ERROR. На
+// здоровом archlint 199 срабатываний на легитимной структуре (DIP-класс конфаунда).
+// Поэтому НЕ в severity_class (никогда не блок), а СИГНАЛЫ-ДЕСКРИПТОРЫ под --signals:
+//   - articulation_points -> WARNING-сигнал (фасад=articulation по определению; интент
+//     синтаксически неотделим — класс DIP);
+//   - bridge_edges -> INFO/WARNING loose-coupling дескриптор (мост чаще = здоровье);
+//   - stability_violations -> INFO-дескриптор (чистая магнитуда SDP: I=ратио+порог, класс
+//     instability/coupling), + регрессия-WARNING в дельте.
+// Наблюдаемость (бутылочные горла + тренд связанности), не гейт.
 
 // StabilityViolations — нарушения SDP Мартина (порт validate_stability_violations):
 // стабильный компонент (низкая I) зависит от нестабильного (высокая I). I=Ce/(Ca+Ce).
