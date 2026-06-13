@@ -61,6 +61,74 @@ func GhostComponents(graph *model.Graph, cfg *archlintcfg.Config) []Violation {
 	return out
 }
 
+// defaultLayerPatterns — хардкод имя-паттерны слоёв (порт validate_layer_traversal).
+// Порядок = приоритет матча (первый substring выигрывает), как Python dict insertion.
+var defaultLayerPatterns = []struct {
+	pat   string
+	layer int
+}{
+	{"cmd", 0}, {"api", 1}, {"handler", 1}, {"controller", 1},
+	{"service", 2}, {"usecase", 2},
+	{"domain", 3}, {"entity", 3}, {"model", 3},
+	{"repository", 4}, {"storage", 4},
+	{"infrastructure", 5}, {"pkg", 6},
+}
+
+func layerOf(comp string) (int, bool) {
+	low := strings.ToLower(comp)
+	for _, p := range defaultLayerPatterns {
+		if strings.Contains(low, p.pat) {
+			return p.layer, true
+		}
+	}
+
+	return 0, false
+}
+
+// LayerTraversalResult — пара компонентов в контексте, нарушающая порядок слоёв
+// (next_layer < curr_layer = «вызов вверх по слоям»).
+type LayerTraversalResult struct {
+	Context   string
+	From      string
+	To        string
+	FromLayer int
+	ToLayer   int
+}
+
+// ComputeLayerTraversal — порт validate_layer_traversal: для каждого контекста
+// анализирует ПОСЛЕДОВАТЕЛЬНОСТЬ его компонентов; consecutive пара (i,i+1) с обоими
+// слоями и next_layer<curr_layer = подъём вверх. nil без contexts.
+//
+// ★INTENT-LADEN (не в severity_class до горнила): опирается на (а) ПОРЯДОК компонентов
+// в context-списке как «execution flow» (декларация != поток), (б) хардкод имя-паттерны
+// слоёв. Слабее соундного layer-backedge (тот — на ОБЪЯВЛЕННОМ порядке + реальных рёбрах).
+func ComputeLayerTraversal(cfg *archlintcfg.Config) []LayerTraversalResult {
+	if cfg == nil || !cfg.HasContexts() {
+		return nil
+	}
+
+	ctxs := append([]archlintcfg.ContextDef(nil), cfg.Contexts...)
+	sort.Slice(ctxs, func(i, j int) bool { return ctxs[i].Name < ctxs[j].Name })
+
+	var out []LayerTraversalResult
+
+	for _, ctx := range ctxs {
+		comps := ctx.Components
+		for i := 0; i+1 < len(comps); i++ {
+			cl, okC := layerOf(comps[i])
+			nl, okN := layerOf(comps[i+1])
+
+			if okC && okN && nl < cl {
+				out = append(out, LayerTraversalResult{
+					Context: ctx.Name, From: comps[i], To: comps[i+1], FromLayer: cl, ToLayer: nl,
+				})
+			}
+		}
+	}
+
+	return out
+}
+
 // CoverageResult — результат context_coverage: покрытие топ-N PageRank-критических
 // узлов объявленными контекстами.
 type CoverageResult struct {
