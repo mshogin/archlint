@@ -37,7 +37,7 @@ func TestDetectCycles_AcyclicChain(t *testing.T) {
 }
 
 // (2) Цикл длины 12 — Tarjan SCC ловит. Старый simple_cycles(max_length=10) пропустил бы
-// (демонстрация закрытия дыры полноты, DR-0008).
+// (демонстрация закрытия дыры полноты).
 func TestDetectCycles_LongCycle12(t *testing.T) {
 	var edges [][2]string
 	for i := 0; i < 12; i++ {

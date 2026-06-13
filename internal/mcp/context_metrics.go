@@ -19,7 +19,7 @@ type ContextSignals struct {
 	MaxDepth      int            `json:"maxDepth"`      // = maxComplexity (оценка Python)
 	MaxCoupling   float64        `json:"maxCoupling"`   // макс. shared_ratio по парам контекстов
 	// SinglePointsOfFailure — компоненты, присутствующие во ВСЕХ контекстах (вездесущая
-	// зависимость = single point of failure). Вердикт горнила DR-0060: WARNING-сигнал,
+	// зависимость = single point of failure). Вердикт горнила : WARNING-сигнал,
 	// НЕ ERROR (вариант articulation, тот же DIP-класс конфаунда). Только при >=2 контекстах.
 	SinglePointsOfFailure []string `json:"singlePointsOfFailure"`
 	// NearSPOFCount — компоненты в >=80% контекстов (но не во всех).

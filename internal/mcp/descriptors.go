@@ -12,7 +12,7 @@ import (
 )
 
 // handleDescriptors — MCP-tool `descriptors`: магнитудные дескрипторы текущего графа.
-// Сигналы/наблюдаемость, не гейт (DR-0049). args не используются.
+// Сигналы/наблюдаемость, не гейт. args не используются.
 func handleDescriptors(state StateReader, _ json.RawMessage) (interface{}, error) {
 	return ComputeDescriptors(state.GetGraph()), nil
 }
@@ -23,7 +23,7 @@ func handleDescriptors(state StateReader, _ json.RawMessage) (interface{}, error
 // (как nx.DiGraph). Эквивалентность гарантируется golden'ом против Python-выхода.
 //
 // ★СЕВЕРИТИ: ВСЕ дескрипторы — СИГНАЛЫ (INFO / регрессия-WARNING), НЕ ERROR. Это
-// магнитуды (ось паттерн/магнитуда, DR-0009): порог произволен, абсолютное значение
+// магнитуды (ось паттерн/магнитуда): порог произволен, абсолютное значение
 // не блокирует. Они НЕ регистрируются в severity_class и НЕ участвуют в дельта-гейте
 // как блокирующие. Назначение — наблюдаемость/тренд, не гейт.
 

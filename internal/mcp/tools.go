@@ -338,10 +338,10 @@ func DetectAllViolations(graph *model.Graph) []Violation {
 
 // detectCycles reports a circular-dependency Violation for startPkg if it
 // participates in a cycle of the import graph. Делегирует graph-agnostic
-// SCC-индексу (cycles_scc.go), который МЕМОИЗИРОВАН на граф (DR-0011): SCC не
+// SCC-индексу (cycles_scc.go), который МЕМОИЗИРОВАН на граф: SCC не
 // зависит от startPkg, поэтому считается один раз, а не P раз на каждый пакет.
 //
-// Принцип (DR-0005, чистый iff): узел в цикле ⟺ SCC размера>1 ИЛИ петля.
+// Принцип (чистый iff): узел в цикле ⟺ SCC размера>1 ИЛИ петля.
 // Соундно+полно (циклы любой длины). Та же SCC-машина обслуживает карточку
 // "слоистость Уровень A" (SCC>1 среди модулей = цикл модульных зависимостей).
 func detectCycles(graph *model.Graph, startPkg string) []Violation {

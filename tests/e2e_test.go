@@ -136,7 +136,7 @@ func TestE2EScanClean(t *testing.T) {
 	}
 }
 
-// TestE2EScanWithViolations verifies the DELTA gate (Фаза 5, DR-0034): a layer
+// TestE2EScanWithViolations verifies the DELTA gate (Фаза 5): a layer
 // violation that is NEW relative to a clean baseline blocks the gate. Layer/cycle/
 // dead-code are ERROR-class and gated by delta — without a baseline they audit (no
 // block); with a clean baseline a newly-introduced violation is a regression -> block.

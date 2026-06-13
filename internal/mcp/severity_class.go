@@ -1,6 +1,6 @@
 package mcp
 
-// SeverityClass — ДЕКЛАРИРУЕМЫЙ класс важности метрики (DR-0029). ОТДЕЛЁН от
+// SeverityClass — ДЕКЛАРИРУЕМЫЙ класс важности метрики. ОТДЕЛЁН от
 // ЭФФЕКТИВНОГО gate-level (ViolationLevel): для open-world-ERROR класс=ERROR
 // заявлен сейчас (метрика прошла горнило), но боевая БЛОКИРОВКА требует
 // дельта-режима + human-in-loop, чья инфраструктура — Фаза 5. До неё эффективный
@@ -22,18 +22,18 @@ type SeverityClass struct {
 
 // violationClasses — реестр заявленных классов по Kind нарушения.
 //
-// Дельта-гейт (EffectiveLevel, DR-0034) активирует в боевом блоке ТОЛЬКО эти
+// Дельта-гейт (EffectiveLevel) активирует в боевом блоке ТОЛЬКО эти
 // ERROR-class паттерны и только в дельта-режиме (NEW vs baseline). Градации
 // соундности (Ось-1б): closed-world (SCC/слой — безусловно соундны, без замков) и
 // open-world (dead-code — условно соунд, обязательны дельта+human-in-loop).
 var violationClasses = map[string]SeverityClass{
-	// circular-dependency — CLOSED-WORLD ERROR (SCC iff, DR-0005): цикл есть цикл,
+	// circular-dependency — CLOSED-WORLD ERROR (SCC iff): цикл есть цикл,
 	// внешнего допущения нет. Дельта-режим здесь — usability (легаси), не условие
 	// соундности -> RequiresDelta=false.
 	"circular-dependency": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
 	// layer-violation — CLOSED-WORLD ERROR относительно объявленного L (back-edge
-	// против порядка слоёв, DR-0009 Уровень B). Соунд относительно конфига L.
+	// против порядка слоёв Уровень B). Соунд относительно конфига L.
 	"layer-violation": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
 	// dead-code промотирован в ERROR (полное горнило соундности: 0 false-dead на self).
@@ -53,11 +53,11 @@ var violationClasses = map[string]SeverityClass{
 	"deprecated-usage": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
 	// layer-backedge — CLOSED-WORLD ERROR относительно ОБЪЯВЛЕННОГО порядка слоёв
-	// (DR-0009 Уровень B). Ребро против порядка (нижний слой -> верхний) = паттерн.
+	// (Уровень B). Ребро против порядка (нижний слой -> верхний) = паттерн.
 	// Conditional: неактивен без layers-конфига.
 	"layer-backedge": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
-	// isp-usage-subset (DR-0033) — промотирован в ERROR после горнила соундности (детерминизм
+	// isp-usage-subset — промотирован в ERROR после горнила соундности (детерминизм
 	// keyed lookup + 0 false-fire стабильно, golden 20x + self дважды NEW=0). CLOSED-WORLD
 	// НА ПОДДОМЕНЕ: соунден там, где числитель применим (param-typed свой интерфейс, оба
 	// guard'а пройдены), вне поддомена воздерживается (no-verdict). cost=irritation (сужение

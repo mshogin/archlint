@@ -2,7 +2,7 @@ package mcp
 
 import "github.com/mshogin/archlint/internal/archlintcfg"
 
-// EffectiveLevel — ГЕЙТ-уровень нарушения с учётом дельта-режима (Фаза 5, DR-0034).
+// EffectiveLevel — ГЕЙТ-уровень нарушения с учётом дельта-режима (Фаза 5).
 // Привязка к severity_class через errorClass/ClassOf:
 //
 //	ERROR-class + baseline == nil      -> Telemetry  (NO-BASELINE -> NO-BLOCK, п.2:

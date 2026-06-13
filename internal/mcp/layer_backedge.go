@@ -8,7 +8,7 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// LayerBackedge — ERROR-детектор обратных рёбер против ПОРЯДКА слоёв (DR-0009 Уровень B).
+// LayerBackedge — ERROR-детектор обратных рёбер против ПОРЯДКА слоёв (Уровень B).
 // Ранг слоя = ПОЗИЦИЯ в списке cfg.Layers (single source of truth; список читается
 // сверху-вниз: верхние слои -> нижние). Разрешённое направление зависимостей — вниз
 // (верхний слой зависит от нижнего, fromRank < toRank). BACK-EDGE — ребро из нижнего

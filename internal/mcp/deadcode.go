@@ -18,7 +18,7 @@ import (
 // ложно-мёртвой -> удаление живого. implements over-approx по имени -> dispatch
 // тоже over-approx -> ложно-живой (дёшево), ложно-мёртвый невозможен.
 //
-// SEVERITY: метрика ТОЛЬКО считает; класс WARNING пока (DR-0020: ERROR после
+// SEVERITY: метрика ТОЛЬКО считает; класс WARNING пока (: ERROR после
 // прохождения self-горнила соундности).
 func DeadCode(g *model.Graph, configPatterns []string) []Violation {
 	r := EntryPoints(g, configPatterns)

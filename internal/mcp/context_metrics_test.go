@@ -39,7 +39,7 @@ func TestContextSignals_Inactive(t *testing.T) {
 	}
 }
 
-// SPOF: "app/core" во ВСЕХ 3 контекстах -> single point of failure (WARNING DR-0060).
+// SPOF: "app/core" во ВСЕХ 3 контекстах -> single point of failure (WARNING).
 func TestContextSignals_SPOF(t *testing.T) {
 	cfg := &archlintcfg.Config{Contexts: []archlintcfg.ContextDef{
 		{Name: "a", Components: []string{"app/core", "app/x"}},

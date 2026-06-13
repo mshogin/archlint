@@ -67,7 +67,7 @@ func (v *modelDIPView) OutEdges(id string) []OutEdge { return v.out[id] }
 // СВОИ типы) -> НЕ нарушение. Только свой concrete -> нарушение. Ложного firing на
 // легальном (abstraction->abstraction, примитивы) нет.
 //
-// SEVERITY (DR-0007/DR-0006): метрика ТОЛЬКО считает нарушения; severity-класс =
+// SEVERITY (/): метрика ТОЛЬКО считает нарушения; severity-класс =
 // WARNING пока self-оракул DIP не размечен (ERROR требует прохождения размеченного
 // оракула). Класс назначает гейт, не метрика.
 func detectDIP(v DIPView) []Violation {

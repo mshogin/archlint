@@ -47,7 +47,7 @@ func (v *importView) NodeIDs() []string            { return v.nodes }
 func (v *importView) Successors(id string) []string { return v.adj[id] }
 
 // sccResult — индекс SCC: cyclic-членство + члены SCC каждого узла. Считается
-// ОДИН раз на граф (SCC не зависит от стартового узла — DR-0011).
+// ОДИН раз на граф (SCC не зависит от стартового узла —).
 type sccResult struct {
 	cyclic  map[string]bool
 	members map[string][]string // node -> члены его SCC (для SCC>1); пусто для self-loop
@@ -112,7 +112,7 @@ func computeSCC(view DirectedView) *sccResult {
 }
 
 // sccMemo мемоизирует SCC-индекс по указателю графа: detectCycles зовётся по
-// каждому пакету (P раз), но SCC одинаков -> считаем ОДИН раз на граф (DR-0011).
+// каждому пакету (P раз), но SCC одинаков -> считаем ОДИН раз на граф.
 // Допущение: граф в рамках анализа неизменен (строится один раз, читается).
 var sccMemo sync.Map // *model.Graph -> *sccResult
 

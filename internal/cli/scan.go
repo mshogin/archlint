@@ -76,11 +76,11 @@ type scanGateResult struct {
 	ConfigFile string          `json:"config_file,omitempty"`
 	Baseline   string          `json:"baseline,omitempty"` // путь к загруженному snapshot ("" = audit-режим)
 	// Signals — структурные магнитудные дескрипторы (--signals, audit/slow). Не часть
-	// гейта: магнитуды НЕ блокируют (DR-0049). omitempty -> быстрый гейт их не несёт.
+	// гейта: магнитуды НЕ блокируют. omitempty -> быстрый гейт их не несёт.
 	Signals *mcp.Descriptors `json:"signals,omitempty"`
 	// ArchmotifSignals — research-метрики archmotif (modularity, motif_redundancy,
 	// spectral/symmetry детекторы) под --signals. Сигналы/наблюдаемость, НИКОГДА ERROR
-	// (спектр != proof, DR-0048/DR-0055).
+	// (спектр != proof/).
 	ArchmotifSignals *archmotifbridge.Report `json:"archmotifSignals,omitempty"`
 	// ContextSignals — INFO-дескрипторы объявленных контекстов (complexity/coupling/
 	// depth) под --signals. nil без contexts в конфиге. Не гейт.
@@ -185,7 +185,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Inactive when no deprecated patterns/attributes are present.
 	violations = append(violations, mcp.DeprecatedUsage(graph, &cfg)...)
 
-	// Layer back-edges against declared layer order (ERROR, DR-0009 level B).
+	// Layer back-edges against declared layer order (ERROR level B).
 	// Inactive when no layers are configured.
 	violations = append(violations, mcp.LayerBackedge(graph, &cfg)...)
 
@@ -199,7 +199,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		violations = append(violations, mcp.DeadCode(graph, cfg.EntryPoints)...)
 	}
 
-	// ISP usage-subset (DR-0033) — клиент-центричный «жирный интерфейс» (узкое
+	// ISP usage-subset — клиент-центричный «жирный интерфейс» (узкое
 	// использование param-интерфейса + 2 guard'а). НЕ блокирующий до прохождения
 	// горнила соундности: Kind'ы не в severity_class как ERROR -> аудит-уровень.
 	if a != nil && cfg.Rules.ISP.IsEnabled() {
@@ -286,7 +286,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return violations[i].Target < violations[j].Target
 	})
 
-	// --- Delta gate (Фаза 5, DR-0034) ---
+	// --- Delta gate (Фаза 5) ---
 	// Загружаем baseline-снимок: отсутствует -> nil -> ERROR-class паттерны
 	// деградируют в audit (NO-BASELINE -> NO-BLOCK). Дельта-гейт блокирует ТОЛЬКО
 	// НОВЫЕ vs baseline ERROR-class паттерны (SCC/layer/dead-code); магнитуды

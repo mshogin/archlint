@@ -11,7 +11,7 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// Goldens ISP usage-subset (DR-0033, golden id:isp). Прогон через РЕАЛЬНЫЙ анализатор
+// Goldens ISP usage-subset (golden id:isp). Прогон через РЕАЛЬНЫЙ анализатор
 // (parser ForwardedParams/NamedParams -> метрика), не конструированные структуры —
 // честная проверка всей цепочки. Критерий горнила = 0 false-ERROR; здесь фиксируем
 // 5 базовых вердиктов из спеки.
@@ -133,7 +133,7 @@ func analyzeMulti(t *testing.T, files map[string]string) (*analyzer.GoAnalyzer, 
 // между пакетами. Два пакета с интерфейсом I разной ширины; клиент в pkga использует
 // СВОЙ I (2 метода) узко. Keyed lookup по пакету клиента обязан: (1) резолвить в pkga.I
 // (Total=2), НЕ в pkgb.I; (2) давать БАЙТ-идентичный результат на ПОВТОРНЫХ прогонах
-// метрики НА ОДНОМ графе (инвариант снапшота дельта-гейта, DR-0034). Перебор-по-имени
+// метрики НА ОДНОМ графе (инвариант снапшота дельта-гейта). Перебор-по-имени
 // тут давал случайный вердикт (Go map-iteration) -> спонтанный NEW в дельте. Анализ
 // делаем ОДИН раз (qname несёт путь tmp-dir -> сравниваем метрику на фикс. графе).
 func TestISP_GoldenDeterminism_DuplicateInterfaceNames(t *testing.T) {

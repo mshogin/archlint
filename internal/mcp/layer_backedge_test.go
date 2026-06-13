@@ -7,7 +7,7 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// Golden layer-backedge (DR-0009 Уровень B). Слои по ПОРЯДКУ списка (верх->низ):
+// Golden layer-backedge (Уровень B). Слои по ПОРЯДКУ списка (верх->низ):
 // presentation(#0) -> domain(#1) -> infra(#2). Разрешено вниз (верх зависит от низа);
 // back-edge = ребро снизу вверх (infra->presentation) -> ERROR.
 

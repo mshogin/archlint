@@ -34,7 +34,7 @@ func TestComputeSCC_GraphAgnostic(t *testing.T) {
 	}
 }
 
-// (2) Мемоизация (DR-0011): тот же граф -> ТОТ ЖЕ индекс (один расчёт на граф,
+// (2) Мемоизация: тот же граф -> ТОТ ЖЕ индекс (один расчёт на граф,
 // не P раз). Проверяем равенство указателей *sccResult.
 func TestCyclicSCC_Memoized(t *testing.T) {
 	g := &model.Graph{Edges: []model.Edge{

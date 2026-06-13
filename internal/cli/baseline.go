@@ -94,7 +94,7 @@ func runBaseline(_ *cobra.Command, args []string) error {
 }
 
 // loadBaseline читает снимок дельта-гейта. Отсутствие файла -> (nil, nil): гейт
-// деградирует в audit (no-baseline -> no-block, DR-0034 п.2), это НЕ ошибка.
+// деградирует в audit (no-baseline -> no-block п.2), это НЕ ошибка.
 func loadBaseline(path string) (*mcp.Baseline, error) {
 	data, err := os.ReadFile(path) //nolint:gosec // G304: path derived from scanned dir / --baseline flag
 	if err != nil {

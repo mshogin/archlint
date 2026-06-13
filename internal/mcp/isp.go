@@ -9,7 +9,7 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// ISP usage-subset (DR-0033, golden id:isp) — путь B (param-typed, БЕЗ go/types).
+// ISP usage-subset (golden id:isp) — путь B (param-typed, БЕЗ go/types).
 //
 // ИДЕЯ: клиентский метод/функция с параметром интерфейсного типа `Use(p I)`, который
 // ВНУТРИ ТЕЛА вызывает СТРОГОЕ ПОДМНОЖЕСТВО методов I (p.Foo(), но не все методы I),
@@ -291,7 +291,7 @@ func resolveParamInterface(
 	// игнорируем -> безопасное воздержание). ПРЯМОЙ keyed lookup по (clientPkg.TypeName):
 	// детерминирован (нет map-iteration) и пакето-корректен (одноимённый интерфейс из
 	// ЧУЖОГО пакета не подставит неверный |methods(I)| -> исключён ложный ERROR и
-	// недетерминизм снапшота, обязательный для дельта-инварианта DR-0034).
+	// недетерминизм снапшота, обязательный для дельта-инварианта).
 	if oi, ok := ifaceMethods[clientPkg+"."+p.TypeName]; ok {
 		return oi.Methods, true, oi.Name
 	}

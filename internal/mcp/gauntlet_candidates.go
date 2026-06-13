@@ -7,7 +7,7 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// Горнило-кандидаты (DR-0051): articulation_points / bridge_edges / stability_violations.
+// Горнило-кандидаты: articulation_points / bridge_edges / stability_violations.
 // INTENT-LADEN: срабатывание НЕ всегда дефект (легитимный единый вход/фасад = articulation
 // point; мост часто = здоровая модульность). DIP-РИСК.
 //
