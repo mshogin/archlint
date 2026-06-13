@@ -1,0 +1,152 @@
+# Self-оракул archlint: размеченные ожидания по принципам для self-эталона.
+# Принцип разметки: ПО МЕРЕ реализации метрик (status: implemented|planned|inactive).
+# planned/inactive несут только whitelist_rules (наводки), БЕЗ фейковых expected
+# (анти-мёртвая-разметка). expected заполняется ТОЛЬКО у implemented.
+
+version: 1
+
+corpus:
+  core: archlint-self        # обязательное ядро (необходимо, НЕ достаточно)
+  extends: []                # позже: размеченные репо (анти-overfit к одному графу)
+
+principles:
+  - id: no-cycles
+    metric: scc-modules       # Tarjan SCC (gonum topo.TarjanSCC), internal/mcp/tools.go
+    status: implemented
+    assert: "0 SCC размера>1 в ПАКЕТНОМ dependsOn-графе archlint"
+    granularity: package      # КРИТИЧНО: функц./тип. рекурсия НЕ нарушение; SCC только на пакетном уровне.
+                              # Без pin реализация прогонит SCC на функц. уровне (рекурсия легальна) -> verified-pass ложный.
+    whitelist: []             # пусто: цикл пакетных зависимостей ВСЕГДА дефект (Go self-import невозможен -> SCC>1 = полный критерий)
+    verified:
+      status: pass
+      evidence: ["python validate_dag PASSED", "Tarjan golden case 1"]   # два независимых сигнала
+    on_fire: real-defect      # срабатывание на self = реальный цикл -> чинить archlint (НЕ зарезать метрику)
+    on_divergence: fail-fast  # факт != expected -> ручной разбор (самозванец vs дефект)
+
+  - id: isp
+    metric: isp-usage-subset
+    status: planned           # активируется в Фазе 3 (Go-порт)
+    metric_input_required: "ЧИСЛИТЕЛЬ — calls привязан к методу
+      интерфейса по СТАТИЧЕСКОМУ типу receiver (i.Foo() где i типа I -> calls(C->I.Foo)).
+      Статический тип объявления, НЕ value-flow. Знаменатель(contains)+coupling(usesType) готовы."
+    severity_class: ERROR-with-2-guards   # ERROR-able с guard'ами; иначе WARNING (false-fire на кондуитах)
+    soundness_guards:         # ПРЕДУСЛОВИЕ порта (без guard'ов -> WARNING, не в горнило)
+      - "guard1: i ТОЛЬКО receiver, НИКОГДА не value-позиция (форвард -> no-verdict)"
+      - "guard2: клиент-метод НЕ реализует интерфейс (контракт-связан -> suppress/WARNING)"
+      - "свой интерфейс+свой клиент = ERROR; внешний (io.*) = WARNING"
+      - "не-param-typed формы (var/struct/returns-receiver) = no-verdict (дешёвая сторона)"
+    class: closed-world-on-subdomain   # воздержание вне поддомена; cost=irritation; guard+дельта, БЕЗ тройного замка
+    repromotion_criterion:    # горнило ISP: чисто = 0 false-ISP-ERROR
+      - "каждый ISP-ERROR: строгое подмножество + i не форвардится + не контракт + СВОЙ интерфейс + сужаем"
+      - "конфаунды не стреляют: кондуиты подавлены, внешние->WARNING, не-param->no-verdict"
+      - "критерий = 0 FALSE-fire (не число находок); любой false-fire -> чинить guard, не промотировать"
+    whitelist_rules:
+      - "широкие ВНЕШНИЕ интерфейсы (io.*, stdlib, сторонние) при узком использовании — WARNING (не ERROR)"
+      - "СВОИ широкие интерфейсы при узком клиенте, i не форвардится — ERROR (реальный запах, сужаем)"
+
+  - id: dip
+    metric: dip-abstraction-to-detail
+    status: implemented
+    severity_class: WARNING-max   # ДЕМОТИРОВАН из ERROR: "деталь" семантична, не в графе.
+                                  # ERROR-кор (DIP с импортным циклом) держит SCC. Никогда не ERROR.
+    self_baseline:                # разметка для регрессии на self; DIP=WARNING
+      whitelist:                  # легальные DTO/value-возвраты = словарь абстракции, НЕ деталь
+        - "MetricsProvider/StateReader -> Report/Graph/FileMetrics/DegradationReport (DTO)"
+        - "callgraph.Analyzer -> CallInfo/FunctionInfo/MethodInfo/TypeInfo (DTO)"
+        - "bot.* -> Issue/ScanResult; mcp.DIPView -> OutEdge (DTO); demo-фикстура"
+      real_smell_warning:         # настоящий запах archlint (WARNING, чинить — backlog, не блок)
+        - "#8 StateReader -> GoAnalyzer (конкретный поведенческий коллаборатор)"
+        - "#10 StateReader -> DegradationDetector (то же)"
+    note: "ранжирование WARNING эвристикой DTO/behavioral — опц. backlog (UX), никогда не ERROR"
+
+  - id: layers-A
+    metric: scc-modules       # тот же механизм что no-cycles (один детектор, две карточки)
+    status: implemented
+    granularity: package      # тот же pin: SCC на пакетном уровне
+    verified:
+      status: pass
+      evidence: ["тот же прогон Tarjan, что no-cycles"]
+    assert: "0 SCC среди пакетов"
+    whitelist: []
+
+  - id: layers-B
+    metric: layer-backedge
+    status: inactive          # ждёт .archlint layers (L-конфиг)
+
+  - id: forbidden-dependencies
+    metric: forbidden-dependency
+    status: implemented       # ERROR; config-driven (.archlint forbidden: [{from,to}])
+    severity_class: ERROR     # closed-world относительно объявленного запрета
+    soundness: "объявленное запрещённое ребро = ПАТТЕРН по определению
+      (односторонняя импликация срабатывание⟹дефект; порог не нужен)"
+    granularity: edge         # substring(from) in source AND substring(to) in target
+    activation: "inactive без forbidden-правил в конфиге (0 ложных по умолчанию)"
+    delta: "RequiresDelta=false (соунд относительно конфига); дельта-гейт = usability
+      на легаси (блок НОВОГО запрещённого ребра), generic через EffectiveLevel"
+    whitelist: []
+
+  - id: dead-code
+    metric: reach-from-entrypoints
+    status: implemented       # ПРОМОТИРОВАН в ERROR; первый open-world ERROR
+    severity_class: ERROR     # open-world условно-соундный; компенсации ОБЯЗАТЕЛЬНЫ
+    verified:
+      status: pass
+      result: "89->5 мёртвых, 0 false-dead; 5 реальных находок (горнило чисто)"
+      validations:
+        - "qname-идентичность точнее грепа (коллизия одноимённых функций развелась по пакету автоматически)"
+        - "граница test-only эмпирична (функция, вызываемая тестом, живая; осиротевшие тест-хелперы мёртвы)"
+    mandatory_compensations:  # следствие open-world условности, не опция
+        - "дельта-режим (новый мёртвый vs baseline, не абсолют)"
+        - "тройной замок (R общие механизмы / дельта / чистое self-горнило)"
+        - "авто-удаление human-in-loop (ERROR-сигнал != авто-действие)"
+    self_findings_to_fix:     # archlint чинит САМ (human-in-loop), не метрику
+        - "прод: readFileLines, isInPackage, printStats (удалить)"
+        - "осиротевшие тест-хелперы: mcp.analyzeCode, mcp.writeAndAnalyze (удалить)"
+        - "протухшие комменты: 'used in tests' / 'used by all reach-SRP tests' (оба врут)"
+    whitelist_rules:
+      - "R (entry points) = КОНФИГ .archlint entrypoints + правила триггер-фреймворков (НЕ эвристика)"
+      - "для библиотеки R = все exported символы (детерминировано, авто)"
+      - "рефлексия/codegen/регистрируемые колбэки -> explicit entry-маркеры в whitelist"
+      - "ложно-мёртвый (неполный R) убивает ЖИВОЙ код -> R консервативен (полон с запасом)"
+      - "AUTO-FIX (удаление) по мёртвому коду НЕ автоматичен без подтверждения человека"
+      - "ОБЯЗАТЕЛЬНО: reach раскрывает implements-dispatch (interface-method достижим"
+      - " ⟹ все реализации via implements достижимы). Иначе ложно-мёртвые impl интерфейсов = удалили живое"
+      - "references материализуются как СИНТАКСИЧЕСКИЙ value-use"
+      - " (символ func/метода в не-call позиции, over-approx по имени)."
+      - " Без этого callback-F без входящего ребра -> reach флагует МЁРТВОЙ -> ложно-мёртвый (дорого)."
+      - " Это НЕ var-type inference (синтаксис, арх-уровень)."
+    acceptance_criteria_phase3:   # dead-code-соундность стоит на ТРЁХ over-approx одновременно;
+                                  # любая под-approx -> false-dead (destruction)
+      - "1. references = ИСТИННАЯ over-approx (синтакс. value-use -> рёбра на ВСЕ одноимённые);
+            references!=0; callback-only функция получает входящее ref-ребро -> reachable -> не мёртва"
+      - "2. dispatch: reach раскрывает interface-method достижим ⟹ все over-approx реализации (implements)"
+      - "3. entry-points R = КОНФИГ (не эвристика) + библиотека=все exported авто; пропущенный entry =
+            false-dead (ВТОРОЙ линчпин рядом с references)"
+      - "КОМПОЗИТ: на чистом self-прогоне КАЖДЫЙ флагнутый-мёртвым проверяется вручную = реально ли
+            мёртв. Хоть один живой -> destruction-несоунден -> демотация/фикс (как DIP). ERROR только при 0 false-dead"
+      - "4. АСИММЕТРИЯ: ERROR-СИГНАЛ ок при чистом горниле, но АВТО-УДАЛЕНИЕ = human-in-loop"
+      - "вероятный исход: reachability = чистый ПАТТЕРН -> устоит как ERROR (в отличие от DIP-семантики),
+            НО только если все 3 входа = true-over-approx; иначе демотация"
+
+# ============================================================
+# ИНФРАСТРУКТУРА (не принцип, а слой активации) — пре-регистрация горнила
+# ============================================================
+infrastructure:
+  - id: delta-gate
+    desc: "дельта-режим (Фаза 5): соундность-сохраняющая АКТИВАЦИЯ над уже-соундными паттернами"
+    status: verified            # реализован и верифицирован по коду; Фаза 5 закрыта, боевой гейт активен
+    backlog_robustness: "развязать SCC/layer-fingerprint от display-строки -> структурное поле (member-qname); смена формата сообщения иначе инвалидирует baseline (mass-false-block). Низкий приоритет, после ISP."
+    design:
+      - "baseline-снапшот паттерн-фактов -> .archlint-baseline.json"
+      - "дельта current-vs-baseline -> NEW-множество (generic по Kind из severity_class)"
+      - "идентичность = СТРОГИЙ qname-key (dead:qname; back-edge:пара; SCC:отсортир.множество/хеш; ISP:пара)"
+      - "НЕ rename-tracking/fuzzy (Ось-1 запрет магнитудного матча на гейте); rename->ложный-NEW=irritation ок"
+      - "fail-safe: над-блок (irritation) >> под-блок (проскок регрессии)"
+      - "гейт-уровень: NEW+Class=ERROR -> блок (SCC/ISP hard; dead-code блок+human-in-loop); существующий->telemetry"
+    hardening_criterion:  # горнило дельта-инфры; чисто = всё ниже
+      - "ЯДРО: baseline на self -> повторный прогон ТОГО ЖЕ кода -> дельта ПУСТА (0 ложных-NEW)"
+      - "+1 ДЕТЕРМИНИЗМ: два baseline одного кода БАЙТ-идентичны (сортировка, стабильные ключи, нет map-недетерминизма)"
+      - "+2 NO-BASELINE -> NO-BLOCK (degrade telemetry; иначе первый прогон=absolute блокирует всё)"
+      - "+3 POSITIVE CONTROL: 1 новый дефект -> дельта=ровно он; откат -> пуста"
+      - "+4 RENAME-CASE: переименование -> ожидаемо ложный-NEW (документировать, не баг)"
+      - "+5 ПО КЛАССАМ: NEW SCC/ISP->hard-block; NEW dead-code->блок+human-in-loop удаление"
