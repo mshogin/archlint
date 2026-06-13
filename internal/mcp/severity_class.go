@@ -52,6 +52,11 @@ var violationClasses = map[string]SeverityClass{
 	// = дефект по определению. Неактивен без явных маркеров (без широких дефолтов).
 	"deprecated-usage": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
+	// layer-backedge — CLOSED-WORLD ERROR относительно ОБЪЯВЛЕННОГО порядка слоёв
+	// (DR-0009 Уровень B). Ребро против порядка (нижний слой -> верхний) = паттерн.
+	// Conditional: неактивен без layers-конфига.
+	"layer-backedge": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
+
 	// isp-usage-subset (DR-0033) — промотирован в ERROR после горнила соундности (детерминизм
 	// keyed lookup + 0 false-fire стабильно, golden 20x + self дважды NEW=0). CLOSED-WORLD
 	// НА ПОДДОМЕНЕ: соунден там, где числитель применим (param-typed свой интерфейс, оба

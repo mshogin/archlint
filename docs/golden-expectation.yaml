@@ -71,7 +71,16 @@ principles:
 
   - id: layers-B
     metric: layer-backedge
-    status: inactive          # ждёт .archlint layers (L-конфиг)
+    status: implemented       # ERROR; активирован (DR-0009 Уровень B)
+    severity_class: ERROR     # closed-world относительно ОБЪЯВЛЕННОГО порядка слоёв
+    order_source: "ПОЗИЦИЯ в списке cfg.layers (single source of truth, без дубль-order;
+      список сверху-вниз: верхние слои -> нижние)"
+    soundness: "ребро снизу-вверх (fromRank > toRank) против порядка = паттерн
+      по определению (односторонняя импликация)"
+    granularity: edge         # назначение узла слою по path-prefix (LayerForModule)
+    activation: "conditional: неактивен без layers-конфига (self-прогон archlint = 0)"
+    delta: "generic дельта-гейт (блок НОВОГО back-edge)"
+    whitelist: []
 
   - id: forbidden-dependencies
     metric: forbidden-dependency

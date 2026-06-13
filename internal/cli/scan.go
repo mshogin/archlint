@@ -177,6 +177,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Inactive when no deprecated patterns/attributes are present.
 	violations = append(violations, mcp.DeprecatedUsage(graph, &cfg)...)
 
+	// Layer back-edges against declared layer order (ERROR, DR-0009 level B).
+	// Inactive when no layers are configured.
+	violations = append(violations, mcp.LayerBackedge(graph, &cfg)...)
+
 	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
 	// НОВЫЙ мёртвый узел vs baseline = регрессия (блок + удаление human-in-loop).
 	if a != nil {
