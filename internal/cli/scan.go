@@ -82,6 +82,9 @@ type scanGateResult struct {
 	// spectral/symmetry детекторы) под --signals. Сигналы/наблюдаемость, НИКОГДА ERROR
 	// (спектр != proof, DR-0048/DR-0055).
 	ArchmotifSignals *archmotifbridge.Report `json:"archmotifSignals,omitempty"`
+	// ContextSignals — INFO-дескрипторы объявленных контекстов (complexity/coupling/
+	// depth) под --signals. nil без contexts в конфиге. Не гейт.
+	ContextSignals *mcp.ContextSignals `json:"contextSignals,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -356,6 +359,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 		archmotifSignals = &rep
 	}
 
+	var contextSignals *mcp.ContextSignals
+	if scanSignals {
+		contextSignals = mcp.ComputeContextSignals(&cfg)
+	}
+
 	switch scanFormat {
 	case "json":
 		result := scanGateResult{
@@ -369,6 +377,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			Baseline:         loadedBaseline,
 			Signals:          signals,
 			ArchmotifSignals: archmotifSignals,
+			ContextSignals:   contextSignals,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
