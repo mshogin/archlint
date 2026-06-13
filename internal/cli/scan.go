@@ -366,6 +366,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 	var contextSignals *mcp.ContextSignals
 	if scanSignals {
 		contextSignals = mcp.ComputeContextSignals(&cfg)
+		// context_coverage — WARNING-сигнал (вердикт горнила), под --signals, не гейт.
+		if contextSignals != nil {
+			cov := mcp.ComputeContextCoverage(graph, &cfg)
+			if cov.Active {
+				contextSignals.Coverage = &cov
+			}
+		}
 	}
 
 	switch scanFormat {

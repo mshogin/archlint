@@ -117,7 +117,22 @@ principles:
     activation: "inactive без contexts (self-горнило: self-прогон archlint = 0)"
     self_gauntlet: "0 ghost на здоровом archlint (нет contexts -> неактивен), conditional как forbidden"
     delta: "generic дельта-гейт (блок НОВОГО ghost vs baseline)"
+    contract: "★ДОПУЩЕНИЕ (обязательная компенсация, как R-полнота у dead-code):
+      contexts ОПИСЫВАЮТ СУЩЕСТВУЮЩУЮ архитектуру для проверки соответствия, НЕ
+      planned-roadmap. Объявленный компонент ОБЯЗАН существовать в графе. ghost =
+      open-world-условный ERROR ПРИ ЭТОМ контракте. Если контексты станут
+      частичными/planned-допускающими -> ДЕМОТИРОВАТЬ в WARNING (соунд только при явном контракте)."
     whitelist: []
+
+  - id: context-coverage
+    metric: context-coverage
+    status: demoted           # ВЕРДИКТ ГОРНИЛА (парный): WARNING-сигнал, НЕ ERROR
+    severity_class: WARNING   # три слоя магнитуды/интента + data-конфаунд класса DIP
+    self_gauntlet: "репрезентативное горнило на реальном archlint (контекст core={mcp,analyzer}):
+      coverage=0.50, uncovered=model.Graph/Node/Edge = фундаментальные data-узлы (высокий
+      PageRank) = ЛЕГИТИМНАЯ структура, не дефекты"
+    verdict: "intent-laden (топ-N PageRank + порог 0.8 + выбор контекста архитектором),
+      синтаксического guard нет -> под --signals (coverage-ratio + uncovered), не гейт"
 
   - id: articulation-points
     metric: articulation-point

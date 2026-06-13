@@ -143,9 +143,10 @@ type CoverageResult struct {
 // (по умолчанию 10) узлов по PageRank; покрытый = существует context-компонент,
 // fuzzy-матчащий узел. coverage = covered/critical.
 //
-// ★INTENT-LADEN (не зарегистрирован в severity_class до горнила): «критический узел
-// вне объявленного контекста» != всегда дефект -> риск false-fire, вердикт ERROR vs
-// WARNING — после репрезентативного горнила (парный, не один).
+// ★ВЕРДИКТ ГОРНИЛА (парный): WARNING-сигнал, НЕ ERROR. Три слоя магнитуды/интента
+// (топ-N PageRank + порог 0.8 + выбор контекста архитектором) + data-конфаунд (model.*
+// фундаментальные узлы попадают в uncovered, тот же класс что убил DIP), синтаксического
+// guard нет. Выводится под --signals (coverage-ratio + uncovered), НЕ в severity_class.
 func ComputeContextCoverage(graph *model.Graph, cfg *archlintcfg.Config) CoverageResult {
 	const topN = 10
 

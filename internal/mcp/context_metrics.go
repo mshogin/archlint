@@ -19,11 +19,14 @@ type ContextSignals struct {
 	MaxDepth      int            `json:"maxDepth"`      // = maxComplexity (оценка Python)
 	MaxCoupling   float64        `json:"maxCoupling"`   // макс. shared_ratio по парам контекстов
 	// SinglePointsOfFailure — компоненты, присутствующие во ВСЕХ контекстах (вездесущая
-	// зависимость = single point of failure). Вердикт горнила : WARNING-сигнал,
+	// зависимость = single point of failure). Вердикт горнила: WARNING-сигнал,
 	// НЕ ERROR (вариант articulation, тот же DIP-класс конфаунда). Только при >=2 контекстах.
 	SinglePointsOfFailure []string `json:"singlePointsOfFailure"`
 	// NearSPOFCount — компоненты в >=80% контекстов (но не во всех).
 	NearSPOFCount int `json:"nearSPOFCount"`
+	// Coverage — покрытие топ-N PageRank-критических узлов контекстами. Вердикт горнила:
+	// WARNING-сигнал, НЕ ERROR (intent-laden, data-конфаунд класса DIP). nil без графа.
+	Coverage *CoverageResult `json:"coverage,omitempty"`
 }
 
 // ComputeContextSignals считает INFO-дескрипторы контекстов из конфига.
