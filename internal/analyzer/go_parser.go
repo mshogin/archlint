@@ -6,6 +6,7 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -241,6 +242,99 @@ func (p *GoParser) parseSignature(ft *ast.FuncType) (params, results []FieldInfo
 	return collect(ft.Params), collect(ft.Results)
 }
 
+// collectParamFacts извлекает ISP-фундамент: именованные параметры (имя+тип) и
+// множество параметров, форвардящихся в value-позицию (guard1). Отдельно от
+// parseSignature, чтобы не трогать usesType/signature-факты.
+func (p *GoParser) collectParamFacts(ft *ast.FuncType, body *ast.BlockStmt) (named []FieldInfo, forwarded []string) {
+	if ft == nil || ft.Params == nil {
+		return nil, nil
+	}
+
+	paramSet := make(map[string]bool)
+
+	for _, f := range ft.Params.List {
+		typeName, typePkg := p.getTypeName(f.Type)
+		for _, name := range f.Names {
+			if name.Name == "_" {
+				continue
+			}
+
+			named = append(named, FieldInfo{Name: name.Name, TypeName: typeName, TypePkg: typePkg})
+			paramSet[name.Name] = true
+		}
+	}
+
+	if body == nil || len(paramSet) == 0 {
+		return named, nil
+	}
+
+	return named, p.collectForwardedParams(body, paramSet)
+}
+
+// collectForwardedParams — синтаксический факт guard1: множество параметров,
+// появляющихся в VALUE-позиции (не только как receiver вызова p.Foo()). Реализация —
+// три класса вхождений Ident в теле:
+//   - Sel-позиция (p в `x.p`) — это селектор-поле, НЕ переменная p -> игнор;
+//   - receiver-of-call (p в `p.Foo()`, т.е. X селектора, который Fun у CallExpr) ->
+//     это и есть ISP-числитель, НЕ форвард -> игнор;
+//   - всё остальное (аргумент helper(p), RHS присвоения, return p, p.(T), method-value
+//     p.Foo как значение) -> VALUE-позиция -> форвард.
+//
+// Over-approx в безопасную для ISP сторону: при сомнении считаем форвардом ->
+// воздержание (no-verdict), а не ложный ISP-ERROR. Имя-коллизия (param shadowing,
+// param==имя метода) тоже уходит в форвард = воздержание.
+func (p *GoParser) collectForwardedParams(body *ast.BlockStmt, paramSet map[string]bool) []string {
+	// Sel-иденты (правая часть селектора `x.Sel`) — не переменные-параметры.
+	selIdents := make(map[*ast.Ident]bool)
+	// receiver-of-call иденты — X селектора, являющегося Fun у CallExpr (p.Foo()).
+	receiverIdents := make(map[*ast.Ident]bool)
+
+	ast.Inspect(body, func(n ast.Node) bool {
+		switch s := n.(type) {
+		case *ast.SelectorExpr:
+			selIdents[s.Sel] = true
+		case *ast.CallExpr:
+			if sel, ok := s.Fun.(*ast.SelectorExpr); ok {
+				if id, ok := sel.X.(*ast.Ident); ok {
+					receiverIdents[id] = true
+				}
+			}
+		}
+
+		return true
+	})
+
+	fwd := make(map[string]bool)
+
+	ast.Inspect(body, func(n ast.Node) bool {
+		id, ok := n.(*ast.Ident)
+		if !ok || !paramSet[id.Name] {
+			return true
+		}
+
+		if selIdents[id] || receiverIdents[id] {
+			return true // селектор-поле или receiver вызова -> не форвард
+		}
+
+		fwd[id.Name] = true
+
+		return true
+	})
+
+	if len(fwd) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(fwd))
+	for k := range fwd {
+		out = append(out, k)
+	}
+
+	sort.Strings(out)
+
+	return out
+}
+
 // collectPackageLevelRefs собирает function-value-use из package-level var/const
 // инициализаторов (вложенные composite-literals/slices/maps раскрываются ast.Inspect)
 // и складывает в p.pkgRefs[pkgID]. Билдер атрибутирует их узлу <pkg>.init (var-init
@@ -338,6 +432,7 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 	calls := p.collectCalls(decl.Body, pkgID, fset)
 	params, results := p.parseSignature(decl.Type)
 	refs := p.collectFuncRefs(decl.Body)
+	namedParams, forwarded := p.collectParamFacts(decl.Type, decl.Body)
 
 	if decl.Recv != nil && len(decl.Recv.List) > 0 {
 		receiverType := p.getReceiverType(decl.Recv.List[0].Type)
@@ -354,29 +449,33 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 		fieldAccess := p.collectFieldAccess(decl.Body, receiverVars, fset)
 
 		p.methods[methodID] = &MethodInfo{
-			Name:        funcName,
-			Receiver:    receiverType,
-			Package:     pkgID,
-			File:        filename,
-			Line:        pos.Line,
-			Calls:       calls,
-			FieldAccess: fieldAccess,
-			Params:      params,
-			Results:     results,
-			Refs:        refs,
+			Name:            funcName,
+			Receiver:        receiverType,
+			Package:         pkgID,
+			File:            filename,
+			Line:            pos.Line,
+			Calls:           calls,
+			FieldAccess:     fieldAccess,
+			Params:          params,
+			Results:         results,
+			Refs:            refs,
+			ForwardedParams: forwarded,
+			NamedParams:     namedParams,
 		}
 	} else {
 		funcID := pkgID + "." + funcName
 
 		p.functions[funcID] = &FunctionInfo{
-			Name:    funcName,
-			Package: pkgID,
-			File:    filename,
-			Line:    pos.Line,
-			Calls:   calls,
-			Params:  params,
-			Results: results,
-			Refs:    refs,
+			Name:            funcName,
+			Package:         pkgID,
+			File:            filename,
+			Line:            pos.Line,
+			Calls:           calls,
+			Params:          params,
+			Results:         results,
+			Refs:            refs,
+			ForwardedParams: forwarded,
+			NamedParams:     namedParams,
 		}
 	}
 }

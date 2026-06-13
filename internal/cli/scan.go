@@ -168,6 +168,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 		violations = append(violations, mcp.DeadCode(graph, cfg.EntryPoints)...)
 	}
 
+	// ISP usage-subset (DR-0033) — клиент-центричный «жирный интерфейс» (узкое
+	// использование param-интерфейса + 2 guard'а). НЕ блокирующий до прохождения
+	// горнила соундности: Kind'ы не в severity_class как ERROR -> аудит-уровень.
+	if a != nil && cfg.Rules.ISP.IsEnabled() {
+		violations = append(violations, mcp.ComputeISPUsageSubset(graph, a)...)
+	}
+
 	// Per-file SOLID and smell violations (Go projects only).
 	var allMetrics map[string]*mcp.FileMetrics
 	if a != nil {

@@ -3,13 +3,13 @@ package model
 
 // Entity kind constants.
 const (
-	EntityPackage  = "package"
-	EntityStruct   = "struct"
+	EntityPackage   = "package"
+	EntityStruct    = "struct"
 	EntityInterface = "interface"
-	EntityFunction = "function"
-	EntityMethod   = "method"
-	EntityField    = "field"
-	EntityExternal = "external"
+	EntityFunction  = "function"
+	EntityMethod    = "method"
+	EntityField     = "field"
+	EntityExternal  = "external"
 )
 
 // Edge type constants.
@@ -108,6 +108,18 @@ type FunctionInfo struct {
 	// Refs — функция/метод использован как ЗНАЧЕНИЕ (callback, Фаза 1). Резолв-фильтр
 	// в билдере оставит только реальные функции -> references-ребро.
 	Refs []CallInfo
+	// ForwardedParams — ОТСОРТИРОВАННОЕ множество имён параметров, появляющихся в
+	// VALUE-позиции в теле (аргумент чужого вызова helper(p), присвоение полю, return,
+	// type-assert) — т.е. НЕ только как receiver вызова p.Foo(). Синтаксический факт
+	// (AST-walk, over-approx по имени), фундамент ISP-guard1: если интерфейсный
+	// параметр форвардится, ISP воздерживается (no-verdict) — сужать «свой» интерфейс
+	// нельзя, если значение утекает наружу.
+	ForwardedParams []string
+	// NamedParams — ИМЕНОВАННЫЕ параметры (имя+type-ref), по одному на каждое имя
+	// (`a, b I` -> два элемента). Отдельно от Params (без имён, для usesType):
+	// ISP-числителю нужен маппинг имя_параметра -> интерфейсный тип. Аддитивно,
+	// существующих потребителей Params не затрагивает.
+	NamedParams []FieldInfo
 }
 
 // MethodInfo содержит информацию о методе.
@@ -126,6 +138,12 @@ type MethodInfo struct {
 	Results []FieldInfo
 	// Refs — функция/метод как ЗНАЧЕНИЕ (callback, Фаза 1) -> references-ребро.
 	Refs []CallInfo
+	// ForwardedParams — см. FunctionInfo.ForwardedParams. Имена параметров метода в
+	// value-позиции (фундамент ISP-guard1).
+	ForwardedParams []string
+	// NamedParams — см. FunctionInfo.NamedParams. Именованные параметры метода
+	// (имя+тип) для ISP-числителя.
+	NamedParams []FieldInfo
 }
 
 // FieldAccessInfo contains information about a field access within a method.

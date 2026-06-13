@@ -40,6 +40,16 @@ var violationClasses = map[string]SeverityClass{
 	// open-world: соунден только в дельта-режиме; блокировка — Фаза 5. Удаление —
 	// human-in-loop (destruction-cost: ложно-мёртвый удаляет живое).
 	"dead-code": {Class: "ERROR", OpenWorld: true, RequiresDelta: true, HumanInLoop: true},
+
+	// isp-usage-subset (DR-0033) — промотирован в ERROR после горнила соундности (детерминизм
+	// keyed lookup + 0 false-fire стабильно, golden 20x + self дважды NEW=0). CLOSED-WORLD
+	// НА ПОДДОМЕНЕ: соунден там, где числитель применим (param-typed свой интерфейс, оба
+	// guard'а пройдены), вне поддомена воздерживается (no-verdict). cost=irritation (сужение
+	// интерфейса, не destruction) -> HumanInLoop=false. RequiresDelta=true: блокирует только
+	// НОВЫЙ запах vs baseline (как dead-code), generic дельта-гейт подхватывает через
+	// errorClass/EffectiveLevel без спец-кода. isp-external-narrow НЕ регистрируется
+	// (внешний чужой контракт -> всегда WARNING, никогда не ERROR).
+	"isp-usage-subset": {Class: "ERROR", OpenWorld: false, RequiresDelta: true, HumanInLoop: false},
 }
 
 // ClassOf возвращает заявленный класс важности для Kind нарушения (если объявлен).
