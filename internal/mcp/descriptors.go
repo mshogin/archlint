@@ -59,6 +59,13 @@ type Descriptors struct {
 	MeanDegree           float64            `json:"meanDegree"`           // средняя total-степень
 	StdDegree            float64            `json:"stdDegree"`            // СКО total-степени (population)
 	MaxTotalDegree       int                `json:"maxTotalDegree"`       // макс. total-степень (hub-магнитуда)
+
+	// --- БАТЧ 5: reachability/ripple ---
+	ChangePropagation    map[string]int     `json:"changePropagation"`    // транзитивные зависимые (descendants(reverse))
+	AvgImpact            float64            `json:"avgImpact"`            // средний impact
+	MaxImpact            int                `json:"maxImpact"`            // макс. impact
+	BlastRadius          map[string]float64 `json:"blastRadius"`          // (pagerank + norm_fan_in)/2
+	MaxComponentDistance int                `json:"maxComponentDistance"` // макс. directed расстояние
 }
 
 // abstractPatterns — имя-эвристика «абстрактного» узла (1:1 с Python validator).
@@ -228,7 +235,89 @@ func ComputeDescriptors(g *model.Graph) Descriptors {
 	d.MeanDegree, d.StdDegree = degreeStats(dg)
 	d.MaxTotalDegree = maxTotalDegree(dg)
 
+	// --- БАТЧ 5 ---
+	d.ChangePropagation, d.AvgImpact, d.MaxImpact = changePropagation(dg)
+	d.BlastRadius = blastRadius(dg, d.ChangePropagation, d.PageRank)
+	d.MaxComponentDistance = maxComponentDistance(dg)
+
 	return d
+}
+
+// changePropagation — для каждого узла число ТРАНЗИТИВНЫХ зависимых
+// (descendants(reverse_graph, node) = все, кто может достичь node) + avg/max.
+func changePropagation(dg *descriptorGraph) (impact map[string]int, avg float64, maxImpact int) {
+	in := inAdjacency(dg)
+	impact = make(map[string]int, len(dg.nodes))
+
+	sum := 0
+
+	for _, v := range dg.nodes {
+		imp := len(bfsIncoming(in, v)) - 1 // исключаем сам узел
+		impact[v] = imp
+		sum += imp
+
+		if imp > maxImpact {
+			maxImpact = imp
+		}
+	}
+
+	if len(dg.nodes) > 0 {
+		avg = float64(sum) / float64(len(dg.nodes))
+	}
+
+	return impact, avg, maxImpact
+}
+
+// blastRadius — (pagerank + нормированный fan-in)/2 на узел (1:1 с Python).
+func blastRadius(dg *descriptorGraph, impact map[string]int, pagerank map[string]float64) map[string]float64 {
+	n := len(dg.nodes)
+	out := make(map[string]float64, n)
+
+	for _, v := range dg.nodes {
+		normFanIn := 0.0
+		if n > 0 {
+			normFanIn = float64(impact[v]) / float64(n)
+		}
+
+		out[v] = (pagerank[v] + normFanIn) / 2
+	}
+
+	return out
+}
+
+// maxComponentDistance — максимальное directed кратчайшее расстояние (по всем парам).
+func maxComponentDistance(dg *descriptorGraph) int {
+	maxd := 0
+
+	for _, s := range dg.nodes {
+		for t, dd := range bfsOutgoing(dg.outAdj, s) {
+			if t != s && dd > maxd {
+				maxd = dd
+			}
+		}
+	}
+
+	return maxd
+}
+
+// bfsOutgoing — directed расстояния от s по исходящим рёбрам.
+func bfsOutgoing(out map[string]map[string]bool, s string) map[string]int {
+	dist := map[string]int{s: 0}
+	queue := []string{s}
+
+	for len(queue) > 0 {
+		u := queue[0]
+		queue = queue[1:]
+
+		for v := range out[u] {
+			if _, seen := dist[v]; !seen {
+				dist[v] = dist[u] + 1
+				queue = append(queue, v)
+			}
+		}
+	}
+
+	return dist
 }
 
 // isAbstractName — имя-эвристика абстрактности (lowercase contains pattern).

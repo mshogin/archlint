@@ -201,6 +201,37 @@ func TestDescriptors_Batch4_vsPython(t *testing.T) {
 	}
 }
 
+// --- БАТЧ 5: reachability/ripple (эталон networkx на A-F) ---
+
+func TestDescriptors_Batch5_vsPython(t *testing.T) {
+	d := ComputeDescriptors(refGraph())
+
+	wantImpact := map[string]int{"A": 3, "B": 3, "C": 3, "D": 5, "E": 5, "F": 0}
+	for id, w := range wantImpact {
+		if d.ChangePropagation[id] != w {
+			t.Errorf("changePropagation[%s]: got %d, want %d", id, d.ChangePropagation[id], w)
+		}
+	}
+	if d.MaxImpact != 5 {
+		t.Errorf("maxImpact: got %d, want 5", d.MaxImpact)
+	}
+	almost(t, "avgImpact", d.AvgImpact, 3.166666667)
+
+	if d.MaxComponentDistance != 4 {
+		t.Errorf("maxComponentDistance: got %d, want 4", d.MaxComponentDistance)
+	}
+
+	// blast = (pagerank + norm_fan_in)/2 на СОШЕДШЕМСЯ pagerank (tol 1e-10, как batch-1
+	// golden; дефолтный nx tol 1e-6 даёт менее точный pagerank).
+	wantBlast := map[string]float64{
+		"A": 0.299490778, "B": 0.283533581, "C": 0.312037124,
+		"D": 0.595011811, "E": 0.580760040, "F": 0.0125,
+	}
+	for id, w := range wantBlast {
+		almost(t, "blastRadius["+id+"]", d.BlastRadius[id], w)
+	}
+}
+
 // abstractness на фикстуре с «абстрактными» именами: 2 из 4 -> 0.5.
 func TestDescriptors_Abstractness_Named(t *testing.T) {
 	n := func(id string) model.Node { return model.Node{ID: id} }
