@@ -173,6 +173,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Inactive when no forbidden rules are configured.
 	violations = append(violations, mcp.ForbiddenDependencies(graph, &cfg)...)
 
+	// Deprecated usage (ERROR, closed-world relative to explicit deprecated markers).
+	// Inactive when no deprecated patterns/attributes are present.
+	violations = append(violations, mcp.DeprecatedUsage(graph, &cfg)...)
+
 	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
 	// НОВЫЙ мёртвый узел vs baseline = регрессия (блок + удаление human-in-loop).
 	if a != nil {

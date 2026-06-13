@@ -85,6 +85,19 @@ principles:
       на легаси (блок НОВОГО запрещённого ребра), generic через EffectiveLevel"
     whitelist: []
 
+  - id: deprecated-usage
+    metric: deprecated-usage
+    status: implemented       # ERROR; маркер-driven (config-паттерны или атрибут `deprecated`)
+    severity_class: ERROR     # closed-world относительно ЯВНЫХ deprecated-маркеров
+    soundness: "ребро в помеченный deprecated-узел = дефект по определению
+      (односторонняя импликация); маркер ЯВНЫЙ -> срабатывание⟹дефект"
+    granularity: edge         # in-edge в deprecated-узел от не-deprecated источника
+    note: "ОТЛИЧИЕ ОТ Python: НЕ берём широкие дефолты (legacy/old/v1 ложно-стреляют);
+      только явные маркеры (config deprecated_patterns или node-атрибут deprecated)"
+    activation: "inactive без явных маркеров (0 ложных по умолчанию; self-прогон = 0)"
+    delta: "generic дельта-гейт (блок НОВОГО использования deprecated)"
+    whitelist: []
+
   - id: dead-code
     metric: reach-from-entrypoints
     status: implemented       # ПРОМОТИРОВАН в ERROR; первый open-world ERROR

@@ -47,6 +47,11 @@ var violationClasses = map[string]SeverityClass{
 	// (соунд относительно конфига; дельта-гейт — usability на легаси, как layer/SCC).
 	"forbidden-dependency": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
+	// deprecated-usage — CLOSED-WORLD ERROR относительно ЯВНЫХ deprecated-маркеров
+	// (config-паттерны или атрибут `deprecated`). Использование помеченного устаревшего
+	// = дефект по определению. Неактивен без явных маркеров (без широких дефолтов).
+	"deprecated-usage": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
+
 	// isp-usage-subset (DR-0033) — промотирован в ERROR после горнила соундности (детерминизм
 	// keyed lookup + 0 false-fire стабильно, golden 20x + self дважды NEW=0). CLOSED-WORLD
 	// НА ПОДДОМЕНЕ: соунден там, где числитель применим (param-typed свой интерфейс, оба

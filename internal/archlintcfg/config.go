@@ -115,6 +115,12 @@ type Config struct {
 	// is a forbidden-dependency ERROR. Declared = pattern by definition (one-way
 	// implication). Empty -> rule inactive (no default forbidden pairs).
 	Forbidden []ForbiddenRule `yaml:"forbidden,omitempty"`
+	// DeprecatedPatterns lists EXPLICIT name substrings marking a node as deprecated
+	// (case-insensitive). A node is also deprecated if its graph attribute
+	// `deprecated` is truthy. Any edge INTO a deprecated node from a non-deprecated
+	// source is a deprecated-usage ERROR. Deliberately NO broad defaults (Python's
+	// legacy/old/v1 would false-fire) -> empty + no attr markers = rule inactive.
+	DeprecatedPatterns []string `yaml:"deprecated_patterns,omitempty"`
 }
 
 // ForbiddenRule is one prohibited dependency pattern: any edge with source
