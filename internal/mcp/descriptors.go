@@ -3,6 +3,7 @@ package mcp
 import (
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/mshogin/archlint/internal/model"
 	"gonum.org/v1/gonum/graph/network"
@@ -48,7 +49,20 @@ type Descriptors struct {
 	Eigenvector   map[string]float64 `json:"eigenvector"`   // nx.eigenvector_centrality (power, I+Aᵀ, L2)
 	Diameter      int                `json:"diameter"`      // диаметр undirected-проекции; -1 если несвязно
 	AvgPathLength float64            `json:"avgPathLength"` // средняя длина пути (undirected, наибольшая компонента)
+
+	// --- БАТЧ 4: распределение/качество ---
+	Abstractness         float64            `json:"abstractness"`         // доля «абстрактных» узлов (по имени)
+	AbstractCount        int                `json:"abstractCount"`        //
+	ConcreteCount        int                `json:"concreteCount"`        //
+	DistanceMainSequence map[string]float64 `json:"distanceMainSequence"` // D=|A+I-1| по пакетам
+	MaxKCore             int                `json:"maxKCore"`             // макс. k-ядро (undirected)
+	MeanDegree           float64            `json:"meanDegree"`           // средняя total-степень
+	StdDegree            float64            `json:"stdDegree"`            // СКО total-степени (population)
+	MaxTotalDegree       int                `json:"maxTotalDegree"`       // макс. total-степень (hub-магнитуда)
 }
+
+// abstractPatterns — имя-эвристика «абстрактного» узла (1:1 с Python validator).
+var abstractPatterns = []string{"interface", "abstract", "base", "contract", "port"}
 
 // descriptorGraph — промежуточное представление: упорядоченные узлы + дедуплицированные
 // directed-рёбра. Изолирует совпадение с nx.DiGraph (схлопывание параллельных рёбер).
@@ -207,7 +221,183 @@ func ComputeDescriptors(g *model.Graph) Descriptors {
 	d.Eigenvector = eigenvectorCentrality(dg)
 	d.Diameter, d.AvgPathLength = diameterAvgPath(dg)
 
+	// --- БАТЧ 4 ---
+	d.Abstractness, d.AbstractCount, d.ConcreteCount = abstractness(dg)
+	d.DistanceMainSequence = distanceMainSequence(dg)
+	d.MaxKCore = maxKCore(dg)
+	d.MeanDegree, d.StdDegree = degreeStats(dg)
+	d.MaxTotalDegree = maxTotalDegree(dg)
+
 	return d
+}
+
+// isAbstractName — имя-эвристика абстрактности (lowercase contains pattern).
+func isAbstractName(id string) bool {
+	low := strings.ToLower(id)
+	for _, p := range abstractPatterns {
+		if strings.Contains(low, p) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// abstractness — доля «абстрактных» узлов по имени + счётчики.
+func abstractness(dg *descriptorGraph) (ratio float64, abstractCount, concreteCount int) {
+	for _, id := range dg.nodes {
+		if isAbstractName(id) {
+			abstractCount++
+		}
+	}
+
+	total := len(dg.nodes)
+	concreteCount = total - abstractCount
+
+	if total > 0 {
+		ratio = float64(abstractCount) / float64(total)
+	}
+
+	return ratio, abstractCount, concreteCount
+}
+
+// distanceMainSequence — D=|A+I-1| по ПАКЕТАМ (pkg = первая часть id по '/' или '.').
+// A — доля абстрактных в пакете, I = Σce/(Σca+Σce) (0.5 если степени 0). 1:1 с Python.
+func distanceMainSequence(dg *descriptorGraph) map[string]float64 {
+	pkgNodes := map[string][]string{}
+
+	for _, id := range dg.nodes {
+		pkg := packageOf(id)
+		pkgNodes[pkg] = append(pkgNodes[pkg], id)
+	}
+
+	out := make(map[string]float64, len(pkgNodes))
+
+	for pkg, nodes := range pkgNodes {
+		abs := 0
+		totalCa, totalCe := 0, 0
+
+		for _, id := range nodes {
+			if isAbstractName(id) {
+				abs++
+			}
+
+			totalCa += dg.inDeg[id]
+			totalCe += dg.outDeg[id]
+		}
+
+		a := float64(abs) / float64(len(nodes))
+
+		var inst float64
+		if totalCa+totalCe > 0 {
+			inst = float64(totalCe) / float64(totalCa+totalCe)
+		} else {
+			inst = 0.5
+		}
+
+		out[pkg] = math.Abs(a + inst - 1)
+	}
+
+	return out
+}
+
+// packageOf — первая часть имени узла (id.replace('.', '/').split('/')[0]), как Python.
+func packageOf(id string) string {
+	norm := strings.ReplaceAll(id, ".", "/")
+
+	if i := strings.IndexByte(norm, '/'); i >= 0 {
+		return norm[:i]
+	}
+
+	return norm
+}
+
+// maxKCore — максимальное k-ядро undirected-проекции (Batagelj-Zaversnik core_number).
+func maxKCore(dg *descriptorGraph) int {
+	adj := undirectedAdj(dg)
+	core := make(map[string]int, len(dg.nodes))
+
+	for _, id := range dg.nodes {
+		core[id] = len(adj[id])
+	}
+
+	processed := make(map[string]bool, len(dg.nodes))
+
+	for len(processed) < len(dg.nodes) {
+		// узел с минимальным текущим core среди необработанных
+		var v string
+
+		first := true
+
+		for _, id := range dg.nodes {
+			if processed[id] {
+				continue
+			}
+
+			if first || core[id] < core[v] {
+				v = id
+				first = false
+			}
+		}
+
+		processed[v] = true
+
+		for u := range adj[v] {
+			if !processed[u] && core[u] > core[v] {
+				core[u]--
+			}
+		}
+	}
+
+	maxK := 0
+	for _, k := range core {
+		if k > maxK {
+			maxK = k
+		}
+	}
+
+	return maxK
+}
+
+// degreeStats — среднее и популяционное СКО total-степени (как np.mean/np.std).
+func degreeStats(dg *descriptorGraph) (mean, std float64) {
+	n := len(dg.nodes)
+	if n == 0 {
+		return 0, 0
+	}
+
+	degs := make([]int, 0, n)
+	sum := 0
+
+	for _, id := range dg.nodes {
+		d := dg.inDeg[id] + dg.outDeg[id]
+		degs = append(degs, d)
+		sum += d
+	}
+
+	mean = float64(sum) / float64(n)
+
+	var sq float64
+	for _, d := range degs {
+		diff := float64(d) - mean
+		sq += diff * diff
+	}
+
+	std = math.Sqrt(sq / float64(n))
+
+	return mean, std
+}
+
+// maxTotalDegree — макс. total-степень (in+out).
+func maxTotalDegree(dg *descriptorGraph) int {
+	maxv := 0
+	for _, id := range dg.nodes {
+		if d := dg.inDeg[id] + dg.outDeg[id]; d > maxv {
+			maxv = d
+		}
+	}
+
+	return maxv
 }
 
 // inAdjacency — предшественники (для входящих расстояний и eigenvector).

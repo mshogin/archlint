@@ -172,6 +172,49 @@ func TestDescriptors_Batch3_vsPython(t *testing.T) {
 	}
 }
 
+// --- БАТЧ 4: распределение/качество (эталон networkx на A-F) ---
+
+func TestDescriptors_Batch4_vsPython(t *testing.T) {
+	d := ComputeDescriptors(refGraph())
+
+	almost(t, "abstractness", d.Abstractness, 0.0)
+	if d.AbstractCount != 0 || d.ConcreteCount != 6 {
+		t.Errorf("abstract/concrete: got %d/%d, want 0/6", d.AbstractCount, d.ConcreteCount)
+	}
+
+	if d.MaxKCore != 2 {
+		t.Errorf("maxKCore: got %d, want 2", d.MaxKCore)
+	}
+	if d.MaxTotalDegree != 4 {
+		t.Errorf("maxTotalDegree: got %d, want 4", d.MaxTotalDegree)
+	}
+
+	almost(t, "meanDegree", d.MeanDegree, 2.666666667)
+	almost(t, "stdDegree", d.StdDegree, 1.105541597)
+
+	// D=|A+I-1| по пакетам (каждый узел A-F -> свой пакет).
+	wantD := map[string]float64{
+		"A": 0.5, "B": 0.5, "C": 0.5, "D": 0.666666667, "E": 0.5, "F": 0.0,
+	}
+	for pkg, w := range wantD {
+		almost(t, "D["+pkg+"]", d.DistanceMainSequence[pkg], w)
+	}
+}
+
+// abstractness на фикстуре с «абстрактными» именами: 2 из 4 -> 0.5.
+func TestDescriptors_Abstractness_Named(t *testing.T) {
+	n := func(id string) model.Node { return model.Node{ID: id} }
+	g := &model.Graph{Nodes: []model.Node{
+		n("core/UserInterface"), n("core/RepositoryPort"), n("svc/Handler"), n("svc/Worker"),
+	}}
+
+	d := ComputeDescriptors(g)
+	almost(t, "abstractness", d.Abstractness, 0.5)
+	if d.AbstractCount != 2 || d.ConcreteCount != 2 {
+		t.Errorf("abstract/concrete: got %d/%d, want 2/2", d.AbstractCount, d.ConcreteCount)
+	}
+}
+
 // graph_depth на АЦИКЛИЧЕСКОМ графе: A->B->C->D -> depth=3 (рёбер в longest-path), isDAG.
 func TestDescriptors_GraphDepth_DAG(t *testing.T) {
 	n := func(id string) model.Node { return model.Node{ID: id, Entity: "package"} }
