@@ -268,3 +268,46 @@ func TestLoadFileMissing(t *testing.T) {
 		t.Errorf("FanOutThreshold: got %d, want 5", cfg.FanOutThreshold())
 	}
 }
+
+// TestContextsParsing — declared-context из .archlint (single source, рядом с layers):
+// парс contexts + хелперы ContextComponents/HasContexts. Пусто -> поведенческие
+// метрики неактивны.
+func TestContextsParsing(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, `
+contexts:
+  - name: checkout
+    components:
+      - app/cart
+      - app/payment
+  - name: catalog
+    components:
+      - app/search
+`)
+	cfg := archlintcfg.Load(dir)
+
+	if !cfg.HasContexts() || len(cfg.Contexts) != 2 {
+		t.Fatalf("ожидалось 2 контекста, got %d (HasContexts=%v)", len(cfg.Contexts), cfg.HasContexts())
+	}
+
+	comps := cfg.ContextComponents()
+	for _, want := range []string{"app/cart", "app/payment", "app/search"} {
+		if !comps[want] {
+			t.Errorf("компонент %s должен быть в ContextComponents; got %v", want, comps)
+		}
+	}
+	if len(comps) != 3 {
+		t.Errorf("ContextComponents: got %d, want 3", len(comps))
+	}
+}
+
+// Без contexts -> HasContexts=false, ContextComponents пуст (метрики неактивны).
+func TestContextsEmpty(t *testing.T) {
+	dir := t.TempDir()
+	writeConfig(t, dir, "rules:\n  cycles:\n    enabled: true\n")
+	cfg := archlintcfg.Load(dir)
+
+	if cfg.HasContexts() || len(cfg.ContextComponents()) != 0 {
+		t.Errorf("без contexts -> неактивно; HasContexts=%v comps=%d", cfg.HasContexts(), len(cfg.ContextComponents()))
+	}
+}

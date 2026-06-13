@@ -121,13 +121,45 @@ type Config struct {
 	// source is a deprecated-usage ERROR. Deliberately NO broad defaults (Python's
 	// legacy/old/v1 would false-fire) -> empty + no attr markers = rule inactive.
 	DeprecatedPatterns []string `yaml:"deprecated_patterns,omitempty"`
+	// Contexts declares named component groups (architect's declaration, alongside
+	// layers). Behaviour metrics gate the graph against them. Empty -> inactive.
+	Contexts []ContextDef `yaml:"contexts,omitempty"`
 }
+
+// ContextComponents returns the set of ALL component IDs declared across every
+// context. Empty when no contexts are configured (behaviour metrics then inactive).
+func (c *Config) ContextComponents() map[string]bool {
+	set := make(map[string]bool)
+	for _, ctx := range c.Contexts {
+		for _, comp := range ctx.Components {
+			if comp != "" {
+				set[comp] = true
+			}
+		}
+	}
+
+	return set
+}
+
+// HasContexts reports whether any context is declared.
+func (c *Config) HasContexts() bool { return len(c.Contexts) > 0 }
 
 // ForbiddenRule is one prohibited dependency pattern: any edge with source
 // containing From and target containing To (case-insensitive substring) is flagged.
 type ForbiddenRule struct {
 	From string `yaml:"from"`
 	To   string `yaml:"to"`
+}
+
+// ContextDef declares a behavioural/architectural context: a named group of
+// components the architect asserts belong together (e.g. a feature, a test
+// suite's surface, a bounded domain). Declared in .archlint alongside layers
+// (single source of config). Behaviour metrics (context coverage, ghost
+// components, ...) gate the graph against these declarations. Empty Contexts ->
+// those metrics are inactive.
+type ContextDef struct {
+	Name       string   `yaml:"name"`
+	Components []string `yaml:"components"`
 }
 
 // Default thresholds matching archlint-rs defaults.
