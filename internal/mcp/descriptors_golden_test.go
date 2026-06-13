@@ -107,3 +107,49 @@ func TestDescriptors_Betweenness_vsPython(t *testing.T) {
 		almost(t, "betweenness["+id+"]", d.Betweenness[id], w)
 	}
 }
+
+// --- БАТЧ 2: глобальные скаляры (эталон networkx на том же графе A-F) ---
+
+func TestDescriptors_Batch2_vsPython(t *testing.T) {
+	d := ComputeDescriptors(refGraph())
+
+	if d.MaxPossibleEdges != 30 {
+		t.Errorf("maxPossibleEdges: got %d, want 30", d.MaxPossibleEdges)
+	}
+	if d.MaxFanOut != 2 {
+		t.Errorf("maxFanOut: got %d, want 2", d.MaxFanOut)
+	}
+	if d.IsDAG {
+		t.Errorf("isDAG: got true, want false (граф A-F цикличен)")
+	}
+	if d.GraphDepth != -1 {
+		t.Errorf("graphDepth: got %d, want -1 (циклы)", d.GraphDepth)
+	}
+	if d.Betti1 != 3 {
+		t.Errorf("betti1: got %d, want 3 (E-V+C = 8-6+1)", d.Betti1)
+	}
+
+	almost(t, "dependencyEntropy", d.DependencyEntropy, 2.5)
+	almost(t, "maxEntropy", d.MaxEntropy, 2.584962501)
+	almost(t, "normalizedEntropy", d.NormalizedEntropy, 0.967132018)
+	almost(t, "gini", d.Gini, 0.229166667)
+	almost(t, "avgClustering", d.AvgClustering, 0.277777778)
+}
+
+// graph_depth на АЦИКЛИЧЕСКОМ графе: A->B->C->D -> depth=3 (рёбер в longest-path), isDAG.
+func TestDescriptors_GraphDepth_DAG(t *testing.T) {
+	n := func(id string) model.Node { return model.Node{ID: id, Entity: "package"} }
+	e := func(f, t string) model.Edge { return model.Edge{From: f, To: t, Type: "calls"} }
+	g := &model.Graph{
+		Nodes: []model.Node{n("A"), n("B"), n("C"), n("D")},
+		Edges: []model.Edge{e("A", "B"), e("B", "C"), e("C", "D")},
+	}
+
+	d := ComputeDescriptors(g)
+	if !d.IsDAG {
+		t.Errorf("isDAG: got false, want true")
+	}
+	if d.GraphDepth != 3 {
+		t.Errorf("graphDepth: got %d, want 3", d.GraphDepth)
+	}
+}
