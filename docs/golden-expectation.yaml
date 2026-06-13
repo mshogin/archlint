@@ -107,6 +107,18 @@ principles:
     delta: "generic дельта-гейт (блок НОВОГО использования deprecated)"
     whitelist: []
 
+  - id: ghost-components
+    metric: ghost-component
+    status: implemented       # ERROR; behaviour-порт, conditional на .archlint contexts
+    severity_class: ERROR     # closed-world относительно объявленных контекстов
+    soundness: "компонент в контексте, отсутствующий в графе = устаревшая декларация
+      (односторонняя импликация ghost⟹дефект)"
+    granularity: component    # fuzzy-матч (нормализация=последний сегмент + двунапр. substring)
+    activation: "inactive без contexts (self-горнило: self-прогон archlint = 0)"
+    self_gauntlet: "0 ghost на здоровом archlint (нет contexts -> неактивен), conditional как forbidden"
+    delta: "generic дельта-гейт (блок НОВОГО ghost vs baseline)"
+    whitelist: []
+
   - id: articulation-points
     metric: articulation-point
     status: demoted           # ВЕРДИКТ ГОРНИЛА: WARNING-сигнал, НЕ ERROR

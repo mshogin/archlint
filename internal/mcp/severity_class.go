@@ -66,6 +66,12 @@ var violationClasses = map[string]SeverityClass{
 	// errorClass/EffectiveLevel без спец-кода. isp-external-narrow НЕ регистрируется
 	// (внешний чужой контракт -> всегда WARNING, никогда не ERROR).
 	"isp-usage-subset": {Class: "ERROR", OpenWorld: false, RequiresDelta: true, HumanInLoop: false},
+
+	// ghost-component — CLOSED-WORLD ERROR относительно объявленных контекстов
+	// (.archlint contexts). Компонент, заявленный в контексте, но отсутствующий в графе
+	// = устаревшая декларация (односторонняя импликация ghost⟹дефект). Conditional:
+	// неактивен без contexts (self=0). fuzzy-матч консервативен (меньше ложных ghost).
+	"ghost-component": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 }
 
 // ClassOf возвращает заявленный класс важности для Kind нарушения (если объявлен).

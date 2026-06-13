@@ -189,6 +189,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Inactive when no layers are configured.
 	violations = append(violations, mcp.LayerBackedge(graph, &cfg)...)
 
+	// Ghost components: declared in a context but absent from the graph (ERROR,
+	// closed-world relative to declared contexts). Inactive without contexts.
+	violations = append(violations, mcp.GhostComponents(graph, &cfg)...)
+
 	// NB: gauntlet candidates (articulation/bridge/stability) are NOT gate violations —
 	// the soundness gauntlet demoted all three to signals (DIP-class confound). They are
 	// surfaced under --signals via ComputeDescriptors, never in severity_class/ the gate.
