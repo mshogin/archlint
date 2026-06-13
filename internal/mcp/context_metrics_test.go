@@ -38,3 +38,38 @@ func TestContextSignals_Inactive(t *testing.T) {
 		t.Errorf("без контекстов -> nil, got %+v", cs)
 	}
 }
+
+// SPOF: "app/core" во ВСЕХ 3 контекстах -> single point of failure (WARNING DR-0060).
+func TestContextSignals_SPOF(t *testing.T) {
+	cfg := &archlintcfg.Config{Contexts: []archlintcfg.ContextDef{
+		{Name: "a", Components: []string{"app/core", "app/x"}},
+		{Name: "b", Components: []string{"app/core", "app/y"}},
+		{Name: "c", Components: []string{"app/core", "app/z"}},
+	}}
+
+	cs := ComputeContextSignals(cfg)
+	if len(cs.SinglePointsOfFailure) != 1 || cs.SinglePointsOfFailure[0] != "app/core" {
+		t.Fatalf("SPOF: ожидался [app/core], got %v", cs.SinglePointsOfFailure)
+	}
+	if cs.NearSPOFCount != 0 {
+		t.Errorf("nearSPOF: got %d, want 0", cs.NearSPOFCount)
+	}
+}
+
+// near-SPOF: "wide" в 4 из 5 контекстов (>=80%, не все) -> near, не SPOF.
+func TestContextSignals_NearSPOF(t *testing.T) {
+	c := func(name string, comps ...string) archlintcfg.ContextDef {
+		return archlintcfg.ContextDef{Name: name, Components: comps}
+	}
+	cfg := &archlintcfg.Config{Contexts: []archlintcfg.ContextDef{
+		c("a", "wide", "1"), c("b", "wide", "2"), c("c", "wide", "3"), c("d", "wide", "4"), c("e", "5"),
+	}}
+
+	cs := ComputeContextSignals(cfg)
+	if len(cs.SinglePointsOfFailure) != 0 {
+		t.Errorf("SPOF: got %v, want []", cs.SinglePointsOfFailure)
+	}
+	if cs.NearSPOFCount != 1 {
+		t.Errorf("nearSPOF: got %d, want 1 (wide в 4/5)", cs.NearSPOFCount)
+	}
+}

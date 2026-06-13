@@ -18,6 +18,12 @@ type ContextSignals struct {
 	MaxComplexity int            `json:"maxComplexity"` // макс. число компонентов в контексте
 	MaxDepth      int            `json:"maxDepth"`      // = maxComplexity (оценка Python)
 	MaxCoupling   float64        `json:"maxCoupling"`   // макс. shared_ratio по парам контекстов
+	// SinglePointsOfFailure — компоненты, присутствующие во ВСЕХ контекстах (вездесущая
+	// зависимость = single point of failure). Вердикт горнила DR-0060: WARNING-сигнал,
+	// НЕ ERROR (вариант articulation, тот же DIP-класс конфаунда). Только при >=2 контекстах.
+	SinglePointsOfFailure []string `json:"singlePointsOfFailure"`
+	// NearSPOFCount — компоненты в >=80% контекстов (но не во всех).
+	NearSPOFCount int `json:"nearSPOFCount"`
 }
 
 // ComputeContextSignals считает INFO-дескрипторы контекстов из конфига.
@@ -60,7 +66,40 @@ func ComputeContextSignals(cfg *archlintcfg.Config) *ContextSignals {
 		}
 	}
 
+	cs.SinglePointsOfFailure, cs.NearSPOFCount = singlePointsOfFailure(sets)
+
 	return cs
+}
+
+// singlePointsOfFailure — компоненты во ВСЕХ контекстах (SPOF) + число near-SPOF
+// (>=80% контекстов, но не все). Требует >=2 контекстов (иначе тривиально все = SPOF).
+func singlePointsOfFailure(sets []map[string]bool) (spof []string, nearCount int) {
+	total := len(sets)
+	if total < 2 {
+		return nil, 0
+	}
+
+	count := make(map[string]int)
+	for _, set := range sets {
+		for comp := range set {
+			count[comp]++
+		}
+	}
+
+	threshold := 0.8 * float64(total)
+
+	for comp, n := range count {
+		switch {
+		case n == total:
+			spof = append(spof, comp)
+		case float64(n) >= threshold:
+			nearCount++
+		}
+	}
+
+	sort.Strings(spof)
+
+	return spof, nearCount
 }
 
 // sharedRatio = |A ∩ B| / min(|A|,|B|); 0 если любой пуст.
