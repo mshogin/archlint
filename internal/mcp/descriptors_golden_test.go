@@ -246,6 +246,91 @@ func TestDescriptors_Abstractness_Named(t *testing.T) {
 	}
 }
 
+// --- БАТЧ 6: Фаулер-смеллы (эталон — РЕАЛЬНЫЕ Python-валидаторы, см. /tmp/b6_truth.py) ---
+
+func TestDescriptors_Batch6_FowlerSmells_vsPython(t *testing.T) {
+	var nodes []model.Node
+	add := func(id, ent string) { nodes = append(nodes, model.Node{ID: id, Entity: ent}) }
+
+	// god_class: app.God с 21 методом (>20)
+	add("app.God", "type")
+	for i := 0; i < 21; i++ {
+		add("app.God.M"+itoa(i), "method")
+	}
+	// lazy_class: app.Lazy с 1 методом, out_degree 0
+	add("app.Lazy", "type")
+	add("app.Lazy.M0", "method")
+	// speculative_generality: интерфейс без реализаций, in_degree 0
+	add("app.Iface", "interface")
+	// shotgun_surgery: app.Hub с fan-in 11 (>10)
+	add("app.Hub", "type")
+
+	var edges []model.Edge
+	for i := 0; i < 11; i++ {
+		add("app.c"+itoa(i), "type")
+		edges = append(edges, model.Edge{From: "app.c" + itoa(i), To: "app.Hub", Type: "calls"})
+	}
+
+	d := ComputeDescriptors(&model.Graph{Nodes: nodes, Edges: edges})
+
+	checks := []struct {
+		name string
+		got  int
+		want int
+	}{
+		{"godClass", d.GodClass, 1},
+		{"lazyClass", d.LazyClass, 1},
+		{"shotgunSurgery", d.ShotgunSurgery, 1},
+		{"speculativeGenerality", d.SpeculativeGenerality, 1},
+		{"featureEnvy", d.FeatureEnvy, 0},
+		{"divergentChange", d.DivergentChange, 0},
+		{"middleMan", d.MiddleMan, 0},
+		{"dataClumps", d.DataClumps, 0},
+		{"zigzagCoupling", d.ZigzagCoupling, 0},
+	}
+	for _, c := range checks {
+		if c.got != c.want {
+			t.Errorf("%s: got %d, want %d (Python)", c.name, c.got, c.want)
+		}
+	}
+}
+
+// zigzag: caller X -> a.b.F1, a.c.G1, a.b.F2 -> компоненты [a.b, a.c, a.b] -> non-adjacent повтор.
+func TestDescriptors_Zigzag_NonAdjacent(t *testing.T) {
+	g := &model.Graph{
+		Nodes: []model.Node{
+			{ID: "X", Entity: "type"},
+			{ID: "a.b.F1", Entity: "method"},
+			{ID: "a.c.G1", Entity: "method"},
+			{ID: "a.b.F2", Entity: "method"},
+		},
+		Edges: []model.Edge{
+			{From: "X", To: "a.b.F1", Type: "calls"},
+			{From: "X", To: "a.c.G1", Type: "calls"},
+			{From: "X", To: "a.b.F2", Type: "calls"},
+		},
+	}
+
+	if d := ComputeDescriptors(g); d.ZigzagCoupling != 1 {
+		t.Errorf("zigzagCoupling: got %d, want 1 (a.b повторяется non-adjacent)", d.ZigzagCoupling)
+	}
+}
+
+func itoa(i int) string {
+	if i == 0 {
+		return "0"
+	}
+
+	var b []byte
+
+	for i > 0 {
+		b = append([]byte{byte('0' + i%10)}, b...)
+		i /= 10
+	}
+
+	return string(b)
+}
+
 // graph_depth на АЦИКЛИЧЕСКОМ графе: A->B->C->D -> depth=3 (рёбер в longest-path), isDAG.
 func TestDescriptors_GraphDepth_DAG(t *testing.T) {
 	n := func(id string) model.Node { return model.Node{ID: id, Entity: "package"} }

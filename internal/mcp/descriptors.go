@@ -66,6 +66,17 @@ type Descriptors struct {
 	MaxImpact            int                `json:"maxImpact"`            // макс. impact
 	BlastRadius          map[string]float64 `json:"blastRadius"`          // (pagerank + norm_fan_in)/2
 	MaxComponentDistance int                `json:"maxComponentDistance"` // макс. directed расстояние
+
+	// --- БАТЧ 6: Фаулер-смеллы (эвристики -> WARNING-сигналы, счётчики при дефолтных порогах) ---
+	GodClass              int `json:"godClass"`              // типы: methods>20 OR deps>15
+	FeatureEnvy           int `json:"featureEnvy"`           // методы, завидующие чужому типу (>0.5)
+	ShotgunSurgery        int `json:"shotgunSurgery"`        // fan-in > 10
+	DivergentChange       int `json:"divergentChange"`       // тип/пакет зависит от >3 доменов
+	LazyClass             int `json:"lazyClass"`             // тип: methods<2 AND out_degree<1
+	MiddleMan             int `json:"middleMan"`             // proxy/wrapper/... с in≈out
+	SpeculativeGenerality int `json:"speculativeGenerality"` // абстракция с <=1 реализацией и <=1 использованием
+	DataClumps            int `json:"dataClumps"`            // пары зависимостей, co-occurrence >=3
+	ZigzagCoupling        int `json:"zigzagCoupling"`        // caller с non-adjacent повтором компонента
 }
 
 // abstractPatterns — имя-эвристика «абстрактного» узла (1:1 с Python validator).
@@ -240,7 +251,416 @@ func ComputeDescriptors(g *model.Graph) Descriptors {
 	d.BlastRadius = blastRadius(dg, d.ChangePropagation, d.PageRank)
 	d.MaxComponentDistance = maxComponentDistance(dg)
 
+	// --- БАТЧ 6: Фаулер-смеллы (на ИСХОДНОМ g: entity + порядок рёбер + типы) ---
+	computeFowlerSmells(g, &d)
+
 	return d
+}
+
+// fowlerGraph — дедуплицированный (как nx.DiGraph) вид с entity, типами рёбер и
+// УПОРЯДОЧЕННЫМИ исходящими (для zigzag). last-wins по типу ребра (как nx-атрибуты).
+type fowlerGraph struct {
+	nodes      []string
+	entity     map[string]string
+	outSet     map[string]map[string]bool
+	inSet      map[string]map[string]bool
+	orderedOut map[string][]string // дедуп (from,to) в порядке первого появления
+	edgeType   map[[2]string]string
+}
+
+func buildFowlerGraph(g *model.Graph) *fowlerGraph {
+	fg := &fowlerGraph{
+		entity:     map[string]string{},
+		outSet:     map[string]map[string]bool{},
+		inSet:      map[string]map[string]bool{},
+		orderedOut: map[string][]string{},
+		edgeType:   map[[2]string]string{},
+	}
+
+	seenNode := map[string]bool{}
+	addNode := func(id, ent string) {
+		if !seenNode[id] {
+			seenNode[id] = true
+			fg.nodes = append(fg.nodes, id)
+		}
+
+		if ent != "" {
+			fg.entity[id] = ent
+		}
+	}
+
+	if g == nil {
+		return fg
+	}
+
+	for _, n := range g.Nodes {
+		addNode(n.ID, n.Entity)
+	}
+
+	seenEdge := map[[2]string]bool{}
+
+	for _, e := range g.Edges {
+		addNode(e.From, "")
+		addNode(e.To, "")
+
+		key := [2]string{e.From, e.To}
+		fg.edgeType[key] = e.Type // last-wins
+
+		if seenEdge[key] {
+			continue
+		}
+
+		seenEdge[key] = true
+
+		if fg.outSet[e.From] == nil {
+			fg.outSet[e.From] = map[string]bool{}
+		}
+
+		fg.outSet[e.From][e.To] = true
+
+		if fg.inSet[e.To] == nil {
+			fg.inSet[e.To] = map[string]bool{}
+		}
+
+		fg.inSet[e.To][e.From] = true
+		fg.orderedOut[e.From] = append(fg.orderedOut[e.From], e.To)
+	}
+
+	sort.Strings(fg.nodes)
+
+	return fg
+}
+
+// computeFowlerSmells считает 9 смеллов при ДЕФОЛТНЫХ порогах Python (счётчики-сигналы).
+func computeFowlerSmells(g *model.Graph, d *Descriptors) {
+	fg := buildFowlerGraph(g)
+
+	d.GodClass, d.LazyClass = godAndLazy(fg)
+	d.FeatureEnvy = featureEnvy(fg)
+	d.ShotgunSurgery = shotgunSurgery(fg)
+	d.DivergentChange = divergentChange(fg)
+	d.MiddleMan = middleMan(fg)
+	d.SpeculativeGenerality = speculativeGenerality(fg)
+	d.DataClumps = dataClumps(fg)
+	d.ZigzagCoupling = zigzagCoupling(fg)
+}
+
+// rsplitDot — часть до последней '.' (как Python rsplit('.',1)[0]); ok=false если '.' нет.
+func rsplitDot(id string) (string, bool) {
+	i := strings.LastIndexByte(id, '.')
+	if i < 0 {
+		return "", false
+	}
+
+	return id[:i], true
+}
+
+func nameHasAny(id string, patterns []string) bool {
+	low := strings.ToLower(id)
+	for _, p := range patterns {
+		if strings.Contains(low, p) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// godAndLazy — god_class (methods>20 OR deps>15) и lazy_class (methods<2 AND out<1).
+func godAndLazy(fg *fowlerGraph) (god, lazy int) {
+	const maxMethods, maxDeps = 20, 15
+
+	const minMethods, minDeps = 2, 1
+
+	typesMethods := map[string]int{}
+	typesDeps := map[string]map[string]bool{}
+
+	addDep := func(t, target string) {
+		if typesDeps[t] == nil {
+			typesDeps[t] = map[string]bool{}
+		}
+
+		typesDeps[t][target] = true
+	}
+
+	for _, id := range fg.nodes {
+		switch fg.entity[id] {
+		case "method":
+			if tid, ok := rsplitDot(id); ok {
+				typesMethods[tid]++
+				for target := range fg.outSet[id] {
+					addDep(tid, target)
+				}
+			}
+		case "type":
+			for target := range fg.outSet[id] {
+				addDep(id, target)
+			}
+		}
+	}
+
+	for tid, mc := range typesMethods {
+		if mc > maxMethods || len(typesDeps[tid]) > maxDeps {
+			god++
+		}
+
+		outDeg := len(fg.outSet[tid])
+		if mc < minMethods && outDeg < minDeps {
+			lazy++
+		}
+	}
+
+	return god, lazy
+}
+
+// featureEnvy — методы с total_deps>=3, где чужой тип получает >own и >50% зависимостей.
+func featureEnvy(fg *fowlerGraph) int {
+	const threshold = 0.5
+
+	count := 0
+
+	for _, id := range fg.nodes {
+		if fg.entity[id] != "method" {
+			continue
+		}
+
+		ownType, ok := rsplitDot(id)
+		if !ok {
+			continue
+		}
+
+		depsByType := map[string]int{}
+		total := 0
+
+		for target := range fg.outSet[id] {
+			tt, ok := rsplitDot(target)
+			if !ok {
+				tt = target
+			}
+
+			depsByType[tt]++
+			total++
+		}
+
+		if total < 3 {
+			continue
+		}
+
+		ownDeps := depsByType[ownType]
+
+		for ot, od := range depsByType {
+			if ot == ownType {
+				continue
+			}
+
+			if od > ownDeps && float64(od)/float64(total) > threshold {
+				count++
+
+				break
+			}
+		}
+	}
+
+	return count
+}
+
+// shotgunSurgery — узлы с fan-in > 10.
+func shotgunSurgery(fg *fowlerGraph) int {
+	const maxDependents = 10
+
+	count := 0
+
+	for _, id := range fg.nodes {
+		if len(fg.inSet[id]) > maxDependents {
+			count++
+		}
+	}
+
+	return count
+}
+
+// divergentChange — тип/пакет, зависящий от >3 доменов (split '/', исключая go*/std*/свой).
+func divergentChange(fg *fowlerGraph) int {
+	const maxDomains = 3
+
+	count := 0
+
+	for _, id := range fg.nodes {
+		ent := fg.entity[id]
+		if ent != "type" && ent != "package" {
+			continue
+		}
+
+		domains := map[string]bool{}
+
+		for target := range fg.outSet[id] {
+			domain := firstSeg(target, '/')
+			if !strings.HasPrefix(domain, "go") && !strings.HasPrefix(domain, "std") {
+				domains[domain] = true
+			}
+		}
+
+		delete(domains, firstSeg(id, '/'))
+
+		if len(domains) > maxDomains {
+			count++
+		}
+	}
+
+	return count
+}
+
+func firstSeg(id string, sep byte) string {
+	if i := strings.IndexByte(id, sep); i >= 0 {
+		return id[:i]
+	}
+
+	return id
+}
+
+// middleMan — proxy/wrapper/delegate/facade с in>=2, out>=1, 0.8<=in/out<=1.2.
+func middleMan(fg *fowlerGraph) int {
+	patterns := []string{"proxy", "wrapper", "delegate", "facade"}
+	count := 0
+
+	for _, id := range fg.nodes {
+		in := len(fg.inSet[id])
+		out := len(fg.outSet[id])
+
+		if in < 2 || out < 1 {
+			continue
+		}
+
+		ratio := float64(in) / float64(maxInt(out, 1))
+		if ratio >= 0.8 && ratio <= 1.2 && nameHasAny(id, patterns) {
+			count++
+		}
+	}
+
+	return count
+}
+
+// speculativeGenerality — абстракция (entity interface или имя) с <=1 реализацией и <=1 использованием.
+func speculativeGenerality(fg *fowlerGraph) int {
+	patterns := []string{"interface", "abstract", "base", "contract"}
+	count := 0
+
+	for _, id := range fg.nodes {
+		abstract := fg.entity[id] == "interface" || nameHasAny(id, patterns)
+		if !abstract {
+			continue
+		}
+
+		impl := 0
+
+		for src := range fg.inSet[id] {
+			if fg.edgeType[[2]string{src, id}] == "implements" {
+				impl++
+			}
+		}
+
+		if impl <= 1 && len(fg.inSet[id]) <= 1 {
+			count++
+		}
+	}
+
+	return count
+}
+
+// dataClumps — пары зависимостей, встречающиеся вместе >=3 раз.
+func dataClumps(fg *fowlerGraph) int {
+	const minCoOccurrence = 3
+
+	pairCount := map[[2]string]int{}
+
+	for _, id := range fg.nodes {
+		if len(fg.outSet[id]) < 2 {
+			continue
+		}
+
+		deps := make([]string, 0, len(fg.outSet[id]))
+		for t := range fg.outSet[id] {
+			deps = append(deps, t)
+		}
+
+		sort.Strings(deps)
+
+		for i := 0; i < len(deps); i++ {
+			for j := i + 1; j < len(deps); j++ {
+				pairCount[[2]string{deps[i], deps[j]}]++
+			}
+		}
+	}
+
+	count := 0
+
+	for _, c := range pairCount {
+		if c >= minCoOccurrence {
+			count++
+		}
+	}
+
+	return count
+}
+
+// zigzagCoupling — caller с non-adjacent повтором компонента в последовательности
+// вызовов (target->компонент: method -> до последней '.'; иначе как есть). threshold 0.
+func zigzagCoupling(fg *fowlerGraph) int {
+	count := 0
+
+	for _, caller := range fg.nodes {
+		ordered := fg.orderedOut[caller]
+		if len(ordered) < 3 {
+			continue
+		}
+
+		seq := make([]string, len(ordered))
+		for i, t := range ordered {
+			seq[i] = toComponent(fg, t)
+		}
+
+		lastSeen := map[string]int{}
+		zz := 0
+
+		for pos, comp := range seq {
+			if prev, ok := lastSeen[comp]; ok && pos > prev+1 {
+				for _, c := range seq[prev+1 : pos] {
+					if c != comp {
+						zz++
+
+						break
+					}
+				}
+			}
+
+			lastSeen[comp] = pos
+		}
+
+		if zz > 0 {
+			count++
+		}
+	}
+
+	return count
+}
+
+// toComponent — target-узел -> идентификатор компонента (метод -> до последней '.').
+func toComponent(fg *fowlerGraph, node string) string {
+	if fg.entity[node] == "method" {
+		if i := strings.LastIndexByte(node, '.'); i > 0 {
+			return node[:i]
+		}
+	}
+
+	return node
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+
+	return b
 }
 
 // changePropagation — для каждого узла число ТРАНЗИТИВНЫХ зависимых
