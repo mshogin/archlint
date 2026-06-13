@@ -23,6 +23,7 @@ var (
 	scanStdin        bool
 	scanExclude      []string
 	scanBaselineFile string
+	scanSignals      bool
 )
 
 var scanCmd = &cobra.Command{
@@ -59,6 +60,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanStdin, "stdin", false, "Read architecture YAML graph from stdin instead of analyzing a directory")
 	scanCmd.Flags().StringSliceVar(&scanExclude, "exclude", nil, "Directory basenames to skip during the source walk (additive on top of built-in defaults). Repeatable.")
 	scanCmd.Flags().StringVar(&scanBaselineFile, "baseline", "", "Path to .archlint-baseline.json for delta gating (default: <directory>/.archlint-baseline.json). Absent baseline -> audit mode (no block on ERROR patterns).")
+	scanCmd.Flags().BoolVar(&scanSignals, "signals", false, "Audit/slow mode: also compute structural magnitude descriptors (centralities, coupling, smells) and include them under `signals` in JSON. Off by default — the fast gate stays free of magnitudes (speed constitution).")
 	rootCmd.AddCommand(scanCmd)
 }
 
@@ -72,6 +74,9 @@ type scanGateResult struct {
 	Details    []mcp.Violation `json:"details"`
 	ConfigFile string          `json:"config_file,omitempty"`
 	Baseline   string          `json:"baseline,omitempty"` // путь к загруженному snapshot ("" = audit-режим)
+	// Signals — структурные магнитудные дескрипторы (--signals, audit/slow). Не часть
+	// гейта: магнитуды НЕ блокируют (DR-0049). omitempty -> быстрый гейт их не несёт.
+	Signals *mcp.Descriptors `json:"signals,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -317,6 +322,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 		categories[v.Kind]++
 	}
 
+	// Магнитудные дескрипторы — только в audit/slow (--signals); НЕ в быстром гейте.
+	var signals *mcp.Descriptors
+	if scanSignals {
+		dd := mcp.ComputeDescriptors(graph)
+		signals = &dd
+	}
+
 	switch scanFormat {
 	case "json":
 		result := scanGateResult{
@@ -328,6 +340,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			Details:    violations,
 			ConfigFile: configFile,
 			Baseline:   loadedBaseline,
+			Signals:    signals,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -364,6 +377,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 				}
 				fmt.Println()
 			}
+		}
+
+		if signals != nil {
+			fmt.Printf("signals (audit): nodes=%d edges=%d density=%.4f maxKCore=%d godClass=%d shotgun=%d (use --format json for full)\n",
+				signals.NodeCount, signals.EdgeCount, signals.Density, signals.MaxKCore, signals.GodClass, signals.ShotgunSurgery)
 		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown format: %s (use text or json)\n", scanFormat)

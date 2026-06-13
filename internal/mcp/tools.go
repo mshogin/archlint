@@ -108,6 +108,14 @@ func toolDefinitions() []ToolDefinition {
 				"required": ["path"]
 			}`),
 		},
+		{
+			Name:        "descriptors",
+			Description: "Get structural magnitude descriptors of the architecture graph: centralities (pagerank, betweenness, closeness, harmonic, eigenvector), coupling (Ca/Ce, instability, abstractness, D), distribution (gini, entropy, clustering, k-core), reachability (blast radius, change propagation), and Fowler smell counts. Signals/magnitudes for analysis — not a gate.",
+			InputSchema: json.RawMessage(`{
+				"type": "object",
+				"properties": {}
+			}`),
+		},
 	}
 }
 
@@ -235,6 +243,8 @@ func (e *ToolExecutor) Execute(toolName string, args json.RawMessage) (interface
 		return handleGetFileMetrics(e.state, args)
 	case "get_degradation_report":
 		return handleGetDegradationReport(e.state, args)
+	case "descriptors":
+		return handleDescriptors(e.state, args)
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolName)
 	}

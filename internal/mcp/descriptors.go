@@ -1,6 +1,7 @@
 package mcp
 
 import (
+	"encoding/json"
 	"math"
 	"sort"
 	"strings"
@@ -9,6 +10,12 @@ import (
 	"gonum.org/v1/gonum/graph/network"
 	"gonum.org/v1/gonum/graph/simple"
 )
+
+// handleDescriptors — MCP-tool `descriptors`: магнитудные дескрипторы текущего графа.
+// Сигналы/наблюдаемость, не гейт (DR-0049). args не используются.
+func handleDescriptors(state StateReader, _ json.RawMessage) (interface{}, error) {
+	return ComputeDescriptors(state.GetGraph()), nil
+}
 
 // Структурные МАГНИТУДНЫЕ дескрипторы — порт Python validator (NetworkX) -> Go
 // (направление A, «перенос вычислений»). Считаются на ВСЁМ архитектурном графе:

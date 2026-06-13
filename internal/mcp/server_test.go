@@ -173,7 +173,7 @@ func TestToolsList(t *testing.T) {
 	expectedTools := []string{
 		"analyze_file", "analyze_change", "get_dependencies",
 		"get_architecture", "check_violations", "get_callgraph",
-		"get_file_metrics", "get_degradation_report",
+		"get_file_metrics", "get_degradation_report", "descriptors",
 	}
 
 	if len(result.Tools) != len(expectedTools) {
