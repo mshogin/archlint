@@ -72,3 +72,39 @@ func TestGhost_DeltaGate(t *testing.T) {
 		t.Errorf("NEW ghost vs baseline -> Taboo, got %v", lvl)
 	}
 }
+
+// Golden context_coverage (порт validate_context_coverage). Эталон vs Python:
+// триугольник A->B->C->A (равный PageRank), контекст {B} -> coverage 0.333,
+// covered=[B], uncovered=[A,C]. SEVERITY НЕ решён (горнило: intent-laden false-fire
+// на легитимных uncovered-критических -> парный вердикт).
+func TestCoverage_vsPython(t *testing.T) {
+	e := func(f, t string) model.Edge { return model.Edge{From: f, To: t, Type: "import"} }
+	g := &model.Graph{
+		Nodes: []model.Node{{ID: "A"}, {ID: "B"}, {ID: "C"}},
+		Edges: []model.Edge{e("A", "B"), e("B", "C"), e("C", "A")},
+	}
+	cfg := &archlintcfg.Config{Contexts: []archlintcfg.ContextDef{{Name: "c", Components: []string{"B"}}}}
+
+	r := ComputeContextCoverage(g, cfg)
+	if !r.Active {
+		t.Fatal("ожидался active coverage")
+	}
+	if r.Coverage < 0.332 || r.Coverage > 0.334 {
+		t.Errorf("coverage: got %.4f, want ~0.333 (Python)", r.Coverage)
+	}
+	if len(r.Covered) != 1 || r.Covered[0] != "B" {
+		t.Errorf("covered: got %v, want [B]", r.Covered)
+	}
+	if len(r.Uncovered) != 2 {
+		t.Errorf("uncovered: got %v, want [A C]", r.Uncovered)
+	}
+}
+
+// Без контекстов -> неактивен.
+func TestCoverage_Inactive(t *testing.T) {
+	e := func(f, t string) model.Edge { return model.Edge{From: f, To: t, Type: "import"} }
+	g := &model.Graph{Nodes: []model.Node{{ID: "A"}, {ID: "B"}}, Edges: []model.Edge{e("A", "B")}}
+	if r := ComputeContextCoverage(g, &archlintcfg.Config{}); r.Active {
+		t.Errorf("без contexts -> неактивен, got %+v", r)
+	}
+}
