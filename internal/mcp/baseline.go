@@ -32,7 +32,7 @@ type Baseline struct {
 //   - прочие (dead-code и др.): строгий qname-key = Target.
 func Fingerprint(v Violation) string {
 	switch v.Kind {
-	case "circular-dependency", "layer-violation":
+	case "circular-dependency", "layer-violation", "forbidden-dependency":
 		// Message построен из отсортированных/стабильных полей -> детерминирован
 		// и кодирует строгую структурную идентичность (член-множество / пару).
 		return v.Message

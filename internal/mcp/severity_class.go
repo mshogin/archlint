@@ -41,6 +41,12 @@ var violationClasses = map[string]SeverityClass{
 	// human-in-loop (destruction-cost: ложно-мёртвый удаляет живое).
 	"dead-code": {Class: "ERROR", OpenWorld: true, RequiresDelta: true, HumanInLoop: true},
 
+	// forbidden-dependency — CLOSED-WORLD ERROR относительно объявленного запрета
+	// (.archlint forbidden: [{from,to}]). Объявленное запрещённое ребро = паттерн по
+	// определению (односторонняя импликация). Неактивен без конфига. RequiresDelta=false
+	// (соунд относительно конфига; дельта-гейт — usability на легаси, как layer/SCC).
+	"forbidden-dependency": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
+
 	// isp-usage-subset (DR-0033) — промотирован в ERROR после горнила соундности (детерминизм
 	// keyed lookup + 0 false-fire стабильно, golden 20x + self дважды NEW=0). CLOSED-WORLD
 	// НА ПОДДОМЕНЕ: соунден там, где числитель применим (param-typed свой интерфейс, оба

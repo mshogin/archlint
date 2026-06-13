@@ -169,6 +169,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Structural violations (coupling, cycles) — config-aware.
 	violations := mcp.DetectAllViolationsWithConfig(graph, &cfg)
 
+	// Forbidden dependencies (ERROR, closed-world relative to declared config).
+	// Inactive when no forbidden rules are configured.
+	violations = append(violations, mcp.ForbiddenDependencies(graph, &cfg)...)
+
 	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
 	// НОВЫЙ мёртвый узел vs baseline = регрессия (блок + удаление human-in-loop).
 	if a != nil {

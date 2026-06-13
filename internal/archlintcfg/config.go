@@ -61,15 +61,15 @@ type LayerDef struct {
 
 // Rules holds configuration for all supported rules.
 type Rules struct {
-	FanOut       RuleConfig `yaml:"fan_out"`
-	FanIn        RuleConfig `yaml:"fan_in"`
-	Cycles       RuleConfig `yaml:"cycles"`
-	ISP          RuleConfig `yaml:"isp"`
-	DIP          RuleConfig `yaml:"dip"`
-	FeatureEnvy  RuleConfig `yaml:"feature_envy"`
-	GodClass     RuleConfig `yaml:"god_class"`
-	HubNode      RuleConfig `yaml:"hub_node"`
-	SRP          RuleConfig `yaml:"srp"`
+	FanOut      RuleConfig `yaml:"fan_out"`
+	FanIn       RuleConfig `yaml:"fan_in"`
+	Cycles      RuleConfig `yaml:"cycles"`
+	ISP         RuleConfig `yaml:"isp"`
+	DIP         RuleConfig `yaml:"dip"`
+	FeatureEnvy RuleConfig `yaml:"feature_envy"`
+	GodClass    RuleConfig `yaml:"god_class"`
+	HubNode     RuleConfig `yaml:"hub_node"`
+	SRP         RuleConfig `yaml:"srp"`
 }
 
 // ExternalContract describes an external API boundary that this codebase
@@ -110,6 +110,18 @@ type Config struct {
 	// Паттерн = подстрока, матчится против ID узла графа (pkg.Func / pkg.Type.Method).
 	// Пропущенный entry -> ложно-мёртвый код, поэтому это страховка полноты R.
 	EntryPoints []string `yaml:"entrypoints,omitempty"`
+	// Forbidden lists prohibited dependency patterns (substring from -> substring to).
+	// An edge whose source contains `from` AND target contains `to` (case-insensitive)
+	// is a forbidden-dependency ERROR. Declared = pattern by definition (one-way
+	// implication). Empty -> rule inactive (no default forbidden pairs).
+	Forbidden []ForbiddenRule `yaml:"forbidden,omitempty"`
+}
+
+// ForbiddenRule is one prohibited dependency pattern: any edge with source
+// containing From and target containing To (case-insensitive substring) is flagged.
+type ForbiddenRule struct {
+	From string `yaml:"from"`
+	To   string `yaml:"to"`
 }
 
 // Default thresholds matching archlint-rs defaults.
@@ -200,7 +212,7 @@ func LoadFile(path string) Config {
 //   - nil:   not set by user -> apply default (true)
 //   - true:  user explicitly enabled
 //   - false: user explicitly disabled (the bug was here: previously treated
-//            the same as nil because bool zero-value == false)
+//     the same as nil because bool zero-value == false)
 //
 // For other fields (Level, Threshold) we still fill in the default when absent.
 func applyRuleDefaults(r, def *RuleConfig) {
