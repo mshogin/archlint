@@ -40,7 +40,7 @@ func TestDirHasGoFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	if !dirHasGoFiles(dir) {
 		t.Error("expected dirHasGoFiles=true for dir with main.go")
@@ -91,7 +91,7 @@ func TestCollectDirsExplicitList(t *testing.T) {
 	// Both have go files so single-arg parent-detection is skipped.
 	for _, d := range []string{dir1, dir2} {
 		f, _ := os.Create(filepath.Join(d, "a.go"))
-		f.Close()
+		_ = f.Close()
 	}
 
 	// Multiple args: treated as explicit list.
@@ -169,10 +169,10 @@ func TestWriteBatchMarkdown(t *testing.T) {
 	if err := writeBatchMarkdown(w, report); err != nil {
 		t.Fatalf("writeBatchMarkdown error: %v", err)
 	}
-	w.Close()
+	_ = w.Close()
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	out := buf.String()
 
 	if !strings.Contains(out, "# Architecture Health Report") {
@@ -199,10 +199,10 @@ func TestWriteBatchCSV(t *testing.T) {
 	if err := writeBatchCSV(w, report); err != nil {
 		t.Fatalf("writeBatchCSV error: %v", err)
 	}
-	w.Close()
+	_ = w.Close()
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 
 	csvR := csv.NewReader(&buf)
 	records, err := csvR.ReadAll()
@@ -252,11 +252,11 @@ func TestRunBatchJSONOnSelf(t *testing.T) {
 
 	runErr := runBatch(nil, []string{dir})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if runErr != nil {

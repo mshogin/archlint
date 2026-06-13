@@ -221,15 +221,6 @@ func computeRExt(
 	return result
 }
 
-// isInPackage returns true when nodeID starts with pkgID followed by ".".
-// This is the convention used throughout the archlint graph builder.
-func isInPackage(nodeID, pkgID string) bool {
-	if len(nodeID) <= len(pkgID) {
-		return false
-	}
-	return nodeID[:len(pkgID)+1] == pkgID+"."
-}
-
 // buildReachGraph constructs the equivalence adjacency list for the method set.
 // Three rules add edges:
 //  1. Shared resource: R(m_i) ∩ R(m_j) ≠ ∅.

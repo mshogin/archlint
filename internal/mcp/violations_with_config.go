@@ -172,6 +172,12 @@ func ViolationLevel(v Violation, cfg *archlintcfg.Config) archlintcfg.Level {
 		return cfg.Rules.DIP.Level
 	case v.Kind == "layer-violation":
 		return archlintcfg.LevelTaboo // layer violations always block
+	case v.Kind == "dead-code":
+		// Заявленный класс = ERROR, open-world (см. violationClasses / ClassOf).
+		// НО эффективный уровень — АУДИТ (Telemetry, exit 0): боевая блокировка
+		// dead-code = ДЕЛЬТА-режим (новый мёртвый vs baseline) + human-in-loop,
+		// чья инфраструктура — Фаза 5. До неё — отчёт, не блок (DR-0029).
+		return archlintcfg.LevelTelemetry
 	default:
 		return archlintcfg.LevelTelemetry
 	}

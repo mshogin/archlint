@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/mshogin/archlint/internal/model"
@@ -325,56 +326,33 @@ func DetectAllViolations(graph *model.Graph) []Violation {
 	return violations
 }
 
-// detectCycles searches for circular dependencies via import edges using DFS.
+// detectCycles reports a circular-dependency Violation for startPkg if it
+// participates in a cycle of the import graph. Делегирует graph-agnostic
+// SCC-индексу (cycles_scc.go), который МЕМОИЗИРОВАН на граф (DR-0011): SCC не
+// зависит от startPkg, поэтому считается один раз, а не P раз на каждый пакет.
+//
+// Принцип (DR-0005, чистый iff): узел в цикле ⟺ SCC размера>1 ИЛИ петля.
+// Соундно+полно (циклы любой длины). Та же SCC-машина обслуживает карточку
+// "слоистость Уровень A" (SCC>1 среди модулей = цикл модульных зависимостей).
 func detectCycles(graph *model.Graph, startPkg string) []Violation {
-	adj := make(map[string][]string)
-
-	for _, edge := range graph.Edges {
-		if edge.Type == "import" {
-			adj[edge.From] = append(adj[edge.From], edge.To)
-		}
+	scc := cyclicSCC(graph)
+	if !scc.cyclic[startPkg] {
+		return nil
 	}
 
-	visited := make(map[string]bool)
-	inStack := make(map[string]bool)
-	var cyclePath []string
-
-	var dfs func(node string) bool
-
-	dfs = func(node string) bool {
-		visited[node] = true
-		inStack[node] = true
-		cyclePath = append(cyclePath, node)
-
-		for _, next := range adj[node] {
-			if next == startPkg && inStack[next] {
-				return true
-			}
-
-			if !visited[next] {
-				if dfs(next) {
-					return true
-				}
-			}
-		}
-
-		inStack[node] = false
-		cyclePath = cyclePath[:len(cyclePath)-1]
-
-		return false
+	members := scc.members[startPkg]
+	if len(members) == 0 {
+		members = []string{startPkg} // self-loop: SCC размера 1
 	}
 
-	if dfs(startPkg) {
-		cycle := strings.Join(cyclePath, " -> ") + " -> " + startPkg
+	sorted := append([]string(nil), members...)
+	sort.Strings(sorted)
 
-		return []Violation{{
-			Kind:    "circular-dependency",
-			Message: fmt.Sprintf("Circular dependency detected: %s", cycle),
-			Target:  startPkg,
-		}}
-	}
-
-	return nil
+	return []Violation{{
+		Kind:    "circular-dependency",
+		Message: fmt.Sprintf("Circular dependency detected (SCC size %d): %s", len(sorted), strings.Join(sorted, " <-> ")),
+		Target:  startPkg,
+	}}
 }
 
 // filterGraph filters the graph to only include nodes and edges related to filter.

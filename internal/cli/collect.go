@@ -66,7 +66,7 @@ func runCollect(cmd *cobra.Command, args []string) error {
 		statusOut = os.Stderr
 	}
 
-	fmt.Fprintf(statusOut, "Analyzing code: %s (language: %s)\n", codeDir, collectLanguage)
+	_, _ = fmt.Fprintf(statusOut, "Analyzing code: %s (language: %s)\n", codeDir, collectLanguage)
 
 	graph, err := analyzeCode(codeDir)
 	if err != nil {
@@ -80,7 +80,7 @@ func runCollect(cmd *cobra.Command, args []string) error {
 	}
 
 	if collectOutputFile != "-" {
-		fmt.Fprintf(statusOut, "Graph saved to %s\n", collectOutputFile)
+		_, _ = fmt.Fprintf(statusOut, "Graph saved to %s\n", collectOutputFile)
 	}
 
 	return nil
@@ -122,10 +122,6 @@ func analyzeCode(codeDir string) (*model.Graph, error) {
 	}
 }
 
-func printStats(graph *model.Graph) {
-	printStatsTo(graph, os.Stdout)
-}
-
 func printStatsTo(graph *model.Graph, w *os.File) {
 	stats := make(map[string]int)
 
@@ -133,13 +129,13 @@ func printStatsTo(graph *model.Graph, w *os.File) {
 		stats[node.Entity]++
 	}
 
-	fmt.Fprintf(w, "Found components: %d\n", len(graph.Nodes))
+	_, _ = fmt.Fprintf(w, "Found components: %d\n", len(graph.Nodes))
 
 	for entity, count := range stats {
-		fmt.Fprintf(w, "  - %s: %d\n", entity, count)
+		_, _ = fmt.Fprintf(w, "  - %s: %d\n", entity, count)
 	}
 
-	fmt.Fprintf(w, "Found edges: %d\n", len(graph.Edges))
+	_, _ = fmt.Fprintf(w, "Found edges: %d\n", len(graph.Edges))
 }
 
 func saveGraph(graph *model.Graph) error {

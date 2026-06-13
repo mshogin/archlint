@@ -142,14 +142,13 @@ def validate_condition_number(
         except Exception:
             cond = float('inf')
 
+        # DR-0005: κ(L)=λ_max/λ_2 — спектральная гетерогенность, порога-принципа нет.
+        # Дескриптор, не нарушение -> severity всегда INFO (вне боевого гейта).
         if cond == float('inf'):
             status = 'INFO'
             cond_display = 'infinity'
-        elif cond > max_condition:
-            status = _get_violation_status(error_on_violation)
-            cond_display = round(cond, 2)
         else:
-            status = 'PASSED'
+            status = 'INFO'
             cond_display = round(cond, 2)
 
         return {

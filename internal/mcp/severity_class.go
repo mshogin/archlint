@@ -36,7 +36,7 @@ var violationClasses = map[string]SeverityClass{
 	// против порядка слоёв, DR-0009 Уровень B). Соунд относительно конфига L.
 	"layer-violation": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
-	// dead-code промотирован в ERROR Сократом (полное горнило: 0 false-dead на self).
+	// dead-code промотирован в ERROR (полное горнило соундности: 0 false-dead на self).
 	// open-world: соунден только в дельта-режиме; блокировка — Фаза 5. Удаление —
 	// human-in-loop (destruction-cost: ложно-мёртвый удаляет живое).
 	"dead-code": {Class: "ERROR", OpenWorld: true, RequiresDelta: true, HumanInLoop: true},

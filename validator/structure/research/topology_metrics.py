@@ -81,10 +81,10 @@ def validate_betti_numbers(
         triangles = sum(nx.triangles(subgraph).values()) // 3
         beta_2_approx = triangles  # Приближение
 
-        if beta_1 > max_beta1:
-            status = _get_violation_status(error_on_violation)
-        else:
-            status = 'PASSED'
+        # DR-0004/DR-0005: β₁ — структурный дескриптор (удалённость графа от дерева),
+        # НЕ нарушение принципа (контрпример «ромб»: β₁=1 при 0 ориент. циклах ⇒ β₁ не про
+        # циклы). Severity всегда INFO, вне боевого гейта; цикл-гейт держит validate_dag (core).
+        status = 'INFO'
 
         return {
             'name': 'betti_numbers',

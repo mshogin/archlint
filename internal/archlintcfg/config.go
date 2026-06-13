@@ -104,6 +104,12 @@ type Config struct {
 	// Additive on top of language-specific built-in defaults
 	// (e.g. Go: vendor, node_modules, .git, bin).
 	ExcludePaths []string `yaml:"exclude_paths,omitempty"`
+	// EntryPoints lists ADDITIONAL reachability roots (R) for dead-code (Phase 3),
+	// дополняющие авто-дефолт (main/init/Test*/exported). Для того, что авто не
+	// видит детерминированно: framework-хендлеры, символы через рефлексию/DI/codegen.
+	// Паттерн = подстрока, матчится против ID узла графа (pkg.Func / pkg.Type.Method).
+	// Пропущенный entry -> ложно-мёртвый код, поэтому это страховка полноты R.
+	EntryPoints []string `yaml:"entrypoints,omitempty"`
 }
 
 // Default thresholds matching archlint-rs defaults.

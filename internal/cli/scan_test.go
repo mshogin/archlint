@@ -28,11 +28,11 @@ func TestScanTextNoViolations(t *testing.T) {
 	// Use the internal directory so we always have a valid Go directory.
 	runErr := runScan(nil, []string{"."})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	// With threshold=9999 any codebase should pass.
@@ -62,11 +62,11 @@ func TestScanJSONFormat(t *testing.T) {
 
 	runErr := runScan(nil, []string{"."})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if runErr != nil {
@@ -115,11 +115,11 @@ func TestScanGateThresholdZero(t *testing.T) {
 
 	runErr := runScan(nil, []string{"."})
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	buf.ReadFrom(r)
+	_, _ = buf.ReadFrom(r)
 	output := buf.String()
 
 	if runErr != nil {

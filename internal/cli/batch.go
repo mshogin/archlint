@@ -297,7 +297,7 @@ func runBatch(cmd *cobra.Command, args []string) error {
 	// Scan each directory.
 	results := make([]batchRepoResult, 0, len(dirs))
 	for _, d := range dirs {
-		fmt.Fprintf(os.Stderr, "scanning %s...\n", d)
+		_, _ = fmt.Fprintf(os.Stderr, "scanning %s...\n", d)
 		var repoCfg *archlintcfg.Config
 		if cfg != nil {
 			repoCfg = cfg
@@ -326,7 +326,7 @@ func runBatch(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("cannot open output file: %w", err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		out = f
 	}
 
@@ -348,37 +348,37 @@ func runBatch(cmd *cobra.Command, args []string) error {
 }
 
 func writeBatchMarkdown(out *os.File, report batchReport) error {
-	fmt.Fprintf(out, "# Architecture Health Report\n\n")
-	fmt.Fprintf(out, "Total repos: %d | Scanned OK: %d | Errors: %d | Avg health: %d/100\n\n",
+	_, _ = fmt.Fprintf(out, "# Architecture Health Report\n\n")
+	_, _ = fmt.Fprintf(out, "Total repos: %d | Scanned OK: %d | Errors: %d | Avg health: %d/100\n\n",
 		report.TotalRepos, report.ScannedOK, report.Errors, report.AvgHealth)
 
 	// Table header.
-	fmt.Fprintf(out, "| Repository | Violations | SOLID | God-class | Fan-out | Cycles | Feature-envy | Coupling | Health |\n")
-	fmt.Fprintf(out, "|------------|-----------|-------|-----------|---------|--------|-------------|----------|--------|\n")
+	_, _ = fmt.Fprintf(out, "| Repository | Violations | SOLID | God-class | Fan-out | Cycles | Feature-envy | Coupling | Health |\n")
+	_, _ = fmt.Fprintf(out, "|------------|-----------|-------|-----------|---------|--------|-------------|----------|--------|\n")
 
 	for _, r := range report.Results {
 		if r.Error != "" {
-			fmt.Fprintf(out, "| %s | ERROR | - | - | - | - | - | - | - |\n", r.Repository)
+			_, _ = fmt.Fprintf(out, "| %s | ERROR | - | - | - | - | - | - | - |\n", r.Repository)
 			continue
 		}
-		fmt.Fprintf(out, "| %s | %d | %d | %d | %d | %d | %d | %d | %d/100 |\n",
+		_, _ = fmt.Fprintf(out, "| %s | %d | %d | %d | %d | %d | %d | %d | %d/100 |\n",
 			r.Repository, r.Violations, r.SOLID, r.GodClass, r.FanOut, r.Cycles, r.FeatureEnvy, r.Coupling, r.Health)
 	}
 
 	// Summary section.
-	fmt.Fprintf(out, "\n## Summary\n\n")
-	fmt.Fprintf(out, "- Total repositories scanned: %d\n", report.ScannedOK)
-	fmt.Fprintf(out, "- Average health score: %d/100\n", report.AvgHealth)
+	_, _ = fmt.Fprintf(out, "\n## Summary\n\n")
+	_, _ = fmt.Fprintf(out, "- Total repositories scanned: %d\n", report.ScannedOK)
+	_, _ = fmt.Fprintf(out, "- Average health score: %d/100\n", report.AvgHealth)
 
 	if len(report.Worst5) > 0 {
-		fmt.Fprintf(out, "- Worst repos (most violations): %s\n", strings.Join(report.Worst5, ", "))
+		_, _ = fmt.Fprintf(out, "- Worst repos (most violations): %s\n", strings.Join(report.Worst5, ", "))
 	}
 
 	if report.Errors > 0 {
-		fmt.Fprintf(out, "\n### Scan errors\n\n")
+		_, _ = fmt.Fprintf(out, "\n### Scan errors\n\n")
 		for _, r := range report.Results {
 			if r.Error != "" {
-				fmt.Fprintf(out, "- %s: %s\n", r.Repository, r.Error)
+				_, _ = fmt.Fprintf(out, "- %s: %s\n", r.Repository, r.Error)
 			}
 		}
 	}

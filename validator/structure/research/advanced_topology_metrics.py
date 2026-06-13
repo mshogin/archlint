@@ -972,87 +972,10 @@ def validate_ricci_flow(
 # =============================================================================
 # HOMOTOPY THEORY
 # =============================================================================
-
-def validate_fundamental_group(
-    graph: nx.DiGraph,
-    config: Optional['RuleConfig'] = None
-) -> Dict[str, Any]:
-    """
-    Fundamental Group π₁ - фундаментальная группа графа.
-
-    π₁(G) = свободная группа с rank = β₁ = E - V + 1 (для связного)
-
-    Rank π₁ = количество независимых циклов = cyclomatic complexity.
-    """
-    max_rank = 10
-    if config and config.threshold is not None:
-        max_rank = int(config.threshold)
-    exclude = config.exclude if config else []
-    error_on_violation = config.error_on_violation if config else True
-
-    try:
-        nodes = [n for n in graph.nodes() if not _is_excluded(n, exclude)]
-        subgraph = graph.subgraph(nodes).to_undirected()
-
-        n = len(nodes)
-        e = subgraph.number_of_edges()
-        c = nx.number_connected_components(subgraph)
-
-        if n < 2:
-            return {
-                'name': 'fundamental_group',
-                'status': 'SKIP',
-                'reason': 'Недостаточно узлов'
-            }
-
-        # rank π₁ = β₁ = E - V + C
-        rank_pi1 = e - n + c
-
-        # Находим базис циклов (генераторы π₁)
-        try:
-            cycle_basis = nx.cycle_basis(subgraph)
-            generators = [{'cycle': cyc[:5] + ['...'] if len(cyc) > 5 else cyc,
-                          'length': len(cyc)}
-                         for cyc in cycle_basis[:10]]
-        except:
-            generators = []
-
-        # Анализ длин циклов
-        if cycle_basis:
-            cycle_lengths = [len(c) for c in cycle_basis]
-            avg_cycle_length = np.mean(cycle_lengths)
-            min_cycle_length = min(cycle_lengths)
-            max_cycle_length = max(cycle_lengths)
-        else:
-            avg_cycle_length = 0
-            min_cycle_length = 0
-            max_cycle_length = 0
-
-        # Контрактируемость: π₁ = 0 ⟺ граф - дерево
-        is_contractible = (rank_pi1 == 0)
-
-        if rank_pi1 > max_rank:
-            status = _get_violation_status(error_on_violation)
-        else:
-            status = 'PASSED'
-
-        return {
-            'name': 'fundamental_group',
-            'description': f'rank(π₁) <= {max_rank}',
-            'status': status,
-            'rank_pi1': rank_pi1,
-            'threshold': max_rank,
-            'is_contractible': is_contractible,
-            'generators_count': len(cycle_basis) if cycle_basis else 0,
-            'generators_sample': generators[:5],
-            'avg_cycle_length': round(avg_cycle_length, 2),
-            'cycle_length_range': [min_cycle_length, max_cycle_length],
-            'interpretation': 'rank π₁ = cyclomatic complexity'
-        }
-    except Exception as e:
-        return {'name': 'fundamental_group', 'status': 'ERROR', 'error': str(e)}
-
-
+# DR-0003 (схлопывание π₁→β₁): validate_fundamental_group УДАЛЁН как тождественный
+# алиас. Для графа π₁ свободна, rank(π₁) = β₁ = E − V + C — ровно то, что считает
+# validate_betti_numbers (topology_metrics.py). Анти-редундантность: archlint не
+# содержит метрику-дубль. Если rank(π₁) где-то нужен — это betti β₁, без отдельного расчёта.
 def validate_covering_space(
     graph: nx.DiGraph,
     config: Optional['RuleConfig'] = None

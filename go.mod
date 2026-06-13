@@ -6,13 +6,11 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/olive-io/bpmn/schema v1.7.1
 	github.com/spf13/cobra v1.10.1
+	gonum.org/v1/gonum v0.15.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require (
-	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	gonum.org/v1/gonum v0.15.1 // indirect
-)
+require golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect

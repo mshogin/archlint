@@ -20,6 +20,7 @@ type GoAnalyzer struct {
 	nodes       []model.Node
 	edges       []model.Edge
 	excludeDirs []string
+	pkgRefs     map[string][]CallInfo // package-level function-value-use ((а)-фикс)
 }
 
 // PackageInfo holds information about a package.
@@ -48,6 +49,9 @@ type CallInfo = model.CallInfo
 // FieldAccessInfo is an alias for model.FieldAccessInfo for backward compatibility.
 type FieldAccessInfo = model.FieldAccessInfo
 
+// InterfaceMethodSig is an alias for model.InterfaceMethodSig.
+type InterfaceMethodSig = model.InterfaceMethodSig
+
 // NewGoAnalyzer creates a new Go code analyzer.
 func NewGoAnalyzer() *GoAnalyzer {
 	return &GoAnalyzer{
@@ -57,6 +61,7 @@ func NewGoAnalyzer() *GoAnalyzer {
 		methods:   make(map[string]*MethodInfo),
 		nodes:     []model.Node{},
 		edges:     []model.Edge{},
+		pkgRefs:   make(map[string][]CallInfo),
 	}
 }
 
@@ -70,6 +75,7 @@ func (a *GoAnalyzer) WithExcludeDirs(dirs []string) *GoAnalyzer {
 // Analyze analyzes a directory containing Go code.
 func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 	parser := newGoParser(a.packages, a.types, a.functions, a.methods)
+	parser.pkgRefs = a.pkgRefs
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -88,7 +94,11 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 			return nil
 		}
 
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		// _test.go ТОЖЕ парсим (test-reachability, Фаза 3): тест-вызовы/ссылки в граф,
+		// иначе test-only хелперы (вызваны лишь из теста) ложно-мёртвы -> destruction
+		// (удалить -> сломать тест). Test*/Benchmark*/Example* в авто-R -> прод-функция,
+		// вызванная только из теста, достижима через них.
+		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
 
@@ -99,6 +109,7 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 	}
 
 	builder := newGoGraphBuilder(a.packages, a.types, a.functions, a.methods, &a.nodes, &a.edges)
+	builder.pkgRefs = a.pkgRefs
 	builder.buildGraph()
 
 	return &model.Graph{
@@ -131,6 +142,7 @@ func (a *GoAnalyzer) FindImplementations(interfaceID string) []string {
 	}
 
 	builder := newGoGraphBuilder(a.packages, a.types, a.functions, a.methods, &a.nodes, &a.edges)
+	builder.pkgRefs = a.pkgRefs
 
 	var result []string
 
@@ -170,6 +182,7 @@ func (a *GoAnalyzer) AllTypes() map[string]*TypeInfo {
 // ResolveCallTarget resolves a call target to a node ID (public access).
 func (a *GoAnalyzer) ResolveCallTarget(call CallInfo, callerPkg string) string {
 	builder := newGoGraphBuilder(a.packages, a.types, a.functions, a.methods, &a.nodes, &a.edges)
+	builder.pkgRefs = a.pkgRefs
 
 	return builder.resolveCallTarget(call, callerPkg)
 }

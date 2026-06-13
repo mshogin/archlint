@@ -7,7 +7,6 @@
 package analyzer
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -397,22 +396,6 @@ func (ta *TypeScriptAnalyzer) resolveImport(fromPkg, importSrc string) string {
 
 	// Unknown relative target – skip.
 	return ""
-}
-
-// readFileLines is a helper used in tests and scanning for line-by-line analysis.
-func readFileLines(path string) ([]string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var lines []string
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		lines = append(lines, sc.Text())
-	}
-	return lines, sc.Err()
 }
 
 // DetectTypeScriptProject returns true if dir contains a package.json or tsconfig.json,
