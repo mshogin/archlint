@@ -85,6 +85,10 @@ type scanGateResult struct {
 	// ContextSignals — INFO-дескрипторы объявленных контекстов (complexity/coupling/
 	// depth) под --signals. nil без contexts в конфиге. Не гейт.
 	ContextSignals *mcp.ContextSignals `json:"contextSignals,omitempty"`
+	// ResearchSignals — медленные структурные дескрипторы (порядок/цепи/замыкание/
+	// геодезические) под --signals (research/slow). Сигналы/наблюдаемость, НИКОГДА
+	// ERROR. Поля внутри nil, если метрика пропущена (мало узлов / граф > 200).
+	ResearchSignals *mcp.ResearchDescriptors `json:"researchSignals,omitempty"`
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -355,12 +359,17 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	var archmotifSignals *archmotifbridge.Report
 
+	var researchSignals *mcp.ResearchDescriptors
+
 	if scanSignals {
 		dd := mcp.ComputeDescriptors(graph)
 		signals = &dd
 
 		rep := archmotifbridge.Compute(graph)
 		archmotifSignals = &rep
+
+		rd := mcp.ComputeResearchDescriptors(graph)
+		researchSignals = &rd
 	}
 
 	var contextSignals *mcp.ContextSignals
@@ -389,6 +398,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			Signals:          signals,
 			ArchmotifSignals: archmotifSignals,
 			ContextSignals:   contextSignals,
+			ResearchSignals:  researchSignals,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
