@@ -14,7 +14,7 @@ import (
 
 // Golden порта graph_loader.py -> Go (направление A, предусловие выпила Python).
 // Критерий приёмки: тот же YAML на вход -> ИДЕНТИЧНЫЙ граф (узлы/рёбра/атрибуты/источник)
-// в Go и в networkx. Эталон снят с настоящего validator.GraphLoader (см. /tmp/canon_dump.py),
+// в Go и в networkx. Эталон снят с настоящего validator.GraphLoader,
 // лежит в testdata/<fmt>.expected.json. Сравнение — каноническая JSON-форма (ключи
 // сортируются encoding/json, как Python sort_keys=True).
 

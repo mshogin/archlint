@@ -13,7 +13,7 @@ import (
 
 // Goldens ISP usage-subset (golden id:isp). Прогон через РЕАЛЬНЫЙ анализатор
 // (parser ForwardedParams/NamedParams -> метрика), не конструированные структуры —
-// честная проверка всей цепочки. Критерий горнила = 0 false-ERROR; здесь фиксируем
+// честная проверка всей цепочки. Критерий проверки соундности = 0 false-ERROR; здесь фиксируем
 // 5 базовых вердиктов из спеки.
 
 func runISP(t *testing.T, src string) []Violation {

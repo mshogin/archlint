@@ -36,7 +36,7 @@ func TestGhost_Detect_vsPython(t *testing.T) {
 	}
 }
 
-// Без контекстов -> детектор НЕАКТИВЕН (self-горнило: self=0 как forbidden).
+// Без контекстов -> детектор НЕАКТИВЕН (self-проверка соундности: self=0 как forbidden).
 func TestGhost_Inactive_NoContexts(t *testing.T) {
 	g, _ := ghostFixture()
 	if v := GhostComponents(g, &archlintcfg.Config{}); len(v) != 0 {
@@ -75,8 +75,8 @@ func TestGhost_DeltaGate(t *testing.T) {
 
 // Golden context_coverage (порт validate_context_coverage). Эталон vs Python:
 // триугольник A->B->C->A (равный PageRank), контекст {B} -> coverage 0.333,
-// covered=[B], uncovered=[A,C]. SEVERITY НЕ решён (горнило: intent-laden false-fire
-// на легитимных uncovered-критических -> парный вердикт).
+// covered=[B], uncovered=[A,C]. SEVERITY НЕ решён (проверка соундности: intent-laden false-fire
+// на легитимных uncovered-критических -> вердикт соундности).
 func TestCoverage_vsPython(t *testing.T) {
 	e := func(f, t string) model.Edge { return model.Edge{From: f, To: t, Type: "import"} }
 	g := &model.Graph{

@@ -61,7 +61,7 @@ func GhostComponents(graph *model.Graph, cfg *archlintcfg.Config) []Violation {
 	return out
 }
 
-// NB: layer_traversal (порт validate_layer_traversal) НЕ реализован — горнило-вердикт
+// NB: layer_traversal (порт validate_layer_traversal) НЕ реализован — вердикт соундности
 // DROP: метрика intent-laden (порядок context-списка != execution flow + хардкод
 // паттерны) и РЕДУНДАНТНА с соундным layer-backedge (объявленный порядок слоёв +
 // реальные рёбра графа). Деградированный дубль = шум. zero-config layer-HINT (подсказка
@@ -81,7 +81,7 @@ type CoverageResult struct {
 // (по умолчанию 10) узлов по PageRank; покрытый = существует context-компонент,
 // fuzzy-матчащий узел. coverage = covered/critical.
 //
-// ★ВЕРДИКТ ГОРНИЛА (парный): WARNING-сигнал, НЕ ERROR. Три слоя магнитуды/интента
+// ВЕРДИКТ СОУНДНОСТИ: WARNING-сигнал, НЕ ERROR. Три слоя магнитуды/интента
 // (топ-N PageRank + порог 0.8 + выбор контекста архитектором) + data-конфаунд (model.*
 // фундаментальные узлы попадают в uncovered, тот же класс что убил DIP), синтаксического
 // guard нет. Выводится под --signals (coverage-ratio + uncovered), НЕ в severity_class.

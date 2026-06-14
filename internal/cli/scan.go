@@ -193,8 +193,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// closed-world relative to declared contexts). Inactive without contexts.
 	violations = append(violations, mcp.GhostComponents(graph, &cfg)...)
 
-	// NB: gauntlet candidates (articulation/bridge/stability) are NOT gate violations —
-	// the soundness gauntlet demoted all three to signals (DIP-class confound). They are
+	// NB: soundness candidates (articulation/bridge/stability) are NOT gate violations —
+	// the soundness check demoted all three to signals (DIP-class confound). They are
 	// surfaced under --signals via ComputeDescriptors, never in severity_class/ the gate.
 
 	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
@@ -205,7 +205,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// ISP usage-subset — клиент-центричный «жирный интерфейс» (узкое
 	// использование param-интерфейса + 2 guard'а). НЕ блокирующий до прохождения
-	// горнила соундности: Kind'ы не в severity_class как ERROR -> аудит-уровень.
+	// проверки соундности: Kind'ы не в severity_class как ERROR -> аудит-уровень.
 	if a != nil && cfg.Rules.ISP.IsEnabled() {
 		violations = append(violations, mcp.ComputeISPUsageSubset(graph, a)...)
 	}
@@ -366,7 +366,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	var contextSignals *mcp.ContextSignals
 	if scanSignals {
 		contextSignals = mcp.ComputeContextSignals(&cfg)
-		// context_coverage — WARNING-сигнал (вердикт горнила), под --signals, не гейт.
+		// context_coverage — WARNING-сигнал (вердикт соундности), под --signals, не гейт.
 		if contextSignals != nil {
 			cov := mcp.ComputeContextCoverage(graph, &cfg)
 			if cov.Active {

@@ -74,7 +74,7 @@ type Descriptors struct {
 	BlastRadius          map[string]float64 `json:"blastRadius"`          // (pagerank + norm_fan_in)/2
 	MaxComponentDistance int                `json:"maxComponentDistance"` // макс. directed расстояние
 
-	// --- Горнило-кандидаты (демотированы в сигналы; НЕ ERROR, НЕ в severity_class) ---
+	// --- Кандидаты соундности (демотированы в сигналы; НЕ ERROR, НЕ в severity_class) ---
 	ArticulationPoints      []string `json:"articulationPoints"`      // узлы-бутылочные горла (WARNING-сигнал)
 	BridgeEdgeCount         int      `json:"bridgeEdgeCount"`         // мосты (INFO loose-coupling дескриптор)
 	StabilityViolationCount int      `json:"stabilityViolationCount"` // SDP-магнитуда (INFO + регрессия-WARNING в дельте)
@@ -266,7 +266,7 @@ func ComputeDescriptors(g *model.Graph) Descriptors {
 	// --- БАТЧ 6: Фаулер-смеллы (на ИСХОДНОМ g: entity + порядок рёбер + типы) ---
 	computeFowlerSmells(g, &d)
 
-	// --- Горнило-кандидаты как СИГНАЛЫ (демотированы вердиктом; не ERROR) ---
+	// --- Кандидаты соундности как СИГНАЛЫ (демотированы вердиктом; не ERROR) ---
 	for _, v := range ArticulationPoints(g) {
 		d.ArticulationPoints = append(d.ArticulationPoints, v.Target)
 	}

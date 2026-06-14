@@ -26,7 +26,7 @@ tests/output/
 *.yaml
 *.yml
 !.github/workflows/*.yml
-# Self-oracle: golden expectations for soundness gauntlet (part of the product,
+# Self-oracle: golden expectations for the soundness check (part of the product,
 # dogfooding transparency). Explicit exception to the *.yaml ignore.
 !docs/golden-expectation.yaml
 !.github/ISSUE_TEMPLATE/*.yml

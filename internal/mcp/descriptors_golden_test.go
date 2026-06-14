@@ -8,7 +8,7 @@ import (
 )
 
 // Golden порта структурных дескрипторов Python(NetworkX)->Go (направление A).
-// Эталонные числа сняты с networkx 3.5 на ТОМ ЖЕ графе (см. /tmp/refgraph_truth.py):
+// Эталонные числа сняты с networkx 3.5 на ТОМ ЖЕ графе:
 // узлы A-F, рёбра [A->B,A->C,B->C,C->A,C->D,D->E,E->D,F->A]. Числовое совпадение
 // (epsilon 1e-9) = доказательство эквивалентности порта.
 
@@ -246,7 +246,7 @@ func TestDescriptors_Abstractness_Named(t *testing.T) {
 	}
 }
 
-// --- БАТЧ 6: Фаулер-смеллы (эталон — РЕАЛЬНЫЕ Python-валидаторы, см. /tmp/b6_truth.py) ---
+// --- БАТЧ 6: Фаулер-смеллы (эталон — РЕАЛЬНЫЕ Python-валидаторы) ---
 
 func TestDescriptors_Batch6_FowlerSmells_vsPython(t *testing.T) {
 	var nodes []model.Node

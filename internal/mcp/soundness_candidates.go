@@ -7,11 +7,11 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// Горнило-кандидаты: articulation_points / bridge_edges / stability_violations.
+// Кандидаты соундности: articulation_points / bridge_edges / stability_violations.
 // INTENT-LADEN: срабатывание НЕ всегда дефект (легитимный единый вход/фасад = articulation
 // point; мост часто = здоровая модульность). DIP-РИСК.
 //
-// ★ВЕРДИКТ ГОРНИЛА (парный, соундность): ВСЕ ТРИ ДЕМОТИРОВАНЫ, НИ ОДИН не ERROR. На
+// ВЕРДИКТ СОУНДНОСТИ: ВСЕ ТРИ ДЕМОТИРОВАНЫ, НИ ОДИН не ERROR. На
 // здоровом archlint 199 срабатываний на легитимной структуре (DIP-класс конфаунда).
 // Поэтому НЕ в severity_class (никогда не блок), а СИГНАЛЫ-ДЕСКРИПТОРЫ под --signals:
 //   - articulation_points -> WARNING-сигнал (фасад=articulation по определению; интент

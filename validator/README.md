@@ -26,7 +26,7 @@ preserved as a reference corpus and as the source for the Python -> Go port:
 - Magnitude / experimental / behavior metrics -> stay here as museum (not gated).
 
 The port scope is decided by soundness criteria, not bulk migration: only metrics
-that survive the soundness gauntlet become Go detectors; the rest remain museum.
+that survive the soundness check become Go detectors; the rest remain museum.
 
 ## How to run (manual / research only)
 

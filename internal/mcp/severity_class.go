@@ -2,7 +2,7 @@ package mcp
 
 // SeverityClass — ДЕКЛАРИРУЕМЫЙ класс важности метрики. ОТДЕЛЁН от
 // ЭФФЕКТИВНОГО gate-level (ViolationLevel): для open-world-ERROR класс=ERROR
-// заявлен сейчас (метрика прошла горнило), но боевая БЛОКИРОВКА требует
+// заявлен сейчас (метрика прошла проверку соундности), но боевая БЛОКИРОВКА требует
 // дельта-режима + human-in-loop, чья инфраструктура — Фаза 5. До неё эффективный
 // уровень держится в АУДИТ-режиме (отчёт, exit 0), не блок.
 type SeverityClass struct {
@@ -36,7 +36,7 @@ var violationClasses = map[string]SeverityClass{
 	// против порядка слоёв Уровень B). Соунд относительно конфига L.
 	"layer-violation": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
-	// dead-code промотирован в ERROR (полное горнило соундности: 0 false-dead на self).
+	// dead-code промотирован в ERROR (полная проверка соундности: 0 false-dead на self).
 	// open-world: соунден только в дельта-режиме; блокировка — Фаза 5. Удаление —
 	// human-in-loop (destruction-cost: ложно-мёртвый удаляет живое).
 	"dead-code": {Class: "ERROR", OpenWorld: true, RequiresDelta: true, HumanInLoop: true},
@@ -57,7 +57,7 @@ var violationClasses = map[string]SeverityClass{
 	// Conditional: неактивен без layers-конфига.
 	"layer-backedge": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
-	// isp-usage-subset — промотирован в ERROR после горнила соундности (детерминизм
+	// isp-usage-subset — промотирован в ERROR после проверки соундности (детерминизм
 	// keyed lookup + 0 false-fire стабильно, golden 20x + self дважды NEW=0). CLOSED-WORLD
 	// НА ПОДДОМЕНЕ: соунден там, где числитель применим (param-typed свой интерфейс, оба
 	// guard'а пройдены), вне поддомена воздерживается (no-verdict). cost=irritation (сужение

@@ -11,7 +11,7 @@ import (
 // множества entry points R по рёбрам calls ∪ references ∪ usesType ∪ returns ∪
 // contains, С РАСКРЫТИЕМ IMPLEMENTS-DISPATCH.
 //
-// ★IMPLEMENTS-DISPATCH (вход 2 горнила, destruction-критично): при достижении
+// IMPLEMENTS-DISPATCH (2-й вход проверки соундности, destruction-критично): при достижении
 // интерфейса I раскрываем на ВСЕ реализующие типы T (обратно по implements T->I)
 // и далее их методы (via contains). Иначе реализация, вызываемая только через
 // i.Foo() (без прямого calls-ребра, т.к. var-тип не резолвится), была бы
@@ -19,7 +19,7 @@ import (
 // тоже over-approx -> ложно-живой (дёшево), ложно-мёртвый невозможен.
 //
 // SEVERITY: метрика ТОЛЬКО считает; класс WARNING пока (: ERROR после
-// прохождения self-горнила соундности).
+// прохождения self-проверки соундности).
 func DeadCode(g *model.Graph, configPatterns []string) []Violation {
 	r := EntryPoints(g, configPatterns)
 

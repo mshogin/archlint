@@ -6,9 +6,9 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-// Golden горнило-кандидатов против networkx на A-F:
+// Golden кандидатов соундности против networkx на A-F:
 // articulation = {A,C,D}; bridges = {A-F, C-D, D-E} (3); stability = 0.
-// SEVERITY этих Kind'ов НЕ решён (нет в severity_class) — вердикт после self-горнила.
+// SEVERITY этих Kind'ов НЕ решён (нет в severity_class) — вердикт после self-проверки соундности.
 
 func TestArticulation_vsPython(t *testing.T) {
 	v := ArticulationPoints(refGraph())

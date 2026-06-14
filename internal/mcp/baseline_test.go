@@ -22,7 +22,7 @@ func layerViol(from, to string) Violation {
 	return Violation{Kind: "layer-violation", Target: from, Message: "Forbidden dependency: " + from + " (app) -> " + to + " (infra)"}
 }
 
-// ЯДРО ГОРНИЛА: baseline на коде -> повторная дельта ТОГО ЖЕ кода ПУСТА.
+// ЯДРО ПРОВЕРКИ СОУНДНОСТИ: baseline на коде -> повторная дельта ТОГО ЖЕ кода ПУСТА.
 func TestDeltaGate_IdempotentEmptyDelta(t *testing.T) {
 	current := []Violation{
 		cycleViol("a", "a <-> b"),

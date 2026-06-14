@@ -30,13 +30,13 @@ principles:
       интерфейса по СТАТИЧЕСКОМУ типу receiver (i.Foo() где i типа I -> calls(C->I.Foo)).
       Статический тип объявления, НЕ value-flow. Знаменатель(contains)+coupling(usesType) готовы."
     severity_class: ERROR-with-2-guards   # ERROR-able с guard'ами; иначе WARNING (false-fire на кондуитах)
-    soundness_guards:         # ПРЕДУСЛОВИЕ порта (без guard'ов -> WARNING, не в горнило)
+    soundness_guards:         # ПРЕДУСЛОВИЕ порта (без guard'ов -> WARNING, не в проверку соундности)
       - "guard1: i ТОЛЬКО receiver, НИКОГДА не value-позиция (форвард -> no-verdict)"
       - "guard2: клиент-метод НЕ реализует интерфейс (контракт-связан -> suppress/WARNING)"
       - "свой интерфейс+свой клиент = ERROR; внешний (io.*) = WARNING"
       - "не-param-typed формы (var/struct/returns-receiver) = no-verdict (дешёвая сторона)"
     class: closed-world-on-subdomain   # воздержание вне поддомена; cost=irritation; guard+дельта, БЕЗ тройного замка
-    repromotion_criterion:    # горнило ISP: чисто = 0 false-ISP-ERROR
+    repromotion_criterion:    # проверка соундности ISP: чисто = 0 false-ISP-ERROR
       - "каждый ISP-ERROR: строгое подмножество + i не форвардится + не контракт + СВОЙ интерфейс + сужаем"
       - "конфаунды не стреляют: кондуиты подавлены, внешние->WARNING, не-param->no-verdict"
       - "критерий = 0 FALSE-fire (не число находок); любой false-fire -> чинить guard, не промотировать"
@@ -114,8 +114,8 @@ principles:
     soundness: "компонент в контексте, отсутствующий в графе = устаревшая декларация
       (односторонняя импликация ghost⟹дефект)"
     granularity: component    # fuzzy-матч (нормализация=последний сегмент + двунапр. substring)
-    activation: "inactive без contexts (self-горнило: self-прогон archlint = 0)"
-    self_gauntlet: "0 ghost на здоровом archlint (нет contexts -> неактивен), conditional как forbidden"
+    activation: "inactive без contexts (self-проверка соундности: self-прогон archlint = 0)"
+    soundness_check: "0 ghost на здоровом archlint (нет contexts -> неактивен), conditional как forbidden"
     delta: "generic дельта-гейт (блок НОВОГО ghost vs baseline)"
     contract: "★ДОПУЩЕНИЕ (обязательная компенсация, как R-полнота у dead-code):
       contexts ОПИСЫВАЮТ СУЩЕСТВУЮЩУЮ архитектуру для проверки соответствия, НЕ
@@ -126,9 +126,9 @@ principles:
 
   - id: context-coverage
     metric: context-coverage
-    status: demoted           # ВЕРДИКТ ГОРНИЛА (парный): WARNING-сигнал, НЕ ERROR
+    status: demoted           # ВЕРДИКТ СОУНДНОСТИ: WARNING-сигнал, НЕ ERROR
     severity_class: WARNING   # три слоя магнитуды/интента + data-конфаунд класса DIP
-    self_gauntlet: "репрезентативное горнило на реальном archlint (контекст core={mcp,analyzer}):
+    soundness_check: "репрезентативная проверка на реальном archlint (контекст core={mcp,analyzer}):
       coverage=0.50, uncovered=model.Graph/Node/Edge = фундаментальные data-узлы (высокий
       PageRank) = ЛЕГИТИМНАЯ структура, не дефекты"
     verdict: "intent-laden (топ-N PageRank + порог 0.8 + выбор контекста архитектором),
@@ -136,9 +136,9 @@ principles:
 
   - id: articulation-points
     metric: articulation-point
-    status: demoted           # ВЕРДИКТ ГОРНИЛА: WARNING-сигнал, НЕ ERROR
+    status: demoted           # ВЕРДИКТ СОУНДНОСТИ: WARNING-сигнал, НЕ ERROR
     severity_class: WARNING   # семантический конфаунд класса DIP
-    self_gauntlet: "44 срабатываний на здоровом archlint = легитимная структура
+    soundness_check: "44 срабатываний на здоровом archlint = легитимная структура
       (единый вход парсинга, фасады, тест-моки); фасад=articulation по определению"
     verdict: "интент синтаксически неотделим -> демотация (как DIP); под --signals, не гейт"
 
@@ -146,14 +146,14 @@ principles:
     metric: bridge-edge
     status: demoted           # WARNING/INFO loose-coupling дескриптор
     severity_class: INFO      # мост чаще = здоровая модульность, не дефект
-    self_gauntlet: "70 на здоровом self; bridge = признак слабой связанности (здоровье)"
+    soundness_check: "70 на здоровом self; bridge = признак слабой связанности (здоровье)"
     verdict: "дескриптор связанности под --signals, не ERROR"
 
   - id: stability-violations
     metric: stability-violation
     status: demoted           # INFO-дескриптор + регрессия-WARNING в дельте
     severity_class: INFO      # чистая магнитуда SDP (I=ратио+произвольный порог)
-    self_gauntlet: "85 на здоровом self; класс instability/coupling (магнитуда, не паттерн)"
+    soundness_check: "85 на здоровом self; класс instability/coupling (магнитуда, не паттерн)"
     verdict: "INFO-дескриптор под --signals; регрессия-WARNING в дельте; не ERROR"
 
   - id: dead-code
@@ -162,13 +162,13 @@ principles:
     severity_class: ERROR     # open-world условно-соундный; компенсации ОБЯЗАТЕЛЬНЫ
     verified:
       status: pass
-      result: "89->5 мёртвых, 0 false-dead; 5 реальных находок (горнило чисто)"
+      result: "89->5 мёртвых, 0 false-dead; 5 реальных находок (проверка соундности чиста)"
       validations:
         - "qname-идентичность точнее грепа (коллизия одноимённых функций развелась по пакету автоматически)"
         - "граница test-only эмпирична (функция, вызываемая тестом, живая; осиротевшие тест-хелперы мёртвы)"
     mandatory_compensations:  # следствие open-world условности, не опция
         - "дельта-режим (новый мёртвый vs baseline, не абсолют)"
-        - "тройной замок (R общие механизмы / дельта / чистое self-горнило)"
+        - "тройной замок (R общие механизмы / дельта / чистая self-проверка соундности)"
         - "авто-удаление human-in-loop (ERROR-сигнал != авто-действие)"
     self_findings_to_fix:     # archlint чинит САМ (human-in-loop), не метрику
         - "прод: readFileLines, isInPackage, printStats (удалить)"
@@ -195,12 +195,12 @@ principles:
             false-dead (ВТОРОЙ линчпин рядом с references)"
       - "КОМПОЗИТ: на чистом self-прогоне КАЖДЫЙ флагнутый-мёртвым проверяется вручную = реально ли
             мёртв. Хоть один живой -> destruction-несоунден -> демотация/фикс (как DIP). ERROR только при 0 false-dead"
-      - "4. АСИММЕТРИЯ: ERROR-СИГНАЛ ок при чистом горниле, но АВТО-УДАЛЕНИЕ = human-in-loop"
+      - "4. АСИММЕТРИЯ: ERROR-СИГНАЛ ок при чистой проверке соундности, но АВТО-УДАЛЕНИЕ = human-in-loop"
       - "вероятный исход: reachability = чистый ПАТТЕРН -> устоит как ERROR (в отличие от DIP-семантики),
             НО только если все 3 входа = true-over-approx; иначе демотация"
 
 # ============================================================
-# ИНФРАСТРУКТУРА (не принцип, а слой активации) — пре-регистрация горнила
+# ИНФРАСТРУКТУРА (не принцип, а слой активации) — пре-регистрация проверки соундности
 # ============================================================
 infrastructure:
   - id: delta-gate
@@ -214,7 +214,7 @@ infrastructure:
       - "НЕ rename-tracking/fuzzy (Ось-1 запрет магнитудного матча на гейте); rename->ложный-NEW=irritation ок"
       - "fail-safe: над-блок (irritation) >> под-блок (проскок регрессии)"
       - "гейт-уровень: NEW+Class=ERROR -> блок (SCC/ISP hard; dead-code блок+human-in-loop); существующий->telemetry"
-    hardening_criterion:  # горнило дельта-инфры; чисто = всё ниже
+    hardening_criterion:  # проверка соундности дельта-инфры; чисто = всё ниже
       - "ЯДРО: baseline на self -> повторный прогон ТОГО ЖЕ кода -> дельта ПУСТА (0 ложных-NEW)"
       - "+1 ДЕТЕРМИНИЗМ: два baseline одного кода БАЙТ-идентичны (сортировка, стабильные ключи, нет map-недетерминизма)"
       - "+2 NO-BASELINE -> NO-BLOCK (degrade telemetry; иначе первый прогон=absolute блокирует всё)"
