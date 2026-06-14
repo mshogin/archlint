@@ -42,6 +42,15 @@ type ResearchDescriptors struct {
 	PersistentHomology *PersistentHomologySignal `json:"persistentHomology,omitempty"`
 	HodgeDecomposition *HodgeSignal              `json:"hodgeDecomposition,omitempty"`
 	ShapleyValue       *ShapleySignal            `json:"shapleyValue,omitempty"`
+
+	// batch-3 (тонкие: теория множеств/порядка/информации + спектральная близость)
+	EquivalenceClasses   *EquivalenceClassesSignal   `json:"equivalenceClasses,omitempty"`
+	Lattice              *LatticeSignal              `json:"lattice,omitempty"`
+	JoinMeet             *JoinMeetSignal             `json:"joinMeet,omitempty"`
+	PartitionRefinement  *PartitionRefinementSignal  `json:"partitionRefinement,omitempty"`
+	MutualInformation    *MutualInformationSignal    `json:"mutualInformation,omitempty"`
+	ResistanceCloseness  *ResistanceClosenessSignal  `json:"resistanceCloseness,omitempty"`
+	CommuteTime          *CommuteTimeSignal          `json:"commuteTime,omitempty"`
 }
 
 // TransitiveClosureSignal — порт validate_transitive_closure. R⁺ = R ∪ R² ∪ ...;
@@ -110,6 +119,15 @@ func ComputeResearchDescriptors(g *model.Graph) ResearchDescriptors {
 	rd.PersistentHomology = computePersistentHomology(dg)
 	rd.HodgeDecomposition = computeHodge(g, dg)
 	rd.ShapleyValue = computeShapley(dg)
+
+	// batch-3: теория множеств/порядка/информации + спектральная близость.
+	rd.EquivalenceClasses = computeEquivalenceClasses(dg)
+	rd.Lattice = computeLattice(dg)
+	rd.JoinMeet = computeJoinMeet(dg)
+	rd.PartitionRefinement = computePartitionRefinement(dg)
+	rd.MutualInformation = computeMutualInformation(dg)
+	rd.ResistanceCloseness = computeResistanceCloseness(dg)
+	rd.CommuteTime = computeCommuteTime(dg)
 
 	return rd
 }
