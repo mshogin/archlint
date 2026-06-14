@@ -16,8 +16,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/klauspost/cpuid/v2 v2.2.10 h1:tBs3QSyvjDyFTq3uoc/9xFpCuOsJQFNPiAhYdw2skhE=
 github.com/klauspost/cpuid/v2 v2.2.10/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
-github.com/mshogin/archmotif v0.0.0-20260612131558-5902862ad7cd h1:yUz1vbkpXUoU83S8Yp42I+wFewNyt2AsFiZhrRgU00M=
-github.com/mshogin/archmotif v0.0.0-20260612131558-5902862ad7cd/go.mod h1:43CTWHP2AcOJ3CtQ+GcLAG5TvyTQUdLwtdIdBbxN9UQ=
+github.com/mshogin/archmotif v0.0.0-20260613221339-42835267872b h1:gB/E6NSrAKOOfwAV2KiGywMC+k28AYF55eeqt3XXvsw=
+github.com/mshogin/archmotif v0.0.0-20260613221339-42835267872b/go.mod h1:43CTWHP2AcOJ3CtQ+GcLAG5TvyTQUdLwtdIdBbxN9UQ=
 github.com/olive-io/bpmn/schema v1.7.1 h1:qzDr8GfgLsvKxuObZuA3Kwcg0+rYBCLrwdN9g7a2wq8=
 github.com/olive-io/bpmn/schema v1.7.1/go.mod h1:I+gdW8VEI52SZ/uhIrMuUgX0k8mEzLxbRBGsVyBMAww=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

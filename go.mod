@@ -26,4 +26,4 @@ require (
 	golang.org/x/sys v0.38.0 // indirect
 )
 
-replace github.com/kgatilin/archmotif => github.com/mshogin/archmotif v0.0.0-20260612131558-5902862ad7cd
+replace github.com/kgatilin/archmotif => github.com/mshogin/archmotif v0.0.0-20260613221339-42835267872b

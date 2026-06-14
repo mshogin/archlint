@@ -22,14 +22,12 @@ import (
 
 var errNilGraph = errors.New("archmotifbridge: nil graph")
 
-// signalMetricNames / signalDetectorNames — выбор по имени из реестра archmotif
-// (DR-0055). Метрики -> Report.GraphMetrics; детекторы -> Report.Anomalies. Всё —
+// signalMetricNames / signalDetectorNames — выбор по имени из реестра archmotif.
+// Метрики -> Report.GraphMetrics; детекторы -> Report.Anomalies. Всё —
 // СИГНАЛЫ/наблюдаемость под --signals, НИКОГДА не ERROR-гейт (спектр != proof).
 var (
-	// Зарегистрированные graph-метрики форка (эмпирически Ran). scc/components/radius
-	// в текущем pin НЕ зарегистрированы как graph-scope метрики -> добавление в реестр
-	// форка = отдельный заход (правка mshogin/archmotif + bump pin).
-	signalMetricNames   = []string{"modularity", "motif_redundancy"}
+	// curvature/radius/components/scc/eigenvalues зарегистрированы в форк-реестре.
+	signalMetricNames   = []string{"modularity", "motif_redundancy", "curvature", "radius", "components", "scc", "eigenvalues"}
 	signalDetectorNames = []string{"spectral_gap", "local_symmetry"}
 )
 
@@ -218,8 +216,8 @@ func (ArchmotifProvider) Compute(g *model.Graph) (Report, error) {
 	if err != nil {
 		return rep, err
 	}
-	// Named selection (DR-0055): structural magnitude metrics + spectral/symmetry
-	// detectors, surfaced as SIGNALS (никогда ERROR — спектр != proof, DR-0048).
+	// Named selection: structural magnitude metrics + spectral/symmetry detectors,
+	// surfaced as SIGNALS (никогда ERROR — спектр != proof).
 	m, err := archmotifmetrics.ComputeMetricsNamed(g2, signalMetricNames, signalDetectorNames)
 	if err != nil {
 		return rep, err

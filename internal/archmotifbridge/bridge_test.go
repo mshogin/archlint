@@ -79,7 +79,7 @@ func TestCompute_RealGraph(t *testing.T) {
 	}
 }
 
-// TestArchmotifProvider_NamedSignals — SUB-1 (DR-0055): ComputeMetricsNamed выводит
+// TestArchmotifProvider_NamedSignals — ComputeMetricsNamed выводит
 // modularity+motif_redundancy как graph-метрики; modularity численно совпадает с
 // archmotif-движком на 3-цикле p1->p2->p3->p1 (эталон -1/3). Сигналы, не гейт.
 func TestArchmotifProvider_NamedSignals(t *testing.T) {
@@ -104,5 +104,30 @@ func TestArchmotifProvider_NamedSignals(t *testing.T) {
 	q := rep.GraphMetrics["modularity"]
 	if q < -0.3334 || q > -0.3332 {
 		t.Errorf("modularity Q=%.6f, want ~-0.3333 (archmotif reference)", q)
+	}
+}
+
+// TestArchmotifProvider_NewMetrics — новые форк-метрики через bridge на
+// triangle(p1,p2,p3)+isolated(p4). Эталон archmotif-движка: components=2, scc=2,
+// radius(λ_max)=3 (триугольник), curvature(mean Forman)=3, eigenvalues(count)=4.
+func TestArchmotifProvider_NewMetrics(t *testing.T) {
+	pkg := func(id string) model.Node { return model.Node{ID: id, Title: id, Entity: model.EntityPackage} }
+	imp := func(a, b string) model.Edge { return model.Edge{From: a, To: b, Type: model.EdgeImport} }
+	g := &model.Graph{
+		Nodes: []model.Node{pkg("p1"), pkg("p2"), pkg("p3"), pkg("p4")},
+		Edges: []model.Edge{imp("p1", "p2"), imp("p2", "p3"), imp("p3", "p1"), imp("p1", "p3")},
+	}
+
+	gm := archmotifbridge.Compute(g).GraphMetrics
+	checks := map[string]float64{"components": 2, "scc": 2, "radius": 3, "curvature": 3, "eigenvalues": 4}
+	for name, want := range checks {
+		got, ok := gm[name]
+		if !ok {
+			t.Errorf("%s not in GraphMetrics: %v", name, gm)
+			continue
+		}
+		if got != want {
+			t.Errorf("%s: got %v, want %v (archmotif reference)", name, got, want)
+		}
 	}
 }
