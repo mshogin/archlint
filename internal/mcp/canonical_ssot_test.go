@@ -35,6 +35,60 @@ func collectErrorClass(t *testing.T, dir string) []Violation {
 	return vs
 }
 
+// СТРАЖ №2 (t_root-инвариантность): collect(из абсолютного пути) == collect(из ".") —
+// fingerprint-наборы побитово равны. Корень №3 (module-relative pkgID). Предусловие (край
+// Сократа): цель скана = ЕДИНЫЙ go-module (для archlint-on-archlint и большинства репо ок;
+// nested go.work — отдельный резолв module-root, см. canonical-fingerprint-ssot-plan.md).
+func TestCanonical_Guard2_TRootInvariance(t *testing.T) {
+	dir := t.TempDir()
+	code := `package sample
+
+type Store interface {
+	Get() int
+	Put(x int)
+}
+
+func client(s Store) { s.Get() }
+`
+	if err := os.WriteFile(filepath.Join(dir, "s.go"), []byte(code), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// collect из АБСОЛЮТНОГО пути.
+	abs := fingerprintSet(t, collectErrorClass(t, dir))
+
+	// collect из "." (cwd = то же дерево).
+	t.Chdir(dir)
+
+	dot := fingerprintSet(t, collectErrorClass(t, "."))
+
+	if len(abs) == 0 {
+		t.Fatal("ожидались нарушения в эталоне (иначе тест пуст)")
+	}
+
+	if len(abs) != len(dot) {
+		t.Fatalf("СТРАЖ №2 НАРУШЕН: |collect(абс)|=%d != |collect(.)|=%d", len(abs), len(dot))
+	}
+
+	for fp := range abs {
+		if !dot[fp] {
+			t.Fatalf("СТРАЖ №2 НАРУШЕН (t_root): fingerprint «%s» есть в collect(абс), нет в collect(.) — qname зависит от корня", fp)
+		}
+	}
+}
+
+// fingerprintSet — множество (Kind|Fingerprint) для сравнения наборов независимо от порядка.
+func fingerprintSet(t *testing.T, vs []Violation) map[string]bool {
+	t.Helper()
+
+	set := make(map[string]bool, len(vs))
+	for _, v := range vs {
+		set[v.Kind+"|"+Fingerprint(v)] = true
+	}
+
+	return set
+}
+
 func TestCanonical_Guard1_DeltaTreeWithSelfEmpty(t *testing.T) {
 	dir := t.TempDir()
 	code := `package sample

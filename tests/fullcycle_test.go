@@ -70,7 +70,7 @@ func TestFullCycle(t *testing.T) {
 		t.Fatalf("Failed to create builder: %v", err)
 	}
 
-	entryPoint := "testdata/sample.Calculator.Calculate"
+	entryPoint := "sample.Calculator.Calculate"
 
 	cg, err := builder.Build(entryPoint)
 	if err != nil {

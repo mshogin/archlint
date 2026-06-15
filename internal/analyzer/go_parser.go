@@ -19,6 +19,13 @@ type GoParser struct {
 	// pkgRefs — package-level function-value-use по пакетам (а)-фикс. Делится с
 	// builder через analyzer (go.go выставляет parser.pkgRefs = a.pkgRefs).
 	pkgRefs map[string][]CallInfo
+	// scanRoot — корень скана (аргумент Analyze). pkgID = путь пакета ОТНОСИТЕЛЬНО него
+	// (module-relative), ИНВАРИАНТНО способу передачи корня ("." vs абсолютный путь vs
+	// worktree). Канонизация qname В ИСТОЧНИКЕ (C1 = теорема конструкции): иначе getPkgID
+	// брал «последние 3 сегмента абс. пути» -> qname зависел от глубины/имени корня
+	// (worktree «main-tree/...» != «.») -> ложные NEW в дельте (корень класса «опорные
+	// точки сравнения разошлись»).
+	scanRoot string
 }
 
 // newGoParser создает новый парсер, работающий с переданными хранилищами данных.
@@ -49,7 +56,7 @@ func (p *GoParser) parseFile(filename string) error {
 
 	pkgName := node.Name.Name
 	pkgDir := filepath.Dir(filename)
-	pkgID := p.getPkgID(pkgDir)
+	pkgID := p.getPkgID(pkgDir, pkgName)
 
 	if _, exists := p.packages[pkgID]; !exists {
 		p.packages[pkgID] = &PackageInfo{
@@ -701,8 +708,22 @@ func (p *GoParser) getReceiverType(expr ast.Expr) string {
 	}
 }
 
-// getPkgID генерирует ID пакета из пути.
-func (p *GoParser) getPkgID(dir string) string {
+// getPkgID генерирует module-relative ID пакета (относительно корня скана) -> ИНВАРИАНТЕН
+// способу передачи корня ("." / абс. путь / worktree). Канонизация qname в источнике:
+// collect(из path-аргумента) и collect(из ".") дают ОДИН pkgID (страж t_root-инвариантности).
+func (p *GoParser) getPkgID(dir, pkgName string) string {
+	if p.scanRoot != "" {
+		if rel, err := filepath.Rel(p.scanRoot, dir); err == nil && !strings.HasPrefix(rel, "..") {
+			rel = filepath.ToSlash(filepath.Clean(rel))
+			if rel == "." {
+				return pkgName // корневой пакет скана -> Go-имя пакета (инвариантно, осмысленно; не "")
+			}
+
+			return rel
+		}
+	}
+
+	// Fallback (scanRoot не задан / dir вне корня): прежняя эвристика «последние 3 сегмента».
 	parts := strings.Split(filepath.Clean(dir), string(filepath.Separator))
 
 	if len(parts) > 3 {

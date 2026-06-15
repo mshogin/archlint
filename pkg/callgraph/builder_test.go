@@ -29,7 +29,7 @@ func TestBuilder_SimpleChain(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.transform")
+	cg, err := builder.Build("sample.transform")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -42,7 +42,7 @@ func TestBuilder_SimpleChain(t *testing.T) {
 		t.Errorf("expected at least 1 edge, got %d", cg.Stats.TotalEdges)
 	}
 
-	if cg.EntryPoint != "testdata/sample.transform" {
+	if cg.EntryPoint != "sample.transform" {
 		t.Errorf("expected entry point 'callgraph/testdata/sample.transform', got %q", cg.EntryPoint)
 	}
 }
@@ -55,7 +55,7 @@ func TestBuilder_MethodChain(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.Service.Process")
+	cg, err := builder.Build("sample.Service.Process")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestBuilder_CycleDetection(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.CycleA")
+	cg, err := builder.Build("sample.CycleA")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestBuilder_MaxDepth(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.transform")
+	cg, err := builder.Build("sample.transform")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestBuilder_GoroutineDetection(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.Service.Process")
+	cg, err := builder.Build("sample.Service.Process")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestBuilder_DeferredCall(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.Service.ProcessWithDefer")
+	cg, err := builder.Build("sample.Service.ProcessWithDefer")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestBuilder_EmptyFunction(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.EmptyFunc")
+	cg, err := builder.Build("sample.EmptyFunc")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -224,7 +224,7 @@ func TestBuilder_ForEvent(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.BuildForEvent("evt-1", "Test Event", "testdata/sample.EmptyFunc")
+	cg, err := builder.BuildForEvent("evt-1", "Test Event", "sample.EmptyFunc")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -275,7 +275,7 @@ func TestBuilder_BuiltinsNotExternal(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.FuncWithBuiltins")
+	cg, err := builder.Build("sample.FuncWithBuiltins")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -308,7 +308,7 @@ func TestBuilder_CycleWarning(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.CycleA")
+	cg, err := builder.Build("sample.CycleA")
 	if err != nil {
 		t.Fatalf("unexpected error building graph: %v", err)
 	}
@@ -340,7 +340,7 @@ func TestBuilder_NodeIDsUnique(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.Service.Process")
+	cg, err := builder.Build("sample.Service.Process")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -363,7 +363,7 @@ func TestBuilder_EdgeReferencesValid(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	cg, err := builder.Build("testdata/sample.Service.Process")
+	cg, err := builder.Build("sample.Service.Process")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

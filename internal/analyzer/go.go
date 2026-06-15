@@ -76,6 +76,7 @@ func (a *GoAnalyzer) WithExcludeDirs(dirs []string) *GoAnalyzer {
 func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 	parser := newGoParser(a.packages, a.types, a.functions, a.methods)
 	parser.pkgRefs = a.pkgRefs
+	parser.scanRoot = filepath.Clean(dir) // module-relative pkgID -> инвариантность корню (canonical qname)
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

@@ -34,10 +34,24 @@ SSOT канонизации идентичности нарушения, не б
    СТАТУС: ЗЕЛЁНЫЙ (TestCanonical_Guard1_DeltaTreeWithSelfEmpty) — на одном пути идентичность
    детерминирована.
 2. `collect(path-аргумент) == collect(".")` — t_root-инвариантность fingerprint.
-   СТАТУС: КРАСНЫЙ (эмпирика выше, корень №3). Требует module-relative pkgID.
+   СТАТУС: ЗЕЛЁНЫЙ (TestCanonical_Guard2_TRootInvariance, корень №3 закрыт — module-relative pkgID).
 3. discriminator = семантический якорь, не line:col/Message. СТАТУС: КРАСНЫЙ (корень №4).
 4. scan.go/gate.go слиты в один collect. СТАТУС: НЕ СДЕЛАНО (корень №2).
 5. единый active_metric_registry. СТАТУС: НЕ СДЕЛАНО.
+6. delta при НЕСВЯЗАННОМ СДВИГЕ СТРОК / переформулировке = ∅ (приёмка корня №4; ортогонален №1 —
+   №1 дельту-self ловит, fragility discriminator НЕТ). СТАТУС: КРАСНЫЙ (после корня №4).
+
+## Края module-relative (Сократ; не отменяют R, очерчивают границу)
+
+1. t_root-инвариантность держится ТОЛЬКО при ЕДИНОМ go-module (import path от go.mod, не от
+   файловой позиции). ЛОМАЕТСЯ: нет go.mod (GOPATH-legacy); nested go.mod/go.work. ПРЕДУСЛОВИЕ:
+   цель скана = единый go-module (для archlint-on-archlint и большинства репо ок). baseline и scan
+   ОБЯЗАНЫ резолвить ОДИН module-root. Для общего archlint на чужих nested-репо — отдельный резолв
+   module-root (backlog). Текущая реализация: rel от scanRoot (корень скана = предполагаемый module-root).
+2. R = НЕОБХОДИМАЯ часть C1 (t_root-ось qname), НЕ весь класс. Полная соундность = R + единый collect
+   (корень №2, t_path) + единый registry (корень №5, C2). R не заменяет слияние.
+3. Корневой пакет скана (rel=".") -> Go-package-name (инвариантно, осмысленно), НЕ "" (пустой ломал
+   metrics-агрегацию by package).
 
 ## Blast radius корневого фикса (эмпирически измерен)
 
@@ -46,22 +60,28 @@ build OK, но падают 7 пакетов (callgraph builder ×12, cli metric
 хардкодят node ID в формате «последние-3-сегмента». Изменение ID-схемы = МАССОВЫЙ golden
 rebaseline. Фикс ОТКАЧЕН (не применять вслепую — это продуктовое решение о rebaseline).
 
-## Развилка реализации (требует продуктового решения)
+## Решение: R (rebaseline) — выбран
 
-- Вариант R (rebaseline): применить module-relative pkgID (корневой, чистый фикс №3 в модели) +
-  пересоздать все golden/baseline-снимки. Стоимость: массовый rebaseline (7 пакетов тестов),
-  одноразовая. Выигрыш: страж №2 закрыт в модели, qname канонический навсегда.
-- Вариант W (canonical-обёртка): не трогать node-ID-схему; нормализовать qname к module-relative
-  ТОЛЬКО в canonical_fingerprint-слое (collect принимает scanRoot, strip префикса до module-root).
-  Стоимость: canonical-слой + scanRoot проброс. Выигрыш: golden целы; риск — постфактум-strip
-  префикса требует знания module-root (эвристика), менее чист чем R.
+R сильнее W: qname канонична В ИСТОЧНИКЕ (модель) -> C1 (одна канонизация) = ТЕОРЕМА КОНСТРУКЦИИ
+(нельзя собрать в обход). W (обёртка-strip) порождает ДВА представления qname (модельный +
+canonical-strip эвристикой) -> C1 держится дисциплиной «идти через обёртку», не конструкцией +
+дубль-представление (то, с чем archlint борется). Цена R (golden-rebaseline) одноразовая.
 
-Discriminator №4 (Message -> структурный якорь) в любом варианте требует расширения Violation
-структурными полями (members/from/to) + перевод детекторов — средний рефактор, независим от R/W.
+## КОРЕНЬ №3 — ВЫПОЛНЕН (R-rebaseline)
 
-## Что сделано в этом инкременте (безопасно, обратимо)
+- module-relative pkgID в модели: `getPkgID` = `filepath.Rel(scanRoot, dir)`; корневой пакет ->
+  Go-package-name (не "", инвариантно). go.go: `parser.scanRoot = Clean(dir)`.
+- Rebaseline golden-diff = СТРОГО qname-формат (verified, ноль изменений набора/severity):
+  - callgraph builder_test.go: 15 entry «testdata/sample.X» -> «sample.X» (pkgID от scanRoot=testdata/sample).
+  - tests/fullcycle_test.go: entry «testdata/sample.Calculator.Calculate» -> «sample.Calculator.Calculate».
+  - cli metrics: краевой случай пустого pkgID корневого пакета закрыт (Go-package-name).
+- Стражи №1, №2 ЗЕЛЁНЫЕ (TestCanonical_Guard1/Guard2). Все тесты зелёные, кроме e2e (предсуществующий
+  cwd-артефакт монорепо «cannot find main module», 12 шт — НЕ связан с этим фиксом).
 
-- Страж №1 как регрессионный тест (зелёный).
-- Эмпирическое доказательство страж №2 (красный) + локализация корня (getPkgID).
-- Измерен blast radius фикса №3 (7 пакетов) -> развилка R/W вынесена на решение.
-- Корневой фикс НЕ применён вслепую (массовый rebaseline = продуктовое решение).
+## Остаток SSOT (следующие коммиты по корням)
+
+- корень №4: discriminator Message -> СЕМАНТИЧЕСКИЙ якорь (расширить Violation структурным полем для
+  circular/layer/forbidden/deprecated/layer-backedge) -> стражи №3 + №6 (delta при сдвиге строк = ∅).
+- корень №2: единый collect (слить scan.go + cli/gate.go errorClassViolations) -> страж №4.
+- корень №5: единый active_metric_registry (C2 по конструкции).
+Приёмка SSOT = 6 стражей зелёные + golden-rebaseline diff verified (только qname-схема).
