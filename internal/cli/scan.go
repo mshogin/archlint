@@ -89,6 +89,73 @@ type scanGateResult struct {
 	// геодезические) под --signals (research/slow). Сигналы/наблюдаемость, НИКОГДА
 	// ERROR. Поля внутри nil, если метрика пропущена (мало узлов / граф > 200).
 	ResearchSignals *mcp.ResearchDescriptors `json:"researchSignals,omitempty"`
+	// MultiModule — АБСТЕЙН при nested go-module (>1 go.mod / go.work): просканирован только
+	// КОРНЕВОЙ модуль -> результат НЕПОЛОН. nil = единый модуль (полный скан). Защита от
+	// ложно-зелёного на monorepo/go.work (молча 0 = active deception, хуже шума).
+	MultiModule *multiModuleInfo `json:"multi_module,omitempty"`
+}
+
+// multiModuleInfo — факт nested go-module и предупреждение о неполноте скана.
+type multiModuleInfo struct {
+	Detected   bool   `json:"detected"`
+	GoModCount int    `json:"go_mod_count"`
+	HasGoWork  bool   `json:"has_go_work"`
+	Warning    string `json:"warning"`
+}
+
+// detectMultiModule считает go.mod в дереве + наличие go.work. nil -> единый модуль (или нет
+// go.mod вовсе). Предусловие SSOT (module-relative pkgID, getPkgID scanRoot) = ЕДИНЫЙ go-module;
+// nested ломает резолв ТИХО (agents-platform: 20 go.mod -> молча 0). Возвращаем явный абстейн.
+func detectMultiModule(dir string, excludes []string) *multiModuleInfo {
+	count := 0
+	hasWork := false
+
+	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil //nolint:nilerr // best-effort обход; ошибки путей не должны валить детект
+		}
+
+		if info.IsDir() {
+			n := info.Name()
+			// Пропускаем НЕ-боевые go.mod: vendor/build-арт + ФИКСТУРНЫЕ конвенции (testdata —
+			// Go-стандарт, инструменты игнорируют; demo/examples — примеры, не боевой код) + excludes.
+			// Иначе ложный абстейн на репо со своими demo/testdata (archlint self: root+demo+testdata).
+			// Реальный monorepo (agents-platform: data/workdir worktree-копии) под эти имена не попадает.
+			if n == "vendor" || n == "node_modules" || n == ".git" || n == "bin" ||
+				n == "testdata" || n == "demo" || n == "examples" || analyzer.MatchesExclude(n, excludes) {
+				return filepath.SkipDir
+			}
+
+			return nil
+		}
+
+		switch info.Name() {
+		case "go.mod":
+			count++
+		case "go.work":
+			hasWork = true
+		}
+
+		return nil
+	})
+
+	if count <= 1 && !hasWork {
+		return nil
+	}
+
+	workNote := ""
+	if hasWork {
+		workNote = " + go.work"
+	}
+
+	return &multiModuleInfo{
+		Detected:   true,
+		GoModCount: count,
+		HasGoWork:  hasWork,
+		Warning: fmt.Sprintf("multi-module repo: %d go.mod%s. archlint просканировал ТОЛЬКО корневой модуль — "+
+			"результат НЕПОЛОН, НЕ полагайся на него как на полный скан (nested/go.work per-module скан пока не поддержан).",
+			count, workNote),
+	}
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -98,6 +165,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	var graph *model.Graph
 	var a *analyzer.GoAnalyzer
+	var multiModule *multiModuleInfo // != nil -> nested go-module, скан НЕПОЛОН (абстейн)
 	var baselineDir string // каталог для дефолтного пути baseline (пусто в stdin-режиме)
 
 	if scanStdin {
@@ -175,6 +243,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 				os.Exit(2)
 			}
 			graph = g
+
+			// nested go-module АБСТЕЙН: SSOT module-relative pkgID предполагает ЕДИНЫЙ модуль;
+			// >1 go.mod / go.work ломает резолв ТИХО -> ложно-зелёный (молча 0). Явный сигнал.
+			if multiModule = detectMultiModule(codeDir, excludes); multiModule != nil {
+				fmt.Fprintf(os.Stderr, "WARNING [multi-module]: %s\n", multiModule.Warning)
+			}
 		}
 	}
 
@@ -376,6 +450,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			ArchmotifSignals: archmotifSignals,
 			ContextSignals:   contextSignals,
 			ResearchSignals:  researchSignals,
+			MultiModule:      multiModule,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -452,8 +527,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Printf("signals (audit): nodes=%d edges=%d density=%.4f maxKCore=%d godClass=%d shotgun=%d (use --format json for full)\n",
 				signals.NodeCount, signals.EdgeCount, signals.Density, signals.MaxKCore, signals.GodClass, signals.ShotgunSurgery)
 		}
+
+		if multiModule != nil {
+			fmt.Printf("\n⚠ ABSTAIN [multi-module]: %s\n", multiModule.Warning)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown format: %s (use text or json)\n", scanFormat)
+		os.Exit(2)
+	}
+
+	// nested go-module: скан НЕПОЛОН -> exit-код сигнализирует НЕ-полный (приоритет над passed/!passed,
+	// чтобы CI/пользователь не принял неполный скан за «чисто»). Урок ложно-зелёного: не молча 0.
+	if multiModule != nil {
 		os.Exit(2)
 	}
 
