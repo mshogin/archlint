@@ -33,11 +33,13 @@ import (
 // ERROR. Критерий проверки соундности = 0 false-ERROR-fire, поэтому числитель здесь
 // сознательно консервативен на ERROR-стороне.
 //
-// SEVERITY: Kind'ы НЕ зарегистрированы в severity_class как ERROR до прохождения
-// проверки соундности (self-прогон 0 false-fire). До промоции оба — не блокирующие.
+// SEVERITY: isp-usage-subset ПРОМОТИРОВАН в severity_class=ERROR после self-прогона
+// соундности (2026-06-15: archlint scan на собственном коде -> 9 валидных срабатываний
+// на своём интерфейсе StateReader, 0 false-fire; разметка docs/golden-expectation.yaml
+// id:isp verified). isp-external-narrow НЕ регистрируется -> остаётся WARNING (чужой контракт).
 const (
 	// KindISPUsageSubset — СВОЙ интерфейс, узкий клиент, не форвард, не контракт.
-	// ERROR-кандидат (промоция в severity_class — после проверки соундности).
+	// ERROR (промотирован в severity_class после self-проверки соундности).
 	KindISPUsageSubset = "isp-usage-subset"
 	// KindISPExternalNarrow — ВНЕШНИЙ интерфейс (io.* и пр.), узкое использование.
 	// Всегда WARNING (чужой контракт), никогда не ERROR.

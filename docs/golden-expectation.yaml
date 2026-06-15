@@ -25,7 +25,7 @@ principles:
 
   - id: isp
     metric: isp-usage-subset
-    status: planned           # активируется в Фазе 3 (Go-порт)
+    status: implemented        # Go-порт internal/mcp/isp.go; промотирован в ERROR после self-прогона (0 false-fire)
     metric_input_required: "ЧИСЛИТЕЛЬ — calls привязан к методу
       интерфейса по СТАТИЧЕСКОМУ типу receiver (i.Foo() где i типа I -> calls(C->I.Foo)).
       Статический тип объявления, НЕ value-flow. Знаменатель(contains)+coupling(usesType) готовы."
@@ -43,6 +43,16 @@ principles:
     whitelist_rules:
       - "широкие ВНЕШНИЕ интерфейсы (io.*, stdlib, сторонние) при узком использовании — WARNING (не ERROR)"
       - "СВОИ широкие интерфейсы при узком клиенте, i не форвардится — ERROR (реальный запах, сужаем)"
+    verified:
+      status: pass            # self-прогон 2026-06-15: archlint scan на собственном коде
+      false_fire: 0           # критерий промотации выполнен
+      findings: 9             # все isp-usage-subset на своём интерфейсе StateReader (4 метода)
+      evidence:
+        - "9 срабатываний — узкие клиенты-функции handleX(state StateReader), используют 1..3 из 4 методов"
+        - "каждое: строгое подмножество + state НЕ форвардится (guard1 чист) + клиент-функция (guard2 n/a) + свой интерфейс — валидный ERROR, не false-fire"
+        - "конфаунды молчат: внешних io.* срабатываний нет; ни одного no-verdict ложно-промотированного"
+      on_fire: real-defect     # срабатывание на self = реальный широкий интерфейс -> сужать клиента (не резать метрику)
+      on_divergence: fail-fast # факт != expected -> ручной разбор (самозванец vs дефект)
 
   - id: dip
     metric: dip-abstraction-to-detail
