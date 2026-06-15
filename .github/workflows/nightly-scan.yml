@@ -17,8 +17,6 @@ jobs:
         with:
           go-version: '1.26'
 
-      - uses: dtolnay/rust-toolchain@stable
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -28,7 +26,6 @@ jobs:
           pip install networkx pyyaml numpy scipy
           pip install -e .
           go build -o bin/archlint ./cmd/archlint/
-          cd archlint-rs && cargo build --release && cd ..
 
       - name: Read monitored repos and scan
         run: |
@@ -59,9 +56,9 @@ jobs:
                   print(f'  SKIP: clone failed - {clone.stderr.strip()}')
                   continue
 
-              # Collect architecture
+              # Collect architecture (Go-ядро; Rust-бинарь заморожен и из боевого пути убран)
               collect = subprocess.run(
-                  ['./archlint-rs/target/release/archlint', 'collect', f'/tmp/{name}'],
+                  ['./bin/archlint', 'collect', f'/tmp/{name}', '-o', f'/tmp/{name}/architecture.yaml'],
                   capture_output=True, text=True
               )
               if collect.returncode != 0:
