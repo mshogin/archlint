@@ -178,41 +178,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Structural violations (coupling, cycles) — config-aware.
-	violations := mcp.DetectAllViolationsWithConfig(graph, &cfg)
-
-	// Forbidden dependencies (ERROR, closed-world relative to declared config).
-	// Inactive when no forbidden rules are configured.
-	violations = append(violations, mcp.ForbiddenDependencies(graph, &cfg)...)
-
-	// Deprecated usage (ERROR, closed-world relative to explicit deprecated markers).
-	// Inactive when no deprecated patterns/attributes are present.
-	violations = append(violations, mcp.DeprecatedUsage(graph, &cfg)...)
-
-	// Layer back-edges against declared layer order (ERROR level B).
-	// Inactive when no layers are configured.
-	violations = append(violations, mcp.LayerBackedge(graph, &cfg)...)
-
-	// Ghost components: declared in a context but absent from the graph (ERROR,
-	// closed-world relative to declared contexts). Inactive without contexts.
-	violations = append(violations, mcp.GhostComponents(graph, &cfg)...)
-
-	// NB: soundness candidates (articulation/bridge/stability) are NOT gate violations —
-	// the soundness check demoted all three to signals (DIP-class confound). They are
-	// surfaced under --signals via ComputeDescriptors, never in severity_class/ the gate.
-
-	// Dead-code (ERROR-class, open-world) — Go-граф only. Участвует в дельта-гейте:
-	// НОВЫЙ мёртвый узел vs baseline = регрессия (блок + удаление human-in-loop).
-	if a != nil {
-		violations = append(violations, mcp.DeadCode(graph, cfg.EntryPoints)...)
-	}
-
-	// ISP usage-subset — клиент-центричный «жирный интерфейс» (узкое
-	// использование param-интерфейса + 2 guard'а). НЕ блокирующий до прохождения
-	// проверки соундности: Kind'ы не в severity_class как ERROR -> аудит-уровень.
-	if a != nil && cfg.Rules.ISP.IsEnabled() {
-		violations = append(violations, mcp.ComputeISPUsageSubset(graph, a)...)
-	}
+	// ЕДИНЫЙ сборщик ERROR-class нарушений (SSOT, корни №2/№5): structural (coupling, cycles) +
+	// forbidden + deprecated + layer-backedge + ghost + dead-code + ISP — из active_metric_registry.
+	// Тот же набор использует baseline (cli/gate.go errorClassViolations) -> симметрия baseline<->scan
+	// по конструкции. NB: soundness-кандидаты (articulation/bridge/stability) НЕ в гейте — они signals.
+	violations := mcp.CollectErrorClassViolations(graph, a, &cfg)
 
 	// structural-clone (DRY) — точная изоморфная копипаста фрагментов >= cloneMinSize.
 	// WARNING-сигнал (не в severity_class -> не блок); Тир1 (хеш-fingerprint O(n log n)).

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mshogin/archlint/internal/analyzer"
+	"github.com/mshogin/archlint/internal/archlintcfg"
 )
 
 // СТРАЖ №1 канонизации fingerprint (главный): дельта дерева С СОБОЙ пуста.
@@ -118,6 +119,56 @@ func fingerprintSet(t *testing.T, vs []Violation) map[string]bool {
 	}
 
 	return set
+}
+
+// СТРАЖ №4/№5 (единый collect + единый registry): набор ERROR-class детекторов берётся из
+// ОДНОГО реестра (active_metric_registry) через ОДИН сборщик (CollectErrorClassViolations),
+// который вызывают и baseline (gate.go), и scan. Реестр непуст; collect детерминирован
+// (два вызова на одном графе -> идентичный fingerprint-набор -> симметрия baseline<->scan).
+func TestCanonical_Guard45_SingleCollectRegistry(t *testing.T) {
+	dir := t.TempDir()
+	code := `package sample
+
+type Repo interface {
+	Find() int
+	Save(x int)
+}
+
+func use(r Repo) { r.Find() }
+`
+	if err := os.WriteFile(filepath.Join(dir, "r.go"), []byte(code), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	a := analyzer.NewGoAnalyzer()
+	g, err := a.Analyze(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := archlintcfg.Default()
+
+	// Два независимых вызова единого сборщика -> идентичный fingerprint-набор (детерминизм registry).
+	s1 := fingerprintSet(t, CollectErrorClassViolations(g, a, &cfg))
+	s2 := fingerprintSet(t, CollectErrorClassViolations(g, a, &cfg))
+
+	if len(s1) != len(s2) {
+		t.Fatalf("СТРАЖ №4/№5: единый collect недетерминирован (%d != %d)", len(s1), len(s2))
+	}
+
+	for fp := range s1 {
+		if !s2[fp] {
+			t.Fatalf("СТРАЖ №4/№5: единый collect недетерминирован — fingerprint «%s» нестабилен", fp)
+		}
+	}
+
+	// delta(collect, baseline(collect)) = ∅ через ЕДИНЫЙ источник (симметрия baseline<->scan).
+	base := BuildBaseline(CollectErrorClassViolations(g, a, &cfg))
+	d := Delta(CollectErrorClassViolations(g, a, &cfg), base)
+
+	if len(d.New) != 0 {
+		t.Fatalf("СТРАЖ №4/№5: единый collect не даёт симметрию baseline<->scan (%d ложных NEW)", len(d.New))
+	}
 }
 
 func TestCanonical_Guard1_DeltaTreeWithSelfEmpty(t *testing.T) {
