@@ -89,13 +89,28 @@ type scanGateResult struct {
 	// геодезические) под --signals (research/slow). Сигналы/наблюдаемость, НИКОГДА
 	// ERROR. Поля внутри nil, если метрика пропущена (мало узлов / граф > 200).
 	ResearchSignals *mcp.ResearchDescriptors `json:"researchSignals,omitempty"`
-	// MultiModule — АБСТЕЙН при nested go-module (>1 go.mod / go.work): просканирован только
-	// КОРНЕВОЙ модуль -> результат НЕПОЛОН. nil = единый модуль (полный скан). Защита от
-	// ложно-зелёного на monorepo/go.work (молча 0 = active deception, хуже шума).
+	// MultiModule — ИНФО-сигнал per-module скана (репо monorepo просканирован помодульно).
+	// nil = single-module. Detected=true -> результат ПОЛОН (агрегат по всем модулям), не абстейн.
 	MultiModule *multiModuleInfo `json:"multi_module,omitempty"`
+	// Modules — per-module разбивка (только в multi-module агрегате; nil в single). Каждый модуль
+	// со своим scanRoot/baseline; верхний уровень (Violations/Blocking/Categories) — агрегат-сумма,
+	// Passed — AND по модулям (worst). omitempty -> single-module JSON не несёт.
+	Modules []moduleScanResult `json:"modules,omitempty"`
 }
 
-// multiModuleInfo — факт nested go-module и предупреждение о неполноте скана.
+// moduleScanResult — результат скана ОДНОГО модуля monorepo (свой scanRoot/baseline).
+type moduleScanResult struct {
+	Module     string          `json:"module"` // путь модуля относительно корня скана (корневой = ".")
+	Passed     bool            `json:"passed"`
+	Violations int             `json:"violations"`
+	Blocking   int             `json:"blocking"`
+	Categories map[string]int  `json:"categories"`
+	Baseline   string          `json:"baseline,omitempty"`
+	Details    []mcp.Violation `json:"details"`
+}
+
+// multiModuleInfo — ИНФО-сигнал per-module скана (репо просканирован помодульно, НЕ абстейн).
+// Detected=true + GoModCount: monorepo обработан полностью, каждый модуль — отдельно.
 type multiModuleInfo struct {
 	Detected   bool   `json:"detected"`
 	GoModCount int    `json:"go_mod_count"`
@@ -105,14 +120,14 @@ type multiModuleInfo struct {
 
 // isSkippedModuleDir — каталог НЕ несёт боевой go-модуль: build-арт (vendor/node_modules/.git/bin)
 // + ФИКСТУРНЫЕ конвенции (testdata — Go-стандарт, инструменты игнорируют; demo/examples — примеры,
-// не боевой код) + пользовательские excludes. ЕДИНЫЙ критерий для detectMultiModule (счёт) и
-// enumerateModules (перечень) -> симметрия: что НЕ считаем модулем, то и НЕ сканируем per-module.
+// не боевой код) + пользовательские excludes. ЕДИНЫЙ критерий перечня модулей -> симметрия: что
+// НЕ считаем модулем, то и НЕ сканируем per-module.
 func isSkippedModuleDir(name string, excludes []string) bool {
 	return name == "vendor" || name == "node_modules" || name == ".git" || name == "bin" ||
 		name == "testdata" || name == "demo" || name == "examples" || analyzer.MatchesExclude(name, excludes)
 }
 
-// enumerateModules возвращает каталоги боевых go.mod (тот же skip-критерий, что detectMultiModule).
+// enumerateModules возвращает каталоги боевых go.mod (skip-критерий isSkippedModuleDir).
 // Каждый каталог -> отдельный scanRoot для per-module скана (module-relative qname внутри модуля,
 // t_root-инвариантность per-module). Порядок детерминирован (sort) -> стабильный объединённый вывод.
 // single-module репо -> [каталог с go.mod]; нет go.mod вовсе -> [] (caller-фолбэк на dir as-is).
@@ -144,56 +159,6 @@ func enumerateModules(dir string, excludes []string) []string {
 	return mods
 }
 
-// detectMultiModule считает go.mod в дереве + наличие go.work. nil -> единый модуль (или нет
-// go.mod вовсе). Предусловие SSOT (module-relative pkgID, getPkgID scanRoot) = ЕДИНЫЙ go-module;
-// nested ломает резолв ТИХО (agents-platform: 20 go.mod -> молча 0). С per-module сканом —
-// сигнал «репо multi-module», а не абстейн (runScan сканирует каждый модуль отдельно).
-func detectMultiModule(dir string, excludes []string) *multiModuleInfo {
-	count := 0
-	hasWork := false
-
-	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil //nolint:nilerr // best-effort обход; ошибки путей не должны валить детект
-		}
-
-		if info.IsDir() {
-			if isSkippedModuleDir(info.Name(), excludes) {
-				return filepath.SkipDir
-			}
-
-			return nil
-		}
-
-		switch info.Name() {
-		case "go.mod":
-			count++
-		case "go.work":
-			hasWork = true
-		}
-
-		return nil
-	})
-
-	if count <= 1 && !hasWork {
-		return nil
-	}
-
-	workNote := ""
-	if hasWork {
-		workNote = " + go.work"
-	}
-
-	return &multiModuleInfo{
-		Detected:   true,
-		GoModCount: count,
-		HasGoWork:  hasWork,
-		Warning: fmt.Sprintf("multi-module repo: %d go.mod%s. archlint просканировал ТОЛЬКО корневой модуль — "+
-			"результат НЕПОЛОН, НЕ полагайся на него как на полный скан (nested/go.work per-module скан пока не поддержан).",
-			count, workNote),
-	}
-}
-
 func runScan(cmd *cobra.Command, args []string) error {
 	// Load .archlint.yaml config.
 	var cfg archlintcfg.Config
@@ -201,7 +166,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	var graph *model.Graph
 	var a *analyzer.GoAnalyzer
-	var multiModule *multiModuleInfo // != nil -> nested go-module, скан НЕПОЛОН (абстейн)
 	var baselineDir string // каталог для дефолтного пути baseline (пусто в stdin-режиме)
 
 	if scanStdin {
@@ -272,6 +236,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 			}
 			graph = g
 		} else {
+			// Multi-module (monorepo / go.work): >1 боевой go.mod -> СКАНИРУЕМ КАЖДЫЙ модуль
+			// отдельно (свой scanRoot -> module-relative qname, t_root-инвариантность per-module,
+			// per-module baseline). Заменяет прежний абстейн (молча неполный скан) полным сканом.
+			if mods := enumerateModules(codeDir, excludes); len(mods) > 1 {
+				return runScanPerModule(codeDir, mods, excludes, &cfg, configFile)
+			}
+
 			a = analyzer.NewGoAnalyzer().WithExcludeDirs(excludes)
 			g, err := a.Analyze(codeDir)
 			if err != nil {
@@ -279,12 +250,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 				os.Exit(2)
 			}
 			graph = g
-
-			// nested go-module АБСТЕЙН: SSOT module-relative pkgID предполагает ЕДИНЫЙ модуль;
-			// >1 go.mod / go.work ломает резолв ТИХО -> ложно-зелёный (молча 0). Явный сигнал.
-			if multiModule = detectMultiModule(codeDir, excludes); multiModule != nil {
-				fmt.Fprintf(os.Stderr, "WARNING [multi-module]: %s\n", multiModule.Warning)
-			}
 		}
 	}
 
@@ -316,24 +281,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		threshold = 0
 	}
 
-	isErrorClass := func(kind string) bool {
-		c, ok := mcp.ClassOf(kind)
-		return ok && c.Class == "ERROR"
-	}
-
-	blocking := 0      // НОВЫЕ ERROR-class паттерны (регрессия) -> блок
-	nonErrorCount := 0 // не-ERROR нарушения -> подлежат threshold-гейту
-	for _, v := range violations {
-		if mcp.EffectiveLevel(v, &cfg, baseline) == archlintcfg.LevelTaboo {
-			blocking++
-		}
-		if !isErrorClass(v.Kind) {
-			nonErrorCount++
-		}
-	}
-
-	countPassed := nonErrorCount <= threshold
-	passed := countPassed && blocking == 0
+	blocking, _, passed := gateViolations(violations, &cfg, baseline, threshold)
 
 	total := len(violations)
 
@@ -395,7 +343,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 			ArchmotifSignals: archmotifSignals,
 			ContextSignals:   contextSignals,
 			ResearchSignals:  researchSignals,
-			MultiModule:      multiModule,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
@@ -472,18 +419,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Printf("signals (audit): nodes=%d edges=%d density=%.4f maxKCore=%d godClass=%d shotgun=%d (use --format json for full)\n",
 				signals.NodeCount, signals.EdgeCount, signals.Density, signals.MaxKCore, signals.GodClass, signals.ShotgunSurgery)
 		}
-
-		if multiModule != nil {
-			fmt.Printf("\n⚠ ABSTAIN [multi-module]: %s\n", multiModule.Warning)
-		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown format: %s (use text or json)\n", scanFormat)
-		os.Exit(2)
-	}
-
-	// nested go-module: скан НЕПОЛОН -> exit-код сигнализирует НЕ-полный (приоритет над passed/!passed,
-	// чтобы CI/пользователь не принял неполный скан за «чисто»). Урок ложно-зелёного: не молча 0.
-	if multiModule != nil {
 		os.Exit(2)
 	}
 
@@ -583,4 +520,172 @@ func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintc
 	})
 
 	return violations
+}
+
+// collectGoModuleViolations анализирует ОДИН go-модуль (свой scanRoot=moduleDir -> module-relative
+// qname, t_root-инвариантность per-module) и собирает все его нарушения тем же collectFromGraph,
+// что single. Каждый модуль получает СВЕЖИЙ analyzer (без переноса state между модулями monorepo).
+func collectGoModuleViolations(moduleDir string, excludes []string, cfg *archlintcfg.Config) ([]mcp.Violation, error) {
+	a := analyzer.NewGoAnalyzer().WithExcludeDirs(excludes)
+	g, err := a.Analyze(moduleDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return collectFromGraph(g, a, cfg), nil
+}
+
+// gateViolations — ЕДИНЫЙ гейт-расчёт (SSOT): blocking = НОВЫЕ ERROR-class паттерны vs baseline
+// (Taboo); nonErrorCount = магнитуды/WARNING под threshold-гейтом; passed = нет блока И count<=порог.
+// Один код для single (runScan) и per-module (агрегат) -> гейт-семантика не расходится между путями.
+func gateViolations(violations []mcp.Violation, cfg *archlintcfg.Config, baseline *mcp.Baseline, threshold int) (blocking, nonErrorCount int, passed bool) {
+	isErrorClass := func(kind string) bool {
+		c, ok := mcp.ClassOf(kind)
+		return ok && c.Class == "ERROR"
+	}
+
+	for _, v := range violations {
+		if mcp.EffectiveLevel(v, cfg, baseline) == archlintcfg.LevelTaboo {
+			blocking++
+		}
+		if !isErrorClass(v.Kind) {
+			nonErrorCount++
+		}
+	}
+
+	return blocking, nonErrorCount, nonErrorCount <= threshold && blocking == 0
+}
+
+// runScanPerModule сканирует monorepo ПОМОДУЛЬНО: каждый go.mod-каталог отдельно (свой scanRoot ->
+// module-relative qname; СВОЙ baseline <module>/.archlint-baseline.json -> delta per-module, не
+// смешиваем модули). Заменяет прежний абстейн полным сканом. Агрегат: violations/blocking — сумма,
+// passed — AND (worst), exit — worst (любой !passed -> exit 1). Вывод — секции с module-префиксом.
+func runScanPerModule(codeDir string, mods []string, excludes []string, cfg *archlintcfg.Config, configFile string) error {
+	threshold := scanThreshold
+	if threshold < 0 {
+		threshold = 0
+	}
+
+	results := make([]moduleScanResult, 0, len(mods))
+	allPassed := true
+	totalViolations := 0
+	totalBlocking := 0
+	aggCategories := make(map[string]int)
+
+	for _, moduleDir := range mods {
+		rel, err := filepath.Rel(codeDir, moduleDir)
+		if err != nil || rel == "" {
+			rel = moduleDir
+		}
+
+		violations, err := collectGoModuleViolations(moduleDir, excludes, cfg)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "analysis error [module %s]: %v\n", rel, err)
+			os.Exit(2)
+		}
+
+		// Baseline — СТРОГО per-module (свой файл в каталоге модуля). Глобальный --baseline на
+		// monorepo не применяется: один файл не описывает несколько модулей с разными scanRoot.
+		baselinePath := filepath.Join(moduleDir, defaultBaselineName)
+		var baseline *mcp.Baseline
+		if b, err := loadBaseline(baselinePath); err != nil {
+			fmt.Fprintf(os.Stderr, "error [module %s]: %v\n", rel, err)
+			os.Exit(2)
+		} else {
+			baseline = b
+		}
+
+		loadedBaseline := ""
+		if baseline != nil {
+			loadedBaseline = baselinePath
+		}
+
+		blocking, _, passed := gateViolations(violations, cfg, baseline, threshold)
+
+		categories := make(map[string]int)
+		for _, v := range violations {
+			categories[v.Kind]++
+			aggCategories[v.Kind]++
+		}
+
+		results = append(results, moduleScanResult{
+			Module:     rel,
+			Passed:     passed,
+			Violations: len(violations),
+			Blocking:   blocking,
+			Categories: categories,
+			Baseline:   loadedBaseline,
+			Details:    violations,
+		})
+
+		totalViolations += len(violations)
+		totalBlocking += blocking
+		allPassed = allPassed && passed
+	}
+
+	info := &multiModuleInfo{
+		Detected:   true,
+		GoModCount: len(mods),
+		Warning:    fmt.Sprintf("multi-module repo: %d modules scanned per-module (each own scanRoot/baseline).", len(mods)),
+	}
+
+	printPerModule(results, aggCategories, info, threshold, totalViolations, totalBlocking, allPassed, configFile)
+
+	if !allPassed {
+		os.Exit(1)
+	}
+
+	return nil
+}
+
+// printPerModule печатает агрегат monorepo: JSON (modules[] + верхнеуровневая сумма/AND) либо текст
+// (секция на модуль с префиксом + сводка). Верхнеуровневые categories — сумма по kind (health их
+// потребляет по kind без изменений). Module-префикс отделяет нарушения разных модулей в выводе.
+func printPerModule(results []moduleScanResult, aggCategories map[string]int, info *multiModuleInfo, threshold, totalViolations, totalBlocking int, allPassed bool, configFile string) {
+	switch scanFormat {
+	case "json":
+		result := scanGateResult{
+			Passed:      allPassed,
+			Violations:  totalViolations,
+			Threshold:   threshold,
+			Blocking:    totalBlocking,
+			Categories:  aggCategories,
+			ConfigFile:  configFile,
+			MultiModule: info,
+			Modules:     results,
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(result); err != nil {
+			fmt.Fprintf(os.Stderr, "JSON encoding error: %v\n", err)
+			os.Exit(2)
+		}
+	case "text":
+		if configFile != "" {
+			fmt.Printf("config: %s\n", configFile)
+		}
+		fmt.Printf("multi-module: %d modules scanned per-module\n\n", info.GoModCount)
+
+		for _, r := range results {
+			status := "PASSED"
+			if !r.Passed {
+				status = "FAILED"
+			}
+			fmt.Printf("=== module: %s === %s: %d violations (blocking: %d)\n", r.Module, status, r.Violations, r.Blocking)
+			for _, v := range r.Details {
+				fmt.Printf("  [%s/%s] %s\n", r.Module, v.Kind, v.Message)
+			}
+			fmt.Println()
+		}
+
+		status := "PASSED"
+		if !allPassed {
+			status = "FAILED"
+		}
+		fmt.Printf("SUMMARY: %s — %d violations across %d modules (blocking: %d, threshold: %d)\n",
+			status, totalViolations, info.GoModCount, totalBlocking, threshold)
+	default:
+		fmt.Fprintf(os.Stderr, "unknown format: %s (use text or json)\n", scanFormat)
+		os.Exit(2)
+	}
 }
