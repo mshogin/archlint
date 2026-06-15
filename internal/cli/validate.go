@@ -1,15 +1,11 @@
 package cli
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/mshogin/archlint/internal/archlintcfg"
 	"github.com/mshogin/archlint/internal/mcp"
@@ -79,37 +75,24 @@ type GraphExportViolation struct {
 
 var validateCmd = &cobra.Command{
 	Use:   "validate [directory|architecture.yaml]",
-	Short: "Validate architecture via the built-in Go engine (--python = DEPRECATED research/museum)",
-	Long: `Validate an architecture graph with the built-in Go rule engine (default).
+	Short: "Validate architecture via the built-in Go engine (--python выпилен из бинаря)",
+	Long: `Validate an architecture graph with the built-in Go rule engine.
 
 The production/boevoy path is the native Go detectors (see 'archlint scan'):
 SCC/cycles, dead-code, ISP, layering — soundness-gated, used in the agent loop
-and CI gate. This command's default (no --python) runs that Go engine.
+and CI gate. This command runs that Go engine.
 
-DEPRECATED: --python runs the Python validator (validator/, Tier-3 museum per
-ADR-0002). Research/museum only — manual run, NOT in the boevoy gate. Its
-structural, provable metrics are being ported to Go; magnitude/experimental
-metrics stay in the museum. Prefer 'archlint scan' for gating.
+--python ВЫПИЛЕН из бинаря (0 Python в боевом пути). Структурные/доказуемые метрики
+портированы в Go; флаг --python теперь возвращает ошибку с указанием на боевой Go-движок.
+validator/ остаётся deprecated-музеем (research/математика), бинарь его НЕ вызывает.
 
 If input is a directory, first runs archlint collect to generate architecture.yaml,
-then runs the selected engine on it. If input is a .yaml file, runs directly on it.
-
-Validator groups (--group, apply to the --python museum only):
-  core         - DAG, cycles, fan-out, coupling, hub nodes
-  solid        - SOLID principles (SRP, OCP, LSP, ISP, DIP)
-  patterns     - Design smells (god class, shotgun surgery, ...)
-  architecture - Clean architecture, domain isolation, ports & adapters
-  quality      - Security, observability, testability
-  advanced     - Graph centrality, pagerank, modularity (opt-in)
-  research     - 142 math metrics: topology, spectral, information theory (opt-in)
+then runs the Go engine on it. If input is a .yaml file, runs directly on it.
 
 Examples:
   archlint validate .
   archlint validate architecture.yaml
-  archlint validate . --python --group solid
-  archlint validate architecture.yaml --python --group research
-  archlint validate . --python --format json
-  archlint-rs collect . && archlint validate architecture.yaml --python`,
+  archlint scan .                 # боевой дельта-гейт (рекомендуется)`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runValidate,
 }
@@ -118,8 +101,8 @@ func init() {
 	validateCmd.Flags().StringVar(&validateGraphFile, "graph", "", "Path to YAML graph file (use - for stdin); legacy flag, prefer positional arg")
 	validateCmd.Flags().StringVar(&validateFormat, "format", "text", "Output format: text, json, or yaml")
 	validateCmd.Flags().StringVar(&validateConfigFile, "config", "", "Path to .archlint.yaml config file (default: ./.archlint.yaml)")
-	validateCmd.Flags().StringVar(&validateGroup, "group", "", "Validator group: core, solid, patterns, architecture, quality, advanced, research")
-	validateCmd.Flags().BoolVar(&validatePython, "python", false, "DEPRECATED (research/museum, not boevoy): run the Python validator instead of the Go engine")
+	validateCmd.Flags().StringVar(&validateGroup, "group", "", "(устар.: применялся к --python музею, который выпилен)")
+	validateCmd.Flags().BoolVar(&validatePython, "python", false, "ВЫПИЛЕН: Python-валидатор удалён из бинаря (вернёт ошибку с указанием на Go-движок)")
 	rootCmd.AddCommand(validateCmd)
 }
 
@@ -150,9 +133,17 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Route to Python validator or built-in Go engine
+	// --python ОТКЛЮЧЁН: Python-валидатор выпилен из бинаря (0 Python в боевом пути).
+	// ЧЕСТНАЯ ошибка (не молча 0/тихий пропуск — урок ложно-зелёного): явно говорим, куда
+	// делся музей. validator/ остаётся как deprecated-музей; его судьба (репо vs архив) —
+	// отдельное решение, бинарь его НЕ зовёт в любом случае.
 	if validatePython {
-		return runPythonValidator(archFile)
+		return fmt.Errorf("--python отключён: Python-валидатор выпилен из бинаря (0 Python в боевом пути).\n" +
+			"  Структурные/доказуемые метрики портированы в Go — используй боевой движок:\n" +
+			"    archlint scan .            (дельта-гейт, боевой путь)\n" +
+			"    archlint validate <file>   (Go-движок, без --python)\n" +
+			"  validator/ остаётся deprecated-музеем (research/математика, не арх-гейт);\n" +
+			"  бинарь его не вызывает. Доступ к музею — напрямую: python3 -m validator (вне archlint)")
 	}
 
 	return runGoValidator(archFile)
@@ -179,203 +170,7 @@ func runCollectForValidate(dir, outFile string) error {
 	return nil
 }
 
-// findPythonValidatorDir returns the path to use as working directory for the validator.
-// When the package is installed (pip install -e), python3 -m validator works from anywhere
-// and no special working directory is needed (returns "").
-// Falls back to source tree locations for development without pip install.
-func findPythonValidatorDir() (string, error) {
-	if p := os.Getenv("ARCHLINT_VALIDATOR_PATH"); p != "" {
-		return p, nil
-	}
-
-	// Check if installed as a package (preferred: works from anywhere)
-	checkCmd := exec.Command("python3", "-c", "import validator")
-	if checkCmd.Run() == nil {
-		return "", nil // installed, no workDir needed
-	}
-
-	// Try relative to binary
-	exe, _ := os.Executable()
-	if exe != "" {
-		candidate := filepath.Join(filepath.Dir(exe), "validator")
-		if _, err := os.Stat(candidate); err == nil {
-			return filepath.Dir(candidate), nil
-		}
-		// One level up (binary in bin/)
-		candidate = filepath.Join(filepath.Dir(exe), "..", "validator")
-		if _, err := os.Stat(candidate); err == nil {
-			return filepath.Dir(candidate), nil
-		}
-	}
-
-	// Try cwd
-	cwd, _ := os.Getwd()
-	candidate := filepath.Join(cwd, "validator")
-	if _, err := os.Stat(candidate); err == nil {
-		return cwd, nil
-	}
-
-	return "", fmt.Errorf("validator package not found; install with: pip install -e <archlint-repo> or set ARCHLINT_VALIDATOR_PATH")
-}
-
-// runPythonValidator runs `python3 -m validator validate <file> --structure-only -f yaml`
-// and prints results grouped by taxonomy.
-func runPythonValidator(archFile string) error {
-	workDir, err := findPythonValidatorDir()
-	if err != nil {
-		return err
-	}
-
-	// Convert archFile to absolute path so Python can find it regardless of workDir.
-	absArchFile := archFile
-	if archFile != "-" {
-		abs, err := filepath.Abs(archFile)
-		if err == nil {
-			absArchFile = abs
-		}
-	}
-
-	pyArgs := []string{"-m", "validator", "validate", absArchFile, "--structure-only", "-f", "yaml"}
-	if validateGroup != "" {
-		pyArgs = append(pyArgs, "-g", validateGroup)
-	}
-	if validateFormat == "json" {
-		// override format
-		for i, a := range pyArgs {
-			if a == "yaml" && i > 0 && pyArgs[i-1] == "-f" {
-				pyArgs[i] = "json"
-			}
-		}
-	}
-
-	// Use a 300-second timeout to handle large graphs (research group can take a while).
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
-	defer cancel()
-
-	//nolint:gosec // G204: absArchFile is validated user input
-	pyCmd := exec.CommandContext(ctx, "python3", pyArgs...)
-	if workDir != "" {
-		pyCmd.Dir = workDir
-	}
-	pyCmd.Stderr = os.Stderr
-
-	var stdout bytes.Buffer
-	pyCmd.Stdout = &stdout
-
-	runErr := pyCmd.Run()
-	out := stdout.Bytes()
-
-	if runErr != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return fmt.Errorf("python3 validator timed out after 300s; try --group to limit scope (e.g. --group core)")
-		}
-		// exit code 1 = FAILED, 2 = ERROR - still print output
-		exitErr, ok := runErr.(*exec.ExitError)
-		if !ok || (exitErr.ExitCode() != 1 && exitErr.ExitCode() != 2) {
-			return fmt.Errorf("python3 validator failed: %w", runErr)
-		}
-		// print output even on failure
-		if len(out) > 0 {
-			printPythonResults(out, validateFormat)
-		}
-		os.Exit(exitErr.ExitCode())
-	}
-
-	printPythonResults(out, validateFormat)
-	return nil
-}
-
-// printPythonResults formats and prints Python validator output.
-func printPythonResults(data []byte, format string) {
-	if format == "json" || format == "yaml" {
-		_, _ = os.Stdout.Write(data)
-		return
-	}
-
-	// Parse YAML and display grouped text summary
-	var results map[string]interface{}
-	if err := yaml.Unmarshal(data, &results); err != nil {
-		// Fall back to raw output
-		_, _ = os.Stdout.Write(data)
-		return
-	}
-
-	// Print header
-	status, _ := results["status"].(string)
-	fmt.Printf("status: %s\n", status)
-
-	if summary, ok := results["summary"].(map[string]interface{}); ok {
-		fmt.Printf("total:    %v checks\n", summary["total_checks"])
-		fmt.Printf("passed:   %v\n", summary["passed"])
-		fmt.Printf("failed:   %v\n", summary["failed"])
-		fmt.Printf("warnings: %v\n", summary["warnings"])
-		fmt.Printf("errors:   %v\n", summary["errors"])
-	}
-
-	if graph, ok := results["graph"].(map[string]interface{}); ok {
-		fmt.Printf("nodes:    %v\n", graph["nodes"])
-		fmt.Printf("edges:    %v\n", graph["edges"])
-	}
-
-	// Print failed/warning checks
-	checks, ok := results["checks"].([]interface{})
-	if !ok || len(checks) == 0 {
-		return
-	}
-
-	var failed, warnings []map[string]interface{}
-	for _, c := range checks {
-		check, ok := c.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		switch check["status"] {
-		case "FAILED":
-			failed = append(failed, check)
-		case "WARNING":
-			warnings = append(warnings, check)
-		}
-	}
-
-	if len(failed) > 0 {
-		fmt.Printf("\nFAILED (%d):\n", len(failed))
-		for _, c := range failed {
-			printCheck(c)
-		}
-	}
-	if len(warnings) > 0 {
-		fmt.Printf("\nWARNINGS (%d):\n", len(warnings))
-		for _, c := range warnings {
-			printCheck(c)
-		}
-	}
-
-	if validateGroup == "" && len(failed)+len(warnings) > 5 {
-		fmt.Printf("\nTip: use --group to focus on a specific area (core, solid, patterns, architecture, quality)\n")
-	}
-}
-
-func printCheck(c map[string]interface{}) {
-	name, _ := c["name"].(string)
-	msg, _ := c["message"].(string)
-	if msg == "" {
-		msg, _ = c["error"].(string)
-	}
-	if msg != "" {
-		fmt.Printf("  [%s] %s\n", name, msg)
-	} else {
-		fmt.Printf("  [%s]\n", name)
-	}
-	if details, ok := c["details"].(string); ok && details != "" {
-		for _, line := range strings.Split(details, "\n") {
-			if line != "" {
-				fmt.Printf("    %s\n", line)
-			}
-		}
-	}
-}
-
-// runGoValidator is the original built-in Go validation engine.
+// runGoValidator is the built-in Go validation engine (default; --python выпилен).
 func runGoValidator(archFile string) error {
 	var data []byte
 	var err error
