@@ -67,9 +67,12 @@ func (v *modelDIPView) OutEdges(id string) []OutEdge { return v.out[id] }
 // СВОИ типы) -> НЕ нарушение. Только свой concrete -> нарушение. Ложного firing на
 // легальном (abstraction->abstraction, примитивы) нет.
 //
-// SEVERITY (/): метрика ТОЛЬКО считает нарушения; severity-класс =
-// WARNING пока self-оракул DIP не размечен (ERROR требует прохождения размеченного
-// оракула). Класс назначает гейт, не метрика.
+// SEVERITY: WARNING (verified self-проверкой). Две оси держать РАЗДЕЛЬНО:
+//   - W1 construct-validity [интенсионал/элементы]: term(m) ⊆ term(Def_DIP) — метрика читает ровно
+//     язык принципа (рёбра abstract->concrete). ВЫПОЛНЕН.
+//   - precision [экстенсионал/исходы]: fire(m) ⊇ viol_DIP, строго fire = viol ∪ {DTO-зависимости}
+//     (DTO=concrete БЕЗ поведения, вне Def_DIP -> legal FP). precision<1 -> WARNING, не ERROR.
+// Демотация обоснована ЭКСТЕНСИОНАЛОМ (precision<1), НЕ дефектом интенсионала (W1 ok).
 func detectDIP(v DIPView) []Violation {
 	var out []Violation
 

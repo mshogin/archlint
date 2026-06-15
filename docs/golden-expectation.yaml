@@ -69,8 +69,10 @@ principles:
         - "#10 StateReader -> DegradationDetector (то же)"
     note: "ранжирование WARNING эвристикой DTO/behavioral — опц. backlog (UX), никогда не ERROR"
     warning_criterion:             # WARNING-проверка (зеркало ERROR, критерий иной — сигнал, не блок):
-      - "W1-привязка: STRICT-DIP fire = ребро abstract(interface)->concrete(свой); term ⊇ Def_DIP
-         (НАДМНОЖЕСТВО: не различает concrete-с-поведением и DTO) -> WARNING, не ERROR"
+      - "STRICT-DIP fire = ребро abstract(interface)->concrete(свой)"
+      - "W1 construct-validity [интенсионал/элементы]: term(m) ⊆ term(Def_DIP) — читает язык DIP. ВЫПОЛНЕН"
+      - "precision [экстенсионал/исходы]: fire(m) ⊇ viol_DIP, fire = viol ∪ {DTO-зависимости} -> precision<1 -> WARNING"
+      - "демотация обоснована ЭКСТЕНСИОНАЛОМ (precision<1), не дефектом интенсионала (W1 ok); DTO = legal FP"
       - "W1/W2 0-FALSE-SILENCE: больной abstract->concrete-с-поведением ОБЯЗАН fire"
       - "W3 НАПРАВЛЕННОСТЬ: улучшение (concrete-зависимость -> интерфейс) НЕ растит метрику (нет инверсии)"
       - "DTO-кейс = LEGAL FP (precision<1): abstract->concrete-DTO fire, whitelist держит -> НЕ демотировать"
