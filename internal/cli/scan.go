@@ -288,98 +288,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// ЕДИНЫЙ сборщик ERROR-class нарушений (SSOT, корни №2/№5): structural (coupling, cycles) +
-	// forbidden + deprecated + layer-backedge + ghost + dead-code + ISP — из active_metric_registry.
-	// Тот же набор использует baseline (cli/gate.go errorClassViolations) -> симметрия baseline<->scan
-	// по конструкции. NB: soundness-кандидаты (articulation/bridge/stability) НЕ в гейте — они signals.
-	violations := mcp.CollectErrorClassViolations(graph, a, &cfg)
-
-	// structural-clone (DRY) — точная изоморфная копипаста фрагментов >= cloneMinSize.
-	// WARNING-сигнал (не в severity_class -> не блок); Тир1 (хеш-fingerprint O(n log n)).
-	// Ложное структурное сходство = legal FP (precision<1).
-	if a != nil {
-		violations = append(violations, mcp.StructuralClone(a)...)
-	}
-
-	// Per-file SOLID and smell violations (Go projects only).
-	var allMetrics map[string]*mcp.FileMetrics
-	if a != nil {
-		allMetrics = mcp.ComputeAllFileMetrics(a, graph)
-	}
-
-	for _, m := range allMetrics {
-		// DIP violations — respect config enabled flag.
-		if cfg.Rules.DIP.IsEnabled() {
-			violations = append(violations, m.DIPViolations...)
-		}
-		// ISP violations — respect config enabled flag.
-		if cfg.Rules.ISP.IsEnabled() {
-			violations = append(violations, m.ISPViolations...)
-		}
-		// SRP violations — respect config enabled flag and exclusions.
-		if cfg.Rules.SRP.IsEnabled() {
-			for _, v := range m.SRPViolations {
-				if !cfg.IsSRPExcluded(v.Target) {
-					violations = append(violations, v)
-				}
-			}
-		}
-
-		// God-class violations — respect config enabled flag and exclusions.
-		if cfg.Rules.GodClass.IsEnabled() {
-			for _, gc := range m.GodClasses {
-				if !cfg.IsGodClassExcluded(gc) {
-					violations = append(violations, mcp.Violation{
-						Kind:    "god-class",
-						Message: fmt.Sprintf("God class detected: %s", gc),
-						Target:  gc,
-					})
-				}
-			}
-		}
-
-		// Hub-node violations — respect config enabled flag and exclusions.
-		if cfg.Rules.HubNode.IsEnabled() {
-			for _, hub := range m.HubNodes {
-				if !cfg.IsHubNodeExcluded(hub) {
-					violations = append(violations, mcp.Violation{
-						Kind:    "hub-node",
-						Message: fmt.Sprintf("Hub node detected: %s", hub),
-						Target:  hub,
-					})
-				}
-			}
-		}
-
-		// Feature-envy violations — respect config enabled flag and exclusions.
-		if cfg.Rules.FeatureEnvy.IsEnabled() {
-			for _, fe := range m.FeatureEnvy {
-				if !cfg.IsFeatureEnvyExcluded(fe) {
-					violations = append(violations, mcp.Violation{
-						Kind:    "feature-envy",
-						Message: fmt.Sprintf("Feature envy: %s", fe),
-						Target:  fe,
-					})
-				}
-			}
-		}
-
-		for _, ss := range m.ShotgunSurgery {
-			violations = append(violations, mcp.Violation{
-				Kind:    "shotgun-surgery",
-				Message: fmt.Sprintf("Shotgun surgery risk: %s", ss),
-				Target:  ss,
-			})
-		}
-	}
-
-	// Sort violations by kind then target for stable output.
-	sort.Slice(violations, func(i, j int) bool {
-		if violations[i].Kind != violations[j].Kind {
-			return violations[i].Kind < violations[j].Kind
-		}
-		return violations[i].Target < violations[j].Target
-	})
+	violations := collectFromGraph(graph, a, &cfg)
 
 	// --- Delta gate (Фаза 5) ---
 	// Загружаем baseline-снимок: отсутствует -> nil -> ERROR-class паттерны
@@ -583,4 +492,95 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// collectFromGraph — ЕДИНЫЙ сбор нарушений из графа+анализатора (SSOT, корни №2/№5). Один и тот же
+// код для single-module (runScan) и per-module (monorepo loop) -> per-module результаты собраны тем
+// же набором метрик, что single (нет расхождения опорных точек). a==nil (stdin/Rust/TS) -> только
+// ERROR-class из графа; a!=nil (Go) -> + structural-clone + per-file SOLID/smell.
+func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []mcp.Violation {
+	// ERROR-class (structural coupling/cycles + forbidden + deprecated + layer-backedge + ghost +
+	// dead-code + ISP). Тот же набор использует baseline (gate.go errorClassViolations) -> симметрия.
+	violations := mcp.CollectErrorClassViolations(graph, a, cfg)
+
+	// structural-clone (DRY) — точная изоморфная копипаста >= cloneMinSize. WARNING (не блок).
+	if a != nil {
+		violations = append(violations, mcp.StructuralClone(a)...)
+	}
+
+	// Per-file SOLID and smell violations (Go projects only).
+	var allMetrics map[string]*mcp.FileMetrics
+	if a != nil {
+		allMetrics = mcp.ComputeAllFileMetrics(a, graph)
+	}
+
+	for _, m := range allMetrics {
+		if cfg.Rules.DIP.IsEnabled() {
+			violations = append(violations, m.DIPViolations...)
+		}
+		if cfg.Rules.ISP.IsEnabled() {
+			violations = append(violations, m.ISPViolations...)
+		}
+		if cfg.Rules.SRP.IsEnabled() {
+			for _, v := range m.SRPViolations {
+				if !cfg.IsSRPExcluded(v.Target) {
+					violations = append(violations, v)
+				}
+			}
+		}
+
+		if cfg.Rules.GodClass.IsEnabled() {
+			for _, gc := range m.GodClasses {
+				if !cfg.IsGodClassExcluded(gc) {
+					violations = append(violations, mcp.Violation{
+						Kind:    "god-class",
+						Message: fmt.Sprintf("God class detected: %s", gc),
+						Target:  gc,
+					})
+				}
+			}
+		}
+
+		if cfg.Rules.HubNode.IsEnabled() {
+			for _, hub := range m.HubNodes {
+				if !cfg.IsHubNodeExcluded(hub) {
+					violations = append(violations, mcp.Violation{
+						Kind:    "hub-node",
+						Message: fmt.Sprintf("Hub node detected: %s", hub),
+						Target:  hub,
+					})
+				}
+			}
+		}
+
+		if cfg.Rules.FeatureEnvy.IsEnabled() {
+			for _, fe := range m.FeatureEnvy {
+				if !cfg.IsFeatureEnvyExcluded(fe) {
+					violations = append(violations, mcp.Violation{
+						Kind:    "feature-envy",
+						Message: fmt.Sprintf("Feature envy: %s", fe),
+						Target:  fe,
+					})
+				}
+			}
+		}
+
+		for _, ss := range m.ShotgunSurgery {
+			violations = append(violations, mcp.Violation{
+				Kind:    "shotgun-surgery",
+				Message: fmt.Sprintf("Shotgun surgery risk: %s", ss),
+				Target:  ss,
+			})
+		}
+	}
+
+	// Стабильный порядок: kind, затем target.
+	sort.Slice(violations, func(i, j int) bool {
+		if violations[i].Kind != violations[j].Kind {
+			return violations[i].Kind < violations[j].Kind
+		}
+		return violations[i].Target < violations[j].Target
+	})
+
+	return violations
 }
