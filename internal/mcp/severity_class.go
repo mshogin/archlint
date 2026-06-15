@@ -89,6 +89,14 @@ var violationClasses = map[string]SeverityClass{
 	"god-class":                     {Class: "INFO"}, // размерная магнитуда (когезия=LCOM4-дубль)
 	"hub-node":                      {Class: "INFO"}, // магнитуда центральности
 	"high-efferent-coupling":        {Class: "INFO"}, // магнитуда coupling (порог произволен)
+	//
+	// Классифицированы стражем полноты (вскрыл спящие метрики без вердикта):
+	"dip-abstraction-to-detail": {Class: "WARNING"}, // detectDIP (verified WARNING-проверка), DIP-сигнал
+	"shotgun-surgery":           {Class: "INFO"},    // магнитуда (degradation), порог произволен
+	"isp-fat-interface":         {Class: "INFO"},    // устаревшая size-эвристика ISP (заменена isp-usage-subset)
+	"articulation-point":        {Class: "INFO"},    // soundness-кандидат -> демотирован в дескриптор (DIP-class confound)
+	"bridge-edge":               {Class: "INFO"},    // soundness-кандидат -> демотирован в дескриптор
+	"stability-violation":       {Class: "INFO"},    // soundness-кандидат -> демотирован в дескриптор
 }
 
 // SeverityClassOf возвращает заявленный класс ("ERROR"|"WARNING"|"INFO") или "" если Kind не
