@@ -1,4 +1,4 @@
-.PHONY: help build install collect clean fmt test lint init build-rs baseline gate
+.PHONY: help build install collect clean fmt test lint init build-rs baseline gate setup-hooks
 
 # Переменные
 BIN_DIR := bin
@@ -42,6 +42,10 @@ gate: build ## Архитектурный self-gate (dogfood): блок НОВЫ
 	@echo "=== Архитектурный self-gate (delta ERROR-регрессия) ==="
 	$(BINARY) scan . --baseline $(BASELINE) --threshold $(GATE_THRESHOLD)
 	@echo "✓ Гейт пройден: новых ERROR-нарушений нет"
+
+setup-hooks: ## Включить РЕПО-ЛОКАЛЬНЫЕ git-hooks (архитектурный pre-commit гейт едет с репо)
+	git config core.hooksPath .githooks
+	@echo "✓ core.hooksPath -> .githooks (pre-commit архитектурный self-gate активен, ~1.7s/коммит)"
 
 fmt: ## Форматирование кода
 	@echo "=== Форматирование кода ==="

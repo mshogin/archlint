@@ -37,6 +37,20 @@ archlint validate architecture.yaml --python --group core
 
 ---
 
+## Local dev gate (pre-commit)
+
+Repo-local architecture gate that travels with the repo (not a global hook):
+
+```bash
+make setup-hooks   # sets core.hooksPath -> .githooks (committed pre-commit)
+```
+
+After this, every commit runs `make gate` (~1.7s): a delta-ERROR check that blocks
+**new** ERROR-class violations (cycles / layer / ISP / dead-code) vs `.archlint-baseline.json`.
+Existing baseline debt does not block. Bypass in exceptional cases with `git commit --no-verify`.
+
+---
+
 ## Docker
 
 The easiest way to run archlint without installing Go, Rust, or Python:

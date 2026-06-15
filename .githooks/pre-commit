@@ -1,0 +1,9 @@
+#!/bin/sh
+# Репо-локальный архитектурный self-gate дружины (ехать С РЕПО через core.hooksPath .githooks,
+# НЕ глобальный ~/.git-hooks). Блокирует коммит при НОВЫХ ERROR-нарушениях vs baseline
+# (delta-режим: 9 baseline ISP-долгов не мешают обычному коммиту). Latency ~1.7s (замер).
+# Включить: make setup-hooks. Обойти в исключительном случае: git commit --no-verify
+# (loop держится на доверии и приемлемой латентности, не на принуждении — см. коуч-инсайт).
+set -e
+echo "[pre-commit] архитектурный self-gate (delta-ERROR, ~1.7s)…"
+make gate
