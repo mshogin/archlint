@@ -69,6 +69,27 @@ principles:
         - "#10 StateReader -> DegradationDetector (то же)"
     note: "ранжирование WARNING эвристикой DTO/behavioral — опц. backlog (UX), никогда не ERROR"
 
+  - id: srp-decomposability
+    metric: srp-lack-of-cohesion   # LCOM4>=2 (metrics.go); число компонент графа методов
+    status: implemented
+    severity_class: WARNING        # сигнал декомпозируемости, НЕ блок (SRP структурно недоказуем)
+    warning_criterion:             # WARNING-проверка = ЗЕРКАЛО ERROR self-проверки, критерий ДРУГОЙ:
+      - "НЕ 0-false-fire на здоровом (это ERROR-ворота, к WARNING не применять; FP легален, precision<1)"
+      - "W1/W2 0-FALSE-SILENCE: больной синтет-эталон (God-class, >=2 непересек. групп, viol по конструкции)
+         ОБЯЗАН fire (LCOM4>=2)"
+      - "W3 НАПРАВЛЕННОСТЬ: легальное улучшение (разбиение God на когезивные типы) НЕ повышает метрику
+         (осколки LCOM4=1, нет инверсии знака)"
+    verified:
+      status: pass                 # self-проверка 2026-06-15 (TestSRPDecomposability_WarningSoundness)
+      evidence:
+        - "0-FALSE-SILENCE: God-class (2 disjoint группы вызовов) -> LCOM4=2 -> fire (метрика не молчит на больном)"
+        - "не always-fire: когезивный тип (цепочка вызовов) -> LCOM4=1 -> НЕ fire (метрика различает)"
+        - "W3 без инверсии: разбиение God -> 2 осколка LCOM4=1 каждый, max=1 < God=2 (улучшение НЕ растит метрику)"
+      caveat: "реализация LCOM4 (lcom4.go) строит граф ТОЛЬКО по взаимным вызовам, без shared-field рёбер
+        (TODO в коде) — расходится с декларацией карточки 'поле ИЛИ вызов'. FP-источник (когезивный-через-поля
+        тип ложно сработает), для WARNING легально; decomposability доказывается по подграфу вызовов."
+    on_fire: design-signal         # кандидат на декомпозицию (суждение), НЕ авто-дефект
+
   - id: layers-A
     metric: scc-modules       # тот же механизм что no-cycles (один детектор, две карточки)
     status: implemented
