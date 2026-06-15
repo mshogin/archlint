@@ -101,20 +101,48 @@ func StructuralClone(a *analyzer.GoAnalyzer) []Violation {
 }
 
 // cloneFingerprint строит каноническую форму фрагмента, АБСТРАГИРУЯ конкретные имена
-// (изоморфизм формы, не совпадение имён). Признаки: арность сигнатуры (params/results),
-// мультимножество структурных видов вызовов (method/goroutine/deferred), профиль доступа
-// к полям (read/write). size = число вызовов (мера размера подграфа для cloneMinSize).
+// (изоморфизм формы, не совпадение имён), но РАЗЛИЧАЯ структуру потока вызовов.
+//
+// Усиление precision (меньше ложных склеек разных функций одной грубой формы):
+//   - КАНОНИЧЕСКАЯ НУМЕРАЦИЯ RECEIVER'ов: имена переменных-приёмников -> позиционные индексы
+//     по первому появлению (a.x();a.y();b.z() -> R0,R0,R1). Сохраняет изоморфизм (переименование
+//     var a->foo НЕ меняет форму -> копипаста с переименованием всё ещё ловится), но различает
+//     СТРУКТУРУ: вызовы на одном объекте vs на разных -> две функции с разным receiver-паттерном
+//     не склеиваются. Это canonical labeling (стандарт для изоморфизма графов).
+//   - ПОРЯДОК вызовов (последовательность, НЕ мультисет): точная копипаста сохраняет порядок;
+//     разный порядок одинаковых видов -> разные формы. Устойчив к переименованию (имён в seq нет).
+//   - арность сигнатуры (params/results), число уникальных receiver'ов, профиль доступа к полям.
+// size = число вызовов (мера размера подграфа для cloneMinSize).
 func cloneFingerprint(
 	numParams, numResults int,
 	calls []model.CallInfo,
 	fields []model.FieldAccessInfo,
 ) (fingerprint string, size int) {
-	callSigs := make([]string, 0, len(calls))
-	for _, c := range calls {
-		callSigs = append(callSigs, fmt.Sprintf("%t-%t-%t", c.IsMethod, c.IsGoroutine, c.IsDeferred))
+	// Каноническая нумерация receiver-переменных (имена -> позиционные индексы).
+	recvIdx := make(map[string]int)
+	nextIdx := 0
+
+	canonRecv := func(r string) int {
+		if r == "" {
+			return -1 // не-method / свободный вызов
+		}
+
+		if i, ok := recvIdx[r]; ok {
+			return i
+		}
+
+		recvIdx[r] = nextIdx
+		nextIdx++
+
+		return recvIdx[r]
 	}
 
-	sort.Strings(callSigs)
+	// Последовательность видов вызовов В ПОРЯДКЕ тела (порядок различает; имён нет -> устойчиво
+	// к переименованию). НЕ сортируется — порядок есть структурный признак точной копипасты.
+	callSeq := make([]string, 0, len(calls))
+	for _, c := range calls {
+		callSeq = append(callSeq, fmt.Sprintf("%d/%t/%t/%t", canonRecv(c.Receiver), c.IsMethod, c.IsGoroutine, c.IsDeferred))
+	}
 
 	fieldSigs := make([]string, 0, len(fields))
 	for _, fa := range fields {
@@ -124,9 +152,10 @@ func cloneFingerprint(
 	sort.Strings(fieldSigs)
 
 	fp := fmt.Sprintf(
-		"p%d|r%d|c%d:%s|f%d:%s",
+		"p%d|r%d|c%d:%s|R%d|f%d:%s",
 		numParams, numResults,
-		len(calls), strings.Join(callSigs, ","),
+		len(calls), strings.Join(callSeq, ","),
+		nextIdx,
 		len(fields), strings.Join(fieldSigs, ","),
 	)
 
