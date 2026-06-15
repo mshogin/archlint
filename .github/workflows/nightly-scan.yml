@@ -17,152 +17,18 @@ jobs:
         with:
           go-version: '1.26'
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
+      # 0 Python: ни setup-python, ни pip (networkx/numpy/scipy/validator) — весь nightly на Go.
+      - name: Build archlint + nightly-report (Go)
         run: |
-          pip install networkx pyyaml numpy scipy
-          pip install -e .
           go build -o bin/archlint ./cmd/archlint/
+          go build -o bin/nightly-report ./scripts/nightly-report/
 
-      - name: Read monitored repos and scan
+      # Go-оркестратор: читает monitored-repos.yaml (Go-YAML) -> clone -> archlint scan --format json
+      # -> health v2 (ERROR-class provable core) -> health-summary.json + Hugo-страницы.
+      # health v2 != Python-методика — переход помечен явно (health_version + healthNote, не молча).
+      - name: Nightly scan + health + Hugo pages (Go orchestrator, 0 Python)
         run: |
-          python3 -c "
-          import yaml, subprocess, json, os
-          from datetime import datetime
-
-          with open('monitored-repos.yaml') as f:
-              config = yaml.safe_load(f)
-
-          results = []
-          for repo in config.get('repos', []):
-              if repo.get('status') != 'active':
-                  continue
-              url = repo['url']
-              name = url.split('/')[-1]
-              owner = url.split('/')[-2]
-              lang = repo.get('language', 'Go')
-
-              print(f'Scanning {owner}/{name} ({lang})...')
-
-              # Clone
-              clone = subprocess.run(
-                  ['git', 'clone', '--depth=1', url, f'/tmp/{name}'],
-                  capture_output=True, text=True
-              )
-              if clone.returncode != 0:
-                  print(f'  SKIP: clone failed - {clone.stderr.strip()}')
-                  continue
-
-              # Collect architecture (Go-ядро; Rust-бинарь заморожен и из боевого пути убран)
-              collect = subprocess.run(
-                  ['./bin/archlint', 'collect', f'/tmp/{name}', '-o', f'/tmp/{name}/architecture.yaml'],
-                  capture_output=True, text=True
-              )
-              if collect.returncode != 0:
-                  print(f'  WARN: collect failed - {collect.stderr.strip()}')
-
-              # Validate per group
-              os.makedirs(f'scan-results/{owner}/{name}', exist_ok=True)
-              for group in ['core', 'solid', 'advanced']:
-                  arch_yaml = f'/tmp/{name}/architecture.yaml'
-                  if not os.path.exists(arch_yaml):
-                      print(f'  SKIP: no architecture.yaml for group {group}')
-                      continue
-                  result = subprocess.run(
-                      ['python3', '-m', 'validator', 'validate', arch_yaml,
-                       '--structure-only', '--group', group, '-f', 'json'],
-                      capture_output=True, text=True
-                  )
-                  with open(f'scan-results/{owner}/{name}/{group}.json', 'w') as out:
-                      out.write(result.stdout if result.stdout else '{}')
-
-              results.append({'name': name, 'owner': owner, 'language': lang})
-              print(f'  done.')
-
-          with open('scan-results/manifest.json', 'w') as f:
-              json.dump({'repos': results, 'scan_date': datetime.utcnow().isoformat()}, f, indent=2)
-
-          print(f'Scanned {len(results)} repos.')
-          "
-
-      - name: Generate health summary
-        run: |
-          python3 -c "
-          import json, os
-
-          manifest = json.load(open('scan-results/manifest.json'))
-          print(f'Scan date: {manifest[\"scan_date\"]}')
-          print(f'Repos scanned: {len(manifest[\"repos\"])}')
-          print()
-
-          for repo in manifest['repos']:
-              owner = repo['owner']
-              name = repo['name']
-              total_passed = total_failed = total_warn = 0
-
-              for group in ['core', 'solid', 'advanced']:
-                  path = f'scan-results/{owner}/{name}/{group}.json'
-                  if os.path.exists(path):
-                      try:
-                          data = json.load(open(path))
-                          checks = data.get('checks', [])
-                          total_passed += sum(1 for c in checks if c.get('status') == 'PASSED')
-                          total_failed += sum(1 for c in checks if c.get('status') in ('ERROR', 'FAILED'))
-                          total_warn += sum(1 for c in checks if c.get('status') == 'WARNING')
-                      except (json.JSONDecodeError, KeyError):
-                          pass
-
-              total = total_passed + total_failed + total_warn
-              health = max(0, 100 - total_failed * 5 - total_warn * 2) if total > 0 else 0
-              print(f'{owner}/{name}: health={health}%, passed={total_passed}, failed={total_failed}, warn={total_warn}')
-          "
-
-      - name: Generate health summary JSON
-        run: |
-          python3 -c "
-          import json, os
-          from datetime import datetime
-
-          manifest = json.load(open('scan-results/manifest.json'))
-          summary = {'scan_date': manifest['scan_date'], 'repos': []}
-
-          for repo in manifest['repos']:
-              owner = repo['owner']
-              name = repo['name']
-              lang = repo.get('language', 'unknown')
-              total_passed = total_failed = total_warn = 0
-
-              for group in ['core', 'solid', 'advanced']:
-                  path = f'scan-results/{owner}/{name}/{group}.json'
-                  if os.path.exists(path):
-                      try:
-                          data = json.load(open(path))
-                          checks = data.get('checks', [])
-                          total_passed += sum(1 for c in checks if c.get('status') == 'PASSED')
-                          total_failed += sum(1 for c in checks if c.get('status') in ('ERROR', 'FAILED'))
-                          total_warn += sum(1 for c in checks if c.get('status') == 'WARNING')
-                      except (json.JSONDecodeError, KeyError):
-                          pass
-
-              total = total_passed + total_failed + total_warn
-              health = max(0, 100 - total_failed * 5 - total_warn * 2) if total > 0 else 0
-              summary['repos'].append({
-                  'owner': owner, 'name': name, 'language': lang,
-                  'health': health, 'passed': total_passed,
-                  'failed': total_failed, 'warnings': total_warn
-              })
-
-          with open('scan-results/health-summary.json', 'w') as f:
-              json.dump(summary, f, indent=2)
-          print(f'Health summary written for {len(summary[\"repos\"])} repos.')
-          "
-
-      - name: Generate Hugo pages for archlint.ru
-        run: |
-          python3 scripts/generate-scan-pages.py
+          bin/nightly-report monitored-repos.yaml bin/archlint scan-results site-content/scan "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
       - name: Commit results
         run: |
