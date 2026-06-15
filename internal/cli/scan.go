@@ -103,9 +103,51 @@ type multiModuleInfo struct {
 	Warning    string `json:"warning"`
 }
 
+// isSkippedModuleDir — каталог НЕ несёт боевой go-модуль: build-арт (vendor/node_modules/.git/bin)
+// + ФИКСТУРНЫЕ конвенции (testdata — Go-стандарт, инструменты игнорируют; demo/examples — примеры,
+// не боевой код) + пользовательские excludes. ЕДИНЫЙ критерий для detectMultiModule (счёт) и
+// enumerateModules (перечень) -> симметрия: что НЕ считаем модулем, то и НЕ сканируем per-module.
+func isSkippedModuleDir(name string, excludes []string) bool {
+	return name == "vendor" || name == "node_modules" || name == ".git" || name == "bin" ||
+		name == "testdata" || name == "demo" || name == "examples" || analyzer.MatchesExclude(name, excludes)
+}
+
+// enumerateModules возвращает каталоги боевых go.mod (тот же skip-критерий, что detectMultiModule).
+// Каждый каталог -> отдельный scanRoot для per-module скана (module-relative qname внутри модуля,
+// t_root-инвариантность per-module). Порядок детерминирован (sort) -> стабильный объединённый вывод.
+// single-module репо -> [каталог с go.mod]; нет go.mod вовсе -> [] (caller-фолбэк на dir as-is).
+func enumerateModules(dir string, excludes []string) []string {
+	var mods []string
+
+	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil //nolint:nilerr // best-effort обход; ошибки путей не валят перечень
+		}
+
+		if info.IsDir() {
+			if isSkippedModuleDir(info.Name(), excludes) {
+				return filepath.SkipDir
+			}
+
+			return nil
+		}
+
+		if info.Name() == "go.mod" {
+			mods = append(mods, filepath.Dir(path))
+		}
+
+		return nil
+	})
+
+	sort.Strings(mods)
+
+	return mods
+}
+
 // detectMultiModule считает go.mod в дереве + наличие go.work. nil -> единый модуль (или нет
 // go.mod вовсе). Предусловие SSOT (module-relative pkgID, getPkgID scanRoot) = ЕДИНЫЙ go-module;
-// nested ломает резолв ТИХО (agents-platform: 20 go.mod -> молча 0). Возвращаем явный абстейн.
+// nested ломает резолв ТИХО (agents-platform: 20 go.mod -> молча 0). С per-module сканом —
+// сигнал «репо multi-module», а не абстейн (runScan сканирует каждый модуль отдельно).
 func detectMultiModule(dir string, excludes []string) *multiModuleInfo {
 	count := 0
 	hasWork := false
@@ -116,13 +158,7 @@ func detectMultiModule(dir string, excludes []string) *multiModuleInfo {
 		}
 
 		if info.IsDir() {
-			n := info.Name()
-			// Пропускаем НЕ-боевые go.mod: vendor/build-арт + ФИКСТУРНЫЕ конвенции (testdata —
-			// Go-стандарт, инструменты игнорируют; demo/examples — примеры, не боевой код) + excludes.
-			// Иначе ложный абстейн на репо со своими demo/testdata (archlint self: root+demo+testdata).
-			// Реальный monorepo (agents-platform: data/workdir worktree-копии) под эти имена не попадает.
-			if n == "vendor" || n == "node_modules" || n == ".git" || n == "bin" ||
-				n == "testdata" || n == "demo" || n == "examples" || analyzer.MatchesExclude(n, excludes) {
+			if isSkippedModuleDir(info.Name(), excludes) {
 				return filepath.SkipDir
 			}
 
