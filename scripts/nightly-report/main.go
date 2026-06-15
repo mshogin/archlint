@@ -7,6 +7,8 @@
 //
 // health v2 != прежняя (Python) методика (меньше checks, иная база) — переход ПОМЕЧЕН ЯВНО
 // (health_version + note в JSON и на дашборде), тренд не загадочный скачок (урок ложно-зелёного).
+// WARN-слой (DIP/SRP/clone) НЕ в формуле: golden-замер показал несоундность линейного веса на
+// объёме verified-WARNING (обнуляет health) — нужна нелинейная/нормализованная формула (backlog).
 //
 // Usage: nightly-report <monitored-repos.yaml> <archlint-bin> <scan-results-dir> <output-dir> <scan-date>
 package main
@@ -27,11 +29,13 @@ import (
 const healthVersion = "v2"
 
 const healthNote = "health v2 = ERROR-class provable core (соундное ядро: SCC/layering/dead-code/ISP/" +
-	"forbidden/deprecated/ghost — прошло ворота + self-проверку). WARN-слой (DIP/SRP/clone/ρ) пока НЕ " +
-	"в формуле health — добавится ПОСЛЕ precision-вехи (DTO-фильтр + srp/ρ-downgrades + clone-тюнинг " +
-	"очистят precision-шум). Advanced research-метрики (центральности/спектр — Тир3 музей) и OCP/LSP-" +
-	"эвристики (несоундны) УБРАНЫ с дашборда. health% = по блокирующим доказуемым дефектам, НЕ сравним " +
-	"напрямую с прежней (Python) методикой. Колонка Warnings — информативна, в health НЕ входит (пока)."
+	"forbidden/deprecated/ghost — прошло ворота + self-проверку). WARN-слой (DIP/SRP/clone/ρ) НЕ в формуле " +
+	"health: precision очищен (DTO-фильтр + INFO-downgrades), но verified-WARNING доминируют по ОБЪЁМУ — " +
+	"линейный вес не масштабируется (десятки WARN -> 0%, ложно-плохой дашборд). Нужна НЕЛИНЕЙНАЯ/" +
+	"нормализованная формула (WARN/KLOC, density, log-scale) — отдельный продуманный инкремент (backlog). " +
+	"Advanced research-метрики (центральности/спектр — Тир3 музей) и OCP/LSP-эвристики (несоундны) УБРАНЫ " +
+	"с дашборда. health% = по блокирующим доказуемым дефектам, НЕ сравним напрямую с прежней (Python) " +
+	"методикой. Колонка Warnings — наблюдаема отдельно (категории), в health НЕ входит."
 
 // severity-классификация берётся из ЕДИНОГО реестра mcp.SeverityClassOf (SSOT) — без дубль-
 // хардкода списков. errors = ERROR-class; warnings = WARNING-class; INFO игнорируется в health.
@@ -115,9 +119,11 @@ func main() {
 		}
 
 		errs, warns := aggregate(scanPath)
-		// health v2 = ERROR-class only (вариант A): WARN-слой исключён до precision-вехи №6
-		// (DIP/SRP/clone-шум иначе обнуляет health -> ложно-плохой дашборд). warns считаем
-		// для информативной колонки, но в формулу health НЕ включаем (пока).
+		// health v2 = ERROR-class only (вариант A, закреплён): WARN-слой исключён из формулы.
+		// Golden-замер показал: даже после precision-очистки (DTO-фильтр + INFO-downgrades)
+		// verified-WARNING доминируют по ОБЪЁМУ -> линейный вес обнуляет health на любом среднем
+		// репо (ложно-плохой дашборд). WARN-слой требует НЕЛИНЕЙНОЙ формулы (density/KLOC) -> backlog.
+		// warns считаем для отдельной наблюдаемой колонки, в health НЕ включаем.
 		health := 100 - errs*5
 		if health < 0 {
 			health = 0
