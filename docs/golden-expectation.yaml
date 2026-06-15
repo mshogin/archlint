@@ -68,6 +68,20 @@ principles:
         - "#8 StateReader -> GoAnalyzer (конкретный поведенческий коллаборатор)"
         - "#10 StateReader -> DegradationDetector (то же)"
     note: "ранжирование WARNING эвристикой DTO/behavioral — опц. backlog (UX), никогда не ERROR"
+    warning_criterion:             # WARNING-проверка (зеркало ERROR, критерий иной — сигнал, не блок):
+      - "W1-привязка: STRICT-DIP fire = ребро abstract(interface)->concrete(свой); term ⊇ Def_DIP
+         (НАДМНОЖЕСТВО: не различает concrete-с-поведением и DTO) -> WARNING, не ERROR"
+      - "W1/W2 0-FALSE-SILENCE: больной abstract->concrete-с-поведением ОБЯЗАН fire"
+      - "W3 НАПРАВЛЕННОСТЬ: улучшение (concrete-зависимость -> интерфейс) НЕ растит метрику (нет инверсии)"
+      - "DTO-кейс = LEGAL FP (precision<1): abstract->concrete-DTO fire, whitelist держит -> НЕ демотировать"
+    verified:
+      status: pass                 # self-проверка 2026-06-15 (TestDIP_WarningSoundness)
+      evidence:
+        - "0-FALSE-SILENCE: abstract(interface)->concrete (uses) -> fire (метрика не молчит на больном)"
+        - "не always-fire: abstraction->abstraction (правильный DI) -> НЕ fire"
+        - "W3 без инверсии: concrete-зависимость заменена на интерфейс -> fire 1->0 (улучшение не растит метрику)"
+        - "DTO-кейс: abstract->concrete-DTO -> fire=1 = LEGAL FP (whitelist держит на гейте, не инверсия/не silence)"
+    on_fire: design-signal         # сигнал суждения; ERROR-кор (DIP+импортный цикл) держит SCC
 
   - id: srp-decomposability
     metric: srp-lack-of-cohesion   # LCOM4>=2 (metrics.go); число компонент графа методов
