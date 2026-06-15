@@ -18,8 +18,11 @@ import (
 // ложно-мёртвой -> удаление живого. implements over-approx по имени -> dispatch
 // тоже over-approx -> ложно-живой (дёшево), ложно-мёртвый невозможен.
 //
-// SEVERITY: метрика ТОЛЬКО считает; класс WARNING пока (: ERROR после
-// прохождения self-проверки соундности).
+// SEVERITY: ПРОМОТИРОВАН в severity_class=ERROR (open-world условно-соундный, обязательны
+// дельта+human-in-loop). Self-проверка соундности пройдена: исторически 89->5 (0 false-dead),
+// свежий self-прогон 2026-06-15 -> 0 находок (5 реальных мёртвых вычищены). Защита от
+// false-dead (destruction) — три over-approx (references / implements-dispatch / exported-entry),
+// доказаны юнит-тестами (TestDeadCode_ImplementsDispatch и др.). Разметка: golden id:dead-code.
 func DeadCode(g *model.Graph, configPatterns []string) []Violation {
 	r := EntryPoints(g, configPatterns)
 

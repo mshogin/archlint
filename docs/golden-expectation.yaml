@@ -172,7 +172,12 @@ principles:
     severity_class: ERROR     # open-world условно-соундный; компенсации ОБЯЗАТЕЛЬНЫ
     verified:
       status: pass
-      result: "89->5 мёртвых, 0 false-dead; 5 реальных находок (проверка соундности чиста)"
+      result: "89->5 мёртвых, 0 false-dead; 5 реальных находок (первичная проверка соундности чиста)"
+      reverify_2026_06_15: "свежий self-прогон -> 0 находок (5 реальных мёртвых вычищены: readFileLines/
+        isInPackage/printStats/mcp.analyzeCode/mcp.writeAndAnalyze). 0 false-dead держится. NB: cli.analyzeCode
+        жив (вызов в collect) — отделён от удалённого mcp.analyzeCode по qname-пакету. Дискриминатор не
+        вырожден (TestDeadCode_CallsReachAndOrphan ловит orphan); защита от false-dead через implements-
+        dispatch доказана TestDeadCode_ImplementsDispatch. ERROR подтверждён соундным."
       validations:
         - "qname-идентичность точнее грепа (коллизия одноимённых функций развелась по пакету автоматически)"
         - "граница test-only эмпирична (функция, вызываемая тестом, живая; осиротевшие тест-хелперы мёртвы)"
