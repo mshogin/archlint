@@ -468,6 +468,7 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			Refs:            refs,
 			ForwardedParams: forwarded,
 			NamedParams:     namedParams,
+			HasControlFlow:  hasControlFlow(decl.Body),
 		}
 	} else {
 		funcID := pkgID + "." + funcName
@@ -485,6 +486,30 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			NamedParams:     namedParams,
 		}
 	}
+}
+
+// hasControlFlow — есть ли в теле управляющая логика (if/for/range/switch/type-switch/select).
+// Структурный признак ПОВЕДЕНИЯ (не аксессор) для DIP DTO-фильтра: метод с control-flow несёт
+// логику, не просто доступ к полю.
+func hasControlFlow(body *ast.BlockStmt) bool {
+	if body == nil {
+		return false
+	}
+
+	found := false
+
+	ast.Inspect(body, func(n ast.Node) bool {
+		switch n.(type) {
+		case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt, *ast.SwitchStmt, *ast.TypeSwitchStmt, *ast.SelectStmt:
+			found = true
+
+			return false
+		}
+
+		return !found
+	})
+
+	return found
 }
 
 // collectFieldAccess walks the function body and collects field accesses on the receiver.

@@ -376,6 +376,26 @@ func computeSRPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 	}
 }
 
+// isBehavioralType — concrete C ПОВЕДЕНЧЕСКИЙ: ∃ метод с control-flow ИЛИ внешними вызовами.
+// false = DTO/value (только поля + аксессоры: тело без control-flow и без вызовов) -> словарь
+// абстракции, не поведенческая деталь (DIP DTO-фильтр, веха precision).
+func isBehavioralType(a *analyzer.GoAnalyzer, typeID string) bool {
+	t := a.LookupType(typeID)
+	if t == nil {
+		return false
+	}
+
+	for _, mi := range a.AllMethods() {
+		if mi.Package == t.Package && mi.Receiver == t.Name {
+			if mi.HasControlFlow || len(mi.Calls) > 0 {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func computeDIPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer) {
 	// Flag functions/methods that accept concrete struct types as parameters.
 	// This is a simplified check: look for function calls that directly reference struct types.
@@ -404,10 +424,14 @@ func computeDIPViolations(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer
 					}
 				}
 
-				if resolvedType != "" {
+				// DTO-фильтр (precision): fire только если concrete C ПОВЕДЕНЧЕСКИЙ (∃ метод с
+				// control-flow/вызовами). DTO/value (только поля+аксессоры) = СЛОВАРЬ абстракции,
+				// не поведенческая деталь -> ссылка на него НЕ DIP-дефект. Убирает массовый FP на
+				// DTO-возвратах (aitrader 118 -> единицы).
+				if resolvedType != "" && isBehavioralType(a, resolvedType) {
 					m.DIPViolations = append(m.DIPViolations, Violation{
 						Kind:    "dip-concrete-dependency",
-						Message: fmt.Sprintf("Type %s depends on concrete type %s — consider depending on an interface", t.Name, field.TypeName),
+						Message: fmt.Sprintf("Type %s depends on concrete behavioral type %s — consider depending on an interface", t.Name, field.TypeName),
 						Target:  t.Package + "." + t.Name,
 					})
 				}

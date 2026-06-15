@@ -147,6 +147,11 @@ type MethodInfo struct {
 	// NamedParams — см. FunctionInfo.NamedParams. Именованные параметры метода
 	// (имя+тип) для ISP-числителя.
 	NamedParams []FieldInfo
+	// HasControlFlow — в теле метода есть управляющая логика (if/for/range/switch/select).
+	// Структурный признак ПОВЕДЕНИЯ (не аксессор) для DIP DTO-фильтра: behavioral(C) =
+	// ∃ метод C с control-flow ИЛИ внешними вызовами; DTO = только аксессоры (нет ни того, ни
+	// другого) -> ссылка на DTO не DIP-дефект (словарь абстракции, не поведенческая деталь).
+	HasControlFlow bool
 }
 
 // FieldAccessInfo contains information about a field access within a method.
