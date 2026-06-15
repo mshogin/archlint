@@ -1,4 +1,4 @@
-.PHONY: help build install collect clean fmt test lint init build-rs
+.PHONY: help build install collect clean fmt test lint init build-rs baseline gate
 
 # Переменные
 BIN_DIR := bin
@@ -6,6 +6,11 @@ BINARY := $(BIN_DIR)/archlint
 GRAPH_DIR := arch
 OUTPUT_ARCH := architecture.yaml
 GITHUB_REPO := mshogin/archlint
+BASELINE := .archlint-baseline.json
+# dogfood-гейт: блокируем ERROR-РЕГРЕССИЮ (НОВЫЕ ERROR-паттерны vs baseline), а НЕ абсолютный
+# объём WARNING/INFO. Большой threshold отключает абсолютный count-порог -> остаётся только
+# delta-ERROR-гейт (blocking==0). Так 9 baseline ISP-долгов не валят собственный CI.
+GATE_THRESHOLD := 100000
 
 help: ## Показать справку
 	@echo "Доступные команды:"
@@ -27,6 +32,16 @@ collect: build ## Построить структурный граф для arch
 	@mkdir -p $(GRAPH_DIR)
 	$(BINARY) collect . -o $(GRAPH_DIR)/$(OUTPUT_ARCH)
 	@echo "✓ Структурный граф сохранён: $(GRAPH_DIR)/$(OUTPUT_ARCH)"
+
+baseline: build ## Снять baseline ERROR-паттернов (для delta-гейта)
+	@echo "=== Снятие baseline ERROR-паттернов ==="
+	$(BINARY) baseline . -o $(BASELINE)
+	@echo "✓ baseline: $(BASELINE)"
+
+gate: build ## Архитектурный self-gate (dogfood): блок НОВЫХ ERROR vs baseline (exit 1 при регрессии)
+	@echo "=== Архитектурный self-gate (delta ERROR-регрессия) ==="
+	$(BINARY) scan . --baseline $(BASELINE) --threshold $(GATE_THRESHOLD)
+	@echo "✓ Гейт пройден: новых ERROR-нарушений нет"
 
 fmt: ## Форматирование кода
 	@echo "=== Форматирование кода ==="

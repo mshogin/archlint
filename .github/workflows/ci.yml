@@ -28,3 +28,10 @@ jobs:
           go build -o bin/archlint ./cmd/archlint/
           bin/archlint collect . -o /tmp/arch.yaml
           echo "Self-check passed"
+
+      - name: Architecture self-gate (dogfood)
+        # Доказуемое ядро в ЖИВОМ блокирующем loop: archlint гоняет ERROR-гейт на себе.
+        # delta-режим (baseline) блокирует НОВЫЕ ERROR-паттерны (SCC/слой/ISP/dead-code),
+        # не существующий baseline (9 ISP-долгов). Большой threshold отключает абсолютный
+        # WARNING-порог -> остаётся только ERROR-регрессия. exit 1 на новом ERROR.
+        run: bin/archlint scan . --baseline .archlint-baseline.json --threshold 100000

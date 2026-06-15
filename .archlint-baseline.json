@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "patterns": {
+    "isp-usage-subset": [
+      "internal/mcp.handleAnalyzeChange",
+      "internal/mcp.handleAnalyzeFile",
+      "internal/mcp.handleCheckViolations",
+      "internal/mcp.handleDescriptors",
+      "internal/mcp.handleGetArchitecture",
+      "internal/mcp.handleGetCallgraph",
+      "internal/mcp.handleGetDegradationReport",
+      "internal/mcp.handleGetDependencies",
+      "internal/mcp.handleGetFileMetrics"
+    ]
+  }
+}
