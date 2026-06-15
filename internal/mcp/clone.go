@@ -120,7 +120,7 @@ func cloneFingerprint(
 ) (fingerprint string, size int) {
 	// Каноническая нумерация receiver-переменных (имена -> позиционные индексы).
 	recvIdx := make(map[string]int)
-	nextIdx := 0
+	nextRecv := 0
 
 	canonRecv := func(r string) int {
 		if r == "" {
@@ -131,17 +131,36 @@ func cloneFingerprint(
 			return i
 		}
 
-		recvIdx[r] = nextIdx
-		nextIdx++
+		recvIdx[r] = nextRecv
+		nextRecv++
 
 		return recvIdx[r]
+	}
+
+	// Каноническая нумерация ЦЕЛЕЙ вызова (Target -> позиционный индекс по первому появлению).
+	// Различает СТРУКТУРУ повторов вызовов (дважды одна функция vs две разные), сохраняя
+	// rename-robustness (конкретное имя цели не хранится — только позиция). Ключевой различитель
+	// для СВОБОДНЫХ вызовов (receiver="" -> R-1 у всех): раньше N свободных вызовов = N×«-1»
+	// и любые две такие функции склеивались; теперь структура повторов целей их разводит.
+	targetIdx := make(map[string]int)
+	nextTarget := 0
+
+	canonTarget := func(tg string) int {
+		if i, ok := targetIdx[tg]; ok {
+			return i
+		}
+
+		targetIdx[tg] = nextTarget
+		nextTarget++
+
+		return targetIdx[tg]
 	}
 
 	// Последовательность видов вызовов В ПОРЯДКЕ тела (порядок различает; имён нет -> устойчиво
 	// к переименованию). НЕ сортируется — порядок есть структурный признак точной копипасты.
 	callSeq := make([]string, 0, len(calls))
 	for _, c := range calls {
-		callSeq = append(callSeq, fmt.Sprintf("%d/%t/%t/%t", canonRecv(c.Receiver), c.IsMethod, c.IsGoroutine, c.IsDeferred))
+		callSeq = append(callSeq, fmt.Sprintf("%d:%d/%t/%t/%t", canonRecv(c.Receiver), canonTarget(c.Target), c.IsMethod, c.IsGoroutine, c.IsDeferred))
 	}
 
 	fieldSigs := make([]string, 0, len(fields))
@@ -152,10 +171,10 @@ func cloneFingerprint(
 	sort.Strings(fieldSigs)
 
 	fp := fmt.Sprintf(
-		"p%d|r%d|c%d:%s|R%d|f%d:%s",
+		"p%d|r%d|c%d:%s|R%d|T%d|f%d:%s",
 		numParams, numResults,
 		len(calls), strings.Join(callSeq, ","),
-		nextIdx,
+		nextRecv, nextTarget,
 		len(fields), strings.Join(fieldSigs, ","),
 	)
 
