@@ -163,6 +163,10 @@ func ViolationLevel(v Violation, cfg *archlintcfg.Config) archlintcfg.Level {
 	}
 
 	switch {
+	// Единый severity-реестр SSOT: INFO-метрики (магнитуды/дубли — srp-multiple/too-many/feature-envy/
+	// god-class/hub/coupling) -> LevelPersonal ([INFO]), убраны из WARNING-шума на дашборде/выводе.
+	case IsInfoClass(v.Kind):
+		return archlintcfg.LevelPersonal
 	case v.Kind == "high-efferent-coupling":
 		return cfg.Rules.FanOut.Level
 	case v.Kind == "circular-dependency":

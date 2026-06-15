@@ -20,6 +20,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/mshogin/archlint/internal/mcp"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,20 +33,8 @@ const healthNote = "health v2 = ERROR-class provable core (соундное яд
 	"эвристики (несоундны) УБРАНЫ с дашборда. health% = по блокирующим доказуемым дефектам, НЕ сравним " +
 	"напрямую с прежней (Python) методикой. Колонка Warnings — информативна, в health НЕ входит (пока)."
 
-// ERROR-class Kind'ы (Go severity_class ERROR) — вес errors*5 в health.
-var errorKinds = map[string]bool{
-	"circular-dependency": true, "layer-violation": true, "layer-backedge": true,
-	"forbidden-dependency": true, "deprecated-usage": true, "dead-code": true,
-	"ghost-component": true, "isp-usage-subset": true,
-}
-
-// WARNING доказуемого ядра (DIP/ISP/SRP/clone) — вес warnings*2. core-магнитуды
-// (feature-envy/hub-node/high-efferent-coupling/god-class) НЕ в health (INFO, не fail-способны).
-var warnKinds = map[string]bool{
-	"dip-concrete-dependency": true, "srp-lack-of-cohesion": true,
-	"srp-multiple-responsibilities": true, "srp-too-many-methods": true,
-	"srp-too-many-fields": true, "structural-clone": true,
-}
+// severity-классификация берётся из ЕДИНОГО реестра mcp.SeverityClassOf (SSOT) — без дубль-
+// хардкода списков. errors = ERROR-class; warnings = WARNING-class; INFO игнорируется в health.
 
 type monitoredConfig struct {
 	Repos []monitoredRepo `yaml:"repos"`
@@ -199,10 +188,10 @@ func aggregate(scanPath string) (errs, warns int) {
 	}
 
 	for kind, n := range s.Categories {
-		switch {
-		case errorKinds[kind]:
+		switch mcp.SeverityClassOf(kind) {
+		case "ERROR":
 			errs += n
-		case warnKinds[kind]:
+		case "WARNING":
 			warns += n
 		}
 	}

@@ -72,6 +72,48 @@ var violationClasses = map[string]SeverityClass{
 	// = устаревшая декларация (односторонняя импликация ghost⟹дефект). Conditional:
 	// неактивен без contexts (self=0). fuzzy-матч консервативен (меньше ложных ghost).
 	"ghost-component": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
+
+	// ── НЕ-ERROR классификация (ЕДИНЫЙ severity-реестр SSOT) ──
+	// Одна точка severity для вывода + health + стража полноты (∀ kind имеет вердикт).
+	//
+	// WARNING — доказуемые сигналы (прошли WARNING-проверку, precision приемлем):
+	"dip-concrete-dependency": {Class: "WARNING"}, // DIP после DTO-фильтра (behavioral concrete)
+	"srp-lack-of-cohesion":    {Class: "WARNING"}, // LCOM4>=2, verified WARNING
+	"structural-clone":        {Class: "WARNING"}, // изоморфизм формы, canonical fingerprint
+	//
+	// INFO — магнитуды (порог произволен, не паттерн) / дубли / нет арх-чтения (вердикты по лестнице):
+	"srp-multiple-responsibilities": {Class: "INFO"}, // reach-ρ: W1 слабая + W2 провал -> INFO
+	"srp-too-many-methods":          {Class: "INFO"}, // размерная магнитуда (#методов > порог)
+	"srp-too-many-fields":           {Class: "INFO"}, // размерная магнитуда (#полей > порог)
+	"feature-envy":                  {Class: "INFO"}, // магнитуда (Go-фон шумит), не паттерн
+	"god-class":                     {Class: "INFO"}, // размерная магнитуда (когезия=LCOM4-дубль)
+	"hub-node":                      {Class: "INFO"}, // магнитуда центральности
+	"high-efferent-coupling":        {Class: "INFO"}, // магнитуда coupling (порог произволен)
+}
+
+// SeverityClassOf возвращает заявленный класс ("ERROR"|"WARNING"|"INFO") или "" если Kind не
+// зарегистрирован. ЕДИНЫЙ источник severity (вывод/health/страж полноты читают отсюда).
+func SeverityClassOf(kind string) string {
+	if c, ok := violationClasses[kind]; ok {
+		return c.Class
+	}
+
+	return ""
+}
+
+// IsInfoClass / IsWarningClass — удобные предикаты над единым реестром.
+func IsInfoClass(kind string) bool    { return SeverityClassOf(kind) == "INFO" }
+func IsWarningClass(kind string) bool { return SeverityClassOf(kind) == "WARNING" }
+
+// RegisteredKinds — все Kind с объявленным severity-вердиктом (для стража полноты:
+// ∀ kind ∈ active_scan_set должен иметь запись здесь).
+func RegisteredKinds() map[string]bool {
+	out := make(map[string]bool, len(violationClasses))
+	for k := range violationClasses {
+		out[k] = true
+	}
+
+	return out
 }
 
 // ClassOf возвращает заявленный класс важности для Kind нарушения (если объявлен).
