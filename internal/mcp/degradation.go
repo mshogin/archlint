@@ -175,7 +175,7 @@ func allViolations(m *FileMetrics) []Violation {
 	}
 
 	for _, cycle := range m.CyclicDeps {
-		all = append(all, Violation{Kind: "circular-dependency", Message: cycle})
+		all = append(all, Violation{Kind: "circular-dependency", Message: cycle, Anchor: "scc:" + cycle})
 	}
 
 	return all

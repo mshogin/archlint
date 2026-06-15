@@ -99,6 +99,7 @@ func detectLayerViolations(graph *model.Graph, cfg *archlintcfg.Config) []Violat
 				Kind:    "layer-violation",
 				Message: fmt.Sprintf("Forbidden dependency: %s (%s) -> %s (%s)", edge.From, fromLayer, edge.To, toLayer),
 				Target:  edge.From,
+				Anchor:  "layer:" + edge.From + "->" + edge.To, // структурный якорь = пара from->to
 			})
 		}
 	}

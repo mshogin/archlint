@@ -70,6 +70,7 @@ func ForbiddenDependencies(graph *model.Graph, cfg *archlintcfg.Config) []Violat
 						src, dst, rule.From, rule.To,
 					),
 					Target: src,
+					Anchor: "forbidden:" + src + "->" + dst, // структурный якорь = пара src->dst
 				})
 			}
 		}

@@ -77,6 +77,37 @@ func client(s Store) { s.Get() }
 	}
 }
 
+// СТРАЖ №3 (discriminator = семантический якорь, НЕ Message): Fingerprint не зависит от
+// display-строки. Корень №4. Изменение Message при том же Anchor -> тот же Fingerprint.
+func TestCanonical_Guard3_DiscriminatorNotMessage(t *testing.T) {
+	v1 := Violation{Kind: "circular-dependency", Message: "Circular dependency detected (SCC size 2): a <-> b", Anchor: "scc:a,b"}
+	v2 := Violation{Kind: "circular-dependency", Message: "СОВСЕМ ИНАЧЕ переформулировано на строке 999", Anchor: "scc:a,b"}
+
+	if Fingerprint(v1) != Fingerprint(v2) {
+		t.Fatalf("СТРАЖ №3 НАРУШЕН: Fingerprint зависит от Message (%q != %q) — discriminator не семантический", Fingerprint(v1), Fingerprint(v2))
+	}
+}
+
+// СТРАЖ №6 (delta при НЕСВЯЗАННОМ сдвиге строк / переформулировке = ∅): приёмка корня №4.
+// Тот же структурный паттерн (Anchor стабилен), но иной Message/позиция -> ноль ложных NEW.
+func TestCanonical_Guard6_UnrelatedMessageShiftDeltaEmpty(t *testing.T) {
+	base := BuildBaseline([]Violation{
+		{Kind: "circular-dependency", Message: "Circular dependency (SCC size 2): a <-> b @line10", Anchor: "scc:a,b"},
+		{Kind: "layer-violation", Message: "Forbidden: x (app) -> y (infra) @line20", Anchor: "layer:x->y"},
+	})
+
+	// Тот же код после несвязанного рефакторинга: Message переформулирован/сдвинут, Anchor тот же.
+	cur := []Violation{
+		{Kind: "circular-dependency", Message: "ЦИКЛ обнаружен иначе на строке 777: a <-> b", Anchor: "scc:a,b"},
+		{Kind: "layer-violation", Message: "Слой нарушен (другой текст) строка 888", Anchor: "layer:x->y"},
+	}
+
+	d := Delta(cur, base)
+	if len(d.New) != 0 {
+		t.Fatalf("СТРАЖ №6 НАРУШЕН: delta при переформулировке Message не пуста (%d ложных NEW) — discriminator-fragility: %+v", len(d.New), d.New)
+	}
+}
+
 // fingerprintSet — множество (Kind|Fingerprint) для сравнения наборов независимо от порядка.
 func fingerprintSet(t *testing.T, vs []Violation) map[string]bool {
 	t.Helper()

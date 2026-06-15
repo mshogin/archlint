@@ -75,6 +75,7 @@ func LayerBackedge(graph *model.Graph, cfg *archlintcfg.Config) []Violation {
 					p[0], fromLayer, fr, p[1], toLayer, tr,
 				),
 				Target: p[0],
+				Anchor: "backedge:" + p[0] + "->" + p[1], // структурный якорь = пара from->to (без рангов/слоёв)
 			})
 		}
 	}

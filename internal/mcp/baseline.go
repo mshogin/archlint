@@ -31,10 +31,17 @@ type Baseline struct {
 //   - layer-violation: пара (From -> To) — несётся в Message детерминированно.
 //   - прочие (dead-code и др.): строгий qname-key = Target.
 func Fingerprint(v Violation) string {
+	// Семантический якорь (корень №4) — ПРИОРИТЕТ: структурная идентичность БЕЗ display/line:col,
+	// иммунна к переформулировке Message и сдвигу строк (страж №6). Заполняется детекторами
+	// circular/layer/forbidden/deprecated/layer-backedge.
+	if v.Anchor != "" {
+		return v.Anchor
+	}
+
 	switch v.Kind {
 	case "circular-dependency", "layer-violation", "forbidden-dependency", "deprecated-usage", "layer-backedge":
-		// Message построен из отсортированных/стабильных полей -> детерминирован
-		// и кодирует строгую структурную идентичность (член-множество / пару).
+		// LEGACY-fallback (Anchor не заполнен): Message построен из отсортированных/стабильных
+		// полей. Хрупок к переформулировке -> детекторы обязаны заполнять Anchor (см. выше).
 		return v.Message
 	default:
 		return v.Target

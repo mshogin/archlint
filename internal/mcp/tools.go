@@ -185,10 +185,17 @@ type DependencyResult struct {
 }
 
 // Violation describes an architecture violation.
+//
+// Anchor — СЕМАНТИЧЕСКИЙ ЯКОРЬ идентичности нарушения (canonical fingerprint, корень №4):
+// детерминированный СТРУКТУРНЫЙ ключ (отсортированные члены SCC / пара from->to), БЕЗ
+// display-форматирования (Message) и line:col. Дельта-гейт идентифицирует паттерн по Anchor,
+// а не по Message -> переформулировка сообщения / сдвиг строк НЕ дают ложный NEW (страж №6).
+// Пусто для Kind, чья идентичность = Target (qname): dead-code, isp и пр.
 type Violation struct {
 	Kind    string `json:"kind"`
 	Message string `json:"message"`
 	Target  string `json:"target,omitempty"`
+	Anchor  string `json:"anchor,omitempty"`
 }
 
 // CallGraphNode represents a node in the call graph result.
@@ -362,6 +369,7 @@ func detectCycles(graph *model.Graph, startPkg string) []Violation {
 		Kind:    "circular-dependency",
 		Message: fmt.Sprintf("Circular dependency detected (SCC size %d): %s", len(sorted), strings.Join(sorted, " <-> ")),
 		Target:  startPkg,
+		Anchor:  "scc:" + strings.Join(sorted, ","), // структурный якорь = отсортир. множество членов SCC
 	}}
 }
 

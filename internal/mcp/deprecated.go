@@ -78,6 +78,7 @@ func DeprecatedUsage(graph *model.Graph, cfg *archlintcfg.Config) []Violation {
 			Kind:    "deprecated-usage",
 			Message: fmt.Sprintf("Use of deprecated component: %s -> %s", p[0], p[1]),
 			Target:  p[0],
+			Anchor:  "deprecated:" + p[0] + "->" + p[1], // структурный якорь = пара user->deprecated
 		})
 	}
 
