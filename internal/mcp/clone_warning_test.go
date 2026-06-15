@@ -33,21 +33,25 @@ func clonesIn(t *testing.T, code string) []Violation {
 	return StructuralClone(a)
 }
 
-// БОЛЬНОЙ: два метода с изоморфной формой (по 3 method-вызова, одинаковая арность) — точная
-// структурная копипаста. Семантически РАЗНЫЕ цели (x/y/z vs p/q/r) -> заодно демонстрирует legal FP.
+// БОЛЬНОЙ: два метода с изоморфной формой (по 5 method-вызовов >= cloneMinSize, одинаковая
+// арность) — точная структурная копипаста. Семантически РАЗНЫЕ цели -> заодно legal FP.
 const cloneSick = `package clone
 
 type T struct{}
 
-func (t *T) CloneA() { t.x(); t.y(); t.z() }
-func (t *T) CloneB() { t.p(); t.q(); t.r() }
+func (t *T) CloneA() { t.x(); t.y(); t.z(); t.w(); t.v() }
+func (t *T) CloneB() { t.p(); t.q(); t.r(); t.s(); t.u() }
 
 func (t *T) x() {}
 func (t *T) y() {}
 func (t *T) z() {}
+func (t *T) w() {}
+func (t *T) v() {}
 func (t *T) p() {}
 func (t *T) q() {}
 func (t *T) r() {}
+func (t *T) s() {}
+func (t *T) u() {}
 `
 
 // ЗДОРОВЫЙ / W3-после-extract: один фрагмент той же формы (дубль устранён) -> группа размера 1.
@@ -55,11 +59,13 @@ const cloneHealthy = `package clone
 
 type T struct{}
 
-func (t *T) Only() { t.x(); t.y(); t.z() }
+func (t *T) Only() { t.x(); t.y(); t.z(); t.w(); t.v() }
 
 func (t *T) x() {}
 func (t *T) y() {}
 func (t *T) z() {}
+func (t *T) w() {}
+func (t *T) v() {}
 `
 
 func TestStructuralClone_WarningSoundness(t *testing.T) {

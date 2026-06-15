@@ -431,14 +431,48 @@ func runScan(cmd *cobra.Command, args []string) error {
 			}
 			fmt.Printf("%s: %d violations found (threshold: %d, blocking regressions: %d)\n\n", status, total, threshold, blocking)
 
+			// UX против alert fatigue (коуч-инсайт на уровне вывода): blocking-регрессии
+			// (NEW ERROR -> Taboo) печатаем ВСЕГДА (критичны, их мало); шумные не-блокирующие
+			// категории (WARNING/INFO, напр. structural-clone) — ЛИМИТ топ-N на Kind + сводка
+			// «…ещё M». Полный список всегда доступен через --format json (машинный путь не урезан).
+			const perKindLimit = 5
+
+			shownPerKind := make(map[string]int)
+			hiddenPerKind := make(map[string]int)
+
 			for _, v := range violations {
 				// Дельта-уровень: НОВЫЙ ERROR-паттерн -> [ERROR]; существующий/без
 				// baseline -> аудит; магнитуды -> их обычный уровень.
 				level := mcp.EffectiveLevel(v, &cfg, baseline)
 				prefix := mcp.LevelPrefix(level)
+
+				if level != archlintcfg.LevelTaboo {
+					if shownPerKind[v.Kind] >= perKindLimit {
+						hiddenPerKind[v.Kind]++
+
+						continue
+					}
+
+					shownPerKind[v.Kind]++
+				}
+
 				fmt.Printf("%s [%s] %s\n", prefix, v.Kind, v.Message)
 				if v.Target != "" {
 					fmt.Printf("  target: %s\n", v.Target)
+				}
+				fmt.Println()
+			}
+
+			if len(hiddenPerKind) > 0 {
+				kinds := make([]string, 0, len(hiddenPerKind))
+				for k := range hiddenPerKind {
+					kinds = append(kinds, k)
+				}
+				sort.Strings(kinds)
+
+				fmt.Printf("…показаны топ-%d на категорию; скрыто (полный список: --format json):\n", perKindLimit)
+				for _, k := range kinds {
+					fmt.Printf("  [%s] +ещё %d\n", k, hiddenPerKind[k])
 				}
 				fmt.Println()
 			}

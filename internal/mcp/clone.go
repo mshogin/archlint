@@ -16,7 +16,12 @@ const KindStructuralClone = "structural-clone"
 // cloneMinSize — порог РАЗМЕРА (число вызовов фрагмента) = отсечка ШУМА (тривиальные мелкие
 // функции одинаковой формы — не дубль). Это НЕ магнитуда-θ (в отличие от near-clone%):
 // паттерн «∃ изоморфная пара >= k узлов» КАЧЕСТВЕННЫЙ, k фиксирован как анти-шум, не настройка.
-const cloneMinSize = 3
+//
+// =5 (поднят с 3): фрагменты в 3-4 вызова — тривиальные мелкие формы (короткие хелперы/
+// getter-цепочки одинакового профиля), массовый FP без архитектурной ценности (на self c3/c4
+// = 128 ложных «клонов» из 478). Право качественного паттерна сохраняется: это сдвиг отсечки
+// ШУМА, не порог величины. W2-проверка держится для k=5 (больной эталон с фрагментами >=5 fire).
+const cloneMinSize = 5
 
 // StructuralClone ищет структурные клоны через КАНОНИЧЕСКИЙ FINGERPRINT формы фрагмента
 // (Тир1: хеш-группировка O(n log n), НЕ полный graph-isomorphism — GI дорог). Конкретные
@@ -28,7 +33,8 @@ func StructuralClone(a *analyzer.GoAnalyzer) []Violation {
 		return nil
 	}
 
-	groups := make(map[string][]string) // fingerprint -> отсортированные qname
+	groups := make(map[string][]string) // fingerprint -> qname
+	sizeOf := make(map[string]int)      // fingerprint -> размер фрагмента (число вызовов)
 
 	add := func(qname, fp string, size int) {
 		if size < cloneMinSize {
@@ -36,6 +42,7 @@ func StructuralClone(a *analyzer.GoAnalyzer) []Violation {
 		}
 
 		groups[fp] = append(groups[fp], qname)
+		sizeOf[fp] = size
 	}
 
 	for id, f := range a.AllFunctions() {
@@ -48,7 +55,15 @@ func StructuralClone(a *analyzer.GoAnalyzer) []Violation {
 		add(id, fp, size)
 	}
 
-	var out []Violation
+	// Группы клонов, РАНЖИРОВАННЫЕ по значимости: крупнейшие формы первыми (UX — самые
+	// весомые клоны вверху вывода/PR-коммента), тай-брейк по fp для детерминизма.
+	type cloneGroup struct {
+		fp      string
+		members []string
+		size    int
+	}
+
+	var gs []cloneGroup
 
 	for fp, members := range groups {
 		if len(members) < 2 {
@@ -56,20 +71,31 @@ func StructuralClone(a *analyzer.GoAnalyzer) []Violation {
 		}
 
 		sort.Strings(members)
+		gs = append(gs, cloneGroup{fp: fp, members: members, size: sizeOf[fp]})
+	}
 
-		for _, qn := range members {
+	sort.Slice(gs, func(i, j int) bool {
+		if gs[i].size != gs[j].size {
+			return gs[i].size > gs[j].size
+		}
+
+		return gs[i].fp < gs[j].fp
+	})
+
+	var out []Violation
+
+	for _, g := range gs {
+		for _, qn := range g.members {
 			out = append(out, Violation{
 				Kind: KindStructuralClone,
 				Message: fmt.Sprintf(
-					"structural clone: %s изоморфен ещё %d фрагмент(ам) формы [%s] — рассмотреть extract common",
-					qn, len(members)-1, fp,
+					"structural clone: %s изоморфен ещё %d фрагмент(ам) формы [%s] (размер %d) — рассмотреть extract common",
+					qn, len(g.members)-1, g.fp, g.size,
 				),
 				Target: qn,
 			})
 		}
 	}
-
-	sort.Slice(out, func(i, j int) bool { return out[i].Target < out[j].Target })
 
 	return out
 }
