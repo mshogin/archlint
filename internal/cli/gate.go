@@ -45,13 +45,20 @@ func analyzeForGate(codeDir string, excludes []string) (*model.Graph, *analyzer.
 
 // errorClassViolations собирает ВСЕ паттерн-факты, которые участвуют в дельта-гейте:
 // структурные (cycles, layer back-edges) + dead-code (только Go-граф). BuildBaseline
-// сам отфильтрует ERROR-class, но dead-code считается отдельно (не входит в
-// DetectAllViolationsWithConfig). Это ровно тот набор, по которому строится baseline
-// и оценивается регрессия в scan.
+// сам отфильтрует ERROR-class, но dead-code И isp-usage-subset считаются отдельно
+// (не входят в DetectAllViolationsWithConfig). Это ровно тот набор, по которому
+// строится baseline и оценивается регрессия в scan — НАБОР ОБЯЗАН БЫТЬ СИММЕТРИЧЕН
+// сбору в scan.go, иначе baseline-снапшот неполон и существующие паттерны ложно
+// считаются NEW (инцидент 2026-06-15: ISP не попадал в baseline -> 9 ISP-долгов
+// ложно блокировались дельтой на стабильном коде). BuildBaseline отфильтрует
+// не-ERROR-class (isp-external-narrow -> WARNING -> отброшен).
 func errorClassViolations(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []mcp.Violation {
 	viols := mcp.DetectAllViolationsWithConfig(graph, cfg)
 	if a != nil {
 		viols = append(viols, mcp.DeadCode(graph, cfg.EntryPoints)...)
+		if cfg.Rules.ISP.IsEnabled() {
+			viols = append(viols, mcp.ComputeISPUsageSubset(graph, a)...)
+		}
 	}
 	return viols
 }

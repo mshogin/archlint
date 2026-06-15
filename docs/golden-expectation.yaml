@@ -236,3 +236,18 @@ infrastructure:
       - "+3 POSITIVE CONTROL: 1 новый дефект -> дельта=ровно он; откат -> пуста"
       - "+4 RENAME-CASE: переименование -> ожидаемо ложный-NEW (документировать, не баг)"
       - "+5 ПО КЛАССАМ: NEW SCC/ISP->hard-block; NEW dead-code->блок+human-in-loop удаление"
+    verified_2026_06_15:    # self-проверка соундности pattern-delta (двусторонняя, на реальном self)
+      status: pass-after-fix
+      bug_found_and_fixed: "ЯДРО-критерий нарушался для ISP: errorClassViolations (путь baseline,
+        cli/gate.go) НЕ включал ComputeISPUsageSubset, тогда как scan.go включал -> baseline пуст
+        по ISP -> 9 существующих ISP-долгов ложно-NEW -> blocking=9 на СТАБИЛЬНОМ коде. Причина =
+        неполнота baseline-снапшота (баг инфры, асимметрия baseline<->scan), НЕ недоказуемость
+        pattern-delta. ФИКС: errorClassViolations синхронизирован со scan (ISP под cfg.Rules.ISP.IsEnabled).
+        severity ERROR сохранена, принцип не тронут (PO-условие: баг инфры -> чиним инфру)."
+      two_sided_check:
+        - "ЯДРО (после фикса): baseline self (9 ISP записаны) -> scan того же кода -> blocking=0 (0 ложных-NEW)"
+        - "POSITIVE CONTROL: добавлен синтетический orphan deltaProbeOrphan -> дельта = ровно он, blocking=1"
+        - "NO-BASELINE -> blocking=0 (audit-degrade) подтверждён"
+        - "unit: TestDeltaGate_IdempotentEmptyDelta / _PositiveControl / _RenameIsFalseNew / _DeterministicSnapshot зелёные"
+      durable_followup: "унифицировать пути сбора violations (scan.go vs cli/gate.go errorClassViolations)
+        в ЕДИНЫЙ источник, чтобы асимметрия baseline<->scan не воспроизводилась при добавлении новых ERROR-метрик"
