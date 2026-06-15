@@ -106,6 +106,26 @@ principles:
         тип ложно сработает), для WARNING легально; decomposability доказывается по подграфу вызовов."
     on_fire: design-signal         # кандидат на декомпозицию (суждение), НЕ авто-дефект
 
+  - id: structural-clone
+    metric: structural-clone       # изоморфная форма фрагментов >= cloneMinSize (clone.go)
+    status: implemented
+    severity_class: WARNING        # DRY-сигнал, не блок; не в severity_class ERROR-реестре
+    latency_tier: tier1            # хеш-fingerprint O(n log n), НЕ полный graph-isomorphism (GI дорог)
+    warning_criterion:
+      - "W1 [интенсионал/элементы]: term(m) ⊆ term(Def_DRY) — читает структуру фрагмента (виды вызовов,
+         арность, профиль полей), имена АБСТРАГИРОВАНЫ -> изоморфизм формы. ВЫПОЛНЕН"
+      - "порог cloneMinSize = отсечка ШУМА (паттерн '∃ изоморфная пара >=k'), НЕ магнитуда-θ (та INFO=near-clone%)"
+      - "precision [экстенсионал/исходы]: fire ⊇ viol, fire = viol ∪ {ложное структурное сходство}
+         (изоморфно, семантика разная) -> precision<1 -> WARNING"
+    verified:
+      status: pass                 # self-проверка 2026-06-15 (TestStructuralClone_WarningSoundness)
+      evidence:
+        - "W2 0-FALSE-SILENCE: точная копипаста (2 изоморфных фрагмента по 3 вызова) -> fire=2 (оба члена)"
+        - "не always-fire: одиночный фрагмент той же формы -> НЕ fire (нужна пара)"
+        - "W3 НАПРАВЛЕННОСТЬ: extract common (дубль устранён -> 1 фрагмент) -> метрика 2->0, инверсии нет"
+        - "legal FP: семантически разные изоморфные фрагменты (x/y/z vs p/q/r) fire = precision<1, НЕ инверсия"
+    on_fire: design-signal         # кандидат на extract common (суждение), НЕ авто-дефект
+
   - id: layers-A
     metric: scc-modules       # тот же механизм что no-cycles (один детектор, две карточки)
     status: implemented

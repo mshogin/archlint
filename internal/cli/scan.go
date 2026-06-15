@@ -214,6 +214,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 		violations = append(violations, mcp.ComputeISPUsageSubset(graph, a)...)
 	}
 
+	// structural-clone (DRY) — точная изоморфная копипаста фрагментов >= cloneMinSize.
+	// WARNING-сигнал (не в severity_class -> не блок); Тир1 (хеш-fingerprint O(n log n)).
+	// Ложное структурное сходство = legal FP (precision<1).
+	if a != nil {
+		violations = append(violations, mcp.StructuralClone(a)...)
+	}
+
 	// Per-file SOLID and smell violations (Go projects only).
 	var allMetrics map[string]*mcp.FileMetrics
 	if a != nil {
