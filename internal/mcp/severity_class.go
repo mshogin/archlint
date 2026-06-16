@@ -80,6 +80,14 @@ var violationClasses = map[string]SeverityClass{
 	"dip-concrete-dependency": {Class: "WARNING"}, // DIP после DTO-фильтра (behavioral concrete)
 	"srp-lack-of-cohesion":    {Class: "WARNING"}, // LCOM4>=2, verified WARNING
 	"structural-clone":        {Class: "WARNING"}, // изоморфизм формы, canonical fingerprint
+	// ocp-open-modification — ПЕРВЫЙ baseline-conditional WARNING: в существующий type-dispatch S
+	// (S был в baseline) добавлена ветка на тип ∈ Δ⁺ (новый vs baseline) -> закрытое S изменено
+	// при расширении. no-baseline -> abstain. WARNING (никогда ERROR: легальный рефактор внутри S = FP).
+	KindOCPOpenModification: {Class: "WARNING"},
+	// ocp-dispatch-site — ФАКТ существования ветки type-dispatch (S::тип), baseline-СНИМОК (не
+	// нарушение). INFO: эмитится ТОЛЬКО при генерации baseline (для дельты), не в scan-выводе.
+	// Через единый Anchor (canonical S.identity) -> один путь канонизации (защита SSOT).
+	KindOCPDispatchSite: {Class: "INFO"},
 	//
 	// INFO — магнитуды (порог произволен, не паттерн) / дубли / нет арх-чтения (вердикты по лестнице):
 	"srp-multiple-responsibilities": {Class: "INFO"}, // reach-ρ: W1 слабая + W2 провал -> INFO

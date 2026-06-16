@@ -171,6 +171,92 @@ func use(r Repo) { r.Find() }
 	}
 }
 
+// dispatchFixture — синтетический type-dispatch (две ветки) для OCP-стражей.
+const dispatchFixture = `package sample
+
+type Shape interface{ Area() float64 }
+type Circle struct{}
+type Square struct{}
+
+func (Circle) Area() float64 { return 0 }
+func (Square) Area() float64 { return 0 }
+
+func describe(s Shape) string {
+	switch s.(type) {
+	case Circle:
+		return "c"
+	case Square:
+		return "s"
+	}
+	return "?"
+}
+`
+
+// collectWithDispatch — ERROR-class + ocp-dispatch-site факты (как baseline-генерация).
+func collectWithDispatch(t *testing.T, dir string) []Violation {
+	t.Helper()
+
+	a := analyzer.NewGoAnalyzer()
+	g, err := a.Analyze(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := archlintcfg.Default()
+	vs := CollectErrorClassViolations(g, a, &cfg)
+	vs = append(vs, CollectDispatchFacts(a)...)
+
+	return vs
+}
+
+// СТРАЖ OCP (П2, ОБЯЗАТЕЛЬНЫЙ): расширение baseline tracked-set на ocp-dispatch-site (ПЕРВЫЙ
+// не-ERROR baseline-tracked kind) НЕ ломает класс «опорные точки сравнения разошлись».
+//   (1) delta(collect+dispatch(X), collect+dispatch(X)) = ∅ — детерминизм с ocp в tracked-set;
+//   (2) baseline РЕАЛЬНО снял dispatch-факты (иначе тест пуст);
+//   (3) t_root-инвариантность dispatch-fingerprint — S.identity module-relative (canonical),
+//       НЕ зависит от корня скана (защита от 5-го инцидента: ocp идёт через единый Fingerprint).
+func TestCanonical_OCPDispatchFacts_SSOT(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "shape.go"), []byte(dispatchFixture), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// (1) delta-self = ∅ с ocp в tracked-set.
+	base := BuildBaseline(collectWithDispatch(t, dir))
+	d := Delta(collectWithDispatch(t, dir), base)
+	if len(d.New) != 0 {
+		t.Fatalf("СТРАЖ OCP НАРУШЕН: delta-self с ocp-dispatch не пуста (%d ложных NEW): %+v", len(d.New), d.New)
+	}
+
+	// (2) baseline реально снял dispatch-факты (Circle/Square ветки сайта describe|s).
+	if got := len(base.Patterns[KindOCPDispatchSite]); got == 0 {
+		t.Fatalf("СТРАЖ OCP: baseline не снял ocp-dispatch-site факты (got 0) — baseline-tracking не работает")
+	}
+
+	// (3) t_root-инвариантность: dispatch-fingerprint(abs) == dispatch-fingerprint(.) (module-relative).
+	absA := analyzer.NewGoAnalyzer()
+	if _, err := absA.Analyze(dir); err != nil {
+		t.Fatal(err)
+	}
+	absSet := fingerprintSet(t, CollectDispatchFacts(absA))
+
+	t.Chdir(dir)
+	dotA := analyzer.NewGoAnalyzer()
+	if _, err := dotA.Analyze("."); err != nil {
+		t.Fatal(err)
+	}
+	dotSet := fingerprintSet(t, CollectDispatchFacts(dotA))
+
+	if len(absSet) != len(dotSet) {
+		t.Fatalf("СТРАЖ OCP t_root: |dispatch(абс)|=%d != |dispatch(.)|=%d", len(absSet), len(dotSet))
+	}
+	for fp := range absSet {
+		if !dotSet[fp] {
+			t.Fatalf("СТРАЖ OCP t_root НАРУШЕН: dispatch-fingerprint «%s» зависит от корня скана (не module-relative)", fp)
+		}
+	}
+}
+
 func TestCanonical_Guard1_DeltaTreeWithSelfEmpty(t *testing.T) {
 	dir := t.TempDir()
 	code := `package sample

@@ -66,6 +66,10 @@ func runBaseline(_ *cobra.Command, args []string) error {
 	}
 
 	violations := errorClassViolations(graph, a, &cfg)
+	// OCP baseline-снимок: ФАКТЫ существования веток type-dispatch (ocp-dispatch-site). Нужен слепок
+	// «что было», чтобы scan отличил НОВУЮ ветку существующего S от нового S (baseline-conditional OCP).
+	// Эмитятся только здесь (baseline-генерация), не в scan-выводе. BuildBaseline снимет их (tracked).
+	violations = append(violations, mcp.CollectDispatchFacts(a)...)
 	baseline := mcp.BuildBaseline(violations)
 
 	data, err := json.MarshalIndent(baseline, "", "  ")

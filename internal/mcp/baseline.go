@@ -56,15 +56,24 @@ func errorClass(kind string) bool {
 	return ok && c.Class == "ERROR"
 }
 
-// BuildBaseline собирает снимок из ERROR-class нарушений. Не-ERROR игнорируются
-// (дельта-гейт оперирует только блокирующими паттернами). Результат детерминирован:
-// каждый список отсортирован и дедуплицирован.
+// baselineTracked — снимается ли Kind в baseline. ERROR-class (дельта-гейт блокировки) ПЛЮС
+// ocp-dispatch-site: ФАКТЫ существования веток type-dispatch для baseline-conditional OCP (нужен
+// слепок «что было», чтобы отличить новую ветку существующего S от нового S). ocp-dispatch-site —
+// первый не-ERROR baseline-tracked kind: снимок-факт, НЕ блокирующий паттерн (OCP-WARNING выводится
+// производно из дельты этого слепка, см. ocp.go). Через единый Fingerprint -> один путь канонизации.
+func baselineTracked(kind string) bool {
+	return errorClass(kind) || kind == KindOCPDispatchSite
+}
+
+// BuildBaseline собирает снимок из baseline-tracked нарушений (ERROR-class + ocp-dispatch-site).
+// Прочие (магнитуды/WARNING) игнорируются. Результат детерминирован: каждый список отсортирован
+// и дедуплицирован.
 func BuildBaseline(violations []Violation) *Baseline {
 	b := &Baseline{Version: 1, Patterns: make(map[string][]string)}
 	seen := make(map[string]map[string]bool)
 
 	for _, v := range violations {
-		if !errorClass(v.Kind) {
+		if !baselineTracked(v.Kind) {
 			continue
 		}
 		fp := Fingerprint(v)
