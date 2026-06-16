@@ -123,6 +123,19 @@ type FunctionInfo struct {
 	// ISP-числителю нужен маппинг имя_параметра -> интерфейсный тип. Аддитивно,
 	// существующих потребителей Params не затрагивает.
 	NamedParams []FieldInfo
+	// Dispatches — type-switch сайты в теле (OCP). См. TypeDispatch.
+	Dispatches []TypeDispatch
+}
+
+// TypeDispatch — type-switch сайт (OCP): `switch x := v.(type) { case T1, T2: ... }`.
+// Operand — текст операнда (идентичность сайта S ВНУТРИ функции: стабилен к добавлению веток,
+// меняется только при смене того, ЧТО диспетчеризуем). Types — ОТСОРТИРОВАННОЕ множество имён
+// типов-веток (case-типы, кроме default/nil). OCP-нарушение (baseline-conditional): в существующий
+// сайт S=funcID|Operand добавлена ветка на тип ∈ Δ⁺ (НОВЫЙ vs baseline) -> закрытое S изменено
+// при расширении. Intent проксирован СТРУКТУРОЙ дельты (новый тип = факт расширения), не intent автора.
+type TypeDispatch struct {
+	Operand string   // текст операнда type-switch (напр. "v", "x.Field") — идентичность сайта
+	Types   []string // отсортированные имена типов-веток
 }
 
 // MethodInfo содержит информацию о методе.
@@ -152,6 +165,8 @@ type MethodInfo struct {
 	// ∃ метод C с control-flow ИЛИ внешними вызовами; DTO = только аксессоры (нет ни того, ни
 	// другого) -> ссылка на DTO не DIP-дефект (словарь абстракции, не поведенческая деталь).
 	HasControlFlow bool
+	// Dispatches — type-switch сайты в теле метода (OCP). См. TypeDispatch.
+	Dispatches []TypeDispatch
 }
 
 // FieldAccessInfo contains information about a field access within a method.

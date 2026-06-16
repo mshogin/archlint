@@ -52,6 +52,9 @@ type FieldAccessInfo = model.FieldAccessInfo
 // InterfaceMethodSig is an alias for model.InterfaceMethodSig.
 type InterfaceMethodSig = model.InterfaceMethodSig
 
+// TypeDispatch is an alias for model.TypeDispatch (OCP type-switch site).
+type TypeDispatch = model.TypeDispatch
+
 // NewGoAnalyzer creates a new Go code analyzer.
 func NewGoAnalyzer() *GoAnalyzer {
 	return &GoAnalyzer{

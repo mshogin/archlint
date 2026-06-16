@@ -469,6 +469,7 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			ForwardedParams: forwarded,
 			NamedParams:     namedParams,
 			HasControlFlow:  hasControlFlow(decl.Body),
+			Dispatches:      p.collectTypeDispatches(decl.Body),
 		}
 	} else {
 		funcID := pkgID + "." + funcName
@@ -484,7 +485,111 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			Refs:            refs,
 			ForwardedParams: forwarded,
 			NamedParams:     namedParams,
+			Dispatches:      p.collectTypeDispatches(decl.Body),
 		}
+	}
+}
+
+// collectTypeDispatches извлекает type-switch сайты тела (OCP). Для каждого `switch x := v.(type)`:
+// Operand = текст операнда (идентичность сайта S, стабилен к добавлению веток), Types = отсортированное
+// множество имён типов-веток (case-типы, кроме default/nil). default-only switch (нет типов) пропущен.
+func (p *GoParser) collectTypeDispatches(body *ast.BlockStmt) []TypeDispatch {
+	if body == nil {
+		return nil
+	}
+
+	var out []TypeDispatch
+
+	ast.Inspect(body, func(n ast.Node) bool {
+		ts, ok := n.(*ast.TypeSwitchStmt)
+		if !ok {
+			return true
+		}
+
+		typeSet := make(map[string]bool)
+		if ts.Body != nil {
+			for _, stmt := range ts.Body.List {
+				cc, ok := stmt.(*ast.CaseClause)
+				if !ok {
+					continue
+				}
+
+				for _, e := range cc.List {
+					if name := p.typeBranchName(e); name != "" && name != "nil" {
+						typeSet[name] = true
+					}
+				}
+			}
+		}
+
+		if len(typeSet) == 0 {
+			return true // default-only / пустой — не диспетчеризация по типам
+		}
+
+		types := make([]string, 0, len(typeSet))
+		for t := range typeSet {
+			types = append(types, t)
+		}
+		sort.Strings(types)
+
+		out = append(out, TypeDispatch{Operand: typeSwitchOperand(ts.Assign), Types: types})
+
+		return true
+	})
+
+	return out
+}
+
+// typeBranchName — имя типа-ветки case-клаузы, СОХРАНЯЯ указатель (`*T` != `T`: разные ветки).
+func (p *GoParser) typeBranchName(expr ast.Expr) string {
+	if star, ok := expr.(*ast.StarExpr); ok {
+		return "*" + p.typeBranchName(star.X)
+	}
+
+	name, _ := p.getTypeName(expr)
+
+	return name
+}
+
+// typeSwitchOperand — текст операнда type-switch (что диспетчеризуем): из `x := v.(type)`
+// (AssignStmt) или `switch v.(type)` (ExprStmt) извлекает операнд v. "" если не распознан.
+func typeSwitchOperand(assign ast.Stmt) string {
+	var ta *ast.TypeAssertExpr
+
+	switch s := assign.(type) {
+	case *ast.AssignStmt:
+		if len(s.Rhs) == 1 {
+			ta, _ = s.Rhs[0].(*ast.TypeAssertExpr)
+		}
+	case *ast.ExprStmt:
+		ta, _ = s.X.(*ast.TypeAssertExpr)
+	}
+
+	if ta == nil {
+		return ""
+	}
+
+	return exprText(ta.X)
+}
+
+// exprText — минимальный текстовый рендер выражения-операнда (Ident/Selector/Star/Paren/Call/Index).
+// Достаточно для идентичности сайта; нераспознанное -> "?".
+func exprText(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.SelectorExpr:
+		return exprText(t.X) + "." + t.Sel.Name
+	case *ast.ParenExpr:
+		return exprText(t.X)
+	case *ast.StarExpr:
+		return "*" + exprText(t.X)
+	case *ast.CallExpr:
+		return exprText(t.Fun) + "()"
+	case *ast.IndexExpr:
+		return exprText(t.X) + "[]"
+	default:
+		return "?"
 	}
 }
 
