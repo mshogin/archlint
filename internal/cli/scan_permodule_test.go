@@ -65,7 +65,7 @@ func TestPerModule_ScansEachModule(t *testing.T) {
 	perMod := map[string]int{}
 	for _, m := range mods {
 		rel, _ := filepath.Rel(root, m)
-		vs, err := collectGoModuleViolations(m, nil, &cfg)
+		vs, err := collectGoModuleViolations(m, nil, &cfg, nil)
 		if err != nil {
 			t.Fatalf("collect %s: %v", rel, err)
 		}
@@ -88,7 +88,7 @@ func TestPerModule_TargetModuleRelative(t *testing.T) {
 	cfg := archlintcfg.Default()
 
 	svcA := filepath.Join(root, "svc-a")
-	vs, err := collectGoModuleViolations(svcA, nil, &cfg)
+	vs, err := collectGoModuleViolations(svcA, nil, &cfg, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,11 +121,11 @@ func TestPerModule_DeltaSelfEmpty(t *testing.T) {
 
 	for _, rel := range []string{"svc-a", "svc-b"} {
 		dir := filepath.Join(root, rel)
-		first, err := collectGoModuleViolations(dir, nil, &cfg)
+		first, err := collectGoModuleViolations(dir, nil, &cfg, nil)
 		if err != nil {
 			t.Fatalf("collect#1 %s: %v", rel, err)
 		}
-		second, err := collectGoModuleViolations(dir, nil, &cfg)
+		second, err := collectGoModuleViolations(dir, nil, &cfg, nil)
 		if err != nil {
 			t.Fatalf("collect#2 %s: %v", rel, err)
 		}
@@ -149,7 +149,7 @@ func TestPerModule_AggregateWorst(t *testing.T) {
 	cfg := archlintcfg.Default()
 
 	gate := func(rel string, threshold int) bool {
-		vs, err := collectGoModuleViolations(filepath.Join(root, rel), nil, &cfg)
+		vs, err := collectGoModuleViolations(filepath.Join(root, rel), nil, &cfg, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

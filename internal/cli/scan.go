@@ -253,13 +253,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	violations := collectFromGraph(graph, a, &cfg)
-
 	// --- Delta gate (Фаза 5) ---
-	// Загружаем baseline-снимок: отсутствует -> nil -> ERROR-class паттерны
-	// деградируют в audit (NO-BASELINE -> NO-BLOCK). Дельта-гейт блокирует ТОЛЬКО
-	// НОВЫЕ vs baseline ERROR-class паттерны (SCC/layer/dead-code); магнитуды
-	// (WARNING/INFO) дельта-гейтом не блокируются (Ось-1).
+	// Загружаем baseline-снимок ДО сбора: нужен collectFromGraph для OCP baseline-conditional
+	// (новая ветка type-dispatch vs baseline). Отсутствует -> nil -> ERROR-class паттерны
+	// деградируют в audit (NO-BASELINE -> NO-BLOCK), OCP -> abstain. Дельта-гейт блокирует ТОЛЬКО
+	// НОВЫЕ vs baseline ERROR-class паттерны (SCC/layer/dead-code); магнитуды (WARNING/INFO) не
+	// блокируются (Ось-1).
 	baselinePath := scanBaselineFile
 	if baselinePath == "" && baselineDir != "" {
 		baselinePath = filepath.Join(baselineDir, defaultBaselineName)
@@ -273,6 +272,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 		baseline = b
 	}
+
+	violations := collectFromGraph(graph, a, &cfg, baseline)
 
 	// Threshold count gate applies ТОЛЬКО к не-ERROR-class нарушениям (магнитуды/
 	// WARNING): ERROR-class управляются дельта-гейтом, не абсолютным счётом.
@@ -434,8 +435,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 // collectFromGraph — ЕДИНЫЙ сбор нарушений из графа+анализатора (SSOT, корни №2/№5). Один и тот же
 // код для single-module (runScan) и per-module (monorepo loop) -> per-module результаты собраны тем
 // же набором метрик, что single (нет расхождения опорных точек). a==nil (stdin/Rust/TS) -> только
-// ERROR-class из графа; a!=nil (Go) -> + structural-clone + per-file SOLID/smell.
-func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []mcp.Violation {
+// ERROR-class из графа; a!=nil (Go) -> + structural-clone + per-file SOLID/smell. baseline (опц.) ->
+// OCP baseline-conditional (новая ветка type-dispatch существующего S); nil baseline -> OCP abstain.
+func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintcfg.Config, baseline *mcp.Baseline) []mcp.Violation {
 	// ERROR-class (structural coupling/cycles + forbidden + deprecated + layer-backedge + ghost +
 	// dead-code + ISP). Тот же набор использует baseline (gate.go errorClassViolations) -> симметрия.
 	violations := mcp.CollectErrorClassViolations(graph, a, cfg)
@@ -511,6 +513,12 @@ func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintc
 		}
 	}
 
+	// OCP baseline-conditional (ocp-open-modification, WARNING): новая ветка type-dispatch
+	// существующего S vs baseline. nil baseline -> abstain (CollectOCP вернёт nil). Go-only (a!=nil).
+	if a != nil {
+		violations = append(violations, mcp.CollectOCP(a, baseline)...)
+	}
+
 	// Стабильный порядок: kind, затем target.
 	sort.Slice(violations, func(i, j int) bool {
 		if violations[i].Kind != violations[j].Kind {
@@ -525,14 +533,14 @@ func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintc
 // collectGoModuleViolations анализирует ОДИН go-модуль (свой scanRoot=moduleDir -> module-relative
 // qname, t_root-инвариантность per-module) и собирает все его нарушения тем же collectFromGraph,
 // что single. Каждый модуль получает СВЕЖИЙ analyzer (без переноса state между модулями monorepo).
-func collectGoModuleViolations(moduleDir string, excludes []string, cfg *archlintcfg.Config) ([]mcp.Violation, error) {
+func collectGoModuleViolations(moduleDir string, excludes []string, cfg *archlintcfg.Config, baseline *mcp.Baseline) ([]mcp.Violation, error) {
 	a := analyzer.NewGoAnalyzer().WithExcludeDirs(excludes)
 	g, err := a.Analyze(moduleDir)
 	if err != nil {
 		return nil, err
 	}
 
-	return collectFromGraph(g, a, cfg), nil
+	return collectFromGraph(g, a, cfg, baseline), nil
 }
 
 // gateViolations — ЕДИНЫЙ гейт-расчёт (SSOT): blocking = НОВЫЕ ERROR-class паттерны vs baseline
@@ -578,14 +586,9 @@ func runScanPerModule(codeDir string, mods []string, excludes []string, cfg *arc
 			rel = moduleDir
 		}
 
-		violations, err := collectGoModuleViolations(moduleDir, excludes, cfg)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "analysis error [module %s]: %v\n", rel, err)
-			os.Exit(2)
-		}
-
 		// Baseline — СТРОГО per-module (свой файл в каталоге модуля). Глобальный --baseline на
 		// monorepo не применяется: один файл не описывает несколько модулей с разными scanRoot.
+		// Грузим ДО сбора: нужен для OCP baseline-conditional per-module (delta не смешивает модули).
 		baselinePath := filepath.Join(moduleDir, defaultBaselineName)
 		var baseline *mcp.Baseline
 		if b, err := loadBaseline(baselinePath); err != nil {
@@ -593,6 +596,12 @@ func runScanPerModule(codeDir string, mods []string, excludes []string, cfg *arc
 			os.Exit(2)
 		} else {
 			baseline = b
+		}
+
+		violations, err := collectGoModuleViolations(moduleDir, excludes, cfg, baseline)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "analysis error [module %s]: %v\n", rel, err)
+			os.Exit(2)
 		}
 
 		loadedBaseline := ""

@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/model"
@@ -69,4 +70,58 @@ func CollectDispatchFacts(a *analyzer.GoAnalyzer) []Violation {
 	}
 
 	return out
+}
+
+// CollectOCP — baseline-conditional OCP-нарушения (ocp-open-modification, WARNING). Новая ветка
+// (тип) в СУЩЕСТВУЮЩЕМ type-dispatch S (S был в baseline, эта ветка — нет) = «закрытое S
+// модифицировано при расширении». Различение через слепок baseline:
+//   - ветка ∈ baseline (S::тип есть)            -> no-fire (не новая);
+//   - ветка ∉ baseline, S ∈ baseline (S::* был) -> WARNING (расширение существующего S);
+//   - ветка ∉ baseline, S ∉ baseline (новый S)  -> no-fire (новый код, не модификация закрытого).
+//
+// no-baseline (nil) -> nil (АБСТЕЙН): без слепка «что было» расширение неотличимо от легально
+// существовавшего dispatch -> молчать ложно-зелёным нельзя, но и шуметь на всех сайтах нельзя.
+// Intent проксирован СТРУКТУРОЙ дельты (новый тип = факт расширения), не intent автора -> WARNING
+// (никогда ERROR: легальный рефактор/расширение domain внутри S = legal FP, precision<1).
+func CollectOCP(a *analyzer.GoAnalyzer, baseline *Baseline) []Violation {
+	if a == nil || baseline == nil {
+		return nil // no-baseline -> abstain
+	}
+
+	// S.identity, присутствовавшие в baseline (по префиксу S:: их веток-фактов).
+	seenSites := make(map[string]bool)
+	for _, fp := range baseline.Patterns[KindOCPDispatchSite] {
+		if i := strings.Index(fp, "::"); i >= 0 {
+			seenSites[fp[:i]] = true
+		}
+	}
+
+	var out []Violation
+
+	for _, fact := range CollectDispatchFacts(a) {
+		if baseline.Contains(fact) {
+			continue // ветка существовала -> не новая
+		}
+		if !seenSites[fact.Target] {
+			continue // новый S целиком -> не модификация закрытого
+		}
+
+		out = append(out, Violation{
+			Kind:    KindOCPOpenModification,
+			Target:  fact.Target,
+			Anchor:  fact.Anchor, // тот же единый fingerprint (S::тип)
+			Message: fmt.Sprintf("OCP: type-dispatch %s расширен новой веткой (%s) — закрытое модифицировано вместо полиморфизма", fact.Target, branchType(fact.Anchor)),
+		})
+	}
+
+	return out
+}
+
+// branchType извлекает имя типа-ветки из fingerprint S::тип (для сообщения).
+func branchType(anchor string) string {
+	if i := strings.LastIndex(anchor, "::"); i >= 0 {
+		return anchor[i+2:]
+	}
+
+	return anchor
 }
