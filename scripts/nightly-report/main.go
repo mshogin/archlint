@@ -16,6 +16,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,16 +27,29 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const healthVersion = "v2"
+const healthVersion = "v3"
 
-const healthNote = "health v2 = ERROR-class provable core (соундное ядро: SCC/layering/dead-code/ISP/" +
-	"forbidden/deprecated/ghost — прошло ворота + self-проверку). WARN-слой (DIP/SRP/clone/ρ) НЕ в формуле " +
-	"health: precision очищен (DTO-фильтр + INFO-downgrades), но verified-WARNING доминируют по ОБЪЁМУ — " +
-	"линейный вес не масштабируется (десятки WARN -> 0%, ложно-плохой дашборд). Нужна НЕЛИНЕЙНАЯ/" +
-	"нормализованная формула (WARN/KLOC, density, log-scale) — отдельный продуманный инкремент (backlog). " +
-	"Advanced research-метрики (центральности/спектр — Тир3 музей) и OCP/LSP-эвристики (несоундны) УБРАНЫ " +
-	"с дашборда. health% = по блокирующим доказуемым дефектам, НЕ сравним напрямую с прежней (Python) " +
-	"методикой. Колонка Warnings — наблюдаема отдельно (категории), в health НЕ входит."
+// Калибровка WARN-слоя (health v3). warnPenalty = warnMax * d/(d+warnD0), d = warns/KLOC (ПЛОТНОСТЬ,
+// не объём -> не обнуляется на больших репо). Гиперболическое насыщение: d=0 -> 0; d=warnD0 -> warnMax/2;
+// d->∞ -> warnMax (асимптота, никогда не обнуляет — WARN не блок). Константы откалиброваны замером на
+// спектре (self + open-source Go): density godotenv=0, color=4.8, log=3.4, self=4.4, env=15.3, twirp=12.5.
+//   warnMax=40: WARN-плотный репо теряет ДО 40 пунктов (заметно, но не обнуляет — ERROR обнуляет, не WARN).
+//   warnD0=8:   при density=8 (≈ выше типичной 3-5) штраф = 20; env(15.3)->26, self(4.4)->14, чистый->~0.
+// Эффект на витрину (golden): godotenv 100, color 85, log 88, env 74 (линейная дала бы 0!), self 41.
+const (
+	warnMax = 40.0
+	warnD0  = 8.0
+)
+
+const healthNote = "health v3 = ERROR-class provable core + НОРМАЛИЗОВАННЫЙ WARN-слой. ERROR-ядро " +
+	"(SCC/layering/dead-code/ISP/forbidden/deprecated/ghost — соундное, прошло ворота + self-проверку): " +
+	"штраф errs*5. WARN-слой (DIP/SRP/clone): штраф по ПЛОТНОСТИ warnMax*d/(d+warnD0), d=warns/KLOC — " +
+	"НЕ по объёму (линейный вес v2 обнулял health на десятках WARN -> ложно-плохой дашборд; golden вскрыл). " +
+	"Насыщение: WARN теряет максимум warnMax пунктов, НИКОГДА не обнуляет (WARN — сигнал, не блок; обнуляет " +
+	"только ERROR). Константы откалиброваны замером на спектре репо (self+open-source). health% v3 != v2 " +
+	"(добавлен WARN-слой) -> тренд НЕ загадочный скачок (переход помечен явно, урок ложно-зелёного). " +
+	"Advanced research-метрики (центральности/спектр) и OCP/LSP-эвристики УБРАНЫ. Колонка Warnings + density " +
+	"наблюдаемы отдельно."
 
 // severity-классификация берётся из ЕДИНОГО реестра mcp.SeverityClassOf (SSOT) — без дубль-
 // хардкода списков. errors = ERROR-class; warnings = WARNING-class; INFO игнорируется в health.
@@ -55,12 +69,14 @@ type scanJSON struct {
 }
 
 type repoHealth struct {
-	Owner    string `json:"owner"`
-	Name     string `json:"name"`
-	Language string `json:"language"`
-	Health   int    `json:"health"`
-	Errors   int    `json:"errors"`
-	Warnings int    `json:"warnings"`
+	Owner    string  `json:"owner"`
+	Name     string  `json:"name"`
+	Language string  `json:"language"`
+	Health   int     `json:"health"`
+	Errors   int     `json:"errors"`
+	Warnings int     `json:"warnings"`
+	LOC      int     `json:"loc"`          // непустые строки исходников (для density-нормализации WARN)
+	Density  float64 `json:"warn_density"` // warns/KLOC — наблюдаемая плотность WARN
 }
 
 type summaryOut struct {
@@ -119,22 +135,15 @@ func main() {
 		}
 
 		errs, warns := aggregate(scanPath)
-		// health v2 = ERROR-class only (вариант A, закреплён): WARN-слой исключён из формулы.
-		// Golden-замер показал: даже после precision-очистки (DTO-фильтр + INFO-downgrades)
-		// verified-WARNING доминируют по ОБЪЁМУ -> линейный вес обнуляет health на любом среднем
-		// репо (ложно-плохой дашборд). WARN-слой требует НЕЛИНЕЙНОЙ формулы (density/KLOC) -> backlog.
-		// warns считаем для отдельной наблюдаемой колонки, в health НЕ включаем.
-		health := 100 - errs*5
-		if health < 0 {
-			health = 0
-		}
+		loc := countCodeLines(dest, repo.Language)
+		health, density := computeHealth(errs, warns, loc)
 
 		out.Repos = append(out.Repos, repoHealth{
 			Owner: owner, Name: name, Language: repo.Language,
-			Health: health, Errors: errs, Warnings: warns,
+			Health: health, Errors: errs, Warnings: warns, LOC: loc, Density: density,
 		})
 
-		fmt.Printf("  health=%d%% (v2), errors=%d, warnings=%d\n", health, errs, warns)
+		fmt.Printf("  health=%d%% (v3), errors=%d, warnings=%d, loc=%d, density=%.2f\n", health, errs, warns, loc, density)
 	}
 
 	if err := os.MkdirAll(scanDir, 0o755); err == nil {
@@ -205,6 +214,85 @@ func aggregate(scanPath string) (errs, warns int) {
 	return errs, warns
 }
 
+// computeHealth — health v3: ERROR-ядро (линейный штраф errs*5, блокирующих мало) + НОРМАЛИЗОВАННЫЙ
+// WARN-слой по ПЛОТНОСТИ (density=warns/KLOC). warnPenalty = warnMax*d/(d+warnD0): гиперболическое
+// насыщение -> WARN теряет максимум warnMax, НИКОГДА не обнуляет (обнуляет только ERROR). Возвращает
+// health [0,100] и density (для наблюдаемости). Решает дефект v2 (линейный вес обнулял на объёме WARN).
+func computeHealth(errs, warns, loc int) (health int, density float64) {
+	kloc := float64(loc) / 1000.0
+	if kloc < 0.001 {
+		kloc = 0.001 // защита от деления на ноль (пустой/неизмеренный репо)
+	}
+
+	density = float64(warns) / kloc
+	warnPenalty := warnMax * density / (density + warnD0)
+
+	health = 100 - errs*5 - int(math.Round(warnPenalty))
+	if health < 0 {
+		health = 0
+	}
+
+	return health, density
+}
+
+// countCodeLines считает НЕПУСТЫЕ строки исходников языка (для density-нормализации WARN). Skip
+// build-артефактов/вендора/фикстур. Грубая мера размера (не настоящий LOC-инструмент) — достаточно
+// для плотности warns/KLOC.
+func countCodeLines(dir, language string) int {
+	exts := map[string][]string{
+		"Go":         {".go"},
+		"Rust":       {".rs"},
+		"TypeScript": {".ts", ".tsx"},
+	}[language]
+	if exts == nil {
+		exts = []string{".go"}
+	}
+
+	skip := map[string]bool{"vendor": true, ".git": true, "node_modules": true, "target": true, "testdata": true}
+	total := 0
+
+	_ = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil //nolint:nilerr // best-effort обход; ошибки путей не валят подсчёт
+		}
+
+		if info.IsDir() {
+			if skip[info.Name()] {
+				return filepath.SkipDir
+			}
+
+			return nil
+		}
+
+		matched := false
+		for _, e := range exts {
+			if strings.HasSuffix(info.Name(), e) {
+				matched = true
+
+				break
+			}
+		}
+		if !matched {
+			return nil
+		}
+
+		data, err := os.ReadFile(path) //nolint:gosec // CI: чтение исходников клонированного репо
+		if err != nil {
+			return nil //nolint:nilerr // нечитаемый файл не валит подсчёт
+		}
+
+		for _, line := range strings.Split(string(data), "\n") {
+			if strings.TrimSpace(line) != "" {
+				total++
+			}
+		}
+
+		return nil
+	})
+
+	return total
+}
+
 func healthBar(h int) string {
 	switch {
 	case h >= 80:
@@ -235,19 +323,20 @@ func writeIndex(s summaryOut, outDir string) {
 	fmt.Fprintf(&b, "Last scan: %s\n", date)
 	fmt.Fprintf(&b, "Repositories monitored: %d\n\n", len(repos))
 	b.WriteString("## Health Dashboard\n\n")
-	b.WriteString("| Repository | Language | Health | Errors | Warnings |\n")
-	b.WriteString("|-----------|----------|--------|--------|----------|\n")
+	b.WriteString("| Repository | Language | Health | Errors | Warnings | WARN/KLOC |\n")
+	b.WriteString("|-----------|----------|--------|--------|----------|-----------|\n")
 
 	for _, r := range repos {
 		link := fmt.Sprintf("[%s/%s](%s-%s/)", r.Owner, r.Name, r.Owner, r.Name)
-		fmt.Fprintf(&b, "| %s | %s | %s | %d | %d |\n", link, r.Language, healthBar(r.Health), r.Errors, r.Warnings)
+		fmt.Fprintf(&b, "| %s | %s | %s | %d | %d | %.1f |\n", link, r.Language, healthBar(r.Health), r.Errors, r.Warnings, r.Density)
 	}
 
 	b.WriteString("\n## How it works\n\n")
 	b.WriteString("Every night at 3:00 UTC, archlint clones each monitored repository, builds the " +
 		"architecture dependency graph (Go engine), and runs the soundness-gated detectors " +
 		"(SCC/cycles, layering, dead-code, ISP, DIP/SRP) — the provable architectural core.\n\n")
-	fmt.Fprintf(&b, "Health score (`%s`): `100 - (errors * 5)`, minimum 0 (ERROR-class provable core; warnings informational).\n\n", healthVersion)
+	fmt.Fprintf(&b, "Health score (`%s`): `100 - errs*5 - warnMax*d/(d+warnD0)`, d = warnings/KLOC, minimum 0 "+
+		"(ERROR-core линейно + WARN-плотность с насыщением — WARN не обнуляет).\n\n", healthVersion)
 	b.WriteString("> " + healthNote + "\n\n")
 	b.WriteString("Want your repo scanned? " +
 		"[Open an issue](https://github.com/mshogin/archlint/issues/new?title=Add+repo:+owner/name).\n")
@@ -271,7 +360,7 @@ func writeRepoPage(r repoHealth, outDir string) {
 	fmt.Fprintf(&b, "**Health:** %s (health %s — provable core)\n\n", healthBar(r.Health), healthVersion)
 	b.WriteString("## Provable-core results\n\n")
 	fmt.Fprintf(&b, "- ERROR-class violations (cycles/layering/dead-code/forbidden/deprecated/ISP/ghost): **%d**\n", r.Errors)
-	fmt.Fprintf(&b, "- WARNING (DIP/SRP/ISP/clone): **%d**\n\n", r.Warnings)
+	fmt.Fprintf(&b, "- WARNING (DIP/SRP/clone): **%d** (density %.1f per KLOC, %d LOC)\n\n", r.Warnings, r.Density, r.LOC)
 	b.WriteString("> " + healthNote + "\n")
 
 	_ = os.WriteFile(filepath.Join(dir, "_index.md"), []byte(b.String()), 0o644) //nolint:gosec // CI artifact
