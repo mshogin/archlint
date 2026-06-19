@@ -167,6 +167,11 @@ type MethodInfo struct {
 	HasControlFlow bool
 	// Dispatches — type-switch сайты в теле метода (OCP). См. TypeDispatch.
 	Dispatches []TypeDispatch
+	// ReceiverVars — ИМЕНА receiver-переменных метода (`func (p *T) ...` -> ["p"]). Нужны для
+	// own-vs-other различения вызовов: CallInfo.Receiver несёт ИМЯ переменной (p), а MethodInfo.
+	// Receiver — ТИП (T); сравнение имя==тип всегда ложно -> свои p.foo() ложно считались чужими
+	// (feature-envy врала). own = call.Receiver ∈ ReceiverVars. Уже собираются в parseFuncDecl.
+	ReceiverVars []string
 }
 
 // FieldAccessInfo contains information about a field access within a method.

@@ -534,17 +534,12 @@ func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintc
 			}
 		}
 
-		if cfg.Rules.FeatureEnvy.IsEnabled() {
-			for _, fe := range m.FeatureEnvy {
-				if !cfg.IsFeatureEnvyExcluded(fe) {
-					violations = append(violations, mcp.Violation{
-						Kind:    "feature-envy",
-						Message: fmt.Sprintf("Feature envy: %s", fe),
-						Target:  fe,
-					})
-				}
-			}
-		}
+		// feature-envy ДЕМОТИРОВАН из active_scan_set (обоснованный отказ, доказательство в
+		// docs/proof-catalog): self-проверка за 3 витка вскрыла, что метрика структурно недоказуема
+		// на Go без type-резолва (call.Receiver = синтаксическое ИМЯ != семантический тип: не различает
+		// чужой объект / stdlib-пакет / своё поле). НЕ эмитится в боевом scan/gate/health. Вычисление
+		// (computeFeatureEnvy с объект-локализацией + own-fix) сохранено в FileMetrics.FeatureEnvy/Envies
+		// для диагностики (MCP/signals). Реактивация: при появлении go/types все 3 корня решаемы.
 
 		for _, ss := range m.ShotgunSurgery {
 			violations = append(violations, mcp.Violation{

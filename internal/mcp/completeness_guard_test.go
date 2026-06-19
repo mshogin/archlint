@@ -31,7 +31,10 @@ func TestCompleteness_AllEmittedKindsHaveVerdict(t *testing.T) {
 
 	// non-gate Kind'ы: НЕ участвуют в severity-гейте (сигналы/исключения), вердикт не требуется.
 	// isp-external-narrow — внешний контракт, по дизайну НЕ в реестре (всегда WARNING на гейте отброшен).
-	whitelist := map[string]bool{"isp-external-narrow": true}
+	// feature-envy — ДЕМОТИРОВАН в диагностику (обоснованный отказ, docs/proof-catalog): структурно
+	// недоказуем на Go без type-резолва. Эмитится в диагностических путях (MCP/check/batch/watch/
+	// degradation), но НЕ в active_scan_set/гейте -> вердикт в боевом реестре не требуется.
+	whitelist := map[string]bool{"isp-external-narrow": true, "feature-envy": true}
 
 	emitted := make(map[string]bool)
 

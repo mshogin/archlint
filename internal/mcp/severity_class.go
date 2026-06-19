@@ -93,7 +93,9 @@ var violationClasses = map[string]SeverityClass{
 	"srp-multiple-responsibilities": {Class: "INFO"}, // reach-ρ: W1 слабая + W2 провал -> INFO
 	"srp-too-many-methods":          {Class: "INFO"}, // размерная магнитуда (#методов > порог)
 	"srp-too-many-fields":           {Class: "INFO"}, // размерная магнитуда (#полей > порог)
-	"feature-envy":                  {Class: "INFO"}, // магнитуда (Go-фон шумит), не паттерн
+	// feature-envy ДЕМОТИРОВАН из active_scan_set (обоснованный отказ, docs/proof-catalog): структурно
+	// недоказуем на Go без type-резолва (call.Receiver = имя != тип; не различает объект/пакет/поле,
+	// 3 корня вскрыты self-проверкой). Не в боевом гейте -> НЕ в реестре. Диагностика через FileMetrics.
 	"god-class":                     {Class: "INFO"}, // размерная магнитуда (когезия=LCOM4-дубль)
 	"hub-node":                      {Class: "INFO"}, // магнитуда центральности
 	"high-efferent-coupling":        {Class: "INFO"}, // магнитуда coupling (порог произволен)

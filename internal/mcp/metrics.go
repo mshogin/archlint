@@ -42,11 +42,15 @@ type FileMetrics struct {
 	ISPViolations []Violation `json:"ispViolations,omitempty"`
 
 	// Code smells.
-	GodClasses     []string `json:"godClasses,omitempty"`
-	HubNodes       []string `json:"hubNodes,omitempty"`
-	OrphanNodes    []string `json:"orphanNodes,omitempty"`
-	FeatureEnvy    []string `json:"featureEnvy,omitempty"`
-	ShotgunSurgery []string `json:"shotgunSurgery,omitempty"`
+	GodClasses  []string `json:"godClasses,omitempty"`
+	HubNodes    []string `json:"hubNodes,omitempty"`
+	OrphanNodes []string `json:"orphanNodes,omitempty"`
+	FeatureEnvy []string `json:"featureEnvy,omitempty"`
+	// FeatureEnvyEnvies — methodID -> ОБЪЕКТ зависти "тип (N/M calls)": к какому чужому receiver'у
+	// метод обращается чаще своего (топ-receiver, N его вызовов из M чужих). Локализует причину
+	// envy в выводе (либо чинить — переместить логику к тому типу, либо видно что сигнал шумный).
+	FeatureEnvyEnvies map[string]string `json:"featureEnvyEnvies,omitempty"`
+	ShotgunSurgery    []string          `json:"shotgunSurgery,omitempty"`
 
 	// Structural metrics.
 	CyclicDeps   []string `json:"cyclicDeps,omitempty"`
@@ -68,6 +72,10 @@ const (
 	godFanOutThreshold = 10
 	hubThreshold       = 15
 	shotgunThreshold   = 5
+	// featureEnvyMinDominant — мин. число вызовов к ДОМИНИРУЮЩЕМУ чужому объекту, чтобы счесть
+	// feature envy (анти-шум: отсекает координаторов с размазанными 1-2 вызовами). Калибруется
+	// по self-проверке соундности (0 ложных на здоровом коде).
+	featureEnvyMinDominant = 3
 )
 
 // ComputeFileMetrics computes full metrics for a single file.
@@ -559,21 +567,53 @@ func computeFeatureEnvy(m *FileMetrics, absPath string, a *analyzer.GoAnalyzer) 
 			continue
 		}
 
+		// own-vs-other по ИМЕНИ receiver-переменной (B'): call.Receiver несёт ИМЯ (p), а
+		// method.Receiver — ТИП (T). own = вызов на receiver-переменную метода (p.foo()) ИЛИ
+		// безымянный (свой). Прежнее сравнение имя==тип всегда ложно -> свои p.foo() ложно-чужие
+		// (feature-envy врала: buildGraph envies g 13/13 — это own-вызовы билдера).
+		ownVars := make(map[string]bool, len(method.ReceiverVars))
+		for _, rv := range method.ReceiverVars {
+			ownVars[rv] = true
+		}
+
 		ownCalls := 0
-		otherCalls := 0
+		otherByRecv := make(map[string]int) // чужой receiver -> число вызовов к нему
 
 		for _, call := range method.Calls {
 			if call.IsMethod {
-				if call.Receiver == method.Receiver || call.Receiver == "" {
+				if call.Receiver == "" || ownVars[call.Receiver] || call.Receiver == method.Receiver {
 					ownCalls++
 				} else {
-					otherCalls++
+					otherByRecv[call.Receiver]++
 				}
 			}
 		}
 
-		if otherCalls > ownCalls && otherCalls > 2 {
+		otherCalls := 0
+		topRecv := ""
+		topN := 0
+		for recv, n := range otherByRecv {
+			otherCalls += n
+			// Доминирующий объект зависти (тай-брейк по имени -> детерминизм).
+			if n > topN || (n == topN && recv < topRecv) {
+				topN = n
+				topRecv = recv
+			}
+		}
+
+		// Feature envy по ОПРЕДЕЛЕНИЮ (Fowler): метод тяготеет к ОДНОМУ чужому объекту больше, чем
+		// к своему — ДОМИНИРУЮЩИЙ receiver, дёрнутый много раз. НЕ суммарная координация многих чужих
+		// по чуть-чуть (это координатор, не envy — прежний порог otherCalls>ownCalls ловил именно его,
+		// интенсионал не привязан к Def). Условие: топ-объект > своих вызовов И >= порога доминирования.
+		// NB (known-limitation): группировка по ИМЕНИ переменной (receiver), НЕ по типу — type-резолв
+		// недоступен без go/types. Две переменные одного типа считаются раздельно -> precision НЕ
+		// доказан -> feature-envy ОСТАЁТСЯ INFO (сев-лестница: WARNING требует доказанной направленности).
+		if topN > ownCalls && topN >= featureEnvyMinDominant {
 			m.FeatureEnvy = append(m.FeatureEnvy, methodID)
+			if m.FeatureEnvyEnvies == nil {
+				m.FeatureEnvyEnvies = make(map[string]string)
+			}
+			m.FeatureEnvyEnvies[methodID] = fmt.Sprintf("%s (%d/%d calls)", topRecv, topN, otherCalls)
 		}
 	}
 }

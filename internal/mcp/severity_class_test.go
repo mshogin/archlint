@@ -19,7 +19,7 @@ func TestSeverityClass_Registry(t *testing.T) {
 	// INFO (магнитуды/дубли) -> LevelPersonal ([INFO]), убраны из WARNING-шума.
 	infoKinds := []string{
 		"srp-multiple-responsibilities", "srp-too-many-methods", "srp-too-many-fields",
-		"feature-envy", "god-class", "hub-node", "high-efferent-coupling",
+		"god-class", "hub-node", "high-efferent-coupling",
 	}
 	for _, k := range infoKinds {
 		if !IsInfoClass(k) {

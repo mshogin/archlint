@@ -470,6 +470,7 @@ func (p *GoParser) parseFuncDecl(decl *ast.FuncDecl, pkgID, filename string, fse
 			NamedParams:     namedParams,
 			HasControlFlow:  hasControlFlow(decl.Body),
 			Dispatches:      p.collectTypeDispatches(decl.Body),
+			ReceiverVars:    receiverVars,
 		}
 	} else {
 		funcID := pkgID + "." + funcName
