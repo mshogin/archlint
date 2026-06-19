@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 
@@ -25,6 +26,7 @@ var (
 	scanExclude      []string
 	scanBaselineFile string
 	scanSignals      bool
+	scanDiff         string
 )
 
 var scanCmd = &cobra.Command{
@@ -62,6 +64,8 @@ func init() {
 	scanCmd.Flags().StringSliceVar(&scanExclude, "exclude", nil, "Directory basenames to skip during the source walk (additive on top of built-in defaults). Repeatable.")
 	scanCmd.Flags().StringVar(&scanBaselineFile, "baseline", "", "Path to .archlint-baseline.json for delta gating (default: <directory>/.archlint-baseline.json). Absent baseline -> audit mode (no block on ERROR patterns).")
 	scanCmd.Flags().BoolVar(&scanSignals, "signals", false, "Audit/slow mode: also compute structural magnitude descriptors (centralities, coupling, smells) and include them under `signals` in JSON. Off by default — the fast gate stays free of magnitudes (speed constitution).")
+	scanCmd.Flags().StringVar(&scanDiff, "diff", "", "Self-audit delta: mark findings INTRODUCED by the working tree vs git <ref> as NEW (all severity, same canonical fingerprint as the ERROR gate). Empty value (--diff alone) compares against HEAD. Requires a git repo.")
+	scanCmd.Flags().Lookup("diff").NoOptDefVal = "HEAD"
 	rootCmd.AddCommand(scanCmd)
 }
 
@@ -166,7 +170,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	var graph *model.Graph
 	var a *analyzer.GoAnalyzer
-	var baselineDir string // каталог для дефолтного пути baseline (пусто в stdin-режиме)
+	var baselineDir string    // каталог для дефолтного пути baseline (пусто в stdin-режиме)
+	var resolvedExcludes []string // итоговые excludes (для --diff ref-worktree скана)
 
 	if scanStdin {
 		// Read YAML graph from stdin.
@@ -218,6 +223,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 
 		excludes := mergeExcludes(cfg.ExcludePaths, scanExclude)
+		resolvedExcludes = excludes
 
 		if analyzer.DetectRustProject(codeDir) {
 			rustAnalyzer := analyzer.NewRustAnalyzer().WithExcludeDirs(excludes)
@@ -274,6 +280,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	violations := collectFromGraph(graph, a, &cfg, baseline)
+
+	// file:line к каждому нарушению (резолв Target-qname из analyzer) — чтобы чинить, не искать
+	// строку вручную. Display-обогащение, не трогает Fingerprint.
+	mcp.ApplyLocations(a, violations)
+
+	// --diff self-аудит: пометить НОВЫЕ нарушения (введены рабочим деревом vs git <ref>) для ВСЕХ
+	// severity. Снимает ручную операцию stash+собрать-старый-бинарь+diff-JSON -> одна команда.
+	if scanDiff != "" && a != nil && baselineDir != "" {
+		if err := markDiffNew(baselineDir, scanDiff, resolvedExcludes, &cfg, violations); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: --diff vs %s failed (%v); showing full findings\n", scanDiff, err)
+		}
+	}
 
 	// Threshold count gate applies ТОЛЬКО к не-ERROR-class нарушениям (магнитуды/
 	// WARNING): ERROR-class управляются дельта-гейтом, не абсолютным счётом.
@@ -367,12 +385,28 @@ func runScan(cmd *cobra.Command, args []string) error {
 			if !passed {
 				status = "FAILED"
 			}
-			fmt.Printf("%s: %d violations found (threshold: %d, blocking regressions: %d)\n\n", status, total, threshold, blocking)
+			fmt.Printf("%s: %d violations found (threshold: %d, blocking regressions: %d)\n", status, total, threshold, blocking)
+
+			// --diff self-аудит: сводка НОВЫХ (введены рабочим деревом vs ref) — главный сигнал автору.
+			diffMode := scanDiff != ""
+			if diffMode {
+				newCount := 0
+				for _, v := range violations {
+					if v.IsNew {
+						newCount++
+					}
+				}
+				fmt.Printf("diff vs %s: %d NEW (introduced by working tree)\n", scanDiff, newCount)
+				// NEW первыми (stable) — заметность; gate/categories уже посчитаны выше, display-сорт безопасен.
+				sort.SliceStable(violations, func(i, j int) bool { return violations[i].IsNew && !violations[j].IsNew })
+			}
+			fmt.Println()
 
 			// UX против alert fatigue (коуч-инсайт на уровне вывода): blocking-регрессии
 			// (NEW ERROR -> Taboo) печатаем ВСЕГДА (критичны, их мало); шумные не-блокирующие
 			// категории (WARNING/INFO, напр. structural-clone) — ЛИМИТ топ-N на Kind + сводка
 			// «…ещё M». Полный список всегда доступен через --format json (машинный путь не урезан).
+			// В --diff режиме NEW тоже печатаются ВСЕГДА (не урезаются — это цель self-аудита).
 			const perKindLimit = 5
 
 			shownPerKind := make(map[string]int)
@@ -384,7 +418,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 				level := mcp.EffectiveLevel(v, &cfg, baseline)
 				prefix := mcp.LevelPrefix(level)
 
-				if level != archlintcfg.LevelTaboo {
+				if level != archlintcfg.LevelTaboo && (!diffMode || !v.IsNew) {
 					if shownPerKind[v.Kind] >= perKindLimit {
 						hiddenPerKind[v.Kind]++
 
@@ -394,9 +428,17 @@ func runScan(cmd *cobra.Command, args []string) error {
 					shownPerKind[v.Kind]++
 				}
 
-				fmt.Printf("%s [%s] %s\n", prefix, v.Kind, v.Message)
+				marker := ""
+				if diffMode && v.IsNew {
+					marker = "NEW "
+				}
+
+				fmt.Printf("%s%s [%s] %s\n", marker, prefix, v.Kind, v.Message)
 				if v.Target != "" {
 					fmt.Printf("  target: %s\n", v.Target)
+				}
+				if v.Location != "" {
+					fmt.Printf("  at: %s\n", v.Location)
 				}
 				fmt.Println()
 			}
@@ -541,6 +583,44 @@ func collectGoModuleViolations(moduleDir string, excludes []string, cfg *archlin
 	}
 
 	return collectFromGraph(g, a, cfg, baseline), nil
+}
+
+// markDiffNew помечает IsNew нарушения, ВВЕДЁННЫЕ рабочим деревом vs git <ref>. ref-состояние
+// собирается во ВРЕМЕННОМ git-worktree (рабочее дерево НЕ трогается — ни checkout, ни stash);
+// refSet = {Kind|Fingerprint} через ЕДИНЫЙ canonical Fingerprint (тот же, что baseline-ERROR-гейт,
+// C1 — одна канонизация). NEW = (Kind,Fingerprint) ∉ refSet, для ВСЕХ severity (снимаем severity-
+// фильтр с уже-соундной дельты). Расширение дельта-механизма, НЕ новый путь канонизации.
+func markDiffNew(repoDir, ref string, excludes []string, cfg *archlintcfg.Config, violations []mcp.Violation) error {
+	refDir, err := os.MkdirTemp("", "archlint-diff-*")
+	if err != nil {
+		return fmt.Errorf("temp worktree: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(refDir) }()
+
+	if out, err := exec.Command("git", "-C", repoDir, "worktree", "add", "--detach", refDir, ref).CombinedOutput(); err != nil { //nolint:gosec // ref из CLI-флага self-аудита
+		return fmt.Errorf("git worktree add %s: %v: %s", ref, err, out)
+	}
+	defer func() { _ = exec.Command("git", "-C", repoDir, "worktree", "remove", "--force", refDir).Run() }() //nolint:gosec // cleanup временного worktree
+
+	// ref-findings ТЕМИ ЖЕ детекторами (collectGoModuleViolations -> collectFromGraph), baseline=nil
+	// (полный набор всех severity для сравнения).
+	refViolations, err := collectGoModuleViolations(refDir, excludes, cfg, nil)
+	if err != nil {
+		return fmt.Errorf("scan ref %s: %w", ref, err)
+	}
+
+	refSet := make(map[string]bool, len(refViolations))
+	for _, v := range refViolations {
+		refSet[v.Kind+"|"+mcp.Fingerprint(v)] = true
+	}
+
+	for i := range violations {
+		if !refSet[violations[i].Kind+"|"+mcp.Fingerprint(violations[i])] {
+			violations[i].IsNew = true
+		}
+	}
+
+	return nil
 }
 
 // gateViolations — ЕДИНЫЙ гейт-расчёт (SSOT): blocking = НОВЫЕ ERROR-class паттерны vs baseline

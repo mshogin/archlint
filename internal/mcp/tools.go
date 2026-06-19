@@ -196,6 +196,12 @@ type Violation struct {
 	Message string `json:"message"`
 	Target  string `json:"target,omitempty"`
 	Anchor  string `json:"anchor,omitempty"`
+	// Location — file:line нарушения (резолвится из analyzer по Target при выводе). Для починки:
+	// не лезть искать строку по qname. НЕ участвует в Fingerprint (display-поле, как Message).
+	Location string `json:"location,omitempty"`
+	// IsNew — нарушение ВВЕДЕНО рабочим деревом vs --diff ref (тот же canonical Fingerprint, что
+	// baseline-ERROR-гейт; расширение дельты на ВСЕ severity). Только в --diff режиме (omitempty).
+	IsNew bool `json:"is_new,omitempty"`
 }
 
 // CallGraphNode represents a node in the call graph result.
