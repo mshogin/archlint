@@ -73,7 +73,7 @@ var monitorRemoveCmd = &cobra.Command{
 var monitorScanCmd = &cobra.Command{
 	Use:   "scan",
 	Short: "Scan all monitored repositories",
-	Long: `Scan all active monitored repositories using archlint-rs.
+	Long: `Scan all active monitored repositories using the archlint Go binary.
 This is intended to be run nightly via cron or CI.`,
 	RunE: runMonitorScan,
 }
@@ -275,10 +275,11 @@ func runMonitorScan(_ *cobra.Command, _ []string) error {
 	for _, repo := range active {
 		fmt.Printf("Scanning: %s\n", repo.URL)
 
-		// Use archlint-rs for scanning - invoke as subprocess.
-		// archlint-rs binary is located at archlint-rs/target/release/archlint-rs
-		// or on PATH. Fall back gracefully if not available.
-		cmd := exec.Command("archlint-rs", "scan", repo.URL, "--language", strings.ToLower(repo.Language))
+		// Use the Go archlint binary for scanning - invoke as subprocess.
+		// Binary is expected on PATH (Docker image installs it to /usr/local/bin/archlint).
+		// Язык определяется автоматически (Go/Rust/TS детектится в scan), флаг --language
+		// больше не нужен. Fall back gracefully if binary not available.
+		cmd := exec.Command("archlint", "scan", repo.URL)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 

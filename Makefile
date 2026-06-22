@@ -1,4 +1,4 @@
-.PHONY: help build install collect clean fmt test lint init build-rs baseline gate setup-hooks
+.PHONY: help build install collect clean fmt test lint init baseline gate setup-hooks
 
 # Переменные
 BIN_DIR := bin
@@ -110,13 +110,6 @@ init: ## Скачать archlint из GitHub Releases для текущей пл
 		fi; \
 	fi; \
 	echo "Installed: $(BINARY) ($$(./$(BINARY) --version 2>/dev/null || echo 'unknown version'))"
-
-build-rs: ## Собрать archlint-rs локально
-	@echo "=== Сборка archlint-rs ==="
-	@mkdir -p $(BIN_DIR)
-	cd archlint-rs && cargo build --release
-	cp archlint-rs/target/release/archlint $(BINARY)
-	@echo "Binary: $(BINARY)"
 
 all: fmt build collect ## Выполнить всё (форматирование, сборка, построение графа)
 

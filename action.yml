@@ -35,33 +35,38 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-
-    - name: Cache archlint build
-      uses: actions/cache@v4
+    - name: Set up Go
+      uses: actions/setup-go@v5
       with:
-        path: ${{ github.action_path }}/archlint-rs/target
-        key: archlint-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+        go-version-file: ${{ github.action_path }}/go.mod
+        cache-dependency-path: ${{ github.action_path }}/go.sum
 
-    - name: Build archlint-rs
+    - name: Build archlint
       shell: bash
       run: |
-        cd ${{ github.action_path }}/archlint-rs
-        cargo build --release 2>/dev/null
+        cd ${{ github.action_path }}
+        go build -o "${{ github.action_path }}/archlint" ./cmd/archlint/
 
     - name: Run architecture scan
       id: scan
       shell: bash
       run: |
-        RESULT=$(${{ github.action_path }}/archlint-rs/target/release/archlint scan ${{ inputs.directory }} --format json 2>/dev/null)
+        # --signals: даёт structural-дескрипторы (componentCount/maxFanOut) в JSON.
+        RESULT=$("${{ github.action_path }}/archlint" scan ${{ inputs.directory }} --format json --signals 2>/dev/null)
 
-        COMPONENTS=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(m.get('component_count',0))")
-        VIOLATIONS=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(len(m.get('violations',[])))")
-        CYCLES=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(len(m.get('cycles',[])))")
-        MAX_FANOUT=$(echo "$RESULT" | python3 -c "import sys,json; m=json.load(sys.stdin).get('metrics',{}); print(m.get('max_fan_out',0))")
+        # Семантическая сохранность outputs (контракт чужих workflow):
+        #  components = ЧИСЛО КОМПОНЕНТ СВЯЗНОСТИ (signals.componentCount) — тот же
+        #    смысл, что Rust metrics.component_count (НЕ число узлов).
+        #  violations = общее число нарушений (top-level violations, int).
+        #  cycles     = число циклических зависимостей (categories['circular-dependency'],
+        #    один violation на SCC -> = число циклов, как Rust metrics.cycles).
+        #  max_fan_out = signals.maxFanOut.
+        COMPONENTS=$(echo "$RESULT" | python3 -c "import sys,json; s=json.load(sys.stdin).get('signals') or {}; print(s.get('componentCount',0))")
+        VIOLATIONS=$(echo "$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('violations',0))")
+        CYCLES=$(echo "$RESULT" | python3 -c "import sys,json; c=json.load(sys.stdin).get('categories') or {}; print(c.get('circular-dependency',0))")
+        MAX_FANOUT=$(echo "$RESULT" | python3 -c "import sys,json; s=json.load(sys.stdin).get('signals') or {}; print(s.get('maxFanOut',0))")
 
-        # Health score: 100 - (violations * 5) - (cycles * 10)
+        # Health score: 100 - (violations * 5) - (cycles * 10) — та же формула на тех же входах.
         HEALTH=$((100 - VIOLATIONS * 5 - CYCLES * 10))
         if [ $HEALTH -lt 0 ]; then HEALTH=0; fi
 

@@ -49,6 +49,7 @@ type Descriptors struct {
 	Gini              float64 `json:"gini"`              // Джини по total-degree
 	AvgClustering     float64 `json:"avgClustering"`     // средний clustering (undirected-проекция)
 	Betti1            int     `json:"betti1"`            // β₁ = E - V + C (C = слабые компоненты)
+	ComponentCount    int     `json:"componentCount"`    // C = число слабых компонент связности (union-find по undirected)
 
 	// --- БАТЧ 3: связностно-дистанционная группа ---
 	Closeness     map[string]float64 `json:"closeness"`     // nx.closeness_centrality (входящие, wf_improved)
@@ -244,7 +245,8 @@ func ComputeDescriptors(g *model.Graph) Descriptors {
 	d.DependencyEntropy, d.MaxEntropy, d.NormalizedEntropy = dependencyEntropy(dg)
 	d.Gini = giniCoefficient(dg)
 	d.AvgClustering = avgClustering(dg)
-	d.Betti1 = dg.edgeCount - n + weaklyConnectedComponents(dg)
+	d.ComponentCount = weaklyConnectedComponents(dg) // компоненты связности (= Rust component_count)
+	d.Betti1 = dg.edgeCount - n + d.ComponentCount
 
 	// --- БАТЧ 3 ---
 	d.Closeness, d.Harmonic = closenessHarmonic(dg)
