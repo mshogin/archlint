@@ -6,16 +6,14 @@
 - [x] test: collaborator access (issue #2)
 
 ## In Progress
-- [ ] feat: rewrite archlint in Rust - safety, parallelism, performance (issue #17)
-- [ ] feat: archlint-rs phase 1 - core graph engine in Rust (issue #18)
-- [ ] plan: migration to Rust monolith - all linters + orchestrator (issue #19)
+- [cancelled] Rust rewrite direction (issues #17/#18/#19): Rust crate removed, implementation stays pure Go.
 - [ ] feat: GitHub Actions CI pipeline (issue #11)
 - [ ] feat: StateReader/MetricsProvider interfaces - DIP refactoring (issue #10)
 - [ ] feat: replace DFS cycle detection with Tarjan's SCC algorithm (issue #5)
 
 ## Planned
 - [ ] feat: Rust project support - parse Cargo.toml and Rust AST (issue #16)
-- [ ] test: compare Go and Rust scanner results - must match on same project (issue #28)
+- [cancelled] compare Go and Rust scanner results (issue #28): Rust scanner removed.
 - [ ] feat: auto-detect project language - go.mod/Cargo.toml/package.json (issue #29)
 - [ ] feat: SOLID score per component - A-F grade (issue #30)
 - [ ] feat: automated PR architecture review + branch-based workflow (issue #31)
