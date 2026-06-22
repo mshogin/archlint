@@ -25,7 +25,7 @@ MAX_FANOUT=${MAX_FANOUT:-8}
 MAX_CYCLES=${MAX_CYCLES:-0}
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ARCHLINT=${ARCHLINT:-"$SCRIPT_DIR/../archlint-rs/target/release/archlint"}
+ARCHLINT=${ARCHLINT:-"$SCRIPT_DIR/../bin/archlint"}
 
 if [[ ! -x "$ARCHLINT" ]]; then
     echo '{"error": "archlint binary not found at '"$ARCHLINT"'"}' >&2

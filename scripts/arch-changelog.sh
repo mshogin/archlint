@@ -4,7 +4,7 @@
 #   arch-changelog.sh diff /path/to/project   - compare current vs baseline
 #   arch-changelog.sh show /path/to/project   - show baseline
 
-ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 ACTION=${1:-diff}
 PROJECT=${2:-.}
 NAME=$(basename "$PROJECT")

@@ -15,11 +15,8 @@ go install github.com/mshogin/archlint/cmd/archlint@latest
 # Scan Go project for violations (quality gate)
 archlint scan .
 
-# Collect architecture graph (Go projects)
+# Collect architecture graph (Go and Rust projects)
 archlint collect . -o architecture.yaml
-
-# Collect architecture graph (Rust projects)
-archlint-rs collect .    # outputs to architecture.yaml by default
 
 # Validate with 229 metrics (Python validator)
 python3 -m validator validate architecture.yaml
@@ -53,7 +50,7 @@ Existing baseline debt does not block. Bypass in exceptional cases with `git com
 
 ## Docker
 
-The easiest way to run archlint without installing Go, Rust, or Python:
+The easiest way to run archlint without installing Go or Python:
 
 ```bash
 # Scan a Go project for architecture violations
@@ -62,28 +59,24 @@ docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint scan /workspace
 # Collect architecture graph and validate with Python validator
 docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint validate /workspace --python
 
-# Collect graph to a file
+# Collect graph to a file (Go and Rust projects)
 docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint collect /workspace -o /workspace/architecture.yaml
-
-# Use archlint-rs for Rust projects (collect writes to architecture.yaml in the project dir)
-docker run --rm -v $(pwd):/workspace --entrypoint archlint-rs ghcr.io/mshogin/archlint collect /workspace
 ```
 
-Image includes: Go binary (`archlint`), Rust binary (`archlint-rs`), and Python validator with all dependencies.
+Image includes: Go binary (`archlint`) and Python validator with all dependencies.
 
 ---
 
 ## Requirements
 
 - **Go 1.21+** - for `archlint` binary
-- **Rust** (stable) - for `archlint-rs` binary (`cargo build --release`)
 - **Python 3.12+** - for Python validator (`pip install networkx numpy scipy`)
 
 ---
 
 ## Commands
 
-### Go binary: `archlint`
+### `archlint`
 
 | Command | Description |
 |---------|-------------|
@@ -105,25 +98,11 @@ Image includes: Go binary (`archlint`), Rust binary (`archlint-rs`), and Python 
 | `compare` | Compare two architecture snapshots |
 | `optimize [dir]` | Suggest dependency optimizations |
 
-### Rust binary: `archlint-rs`
-
-| Command | Description |
-|---------|-------------|
-| `scan [dir]` | Architecture scan with YAML/JSON/brief output |
-| `collect [dir]` | Collect architecture graph to YAML (input for validator) |
-| `fix [dir]` | Suggest fixes for detected violations |
-| `watch [dir]` | Watch for file changes, re-scan automatically |
-| `badge [dir]` | Generate SVG health badge for README |
-| `diff <range>` | Architecture diff between two git commits |
-| `perf [dir]` | Performance analysis: nesting, complexity, allocation patterns |
-| `serve` | HTTP API server |
-| `worker` | Manage Docker-based Claude Code workers |
-
 ---
 
 ## Python Validator: 229 Metrics
 
-The validator runs against `architecture.yaml` produced by `archlint collect` or `archlint-rs collect`.
+The validator runs against `architecture.yaml` produced by `archlint collect`.
 
 ```bash
 # Run all 87 production metrics
@@ -174,7 +153,7 @@ archlint validate . --python --group solid
 archlint validate . --python --format json
 
 # Legacy pipe mode (still supported)
-archlint-rs collect . -o graph.yaml
+archlint collect . -o graph.yaml
 archlint validate --graph graph.yaml
 ```
 
@@ -287,14 +266,6 @@ make install   # installs archlint to $GOPATH/bin
 make build     # builds to bin/archlint
 ```
 
-### Rust binary
-
-```bash
-cd archlint-rs
-cargo build --release
-# binary at archlint-rs/target/release/archlint
-```
-
 ### Python validator
 
 ```bash
@@ -387,15 +358,15 @@ archlint self-scan
 ### Architecture diff
 
 ```bash
-archlint-rs diff HEAD~5..HEAD
-archlint-rs diff main..feature --dir ./myproject --format json
+archlint diff HEAD~5..HEAD
+archlint diff main..feature --dir ./myproject --format json
 ```
 
 ### Watch mode
 
 ```bash
-archlint-rs watch .
-archlint-rs watch . --fix   # auto-suggest fixes on violations
+archlint watch .
+archlint watch . --fix   # auto-suggest fixes on violations
 ```
 
 ---
@@ -436,7 +407,6 @@ archlint/
 │   ├── bpmn/              # BPMN 2.0 parser
 │   ├── callgraph/         # Static call graph builder
 │   └── archtest/          # Architecture test assertions library
-├── archlint-rs/           # Rust monolith (scan, fix, watch, badge, diff, ...)
 ├── validator/             # Python validator: 229 architecture metrics
 ├── action.yml             # GitHub Action definition
 ├── .archlint.yaml         # archlint config for this repo
@@ -449,12 +419,6 @@ archlint/
 
 ```bash
 go test ./...
-```
-
-Rust tests:
-
-```bash
-cd archlint-rs && cargo test
 ```
 
 ---

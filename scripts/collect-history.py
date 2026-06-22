@@ -13,7 +13,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-ARCHLINT = "/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint"
+ARCHLINT = os.environ.get(
+    "ARCHLINT",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin", "archlint"),
+)
 VALIDATOR_DIR = "/home/assistant/projects/archlint-repo"
 TIMEOUT_PER_COMMIT = 60  # seconds
 

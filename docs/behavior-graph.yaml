@@ -70,8 +70,8 @@ scenarios:
   # ----------------------------------------------------------------
   - name: validate
     description: >
-      CLI validate reads a YAML graph produced by archlint-rs (or collect)
-      and prints summary stats. Designed for Unix pipe: archlint-rs scan | archlint validate.
+      CLI validate reads a YAML graph produced by archlint scan (or collect)
+      and prints summary stats. Designed for Unix pipe: archlint scan | archlint validate.
     entry: cmd/archlint/main.go -> cobra.Command.Execute
     chain:
       - step: runValidate(cmd, args)

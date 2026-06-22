@@ -9,7 +9,7 @@
 
 PROJECT=$(realpath "${1:-.}")
 SCRIPTS_DIR="$(dirname "$(realpath "$0")")"
-ARCHLINT_BIN=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT_BIN=${ARCHLINT_BIN:-"$SCRIPTS_DIR/../bin/archlint"}
 
 # Collect detected languages
 LANGUAGES=()

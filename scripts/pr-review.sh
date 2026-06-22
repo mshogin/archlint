@@ -6,7 +6,7 @@
 # Output: Markdown text for PR comment
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ARCHLINT=${ARCHLINT:-"$SCRIPT_DIR/../archlint-rs/target/release/archlint"}
+ARCHLINT=${ARCHLINT:-"$SCRIPT_DIR/../bin/archlint"}
 
 PROJECT=${1:-.}
 BASE=${2:-main}

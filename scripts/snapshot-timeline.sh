@@ -3,7 +3,7 @@
 # Tracks architecture metrics over git commits using git worktree (non-destructive)
 # Output: JSON timeline with metrics per commit
 
-ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 COMMITS=${2:-10}
 

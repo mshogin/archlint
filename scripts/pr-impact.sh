@@ -3,7 +3,7 @@
 # Shows architecture impact of current changes vs base branch
 # Output: JSON with before/after metrics and diff
 
-ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 BASE=${2:-main}
 

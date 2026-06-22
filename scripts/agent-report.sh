@@ -2,7 +2,7 @@
 # Usage: agent-report.sh /path/to/project
 # Runs archlint scan and produces agent-readable report with action items
 
-ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 CATALOG=/home/assistant/projects/archlint-repo/docs/smell-catalog.json
 

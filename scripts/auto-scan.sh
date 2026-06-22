@@ -19,8 +19,8 @@ LANG=$(detect_language)
 
 case "$LANG" in
     go|rust)
-        # Use archlint Rust binary (supports both Go and Rust)
-        ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+        # Use archlint binary (supports both Go and Rust projects)
+        ARCHLINT=${ARCHLINT:-"$SCRIPTS_DIR/../bin/archlint"}
         $ARCHLINT scan "$PROJECT" --format json 2>/dev/null
         ;;
     typescript)

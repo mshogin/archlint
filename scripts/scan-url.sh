@@ -8,7 +8,7 @@ if [ -z "$URL" ]; then
     exit 1
 fi
 
-ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 TMPDIR=$(mktemp -d)
 REPO_NAME=$(basename "$URL" .git)
 

@@ -22,9 +22,9 @@ var (
 	validatePython     bool
 )
 
-// GraphExport is the standard YAML graph format produced by archlint-rs scan --format yaml.
+// GraphExport is the standard YAML graph format produced by 'archlint scan --format yaml'.
 // It is part of the Unix-pipe multi-language architecture pipeline.
-// Field names match archlint-rs ArchGraph: components/links (not nodes/edges).
+// Field names: components/links (not nodes/edges).
 type GraphExport struct {
 	Components []GraphExportNode   `yaml:"components" json:"components"`
 	Links      []GraphExportEdge   `yaml:"links"      json:"links"`
@@ -33,7 +33,7 @@ type GraphExport struct {
 }
 
 // GraphExportNode represents a component in the exported graph.
-// Fields match archlint-rs Component: id, title, entity.
+// Fields: id, title, entity.
 type GraphExportNode struct {
 	ID     string `yaml:"id"     json:"id"`
 	Title  string `yaml:"title"  json:"title"`
@@ -41,7 +41,7 @@ type GraphExportNode struct {
 }
 
 // GraphExportEdge represents a dependency link in the exported graph.
-// Fields match archlint-rs Link: from, to, link_type.
+// Fields: from, to, link_type.
 type GraphExportEdge struct {
 	From     string `yaml:"from"      json:"from"`
 	To       string `yaml:"to"        json:"to"`

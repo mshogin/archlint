@@ -4,9 +4,7 @@ rules:
     error_on_violation: true
     level: telemetry
     threshold: 10
-    exclude:
-    - archlint-rs::src::main
-    - archlint-rs::src::analyzer
+    exclude: []
   fan_in:
     enabled: true
     error_on_violation: true
@@ -14,10 +12,7 @@ rules:
     threshold: 10
     exclude:
     - internal/analyzer
-    - serde
     - tests
-    - archlint-rs::src::main
-    - archlint-rs::src::analyzer
   absorption_probability:
     enabled: true
     error_on_violation: false

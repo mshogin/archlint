@@ -1,6 +1,5 @@
 // Package archlintcfg loads and parses the .archlint.yaml configuration file.
-// The config schema mirrors the Rust archlint-rs config.rs so that both tools
-// read the same .archlint.yaml file without modification.
+// It defines the .archlint.yaml config schema.
 package archlintcfg
 
 import (
@@ -28,8 +27,8 @@ const (
 type RuleConfig struct {
 	// Enabled controls whether the rule is active (default: true).
 	// Using *bool so we can distinguish "omitted" (nil -> default true) from
-	// "explicitly false" (false pointer). This mirrors serde's default=true in
-	// archlint-rs and fixes the bug where "enabled: false" was silently ignored.
+	// "explicitly false" (false pointer). This defaults to true and fixes the
+	// bug where "enabled: false" was silently ignored.
 	Enabled *bool `yaml:"enabled"`
 	// ErrorOnViolation controls whether a violation causes a non-zero exit code.
 	ErrorOnViolation bool `yaml:"error_on_violation"`
@@ -162,7 +161,7 @@ type ContextDef struct {
 	Components []string `yaml:"components"`
 }
 
-// Default thresholds matching archlint-rs defaults.
+// Default thresholds.
 const (
 	DefaultFanOutThreshold = 5
 	DefaultFanInThreshold  = 10
@@ -183,7 +182,7 @@ func defaultRuleConfig(threshold *int) RuleConfig {
 
 func intPtr(v int) *int { return &v }
 
-// Default returns a Config with all default values (same as archlint-rs).
+// Default returns a Config with all default values.
 func Default() Config {
 	return Config{
 		Rules: Rules{
@@ -201,7 +200,7 @@ func Default() Config {
 }
 
 // Load reads .archlint.yaml from dir. Falls back to defaults if the file does
-// not exist or cannot be parsed (matching archlint-rs behaviour).
+// not exist or cannot be parsed.
 func Load(dir string) Config {
 	return LoadFile(filepath.Join(dir, ".archlint.yaml"))
 }
@@ -227,7 +226,7 @@ func LoadFile(path string) Config {
 
 	def := Default()
 
-	// Apply defaults for missing fields (mirrors archlint-rs fill-logic).
+	// Apply defaults for missing fields.
 	applyRuleDefaults(&raw.Rules.FanOut, &def.Rules.FanOut)
 	applyRuleDefaults(&raw.Rules.FanIn, &def.Rules.FanIn)
 	applyRuleDefaults(&raw.Rules.Cycles, &def.Rules.Cycles)

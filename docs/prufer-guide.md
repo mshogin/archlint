@@ -32,7 +32,7 @@ Prüfer metrics make that hidden shape measurable.
 
 ```bash
 # Scan your project and produce architecture.yaml
-archlint-rs collect . > architecture.yaml
+archlint collect . > architecture.yaml
 ```
 
 ### Step 2: Run the validator
@@ -293,7 +293,7 @@ Diagnosis steps:
 
 5. Re-run the metrics to verify the change:
    ```bash
-   archlint-rs collect . > architecture-after.yaml
+   archlint collect . > architecture-after.yaml
    python3 -m validator validate architecture-after.yaml --group research
    ```
 

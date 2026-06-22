@@ -2,7 +2,7 @@
 # Usage: anomaly-detect.sh /path/to/project
 # Detects components with anomalous metrics (statistical outliers)
 
-ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 
 TMPFILE=$(mktemp /tmp/archlint-scan-XXXXXX.json)

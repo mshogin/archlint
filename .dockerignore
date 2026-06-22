@@ -4,7 +4,6 @@
 
 # Build artifacts
 bin/
-archlint-rs/target/
 archlint_validator.egg-info/
 
 # Test and demo data

@@ -6,12 +6,12 @@ All archlint features with CLI usage and status.
 
 | Feature | CLI | Config | Issue | Status |
 |---------|-----|--------|-------|--------|
-| Go project scan | `archlint collect .` | architecture.yaml | - | done (Go) |
-| Rust project scan | `archlint-rs scan .` | - | #16 | done (Rust) |
-| Architecture rules | `.archlint.yaml` | dag_check, fan_out, modularity, centrality | - | done (Go) |
-| Component graph | `archlint collect .` | architecture.yaml | - | done (Go) |
+| Go project scan | `archlint collect .` | architecture.yaml | - | done |
+| Rust project scan | `archlint scan .` | - | #16 | done |
+| Architecture rules | `.archlint.yaml` | dag_check, fan_out, modularity, centrality | - | done |
+| Component graph | `archlint collect .` | architecture.yaml | - | done |
 
-## archlint-rs (Rust monolith)
+## archlint commands
 
 | Feature | CLI | Issue | Status |
 |---------|-----|-------|--------|
@@ -44,11 +44,9 @@ All archlint features with CLI usage and status.
 | Multi-language graph | #25 | P2 |
 | Dependency age map | #26 | P2 |
 | Snapshot timeline | #27 | P2 |
-| Scanner comparison (Go vs Rust) | #28 | P1 |
 | Auto-fix worker | #20 | P2 |
 | GitHub Releases | #21 | done |
 | Rust project support | #16 | done |
-| Rust rewrite | #17 | phases 1-6 done |
 | Performance metrics (archlint) | #22 | done |
 | Quality gate for myhome | #14 | P2 |
 | Costlint escalation tracking | #15 | P3 |

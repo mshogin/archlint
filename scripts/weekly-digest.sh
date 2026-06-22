@@ -2,7 +2,7 @@
 # Usage: weekly-digest.sh /path/to/project [project_name]
 # Generates weekly architecture digest as text report
 
-ARCHLINT=/home/assistant/projects/archlint-repo/archlint-rs/target/release/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 NAME=${2:-$(basename "$PROJECT")}
 
