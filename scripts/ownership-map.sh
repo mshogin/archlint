@@ -3,7 +3,7 @@
 # Maps component ownership by analyzing git history per component.
 # Output: JSON with primary owner, contributors, and orphaned components.
 
-ARCHLINT=/home/assistant/projects/archlint-repo/bin/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 
 if [ ! -d "$PROJECT" ]; then

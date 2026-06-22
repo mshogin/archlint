@@ -22,7 +22,7 @@ if [ ! -d "$TMPDIR/$REPO_NAME" ]; then
 fi
 
 # Run agent report
-REPORT=$(bash /home/assistant/projects/archlint-repo/scripts/agent-report.sh "$TMPDIR/$REPO_NAME" 2>/dev/null)
+REPORT=$(bash "$(dirname "${BASH_SOURCE[0]}")/agent-report.sh" "$TMPDIR/$REPO_NAME" 2>/dev/null)
 
 # Clean up
 rm -rf "$TMPDIR"

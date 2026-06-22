@@ -17,7 +17,7 @@ ARCHLINT = os.environ.get(
     "ARCHLINT",
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bin", "archlint"),
 )
-VALIDATOR_DIR = "/home/assistant/projects/archlint-repo"
+VALIDATOR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TIMEOUT_PER_COMMIT = 60  # seconds
 
 

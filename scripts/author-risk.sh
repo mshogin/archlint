@@ -3,7 +3,7 @@
 # Analyzes git blame to score authors by architectural impact.
 # Output: JSON with per-author risk score for smart PR review routing.
 
-ARCHLINT=/home/assistant/projects/archlint-repo/bin/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 
 if [ ! -d "$PROJECT" ]; then

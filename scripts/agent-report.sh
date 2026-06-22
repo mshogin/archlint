@@ -4,7 +4,7 @@
 
 ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
-CATALOG=/home/assistant/projects/archlint-repo/docs/smell-catalog.json
+CATALOG="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/docs/smell-catalog.json"
 
 SCAN=$($ARCHLINT scan "$PROJECT" --format json 2>/dev/null)
 

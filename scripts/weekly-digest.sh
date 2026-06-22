@@ -6,7 +6,7 @@ ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archl
 PROJECT=${1:-.}
 NAME=${2:-$(basename "$PROJECT")}
 
-REPORT=$(bash /home/assistant/projects/archlint-repo/scripts/agent-report.sh "$PROJECT" 2>/dev/null)
+REPORT=$(bash "$(dirname "${BASH_SOURCE[0]}")/agent-report.sh" "$PROJECT" 2>/dev/null)
 
 python3 -c "
 import json, datetime

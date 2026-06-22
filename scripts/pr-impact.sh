@@ -12,7 +12,7 @@ CURRENT=$($ARCHLINT scan "$PROJECT" --format json 2>/dev/null)
 
 # Get base branch metrics (stash changes, checkout base, scan, restore)
 # Simpler: use agent-report.sh for both and diff
-CURRENT_REPORT=$(bash /home/assistant/projects/archlint-repo/scripts/agent-report.sh "$PROJECT" 2>/dev/null)
+CURRENT_REPORT=$(bash "$(dirname "${BASH_SOURCE[0]}")/agent-report.sh" "$PROJECT" 2>/dev/null)
 
 # Build impact report
 python3 -c "

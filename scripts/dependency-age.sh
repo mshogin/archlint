@@ -9,7 +9,7 @@
 #   fresh   (<30 days): very new, might change
 #   unknown: can't determine (not a git repo, no history)
 
-ARCHLINT=/home/assistant/projects/archlint-repo/bin/archlint
+ARCHLINT=${ARCHLINT:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/bin/archlint"}
 PROJECT=${1:-.}
 
 if [ ! -d "$PROJECT" ]; then
