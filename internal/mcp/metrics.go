@@ -20,7 +20,7 @@ type FileMetrics struct {
 	EfferentCoupling int     `json:"efferentCoupling"` // Ce: outgoing dependencies
 	Instability      float64 `json:"instability"`      // I = Ce / (Ca + Ce)
 	Abstractness     float64 `json:"abstractness"`     // ratio of interfaces to total types
-	MainSeqDistance  float64 `json:"mainSeqDistance"`   // |A + I - 1|
+	MainSeqDistance  float64 `json:"mainSeqDistance"`  // |A + I - 1|
 
 	// Size metrics.
 	Types     int `json:"types"`

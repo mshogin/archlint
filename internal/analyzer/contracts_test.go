@@ -107,10 +107,10 @@ func TestContractOrphan(t *testing.T) {
 func TestContractMixedStatuses(t *testing.T) {
 	g := buildTestGraph()
 	contracts := []archlintcfg.ExternalContract{
-		{Name: "ok_contract", Module: "B", Type: "query"},       // OK
-		{Name: "unused_contract", Module: "A", Type: "stream"},  // UNUSED
-		{Name: "orphan_contract", Module: "Z", Type: "event"},   // ORPHAN
-		{Name: "ok_contract2", Module: "C", Type: "rest"},       // UNUSED (C has 1 dep but no inbound besides B->C which is inbound)
+		{Name: "ok_contract", Module: "B", Type: "query"},      // OK
+		{Name: "unused_contract", Module: "A", Type: "stream"}, // UNUSED
+		{Name: "orphan_contract", Module: "Z", Type: "event"},  // ORPHAN
+		{Name: "ok_contract2", Module: "C", Type: "rest"},      // UNUSED (C has 1 dep but no inbound besides B->C which is inbound)
 	}
 
 	analysis := AnalyzeContracts(g, contracts)
@@ -161,8 +161,8 @@ func TestInjectContractNodes(t *testing.T) {
 	originalEdgeCount := len(g.Edges)
 
 	contracts := []archlintcfg.ExternalContract{
-		{Name: "b_contract", Module: "B", Type: "query"},          // exists -> implements edge
-		{Name: "orphan_contract", Module: "Z", Type: "rpc"},       // orphan -> no implements edge
+		{Name: "b_contract", Module: "B", Type: "query"},    // exists -> implements edge
+		{Name: "orphan_contract", Module: "Z", Type: "rpc"}, // orphan -> no implements edge
 	}
 
 	enriched := InjectContractNodes(g, contracts)

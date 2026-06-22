@@ -96,9 +96,9 @@ var violationClasses = map[string]SeverityClass{
 	// feature-envy ДЕМОТИРОВАН из active_scan_set (обоснованный отказ, docs/proof-catalog): структурно
 	// недоказуем на Go без type-резолва (call.Receiver = имя != тип; не различает объект/пакет/поле,
 	// 3 корня вскрыты self-проверкой). Не в боевом гейте -> НЕ в реестре. Диагностика через FileMetrics.
-	"god-class":                     {Class: "INFO"}, // размерная магнитуда (когезия=LCOM4-дубль)
-	"hub-node":                      {Class: "INFO"}, // магнитуда центральности
-	"high-efferent-coupling":        {Class: "INFO"}, // магнитуда coupling (порог произволен)
+	"god-class":              {Class: "INFO"}, // размерная магнитуда (когезия=LCOM4-дубль)
+	"hub-node":               {Class: "INFO"}, // магнитуда центральности
+	"high-efferent-coupling": {Class: "INFO"}, // магнитуда coupling (порог произволен)
 	//
 	// Классифицированы стражем полноты (вскрыл спящие метрики без вердикта):
 	"dip-abstraction-to-detail": {Class: "WARNING"}, // detectDIP (verified WARNING-проверка), DIP-сигнал

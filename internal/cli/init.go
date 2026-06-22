@@ -50,8 +50,8 @@ type initLanguage string
 
 const (
 	langGo         initLanguage = "Go"
-	langRust        initLanguage = "Rust"
-	langTypeScript  initLanguage = "TypeScript"
+	langRust       initLanguage = "Rust"
+	langTypeScript initLanguage = "TypeScript"
 )
 
 type initLayer struct {

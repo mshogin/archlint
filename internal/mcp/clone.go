@@ -112,6 +112,7 @@ func StructuralClone(a *analyzer.GoAnalyzer) []Violation {
 //   - ПОРЯДОК вызовов (последовательность, НЕ мультисет): точная копипаста сохраняет порядок;
 //     разный порядок одинаковых видов -> разные формы. Устойчив к переименованию (имён в seq нет).
 //   - арность сигнатуры (params/results), число уникальных receiver'ов, профиль доступа к полям.
+//
 // size = число вызовов (мера размера подграфа для cloneMinSize).
 func cloneFingerprint(
 	numParams, numResults int,

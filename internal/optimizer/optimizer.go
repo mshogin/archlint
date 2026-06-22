@@ -20,8 +20,8 @@ import (
 
 // Targets holds the user-defined metric goals parsed from .archlint.yaml.
 type Targets struct {
-	MaxFanOut             *Constraint // max_fan_out: "<= 7"
-	SpanningTreeCoverage  *Constraint // spanning_tree_coverage: ">= 0.4"
+	MaxFanOut            *Constraint // max_fan_out: "<= 7"
+	SpanningTreeCoverage *Constraint // spanning_tree_coverage: ">= 0.4"
 }
 
 // Constraint represents a comparison constraint like "<= 7" or ">= 0.4".
@@ -96,7 +96,8 @@ func computeMaxFanOut(g *model.Graph) int {
 }
 
 // computeSpanningTreeCoverage computes the ratio:
-//   (number of unique import edges in the spanning tree) / (total import edges)
+//
+//	(number of unique import edges in the spanning tree) / (total import edges)
 //
 // We use a simple BFS spanning tree over the import graph.
 // If there are no import edges the coverage is defined as 1.0.
@@ -172,21 +173,21 @@ func computeSpanningTreeCoverage(g *model.Graph) float64 {
 
 // Suggestion is a recommended edge removal with its projected impact.
 type Suggestion struct {
-	From        string
-	To          string
-	ImpactScore int     // number of target constraints moved closer to satisfied
-	FanOutDelta int     // change in max fan-out (negative = improvement)
+	From          string
+	To            string
+	ImpactScore   int     // number of target constraints moved closer to satisfied
+	FanOutDelta   int     // change in max fan-out (negative = improvement)
 	CoverageDelta float64 // change in spanning-tree coverage (positive = improvement)
-	Reason      string
+	Reason        string
 }
 
 // ---- Optimizer -------------------------------------------------------------
 
 // Optimizer analyses the graph and produces Suggestions.
 type Optimizer struct {
-	targets        Targets
-	preservedPkgs  map[string]bool // packages that must not lose any edges
-	topN           int
+	targets       Targets
+	preservedPkgs map[string]bool // packages that must not lose any edges
+	topN          int
 }
 
 // New creates a new Optimizer.

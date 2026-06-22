@@ -192,15 +192,15 @@ type Bar struct{}
 func TestHealthScoreComputation(t *testing.T) {
 	// Test health score directly with known violation counts.
 	m := &FileMetrics{
-		SRPViolations: []Violation{{Kind: "srp"}},                        // -5
-		GodClasses:    []string{"Monster"},                               // -10
-		CyclicDeps:    []string{"a -> b -> a"},                           // -10
-		HubNodes:      []string{"hub1"},                                  // -5
-		ISPViolations: []Violation{{Kind: "isp"}},                        // -3
-		DIPViolations: []Violation{{Kind: "dip"}},                        // -3
-		FeatureEnvy:   []string{"envious"},                               // -2
-		Instability:   0.9,                                               // -5
-		MainSeqDistance: 0.6,                                             // -5
+		SRPViolations:   []Violation{{Kind: "srp"}}, // -5
+		GodClasses:      []string{"Monster"},        // -10
+		CyclicDeps:      []string{"a -> b -> a"},    // -10
+		HubNodes:        []string{"hub1"},           // -5
+		ISPViolations:   []Violation{{Kind: "isp"}}, // -3
+		DIPViolations:   []Violation{{Kind: "dip"}}, // -3
+		FeatureEnvy:     []string{"envious"},        // -2
+		Instability:     0.9,                        // -5
+		MainSeqDistance: 0.6,                        // -5
 	}
 
 	score := computeHealthScore(m)

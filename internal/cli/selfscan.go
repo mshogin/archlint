@@ -35,19 +35,19 @@ func init() {
 
 // selfScanResult holds aggregated self-scan data.
 type selfScanResult struct {
-	SourceDir   string
-	Components  int
-	Links       int
-	Packages    int
-	Structs     int
-	Interfaces  int
-	Functions   int
-	Methods     int
-	External    int
-	Violations  int
-	Cycles      int
-	MaxFanOut   int
-	HealthScore int
+	SourceDir     string
+	Components    int
+	Links         int
+	Packages      int
+	Structs       int
+	Interfaces    int
+	Functions     int
+	Methods       int
+	External      int
+	Violations    int
+	Cycles        int
+	MaxFanOut     int
+	HealthScore   int
 	TopViolations []string
 	PackageScores []packageScore
 }

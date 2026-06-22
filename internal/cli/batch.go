@@ -60,28 +60,28 @@ func init() {
 
 // batchRepoResult holds the scan result for a single repository.
 type batchRepoResult struct {
-	Repository  string         `json:"repository"`
-	Path        string         `json:"path"`
-	Violations  int            `json:"violations"`
-	SOLID       int            `json:"solid"`
-	GodClass    int            `json:"god_class"`
-	FanOut      int            `json:"fan_out"`
-	Cycles      int            `json:"cycles"`
-	FeatureEnvy int            `json:"feature_envy"`
-	Coupling    int            `json:"coupling"`
-	Health      int            `json:"health"`
-	Error       string         `json:"error,omitempty"`
+	Repository  string          `json:"repository"`
+	Path        string          `json:"path"`
+	Violations  int             `json:"violations"`
+	SOLID       int             `json:"solid"`
+	GodClass    int             `json:"god_class"`
+	FanOut      int             `json:"fan_out"`
+	Cycles      int             `json:"cycles"`
+	FeatureEnvy int             `json:"feature_envy"`
+	Coupling    int             `json:"coupling"`
+	Health      int             `json:"health"`
+	Error       string          `json:"error,omitempty"`
 	Details     []mcp.Violation `json:"details,omitempty"`
 }
 
 // batchReport is the full consolidated report.
 type batchReport struct {
-	TotalRepos  int               `json:"total_repos"`
-	ScannedOK   int               `json:"scanned_ok"`
-	Errors      int               `json:"errors"`
-	AvgHealth   int               `json:"avg_health"`
-	Worst5      []string          `json:"worst_5"`
-	Results     []batchRepoResult `json:"results"`
+	TotalRepos int               `json:"total_repos"`
+	ScannedOK  int               `json:"scanned_ok"`
+	Errors     int               `json:"errors"`
+	AvgHealth  int               `json:"avg_health"`
+	Worst5     []string          `json:"worst_5"`
+	Results    []batchRepoResult `json:"results"`
 }
 
 // calcHealth converts a violation count to a health score.

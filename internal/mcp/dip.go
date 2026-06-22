@@ -54,8 +54,8 @@ func newDIPView(g *model.Graph) *modelDIPView {
 	return v
 }
 
-func (v *modelDIPView) InterfaceNodes() []string  { return v.ifaces }
-func (v *modelDIPView) KindOf(id string) string   { return v.kind[id] }
+func (v *modelDIPView) InterfaceNodes() []string     { return v.ifaces }
+func (v *modelDIPView) KindOf(id string) string      { return v.kind[id] }
 func (v *modelDIPView) OutEdges(id string) []OutEdge { return v.out[id] }
 
 // detectDIP — нарушения принципа инверсии зависимостей: интерфейс (абстракция)
@@ -72,6 +72,7 @@ func (v *modelDIPView) OutEdges(id string) []OutEdge { return v.out[id] }
 //     язык принципа (рёбра abstract->concrete). ВЫПОЛНЕН.
 //   - precision [экстенсионал/исходы]: fire(m) ⊇ viol_DIP, строго fire = viol ∪ {DTO-зависимости}
 //     (DTO=concrete БЕЗ поведения, вне Def_DIP -> legal FP). precision<1 -> WARNING, не ERROR.
+//
 // Демотация обоснована ЭКСТЕНСИОНАЛОМ (precision<1), НЕ дефектом интенсионала (W1 ok).
 func detectDIP(v DIPView) []Violation {
 	var out []Violation

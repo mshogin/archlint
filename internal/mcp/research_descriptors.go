@@ -44,13 +44,13 @@ type ResearchDescriptors struct {
 	ShapleyValue       *ShapleySignal            `json:"shapleyValue,omitempty"`
 
 	// batch-3 (тонкие: теория множеств/порядка/информации + спектральная близость)
-	EquivalenceClasses   *EquivalenceClassesSignal   `json:"equivalenceClasses,omitempty"`
-	Lattice              *LatticeSignal              `json:"lattice,omitempty"`
-	JoinMeet             *JoinMeetSignal             `json:"joinMeet,omitempty"`
-	PartitionRefinement  *PartitionRefinementSignal  `json:"partitionRefinement,omitempty"`
-	MutualInformation    *MutualInformationSignal    `json:"mutualInformation,omitempty"`
-	ResistanceCloseness  *ResistanceClosenessSignal  `json:"resistanceCloseness,omitempty"`
-	CommuteTime          *CommuteTimeSignal          `json:"commuteTime,omitempty"`
+	EquivalenceClasses  *EquivalenceClassesSignal  `json:"equivalenceClasses,omitempty"`
+	Lattice             *LatticeSignal             `json:"lattice,omitempty"`
+	JoinMeet            *JoinMeetSignal            `json:"joinMeet,omitempty"`
+	PartitionRefinement *PartitionRefinementSignal `json:"partitionRefinement,omitempty"`
+	MutualInformation   *MutualInformationSignal   `json:"mutualInformation,omitempty"`
+	ResistanceCloseness *ResistanceClosenessSignal `json:"resistanceCloseness,omitempty"`
+	CommuteTime         *CommuteTimeSignal         `json:"commuteTime,omitempty"`
 }
 
 // TransitiveClosureSignal — порт validate_transitive_closure. R⁺ = R ∪ R² ∪ ...;

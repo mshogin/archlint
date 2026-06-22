@@ -37,8 +37,8 @@ func collectErrorClass(t *testing.T, dir string) []Violation {
 }
 
 // СТРАЖ №2 (t_root-инвариантность): collect(из абсолютного пути) == collect(из ".") —
-// fingerprint-наборы побитово равны. Корень №3 (module-relative pkgID). Предусловие (край
-// Сократа): цель скана = ЕДИНЫЙ go-module (для archlint-on-archlint и большинства репо ок;
+// fingerprint-наборы побитово равны. Корень №3 (module-relative pkgID). Предусловие (граничное
+// условие, соундность-ревью): цель скана = ЕДИНЫЙ go-module (для archlint-on-archlint и большинства репо ок;
 // nested go.work — отдельный резолв module-root, см. canonical-fingerprint-ssot-plan.md).
 func TestCanonical_Guard2_TRootInvariance(t *testing.T) {
 	dir := t.TempDir()
@@ -211,10 +211,11 @@ func collectWithDispatch(t *testing.T, dir string) []Violation {
 
 // СТРАЖ OCP (П2, ОБЯЗАТЕЛЬНЫЙ): расширение baseline tracked-set на ocp-dispatch-site (ПЕРВЫЙ
 // не-ERROR baseline-tracked kind) НЕ ломает класс «опорные точки сравнения разошлись».
-//   (1) delta(collect+dispatch(X), collect+dispatch(X)) = ∅ — детерминизм с ocp в tracked-set;
-//   (2) baseline РЕАЛЬНО снял dispatch-факты (иначе тест пуст);
-//   (3) t_root-инвариантность dispatch-fingerprint — S.identity module-relative (canonical),
-//       НЕ зависит от корня скана (защита от 5-го инцидента: ocp идёт через единый Fingerprint).
+//
+//	(1) delta(collect+dispatch(X), collect+dispatch(X)) = ∅ — детерминизм с ocp в tracked-set;
+//	(2) baseline РЕАЛЬНО снял dispatch-факты (иначе тест пуст);
+//	(3) t_root-инвариантность dispatch-fingerprint — S.identity module-relative (canonical),
+//	    НЕ зависит от корня скана (защита от 5-го инцидента: ocp идёт через единый Fingerprint).
 func TestCanonical_OCPDispatchFacts_SSOT(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "shape.go"), []byte(dispatchFixture), 0o644); err != nil {

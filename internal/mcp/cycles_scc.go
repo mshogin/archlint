@@ -43,7 +43,7 @@ func newImportView(g *model.Graph) *importView {
 	return &importView{nodes: nodes, adj: adj}
 }
 
-func (v *importView) NodeIDs() []string            { return v.nodes }
+func (v *importView) NodeIDs() []string             { return v.nodes }
 func (v *importView) Successors(id string) []string { return v.adj[id] }
 
 // sccResult — индекс SCC: cyclic-членство + члены SCC каждого узла. Считается

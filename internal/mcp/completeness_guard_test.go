@@ -17,6 +17,7 @@ import (
 // Извлекает Kind-литералы из исходников детекторов в ДВУХ формах:
 //   - struct-литерал:  Violation{Kind: "kind-name"}
 //   - const-объявление: KindXxx = "kind-name"
+//
 // и проверяет каждый против RegisteredKinds().
 func TestCompleteness_AllEmittedKindsHaveVerdict(t *testing.T) {
 	reg := RegisteredKinds()

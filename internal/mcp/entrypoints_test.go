@@ -6,9 +6,9 @@ import (
 	"github.com/mshogin/archlint/internal/model"
 )
 
-func fn(id, title string) model.Node    { return model.Node{ID: id, Title: title, Entity: "function"} }
-func meth(id, title string) model.Node  { return model.Node{ID: id, Title: title, Entity: "method"} }
-func typ(id, title string) model.Node   { return model.Node{ID: id, Title: title, Entity: "struct"} }
+func fn(id, title string) model.Node   { return model.Node{ID: id, Title: title, Entity: "function"} }
+func meth(id, title string) model.Node { return model.Node{ID: id, Title: title, Entity: "method"} }
+func typ(id, title string) model.Node  { return model.Node{ID: id, Title: title, Entity: "struct"} }
 
 // (1) main -> в R; (2) exported func -> в R; (3) unexported не-init/не-Test -> НЕ в дефолтном R.
 func TestEntryPoints_Default(t *testing.T) {

@@ -250,7 +250,7 @@ func TestNetworkPageRankSum(t *testing.T) {
 		[]string{"A", "B", "C", "D", "E"},
 		[][2]string{
 			{"A", "B"}, {"B", "C"}, {"C", "A"}, // cycle
-			{"D", "E"},                           // separate component
+			{"D", "E"}, // separate component
 		},
 	)
 	nm := ComputeNetworkMetrics(g)

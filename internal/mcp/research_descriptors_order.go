@@ -18,15 +18,15 @@ import (
 // --- структуры сигналов -----------------------------------------------------
 
 type EquivalenceClassesSignal struct {
-	NumClasses         int     `json:"numClasses"`         // число SCC
-	MaxClassSize       int     `json:"maxClassSize"`       //
-	MinClassSize       int     `json:"minClassSize"`       //
-	MeanClassSize      float64 `json:"meanClassSize"`      //
-	SingletonClasses   int     `json:"singletonClasses"`   // классы размера 1
-	NonTrivialClasses  int     `json:"nonTrivialClasses"`  // классы размера > 1 (циклы)
-	QuotientNodes      int     `json:"quotientNodes"`      // узлы фактор-графа (= NumClasses)
-	QuotientEdges      int     `json:"quotientEdges"`      // рёбра конденсации
-	PartitionEntropy   float64 `json:"partitionEntropy"`   // -Σ p log2 p по размерам классов
+	NumClasses        int     `json:"numClasses"`        // число SCC
+	MaxClassSize      int     `json:"maxClassSize"`      //
+	MinClassSize      int     `json:"minClassSize"`      //
+	MeanClassSize     float64 `json:"meanClassSize"`     //
+	SingletonClasses  int     `json:"singletonClasses"`  // классы размера 1
+	NonTrivialClasses int     `json:"nonTrivialClasses"` // классы размера > 1 (циклы)
+	QuotientNodes     int     `json:"quotientNodes"`     // узлы фактор-графа (= NumClasses)
+	QuotientEdges     int     `json:"quotientEdges"`     // рёбра конденсации
+	PartitionEntropy  float64 `json:"partitionEntropy"`  // -Σ p log2 p по размерам классов
 }
 
 type LatticeSignal struct {

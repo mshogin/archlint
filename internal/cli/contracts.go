@@ -96,7 +96,8 @@ func runContracts(cmd *cobra.Command, args []string) error {
 	cfg := archlintcfg.Load(absDir)
 
 	// Analyze the codebase to build the graph.
-	var graph interface{ /* *model.Graph */ } = nil
+	var graph interface { /* *model.Graph */
+	} = nil
 	_ = graph // used below via typed var
 
 	var graphResult *analyzer.ContractAnalysis

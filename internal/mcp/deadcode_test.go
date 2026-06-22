@@ -65,8 +65,8 @@ func TestDeadCode_ImplementsDispatch(t *testing.T) {
 			fn("p.main", "main"),
 			kindNode("p.iface", model.KindInterface),
 			kindNode("p.impl", model.KindConcrete),
-			meth("p.impl.do", "do"),       // unexported, только через dispatch
-			meth("p.other.bar", "bar"),    // unexported, не реализует iface, никто не зовёт -> мёртв
+			meth("p.impl.do", "do"),    // unexported, только через dispatch
+			meth("p.other.bar", "bar"), // unexported, не реализует iface, никто не зовёт -> мёртв
 		},
 		[]model.Edge{
 			{From: "p.main", To: "p.iface", Type: model.EdgeUses}, // live func использует интерфейс
@@ -88,7 +88,7 @@ func TestDeadCode_ImplementsDispatch(t *testing.T) {
 func TestDeadCode_TestOnlyReachable(t *testing.T) {
 	g := deadGraph(
 		[]model.Node{
-			fn("p.helper", "helper"),        // prod, unexported, зовётся только тестом
+			fn("p.helper", "helper"),         // prod, unexported, зовётся только тестом
 			fn("p.TestHelper", "TestHelper"), // тест-функция -> в R
 		},
 		[]model.Edge{{From: "p.TestHelper", To: "p.helper", Type: model.EdgeCalls}},

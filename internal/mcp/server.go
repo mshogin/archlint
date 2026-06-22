@@ -70,7 +70,7 @@ func NewServer(logFile string) (*Server, error) {
 	state := NewState()
 
 	return &Server{
-		logFile: lf,
+		logFile:  lf,
 		state:    state,
 		executor: NewToolExecutor(state),
 		logger:   logger,

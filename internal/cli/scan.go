@@ -170,7 +170,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	var graph *model.Graph
 	var a *analyzer.GoAnalyzer
-	var baselineDir string    // каталог для дефолтного пути baseline (пусто в stdin-режиме)
+	var baselineDir string        // каталог для дефолтного пути baseline (пусто в stdin-режиме)
 	var resolvedExcludes []string // итоговые excludes (для --diff ref-worktree скана)
 
 	if scanStdin {

@@ -148,10 +148,10 @@ func (s *LocalScanner) runExternalBinary(ctx context.Context, dir string) (*Scan
 	}
 
 	var result struct {
-		Passed     bool               `json:"passed"`
-		Violations int                `json:"violations"`
-		Categories map[string]int     `json:"categories"`
-		Details    []mcp.Violation    `json:"details"`
+		Passed     bool            `json:"passed"`
+		Violations int             `json:"violations"`
+		Categories map[string]int  `json:"categories"`
+		Details    []mcp.Violation `json:"details"`
 	}
 	if err := json.Unmarshal(out, &result); err != nil {
 		return nil, fmt.Errorf("parse archlint output: %w", err)
