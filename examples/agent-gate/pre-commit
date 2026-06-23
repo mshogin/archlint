@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Minimal archlint architecture gate as a git pre-commit hook.
+# Blocks the commit when violations exceed the threshold (exit 1).
+# Install: cp examples/agent-gate/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+set -euo pipefail
+
+# --threshold 0: any non-ERROR-class violation over the limit fails; ERROR-class
+# is delta-gated against .archlint-baseline.json (existing debt does not block,
+# a new regression does). Bypass in exceptional cases: git commit --no-verify.
+archlint scan . --threshold 0 --format text

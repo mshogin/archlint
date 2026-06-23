@@ -2,34 +2,36 @@
 
 > [Русская версия](README.ru.md)
 
-Architecture linter for Go and Rust projects. Structural graphs, dependency cycles, SOLID metrics, 229 automated checks.
+Architecture linter for Go (also scans external Rust/TS codebases). Structural graphs, dependency cycles, SOLID metrics, agent-ready quality gate (MCP).
+
+archlint is a pure-Go tool. Go is the primary target; it can also scan external Rust and TypeScript projects to build their structural graph.
+
+**For AI agents:** archlint exposes an MCP server (severity + remediation + human-in-the-loop per violation) — see [docs/mcp-setup.md](docs/mcp-setup.md) and [docs/agent-gate.md](docs/agent-gate.md).
 
 ---
 
 ## Quick Start
 
+Pure-Go workflow — no Python required:
+
 ```bash
-# Install Go binary
+# 1. Install the Go binary
 go install github.com/mshogin/archlint/cmd/archlint@latest
 
-# Scan Go project for violations (quality gate)
+# 2. Scan for violations (quality gate)
 archlint scan .
 
-# Collect architecture graph (Go and Rust projects)
+# 3. Collect the architecture graph (Go; also scans external Rust/TS)
 archlint collect . -o architecture.yaml
 
-# Validate with 229 metrics (Python validator)
-python3 -m validator validate architecture.yaml
+# 4. Install the repo-local pre-commit gate
+make setup-hooks
+```
 
-# Or validate specific group
-python3 -m validator validate architecture.yaml --group solid
-python3 -m validator validate architecture.yaml --group research
+For AI agents, start the MCP server instead:
 
-# Combined: collect + validate in one step
-archlint validate . --python
-
-# Validate Rust project graph
-archlint validate architecture.yaml --python --group core
+```bash
+archlint serve   # MCP server for Claude Code / Cursor — see docs/mcp-setup.md
 ```
 
 ---
@@ -50,27 +52,27 @@ Existing baseline debt does not block. Bypass in exceptional cases with `git com
 
 ## Docker
 
-The easiest way to run archlint without installing Go or Python:
+The easiest way to run archlint without installing Go:
 
 ```bash
-# Scan a Go project for architecture violations
+# Scan a project for architecture violations (quality gate)
 docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint scan /workspace
 
-# Collect architecture graph and validate with Python validator
-docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint validate /workspace --python
+# Validate the graph with the built-in Go engine
+docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint validate /workspace
 
-# Collect graph to a file (Go and Rust projects)
+# Collect graph to a file (Go; also scans external Rust/TS)
 docker run --rm -v $(pwd):/workspace ghcr.io/mshogin/archlint collect /workspace -o /workspace/architecture.yaml
 ```
 
-Image includes: Go binary (`archlint`) and Python validator with all dependencies.
+Image includes: the Go binary (`archlint`) and, optionally, the research validator.
 
 ---
 
 ## Requirements
 
-- **Go 1.21+** - for `archlint` binary
-- **Python 3.12+** - for Python validator (`pip install networkx numpy scipy`)
+- **Go 1.21+** - for the `archlint` binary (the only requirement for the production path)
+- **Python 3.12+** - OPTIONAL, only for the legacy/research validator (`pip install networkx numpy scipy`)
 
 ---
 
@@ -82,11 +84,11 @@ Image includes: Go binary (`archlint`) and Python validator with all dependencie
 |---------|-------------|
 | `scan [dir]` | Quality gate: scan for violations, exit 1 if threshold exceeded |
 | `collect [dir]` | Build structural graph -> architecture.yaml |
-| `validate [dir\|file]` | Validate graph: built-in Go engine or Python validator (--python) |
+| `validate [dir\|file]` | Validate graph with the built-in Go engine |
 | `check [dir]` | Check for violations (no exit code on fail) |
 | `metrics [dir]` | Per-package coupling, SOLID, health scores |
 | `self-scan` | Run archlint on its own source, print health dashboard |
-| `serve` | Start MCP server for Claude Code integration |
+| `serve` | Start MCP server for agent integration (Claude Code / Cursor) — see [docs/mcp-setup.md](docs/mcp-setup.md) |
 | `bot` | GitHub bot: polls issues, scans repos, posts results |
 | `callgraph [dir]` | Build call graph from entry point or BPMN contexts |
 | `bpmn <file>` | Parse BPMN 2.0 process into a structured graph |
@@ -100,67 +102,25 @@ Image includes: Go binary (`archlint`) and Python validator with all dependencie
 
 ---
 
-## Python Validator: 229 Metrics
-
-The validator runs against `architecture.yaml` produced by `archlint collect`.
-
-```bash
-# Run all 87 production metrics
-python3 -m validator validate architecture.yaml
-
-# Run specific group
-python3 -m validator validate architecture.yaml --group solid
-
-# Output formats
-python3 -m validator validate architecture.yaml --format json
-python3 -m validator validate architecture.yaml --format yaml
-```
-
-### Validator Groups
-
-| Group | Metrics | What it checks |
-|-------|---------|----------------|
-| `core` | ~10 | DAG integrity, cycles, fan-out/fan-in, hub nodes, orphan nodes, graph depth |
-| `solid` | ~10 | SOLID principles: SRP, OCP, LSP, ISP, DIP |
-| `patterns` | ~7 | Design smells: god class, shotgun surgery, feature envy, lazy class, middle man, data clumps |
-| `architecture` | ~8 | Clean architecture: domain isolation, ports & adapters, use case purity, bounded context |
-| `quality` | ~9 | Security, observability, testability: auth boundaries, logging, metrics, mockability |
-| `advanced` | ~6 | Graph centrality, pagerank, modularity, clustering, change propagation, blast radius |
-| `research` | 142 | Math analysis: topology (Betti numbers, Euler), spectral, information theory, game theory, category theory |
-
-Run all groups at once (omit `--group`), or pick one to focus on a specific area.
-
----
-
 ## validate Command
 
-The `validate` command integrates both the Go engine and the Python validator:
+The `validate` command runs the built-in Go engine against a directory or a previously collected graph:
 
 ```bash
-# Validate directory (collect + Go engine)
+# Validate a directory (collect + Go engine)
 archlint validate .
 
-# Validate directory (collect + Python validator)
-archlint validate . --python
-
-# Validate existing .yaml file (Python validator)
-archlint validate architecture.yaml --python
-
-# Filter by group
-archlint validate . --python --group solid
-
-# JSON output
-archlint validate . --python --format json
+# Validate an existing .yaml file
+archlint validate architecture.yaml
 
 # Legacy pipe mode (still supported)
 archlint collect . -o graph.yaml
 archlint validate --graph graph.yaml
 ```
 
-The Python validator path is resolved in this order:
-1. `ARCHLINT_VALIDATOR_PATH` environment variable
-2. `validator/` relative to the archlint binary
-3. `validator/` in the current working directory
+> The `--python` flag is now a NO-OP. The production `validate` path runs entirely
+> on the built-in Go engine. The Python validator is documented separately under
+> [Legacy / Research validator](#legacy--research-validator-optional).
 
 ---
 
@@ -239,12 +199,8 @@ Posts a summary table to the PR and fails the check if violations exceed thresho
 ### Quality Gate (exit code)
 
 ```bash
-# Fails with exit 1 if violations > threshold
+# Fails with exit 1 if violations > threshold (pure Go, no extra deps)
 archlint scan . --threshold 0 --format json
-
-# In pipeline: collect + Python validator
-archlint collect . -o architecture.yaml
-python3 -m validator validate architecture.yaml
 ```
 
 ---
@@ -264,14 +220,6 @@ git clone https://github.com/mshogin/archlint
 cd archlint
 make install   # installs archlint to $GOPATH/bin
 make build     # builds to bin/archlint
-```
-
-### Python validator
-
-```bash
-pip install networkx numpy scipy
-# run from repo root:
-python3 -m validator validate architecture.yaml
 ```
 
 ---
@@ -298,7 +246,7 @@ Graph saved to architecture.yaml
 
 ```bash
 archlint collect . -o architecture.yaml
-python3 -m validator validate architecture.yaml --group solid
+archlint validate architecture.yaml
 ```
 
 ```yaml
@@ -371,13 +319,19 @@ archlint watch . --fix   # auto-suggest fixes on violations
 
 ---
 
-## MCP Server (Claude Code integration)
+## MCP Server (agent integration)
+
+Start the MCP server so AI agents (Claude Code / Cursor) can call archlint as a
+quality gate — each violation carries severity, remediation, and a human-in-the-loop
+hook.
 
 ```bash
 archlint serve
 ```
 
 Available tools: `analyze_file`, `analyze_change`, `get_dependencies`, `get_architecture`, `check_violations`, `get_callgraph`
+
+See [docs/mcp-setup.md](docs/mcp-setup.md) and [docs/agent-gate.md](docs/agent-gate.md) for setup.
 
 ---
 
@@ -397,7 +351,7 @@ archlint bot --owner mshogin --repo archlint --token $GITHUB_TOKEN
 archlint/
 ├── cmd/archlint/          # CLI entry point
 ├── internal/
-│   ├── analyzer/          # Go and Rust AST analyzers
+│   ├── analyzer/          # Go AST analyzer (+ external Rust/TS scanners)
 │   ├── cli/               # Cobra commands (scan, collect, validate, ...)
 │   ├── bot/               # GitHub issue bot
 │   ├── config/            # .archlint.yaml and BPMN config loading
@@ -407,7 +361,7 @@ archlint/
 │   ├── bpmn/              # BPMN 2.0 parser
 │   ├── callgraph/         # Static call graph builder
 │   └── archtest/          # Architecture test assertions library
-├── validator/             # Python validator: 229 architecture metrics
+├── validator/             # Legacy/research Python validator (optional, see below)
 ├── action.yml             # GitHub Action definition
 ├── .archlint.yaml         # archlint config for this repo
 └── specs/                 # Feature specs (todo/inprogress/done)
@@ -454,6 +408,52 @@ Want archlint to monitor your project's architecture?
 1. [Create an issue](https://github.com/mshogin/archlint/issues/new?template=add-repo.yml) with your repo URL
 2. We'll review and add your project to monitoring
 3. Architecture metrics will be published at archlint.ru/projects/your-org/your-repo
+
+---
+
+## Legacy / Research validator (optional)
+
+The production path is pure Go: `archlint scan` (gate) and `archlint validate`
+(built-in Go engine). The Python validator below is **research mathematics**
+(topology, spectral analysis, information / game / category theory), **not** a
+production gate. It is optional and not part of the shipped binary — the
+`archlint validate --python` flag is now a NO-OP.
+
+Use it only if you want to explore the research metrics against a graph produced
+by `archlint collect`.
+
+```bash
+pip install networkx numpy scipy
+
+# Collect the graph with archlint, then run the validator directly
+archlint collect . -o architecture.yaml
+python3 -m validator validate architecture.yaml
+
+# Focus on a specific group
+python3 -m validator validate architecture.yaml --group solid
+python3 -m validator validate architecture.yaml --group research
+
+# Output formats
+python3 -m validator validate architecture.yaml --format json
+python3 -m validator validate architecture.yaml --format yaml
+```
+
+### Validator Groups
+
+| Group | Metrics | What it checks |
+|-------|---------|----------------|
+| `core` | ~10 | DAG integrity, cycles, fan-out/fan-in, hub nodes, orphan nodes, graph depth |
+| `solid` | ~10 | SOLID principles: SRP, OCP, LSP, ISP, DIP |
+| `patterns` | ~7 | Design smells: god class, shotgun surgery, feature envy, lazy class, middle man, data clumps |
+| `architecture` | ~8 | Clean architecture: domain isolation, ports & adapters, use case purity, bounded context |
+| `quality` | ~9 | Security, observability, testability: auth boundaries, logging, metrics, mockability |
+| `advanced` | ~6 | Graph centrality, pagerank, modularity, clustering, change propagation, blast radius |
+| `research` | 142 | Math analysis: topology (Betti numbers, Euler), spectral, information theory, game theory, category theory |
+
+The validator path is resolved in this order:
+1. `ARCHLINT_VALIDATOR_PATH` environment variable
+2. `validator/` relative to the archlint binary
+3. `validator/` in the current working directory
 
 ---
 
