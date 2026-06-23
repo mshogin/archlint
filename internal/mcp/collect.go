@@ -35,11 +35,14 @@ func activeErrorClassRegistry() []metricDetector {
 		func(g *model.Graph, _ *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []Violation {
 			return GhostComponents(g, cfg)
 		},
-		func(g *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []Violation {
-			if a == nil {
-				return nil
-			}
-
+		func(g *model.Graph, _ *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []Violation {
+			// DeadCode — ГРАФ-ONLY (reachability чисто по рёбрам, GoAnalyzer не нужен). Guard
+			// a==nil снят: теперь dead-code считается и для импортированных графов (stdin) и
+			// язык-фронтов без Go-анализатора. На TS/Rust находок 0 ПО КОНСТРУКЦИИ — DeadCode
+			// помечает только узлы entity function|method, а TS даёт component/*-package, Rust —
+			// struct/enum/trait; ни одного function|method -> ложно-красное невозможно (self-
+			// проверка соундности на здоровом TS подтверждает 0). Реальный выигрыш снятия — stdin-Go-граф
+			// больше НЕ глушит dead-code. Символьный dead-code для TS — горизонт AST (C+D), не тут.
 			return DeadCode(g, cfg.EntryPoints)
 		},
 		func(g *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []Violation {

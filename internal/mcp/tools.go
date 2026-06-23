@@ -352,6 +352,14 @@ func DetectViolationsForPackage(graph *model.Graph, pkgID string) []Violation {
 	return violations
 }
 
+// isPackageNode — узел представляет ПАКЕТ (контейнер импортов), независимо от языка-фронта:
+// Go "package", TS "ts-package"/"react-package". Циклы/coupling — пакетного уровня и язык-нейтральны,
+// поэтому перечисление пакетов тоже должно быть язык-нейтральным; иначе TS-пакеты не попадали в
+// проверку циклов (detectCycles не вызывался) -> package-cycle на TS был невидим. Аддитивно к Go.
+func isPackageNode(entity string) bool {
+	return entity == "package" || entity == "ts-package" || entity == "react-package"
+}
+
 // DetectAllViolations checks all packages for violations.
 func DetectAllViolations(graph *model.Graph) []Violation {
 	var violations []Violation
@@ -359,7 +367,7 @@ func DetectAllViolations(graph *model.Graph) []Violation {
 	packages := make(map[string]bool)
 
 	for _, node := range graph.Nodes {
-		if node.Entity == "package" {
+		if isPackageNode(node.Entity) {
 			packages[node.ID] = true
 		}
 	}

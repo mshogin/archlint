@@ -307,13 +307,24 @@ func (ta *TypeScriptAnalyzer) buildGraph() {
 	for pkgKey, pkg := range ta.packages {
 		for _, imp := range pkg.Imports {
 			target := ta.resolveImport(pkgKey, imp.From)
-			if target == "" {
+			if target == "" || target == pkgKey {
+				// target=="" -> неразрешённый/внешний-неизвестный; target==pkgKey -> ВНУТРИпакетный
+				// импорт (файл тянет соседний файл той же папки -> resolveImport даёт ту же package-key).
+				// Это НЕ межпакетная зависимость: self-import-ребро создавало бы ложный self-loop цикл
+				// и раздувало efferent-coupling. Пакет не «зависит от себя» (Go-анализатор такие не
+				// эмитит). Пропускаем -> пакетные детекторы видят только реальные кросс-пакетные рёбра.
 				continue
 			}
+			// Тип ребра = КАНОНИЧЕСКИЙ model.EdgeImport (НЕ сырой imp.Kind "es6"/"type"/...):
+			// агностичные детекторы (cycles_scc/coupling) фильтруют импорты по model.EdgeImport,
+			// поэтому TS-импорты ДОЛЖНЫ нести каноническую метку, иначе SCC-детектор их не видит
+			// (был ровно этот дефект: TS package-циклы не ловились). Сырой kind сохраняем в Method
+			// для трассировки (es6/type/dynamic/require — не теряем информацию).
 			ta.edges = append(ta.edges, model.Edge{
-				From: pkgKey,
-				To:   target,
-				Type: imp.Kind,
+				From:   pkgKey,
+				To:     target,
+				Type:   model.EdgeImport,
+				Method: imp.Kind,
 			})
 		}
 	}

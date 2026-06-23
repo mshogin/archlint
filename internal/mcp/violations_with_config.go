@@ -20,7 +20,7 @@ func DetectAllViolationsWithConfig(graph *model.Graph, cfg *archlintcfg.Config) 
 
 	packages := make(map[string]bool)
 	for _, node := range graph.Nodes {
-		if node.Entity == "package" {
+		if isPackageNode(node.Entity) {
 			packages[node.ID] = true
 		}
 	}

@@ -79,6 +79,16 @@ type scanGateResult struct {
 	Details    []mcp.Violation `json:"details"`
 	ConfigFile string          `json:"config_file,omitempty"`
 	Baseline   string          `json:"baseline,omitempty"` // путь к загруженному snapshot ("" = audit-режим)
+	// Language — детектированный язык фронта (go|typescript|rust|graph). Часть honest-na:
+	// агент видит, ЧЕМ анализировали.
+	Language string `json:"language,omitempty"`
+	// SymbolLevel — true: символьные детекторы (dead-code/ISP/clone/SRP) реально прогнаны
+	// (Go-анализатор присутствует). false: ТОЛЬКО package-level (TS/Rust/stdin-граф) — символьная
+	// архитектура НЕ анализирована. Честная граница против ложно-зелёного: PASSED при false НЕ
+	// означает «чисто», означает «package-level чисто, символьный уровень не смотрели».
+	SymbolLevel bool `json:"symbol_level"`
+	// Scope — человекочитаемая маркировка покрытия (что реально проверено / что DISABLED).
+	Scope string `json:"scope,omitempty"`
 	// Signals — структурные магнитудные дескрипторы (--signals, audit/slow). Не часть
 	// гейта: магнитуды НЕ блокируют. omitempty -> быстрый гейт их не несёт.
 	Signals *mcp.Descriptors `json:"signals,omitempty"`
@@ -170,6 +180,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	var graph *model.Graph
 	var a *analyzer.GoAnalyzer
+	language := "go"              // детектированный фронт; уточняется по выбранному анализатору ниже
 	var baselineDir string        // каталог для дефолтного пути baseline (пусто в stdin-режиме)
 	var resolvedExcludes []string // итоговые excludes (для --diff ref-worktree скана)
 
@@ -188,6 +199,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			os.Exit(2)
 		}
 		graph = g
+		language = "graph" // импортированный YAML-граф: символьного анализатора нет (package-level)
 
 		// Load config from --config flag if provided; otherwise use defaults.
 		if scanConfigFile != "" {
@@ -233,6 +245,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 				os.Exit(2)
 			}
 			graph = g
+			language = "rust" // Rust-фронт: символьного Go-анализатора нет (package-level)
 		} else if analyzer.DetectTypeScriptProject(codeDir) {
 			tsAnalyzer := analyzer.NewTypeScriptAnalyzer().WithExcludeDirs(excludes)
 			g, err := tsAnalyzer.Analyze(codeDir)
@@ -241,6 +254,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 				os.Exit(2)
 			}
 			graph = g
+			language = "typescript" // regex MVP, package-level; символьные детекторы недоступны
 		} else {
 			// Multi-module (monorepo / go.work): >1 боевой go.mod -> СКАНИРУЕМ КАЖДЫЙ модуль
 			// отдельно (свой scanRoot -> module-relative qname, t_root-инвариантность per-module,
@@ -351,6 +365,19 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// honest-na (анти ложно-зелёное): символьные детекторы (dead-code/ISP/structural-clone/SRP/LCOM)
+	// прогоняются ТОЛЬКО при наличии Go-анализатора (a != nil). Для TS/Rust/импортированного графа их
+	// НЕ было — значит PASSED означает «package-level чисто», НЕ «архитектура чиста». Явно маркируем
+	// scope, чтобы агент/человек видел границу покрытия и не доверял пустому результату как полному.
+	symbolLevel := a != nil
+	scope := ""
+	if !symbolLevel {
+		scope = fmt.Sprintf(
+			"PACKAGE-LEVEL only (%s): symbol-level detectors (dead-code/ISP/structural-clone/SRP) DISABLED — symbol-level architecture NOT analyzed",
+			language,
+		)
+	}
+
 	switch scanFormat {
 	case "json":
 		result := scanGateResult{
@@ -362,6 +389,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 			Details:          violations,
 			ConfigFile:       configFile,
 			Baseline:         loadedBaseline,
+			Language:         language,
+			SymbolLevel:      symbolLevel,
+			Scope:            scope,
 			Signals:          signals,
 			ArchmotifSignals: archmotifSignals,
 			ContextSignals:   contextSignals,
@@ -382,8 +412,16 @@ func runScan(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("baseline: none (audit mode — ERROR patterns reported, not blocked)\n")
 		}
+		if scope != "" {
+			fmt.Printf("scope: %s\n", scope)
+		}
 		if total == 0 {
-			fmt.Printf("PASSED: No violations found (threshold: %d)\n", threshold)
+			if symbolLevel {
+				fmt.Printf("PASSED: No violations found (threshold: %d)\n", threshold)
+			} else {
+				// НЕ голое «No violations found»: было бы ложно-зелёное (символьный уровень не смотрели).
+				fmt.Printf("PASSED (package-level): no package-level violations (threshold: %d); symbol-level NOT analyzed — see scope above\n", threshold)
+			}
 		} else {
 			status := "PASSED"
 			if !passed {

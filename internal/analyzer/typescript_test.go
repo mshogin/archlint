@@ -304,6 +304,61 @@ func importKinds(pkg *TSPackage) []string {
 	return kinds
 }
 
+// TestTypeScriptAnalyzer_CrossPackageImportIsCanonicalEdge verifies the package-level
+// gate contract for TS: cross-package imports carry the CANONICAL model.EdgeImport type
+// (so agnostic detectors — cycles_scc/coupling — see them), and INTRA-package imports
+// (a file importing a sibling in the same folder) produce NO self-loop edge (which would
+// be a false self-cycle and inflate efferent coupling).
+func TestTypeScriptAnalyzer_CrossPackageImportIsCanonicalEdge(t *testing.T) {
+	dir := t.TempDir()
+	mustWrite(t, filepath.Join(dir, "a", "index.ts"),
+		"import { bar } from '../b';\nimport { h } from './helper';\nexport function foo() { return bar() + h(); }\n")
+	mustWrite(t, filepath.Join(dir, "a", "helper.ts"), "export function h() { return 1; }\n")
+	mustWrite(t, filepath.Join(dir, "b", "index.ts"),
+		"import { foo } from '../a';\nexport function bar() { return foo(); }\n")
+
+	graph, err := NewTypeScriptAnalyzer().Analyze(dir)
+	if err != nil {
+		t.Fatalf("Analyze: %v", err)
+	}
+
+	var aToB, bToA, selfLoop bool
+	for _, e := range graph.Edges {
+		switch {
+		case e.From == "a" && e.To == "b":
+			aToB = true
+			if e.Type != model.EdgeImport {
+				t.Errorf("a->b edge must be canonical %q, got %q (cycles_scc would miss it)", model.EdgeImport, e.Type)
+			}
+		case e.From == "b" && e.To == "a":
+			bToA = true
+			if e.Type != model.EdgeImport {
+				t.Errorf("b->a edge must be canonical %q, got %q", model.EdgeImport, e.Type)
+			}
+		case e.From == "a" && e.To == "a":
+			selfLoop = true
+		}
+	}
+
+	if !aToB || !bToA {
+		t.Errorf("expected canonical import edges a<->b, got: %v", edgeSummary(graph.Edges))
+	}
+	if selfLoop {
+		t.Errorf("intra-package import must NOT create a self-loop a->a (false self-cycle), got: %v", edgeSummary(graph.Edges))
+	}
+}
+
+// mustWrite creates parent dirs and writes content, failing the test on error.
+func mustWrite(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir %s: %v", filepath.Dir(path), err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
+}
+
 // edgeSummary returns a compact string representation of edges for test error output.
 func edgeSummary(edges []model.Edge) []string {
 	out := make([]string, 0, len(edges))
