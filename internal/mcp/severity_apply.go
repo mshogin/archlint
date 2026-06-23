@@ -34,39 +34,39 @@ func ApplySeverity(violations []Violation) {
 func remediationOf(kind string) string {
 	switch kind {
 	case "circular-dependency":
-		return "разорвать цикл: вынести общую абстракцию в отдельный пакет или инвертировать одну зависимость через интерфейс"
+		return "break the cycle: extract the shared abstraction into a separate package, or invert one dependency through an interface"
 	case "layer-violation", "layer-backedge":
-		return "убрать back-edge: зависимость должна идти по объявленному порядку слоёв; инвертировать через интерфейс"
+		return "remove the back-edge: dependencies must follow the declared layer order; invert through an interface"
 	case "forbidden-dependency":
-		return "убрать импорт запрещённого пакета (см. объявленный запрет); вынести общее в разрешённый слой"
+		return "remove the import of the forbidden package (see the declared rule); move shared code into an allowed layer"
 	case "deprecated-usage":
-		return "заменить вызов deprecated на актуальный API (см. маркер deprecated)"
+		return "replace the deprecated call with the current API (see the deprecated marker)"
 	case "dead-code":
-		return "★подтвердить с человеком (HumanInLoop, не авто): затем удалить неиспользуемый код ЛИБО подключить недостающую точку входа"
+		return "★confirm with a human (HumanInLoop, not automatic): then delete the unused code OR wire up the missing entry point"
 	case kindTestOnlyProdSymbol, kindTestOnlyProdSymbolExported:
-		return "★подтвердить с человеком (HumanInLoop): убрать символ из prod (если мёртв) ЛИБО перенести в _test.go/testdata, ЛИБО подключить легального prod-юзера (возможна незаконченная интеграция)"
+		return "★confirm with a human (HumanInLoop): remove the symbol from prod (if dead) OR move it into _test.go/testdata, OR wire up a legitimate prod user (may be an unfinished integration)"
 	case "ghost-component":
-		return "устаревшая декларация контекста: убрать отсутствующий компонент из .archlint contexts ЛИБО восстановить его в графе"
+		return "stale context declaration: remove the missing component from .archlint contexts OR restore it in the graph"
 	case "isp-usage-subset", "isp-fat-interface":
-		return "разбить интерфейс по кластерам использования (ISP): дать клиенту узкий интерфейс из реально используемых методов"
+		return "split the interface by usage clusters (ISP): give the client a narrow interface of the methods it actually uses"
 	case "dip-concrete-dependency", "dip-abstraction-to-detail":
-		return "инвертировать зависимость через интерфейс/абстракцию (DIP): зависеть от абстракции, не от конкретного типа"
+		return "invert the dependency through an interface/abstraction (DIP): depend on the abstraction, not the concrete type"
 	case "ocp-open-modification":
-		return "расширять поведение через полиморфизм/новый тип (OCP), не модифицируя существующий type-dispatch"
+		return "extend behavior via polymorphism / a new type (OCP) instead of modifying the existing type-dispatch"
 	case "structural-clone":
-		return "вынести дублирующийся код в общую функцию/тип (DRY)"
+		return "extract the duplicated code into a shared function/type (DRY)"
 	case "srp-lack-of-cohesion", "srp-multiple-responsibilities", "srp-too-many-methods", "srp-too-many-fields":
-		return "разделить ответственности (SRP): выделить независимые обязанности в отдельные типы/функции"
+		return "split responsibilities (SRP): extract independent concerns into separate types/functions"
 	case "god-class":
-		return "разбить god-class на меньшие типы по ответственностям; вынести группы методов/полей"
+		return "split the god class into smaller types by responsibility; extract groups of methods/fields"
 	case "hub-node":
-		return "снизить центральность hub: разорвать часть связей через посредники/интерфейсы или разбить узел"
+		return "reduce the hub's centrality: break some links via mediators/interfaces, or split the node"
 	case "high-efferent-coupling":
-		return "сократить исходящие зависимости: сгруппировать через фасад/интерфейс, убрать лишние импорты"
+		return "reduce outgoing dependencies: group them behind a facade/interface, remove unnecessary imports"
 	case "shotgun-surgery":
-		return "собрать рассеянную логику в один модуль, чтобы изменение не затрагивало много файлов"
+		return "consolidate the scattered logic into one module so a change does not touch many files"
 	case "articulation-point", "bridge-edge", "stability-violation":
-		return "сигнал структурной хрупкости (диагностика): рассмотреть дублирование пути/снижение зависимости в узком месте"
+		return "structural fragility signal (diagnostic): consider path redundancy or reducing the dependency at the bottleneck"
 	default:
 		return ""
 	}

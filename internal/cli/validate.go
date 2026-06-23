@@ -75,7 +75,7 @@ type GraphExportViolation struct {
 
 var validateCmd = &cobra.Command{
 	Use:   "validate [directory|architecture.yaml]",
-	Short: "Validate architecture via the built-in Go engine (--python выпилен из бинаря)",
+	Short: "Validate architecture via the built-in Go engine (--python removed from the binary)",
 	Long: `Validate an architecture graph with the built-in Go rule engine.
 
 The production/boevoy path is the native Go detectors (see 'archlint scan'):
@@ -101,8 +101,8 @@ func init() {
 	validateCmd.Flags().StringVar(&validateGraphFile, "graph", "", "Path to YAML graph file (use - for stdin); legacy flag, prefer positional arg")
 	validateCmd.Flags().StringVar(&validateFormat, "format", "text", "Output format: text, json, or yaml")
 	validateCmd.Flags().StringVar(&validateConfigFile, "config", "", "Path to .archlint.yaml config file (default: ./.archlint.yaml)")
-	validateCmd.Flags().StringVar(&validateGroup, "group", "", "(устар.: применялся к --python музею, который выпилен)")
-	validateCmd.Flags().BoolVar(&validatePython, "python", false, "ВЫПИЛЕН: Python-валидатор удалён из бинаря (вернёт ошибку с указанием на Go-движок)")
+	validateCmd.Flags().StringVar(&validateGroup, "group", "", "(deprecated: applied to the removed --python validator)")
+	validateCmd.Flags().BoolVar(&validatePython, "python", false, "REMOVED: the Python validator is no longer in the binary (returns an error pointing to the Go engine)")
 	rootCmd.AddCommand(validateCmd)
 }
 
@@ -138,12 +138,12 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	// делся музей. validator/ остаётся как deprecated-музей; его судьба (репо vs архив) —
 	// отдельное решение, бинарь его НЕ зовёт в любом случае.
 	if validatePython {
-		return fmt.Errorf("--python отключён: Python-валидатор выпилен из бинаря (0 Python в боевом пути).\n" +
-			"  Структурные/доказуемые метрики портированы в Go — используй боевой движок:\n" +
-			"    archlint scan .            (дельта-гейт, боевой путь)\n" +
-			"    archlint validate <file>   (Go-движок, без --python)\n" +
-			"  validator/ остаётся deprecated-музеем (research/математика, не арх-гейт);\n" +
-			"  бинарь его не вызывает. Доступ к музею — напрямую: python3 -m validator (вне archlint)")
+		return fmt.Errorf("--python is disabled: the Python validator was removed from the binary (0 Python on the production path).\n" +
+			"  The structural/provable metrics are ported to Go — use the production engine:\n" +
+			"    archlint scan .            (delta gate, production path)\n" +
+			"    archlint validate <file>   (Go engine, without --python)\n" +
+			"  validator/ remains a deprecated museum (research/math, not an architecture gate);\n" +
+			"  the binary does not call it. To access the museum directly: python3 -m validator (outside archlint)")
 	}
 
 	return runGoValidator(archFile)

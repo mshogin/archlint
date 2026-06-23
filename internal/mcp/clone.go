@@ -89,7 +89,7 @@ func StructuralClone(a *analyzer.GoAnalyzer) []Violation {
 			out = append(out, Violation{
 				Kind: KindStructuralClone,
 				Message: fmt.Sprintf(
-					"structural clone: %s изоморфен ещё %d фрагмент(ам) формы [%s] (размер %d) — рассмотреть extract common",
+					"structural clone: %s is isomorphic to %d more fragment(s) of shape [%s] (size %d) — consider extracting common code",
 					qn, len(g.members)-1, g.fp, g.size,
 				),
 				Target: qn,

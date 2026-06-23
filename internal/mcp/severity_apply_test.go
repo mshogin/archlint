@@ -27,7 +27,7 @@ func TestApplySeverity(t *testing.T) {
 		t.Errorf("dead-code: %+v", d)
 	}
 	// dead-code remediation ОБЯЗАН содержать human-in-loop оговорку.
-	if !strings.Contains(vs[0].Remediation, "человек") {
+	if !strings.Contains(vs[0].Remediation, "human") {
 		t.Errorf("dead-code remediation без human-in-loop оговорки: %q", vs[0].Remediation)
 	}
 	// Каждое ИЗВЕСТНОЕ нарушение несёт actionable Remediation-направление.

@@ -73,14 +73,14 @@ A `check_violations` call on a package containing a god-class returns (abridged)
       "kind": "god-class",
       "severity": "INFO",
       "principle": "coupling-cohesion",
-      "remediation": "разбить god-class на меньшие типы по ответственностям; вынести группы методов/полей",
+      "remediation": "split the god class into smaller types by responsibility; extract groups of methods/fields",
       "location": "god.go:4"
     },
     {
       "kind": "srp-lack-of-cohesion",
       "severity": "WARNING",
       "principle": "SRP",
-      "remediation": "разделить ответственности (SRP): выделить независимые обязанности в отдельные типы/функции"
+      "remediation": "split responsibilities (SRP): extract independent concerns into separate types/functions"
     }
   ]
 }
@@ -95,7 +95,7 @@ For a blocking, human-gated case the envelope looks like:
   "principle": "reachability",
   "human_in_loop": true,
   "requires_delta": true,
-  "remediation": "★подтвердить с человеком (HumanInLoop, не авто): затем удалить неиспользуемый код ЛИБО подключить недостающую точку входа"
+  "remediation": "★confirm with a human (HumanInLoop, not automatic): then delete the unused code OR wire up the missing entry point"
 }
 ```
 

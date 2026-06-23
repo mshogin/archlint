@@ -110,7 +110,7 @@ func CollectOCP(a *analyzer.GoAnalyzer, baseline *Baseline) []Violation {
 			Kind:    KindOCPOpenModification,
 			Target:  fact.Target,
 			Anchor:  fact.Anchor, // тот же единый fingerprint (S::тип)
-			Message: fmt.Sprintf("OCP: type-dispatch %s расширен новой веткой (%s) — закрытое модифицировано вместо полиморфизма", fact.Target, branchType(fact.Anchor)),
+			Message: fmt.Sprintf("OCP: type-dispatch %s extended with a new branch (%s) — closed code modified instead of using polymorphism", fact.Target, branchType(fact.Anchor)),
 		})
 	}
 

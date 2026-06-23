@@ -95,7 +95,7 @@ func TestOnlyProdSymbol(g *model.Graph, a *analyzer.GoAnalyzer) []Violation {
 		}
 		out = append(out, Violation{
 			Kind:    kind,
-			Message: fmt.Sprintf("prod-символ %s используется только из _test.go (quasi-dead в проде)", n.ID),
+			Message: fmt.Sprintf("prod symbol %s is used only from _test.go (quasi-dead in production)", n.ID),
 			Target:  n.ID,
 			Anchor:  "test-only:" + n.ID,
 		})

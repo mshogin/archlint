@@ -454,9 +454,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 				}
 				sort.Strings(kinds)
 
-				fmt.Printf("…показаны топ-%d на категорию; скрыто (полный список: --format json):\n", perKindLimit)
+				fmt.Printf("…showing top %d per category; hidden (full list: --format json):\n", perKindLimit)
 				for _, k := range kinds {
-					fmt.Printf("  [%s] +ещё %d\n", k, hiddenPerKind[k])
+					fmt.Printf("  [%s] +%d more\n", k, hiddenPerKind[k])
 				}
 				fmt.Println()
 			}

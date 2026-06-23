@@ -81,7 +81,7 @@ func DeadCode(g *model.Graph, configPatterns []string) []Violation {
 		if (n.Entity == "function" || n.Entity == "method") && !reached[n.ID] {
 			out = append(out, Violation{
 				Kind:    "dead-code",
-				Message: fmt.Sprintf("dead code: %s недостижим от entry points R", n.ID),
+				Message: fmt.Sprintf("dead code: %s is unreachable from entry points R", n.ID),
 				Target:  n.ID,
 			})
 		}

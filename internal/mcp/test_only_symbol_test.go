@@ -89,7 +89,7 @@ func TestA(t *testing.T) {
 		t.Errorf("testHelper НЕ пойман детектором (vs=%+v)", vs)
 	} else if v.Kind != kindTestOnlyProdSymbol || v.Severity != "ERROR" || !v.HumanInLoop || !v.RequiresDelta {
 		t.Errorf("testHelper: %+v (ждали ERROR+HumanInLoop+RequiresDelta)", v)
-	} else if !strings.Contains(v.Remediation, "человек") {
+	} else if !strings.Contains(v.Remediation, "human") {
 		t.Errorf("testHelper remediation без human-in-loop: %q", v.Remediation)
 	}
 

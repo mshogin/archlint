@@ -96,7 +96,7 @@ func detectDIP(v DIPView) []Violation {
 
 			out = append(out, Violation{
 				Kind:    "dip-abstraction-to-detail",
-				Message: fmt.Sprintf("DIP: интерфейс %s ссылается на конкретный тип %s в сигнатуре метода (абстракция зависит от детали)", iface, e.To),
+				Message: fmt.Sprintf("DIP: interface %s references concrete type %s in a method signature (the abstraction depends on a detail)", iface, e.To),
 				Target:  iface,
 			})
 		}
