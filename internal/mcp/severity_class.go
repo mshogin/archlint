@@ -73,6 +73,17 @@ var violationClasses = map[string]SeverityClass{
 	// неактивен без contexts (self=0). fuzzy-матч консервативен (меньше ложных ghost).
 	"ghost-component": {Class: "ERROR", OpenWorld: false, RequiresDelta: false, HumanInLoop: false},
 
+	// test-only-prod-symbol — UNEXPORTED prod-символ, используемый ТОЛЬКО из
+	// _test.go (под-класс dead-code). CLOSED-WORLD (unexported не виден вне пакета,
+	// юзают только тесты => quasi-dead): ERROR-кандидат В ДЕЛЬТЕ (RequiresDelta) +
+	// HumanInLoop (тест может быть временно единственным легальным юзером —
+	// удаление/перенос решает человек, как dead-code destruction).
+	kindTestOnlyProdSymbol: {Class: "ERROR", OpenWorld: false, RequiresDelta: true, HumanInLoop: true},
+
+	// test-only-prod-symbol-exported — EXPORTED вариант. OPEN-WORLD (может юзаться
+	// внешними репо, не видно) -> НЕ ERROR, max WARNING (как dead-code exported).
+	kindTestOnlyProdSymbolExported: {Class: "WARNING"},
+
 	// ── НЕ-ERROR классификация (ЕДИНЫЙ severity-реестр SSOT) ──
 	// Одна точка severity для вывода + health + стража полноты (∀ kind имеет вердикт).
 	//

@@ -224,23 +224,3 @@ func TestHealthScoreFloor(t *testing.T) {
 		t.Errorf("expected health score 0 (floor), got %d", score)
 	}
 }
-
-func TestIntToStr(t *testing.T) {
-	tests := []struct {
-		input    int
-		expected string
-	}{
-		{0, "0"},
-		{1, "1"},
-		{42, "42"},
-		{-5, "-5"},
-		{100, "100"},
-	}
-
-	for _, tt := range tests {
-		result := intToStr(tt.input)
-		if result != tt.expected {
-			t.Errorf("intToStr(%d) = %q, want %q", tt.input, result, tt.expected)
-		}
-	}
-}

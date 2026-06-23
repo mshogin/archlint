@@ -43,6 +43,8 @@ func remediationOf(kind string) string {
 		return "заменить вызов deprecated на актуальный API (см. маркер deprecated)"
 	case "dead-code":
 		return "★подтвердить с человеком (HumanInLoop, не авто): затем удалить неиспользуемый код ЛИБО подключить недостающую точку входа"
+	case kindTestOnlyProdSymbol, kindTestOnlyProdSymbolExported:
+		return "★подтвердить с человеком (HumanInLoop): убрать символ из prod (если мёртв) ЛИБО перенести в _test.go/testdata, ЛИБО подключить легального prod-юзера (возможна незаконченная интеграция)"
 	case "ghost-component":
 		return "устаревшая декларация контекста: убрать отсутствующий компонент из .archlint contexts ЛИБО восстановить его в графе"
 	case "isp-usage-subset", "isp-fat-interface":
@@ -95,6 +97,8 @@ func principleOf(kind string) string {
 		return "deprecation"
 	case "dead-code":
 		return "reachability"
+	case kindTestOnlyProdSymbol, kindTestOnlyProdSymbolExported:
+		return "test-hygiene"
 	case "ghost-component":
 		return "context-integrity"
 	case "god-class", "hub-node", "high-efferent-coupling", "shotgun-surgery",

@@ -49,6 +49,17 @@ func activeErrorClassRegistry() []metricDetector {
 
 			return ComputeISPUsageSubset(g, a)
 		},
+		func(g *model.Graph, a *analyzer.GoAnalyzer, _ *archlintcfg.Config) []Violation {
+			if a == nil {
+				return nil
+			}
+			// test-only-prod-symbol (под-класс dead-code): возвращает ERROR
+			// (unexported, RequiresDelta -> baseline-tracked) + WARNING (exported,
+			// open-world). exported в ERROR-class collect безвреден: gate смотрит
+			// ClassOf (WARNING != Taboo -> не блокирует), baseline-tracking WARNING
+			// нейтрален. self-проверка соундности: 0 ложных ERROR (intToStr — реальный quasi-dead).
+			return TestOnlyProdSymbol(g, a)
+		},
 	}
 }
 
