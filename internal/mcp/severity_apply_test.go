@@ -1,6 +1,9 @@
 package mcp
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // TestApplySeverity — обогащение Violation severity-классом + флагами соундности
 // из SSOT (Горизонт 1, объяснимость агентского гейта). Покрывает критерий:
@@ -22,6 +25,16 @@ func TestApplySeverity(t *testing.T) {
 	// dead-code: ERROR + все флаги условной соундности + principle reachability.
 	if d := vs[0]; d.Severity != "ERROR" || !d.OpenWorld || !d.RequiresDelta || !d.HumanInLoop || d.Principle != "reachability" {
 		t.Errorf("dead-code: %+v", d)
+	}
+	// dead-code remediation ОБЯЗАН содержать human-in-loop оговорку.
+	if !strings.Contains(vs[0].Remediation, "человек") {
+		t.Errorf("dead-code remediation без human-in-loop оговорки: %q", vs[0].Remediation)
+	}
+	// Каждое ИЗВЕСТНОЕ нарушение несёт actionable Remediation-направление.
+	for idx := 0; idx < 7; idx++ { // 0..6 — зарегистрированные kinds
+		if vs[idx].Remediation == "" {
+			t.Errorf("kind %q без Remediation", vs[idx].Kind)
+		}
 	}
 	// circular: ERROR closed-world (флаги false) + acyclic-dependencies.
 	if c := vs[1]; c.Severity != "ERROR" || c.OpenWorld || c.RequiresDelta || c.HumanInLoop || c.Principle != "acyclic-dependencies" {
@@ -64,7 +77,9 @@ func TestApplySeverity_DoesNotAffectFingerprint(t *testing.T) {
 	if before != after {
 		t.Errorf("Fingerprint изменился от ApplySeverity: %q -> %q", before, after)
 	}
-	if vs[0].Severity == "" {
-		t.Error("severity должен быть заполнен (sanity)")
+	// sanity: обогащение реально произошло (severity + remediation заполнены),
+	// но Fingerprint остался прежним — поля АДДИТИВНЫ, не в идентичности.
+	if vs[0].Severity == "" || vs[0].Remediation == "" {
+		t.Error("severity/remediation должны быть заполнены (sanity)")
 	}
 }

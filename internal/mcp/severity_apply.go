@@ -23,6 +23,50 @@ func ApplySeverity(violations []Violation) {
 			violations[i].HumanInLoop = c.HumanInLoop
 		}
 		violations[i].Principle = principleOf(violations[i].Kind)
+		violations[i].Remediation = remediationOf(violations[i].Kind)
+	}
+}
+
+// remediationOf — actionable НАПРАВЛЕНИЕ «как устранить» per Kind. ★GUIDANCE для
+// агента (как действовать), НЕ доказательство/гарантия/метрика — DX-слой
+// объяснимости. HumanInLoop-нарушения (dead-code) содержат явную оговорку
+// «подтвердить с человеком». "" если Kind не сопоставлен.
+func remediationOf(kind string) string {
+	switch kind {
+	case "circular-dependency":
+		return "разорвать цикл: вынести общую абстракцию в отдельный пакет или инвертировать одну зависимость через интерфейс"
+	case "layer-violation", "layer-backedge":
+		return "убрать back-edge: зависимость должна идти по объявленному порядку слоёв; инвертировать через интерфейс"
+	case "forbidden-dependency":
+		return "убрать импорт запрещённого пакета (см. объявленный запрет); вынести общее в разрешённый слой"
+	case "deprecated-usage":
+		return "заменить вызов deprecated на актуальный API (см. маркер deprecated)"
+	case "dead-code":
+		return "★подтвердить с человеком (HumanInLoop, не авто): затем удалить неиспользуемый код ЛИБО подключить недостающую точку входа"
+	case "ghost-component":
+		return "устаревшая декларация контекста: убрать отсутствующий компонент из .archlint contexts ЛИБО восстановить его в графе"
+	case "isp-usage-subset", "isp-fat-interface":
+		return "разбить интерфейс по кластерам использования (ISP): дать клиенту узкий интерфейс из реально используемых методов"
+	case "dip-concrete-dependency", "dip-abstraction-to-detail":
+		return "инвертировать зависимость через интерфейс/абстракцию (DIP): зависеть от абстракции, не от конкретного типа"
+	case "ocp-open-modification":
+		return "расширять поведение через полиморфизм/новый тип (OCP), не модифицируя существующий type-dispatch"
+	case "structural-clone":
+		return "вынести дублирующийся код в общую функцию/тип (DRY)"
+	case "srp-lack-of-cohesion", "srp-multiple-responsibilities", "srp-too-many-methods", "srp-too-many-fields":
+		return "разделить ответственности (SRP): выделить независимые обязанности в отдельные типы/функции"
+	case "god-class":
+		return "разбить god-class на меньшие типы по ответственностям; вынести группы методов/полей"
+	case "hub-node":
+		return "снизить центральность hub: разорвать часть связей через посредники/интерфейсы или разбить узел"
+	case "high-efferent-coupling":
+		return "сократить исходящие зависимости: сгруппировать через фасад/интерфейс, убрать лишние импорты"
+	case "shotgun-surgery":
+		return "собрать рассеянную логику в один модуль, чтобы изменение не затрагивало много файлов"
+	case "articulation-point", "bridge-edge", "stability-violation":
+		return "сигнал структурной хрупкости (диагностика): рассмотреть дублирование пути/снижение зависимости в узком месте"
+	default:
+		return ""
 	}
 }
 

@@ -219,6 +219,11 @@ type Violation struct {
 	// Principle — арх-принцип, к которому относится Kind (SOLID/layering/...), для
 	// объяснимости-почему агенту. Display-поле, дешёвый mapping по Kind.
 	Principle string `json:"principle,omitempty"`
+	// Remediation — actionable НАПРАВЛЕНИЕ «как устранить» per Kind (DX-слой
+	// объяснимости для агента). ★GUIDANCE, НЕ доказательство и НЕ гарантия — не
+	// метрика. Для HumanInLoop-нарушений (dead-code) содержит оговорку «подтвердить
+	// с человеком». Display-поле, НЕ в Fingerprint (как Principle/Severity/Location).
+	Remediation string `json:"remediation,omitempty"`
 }
 
 // CallGraphNode represents a node in the call graph result.
