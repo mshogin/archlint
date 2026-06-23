@@ -202,6 +202,23 @@ type Violation struct {
 	// IsNew — нарушение ВВЕДЕНО рабочим деревом vs --diff ref (тот же canonical Fingerprint, что
 	// baseline-ERROR-гейт; расширение дельты на ВСЕ severity). Только в --diff режиме (omitempty).
 	IsNew bool `json:"is_new,omitempty"`
+	// Severity — заявленный класс важности (ERROR|WARNING|INFO) из единого реестра
+	// severity_class (SSOT C1; резолв по Kind при выводе, как Location по Target).
+	// Display-поле, НЕ участвует в Fingerprint/Anchor. Для агентского гейта: ERROR
+	// блокирует, WARNING/INFO — сигнал. "" если Kind не зарегистрирован.
+	Severity string `json:"severity,omitempty"`
+	// OpenWorld — условно-соундная метрика: ERROR валиден ТОЛЬКО в дельта-режиме
+	// (новое vs baseline), не абсолютным числом (напр. dead-code зависит от полноты R).
+	OpenWorld bool `json:"open_world,omitempty"`
+	// RequiresDelta — боевая блокировка требует дельта-режима; вне дельты — аудит,
+	// не блок (агенту понять, почему ERROR-kind сейчас не блокирующий).
+	RequiresDelta bool `json:"requires_delta,omitempty"`
+	// HumanInLoop — агент НЕ авто-чинит вслепую, эскалирует человеку (destruction-cost,
+	// напр. dead-code: ложно-мёртвый удалит живой код).
+	HumanInLoop bool `json:"human_in_loop,omitempty"`
+	// Principle — арх-принцип, к которому относится Kind (SOLID/layering/...), для
+	// объяснимости-почему агенту. Display-поле, дешёвый mapping по Kind.
+	Principle string `json:"principle,omitempty"`
 }
 
 // CallGraphNode represents a node in the call graph result.

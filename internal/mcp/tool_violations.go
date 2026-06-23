@@ -86,11 +86,17 @@ func handleCheckViolations(state StateReader, args json.RawMessage) (*ViolationR
 			})
 		}
 
+		// Объяснимость агентского гейта: severity-класс + флаги соундности из SSOT.
+		ApplySeverity(report.Violations)
+
 		return report, nil
 	}
 
 	// Check all packages.
 	report.Violations = DetectAllViolations(graph)
+
+	// Объяснимость агентского гейта: severity-класс + флаги соундности из SSOT.
+	ApplySeverity(report.Violations)
 
 	return report, nil
 }

@@ -285,6 +285,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// строку вручную. Display-обогащение, не трогает Fingerprint.
 	mcp.ApplyLocations(a, violations)
 
+	// severity-класс + флаги соундности (ERROR/WARNING/INFO, HumanInLoop, ...) из
+	// SSOT severity_class — объяснимость гейта агенту. Display, не трогает Fingerprint.
+	mcp.ApplySeverity(violations)
+
 	// --diff self-аудит: пометить НОВЫЕ нарушения (введены рабочим деревом vs git <ref>) для ВСЕХ
 	// severity. Снимает ручную операцию stash+собрать-старый-бинарь+diff-JSON -> одна команда.
 	if scanDiff != "" && a != nil && baselineDir != "" {

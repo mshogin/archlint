@@ -96,6 +96,9 @@ func handleAnalyzeChange(state StateReader, args json.RawMessage) (*ChangeAnalys
 
 	result.Violations = DetectViolationsForPackage(graph, pkg)
 
+	// Объяснимость агентского гейта: severity-класс + флаги соундности из SSOT.
+	ApplySeverity(result.Violations)
+
 	// Include degradation report.
 	result.Degradation = state.GetDegradationDetector().CheckWithoutUpdate(absPath, a, graph)
 
