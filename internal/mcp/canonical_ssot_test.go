@@ -30,7 +30,7 @@ func collectErrorClass(t *testing.T, dir string) []Violation {
 
 	var vs []Violation
 	vs = append(vs, DetectAllViolations(g)...)
-	vs = append(vs, DeadCode(g, nil)...)
+	vs = append(vs, DeadCode(g, nil, nil)...)
 	vs = append(vs, ComputeISPUsageSubset(g, a)...)
 
 	return vs

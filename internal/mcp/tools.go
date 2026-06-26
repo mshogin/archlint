@@ -224,6 +224,11 @@ type Violation struct {
 	// метрика. Для HumanInLoop-нарушений (dead-code) содержит оговорку «подтвердить
 	// с человеком». Display-поле, НЕ в Fingerprint (как Principle/Severity/Location).
 	Remediation string `json:"remediation,omitempty"`
+	// Module — путь модуля monorepo (относительно корня скана), к которому относится
+	// нарушение. Заполняется ТОЛЬКО в multi-module-агрегате (top-level details собирает
+	// modules[].details — агент на monorepo видит нарушение И его модуль). Single-module ->
+	// "" (omitempty). Display-поле, НЕ в Fingerprint (per-module baseline по своему scanRoot).
+	Module string `json:"module,omitempty"`
 }
 
 // CallGraphNode represents a node in the call graph result.

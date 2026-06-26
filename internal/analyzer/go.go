@@ -88,7 +88,11 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 
 		if info.IsDir() {
 			name := info.Name()
-			if name == "vendor" || name == "node_modules" || name == ".git" || name == "bin" {
+			// testdata — Go-конвенция: `go` tooling его игнорирует (фикстуры, не prod-код).
+			// archlint тоже не анализирует testdata из РОДИТЕЛЬСКОГО скана, чтобы тест-фикстуры
+			// (намеренно «мёртвый»/некорректный код) не засоряли self-audit/дельта-гейт. Прямой
+			// Analyze самой testdata-папки работает (skip по имени subdir, не корня walk).
+			if name == "vendor" || name == "node_modules" || name == ".git" || name == "bin" || name == "testdata" {
 				return filepath.SkipDir
 			}
 			if MatchesExclude(name, a.excludeDirs) {

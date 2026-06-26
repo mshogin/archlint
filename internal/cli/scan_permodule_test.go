@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mshogin/archlint/internal/archlintcfg"
+	"github.com/mshogin/archlint/internal/mcp"
 )
 
 // makeMonorepo строит синтетический monorepo: svc-a с structural-clone (T.CloneA/CloneB,
@@ -172,5 +173,51 @@ func TestPerModule_AggregateWorst(t *testing.T) {
 	// большой threshold: оба проходят (нет ERROR-blocking, count под порогом).
 	if !gate("svc-a", 100000) || !gate("svc-b", 100000) {
 		t.Errorf("под threshold=100000 оба модуля должны passed")
+	}
+}
+
+// TestPerModule_ViolationsCarrySeverity — Применимость (multi-module): per-module нарушения
+// ДОЛЖНЫ нести severity (объяснимость). До фикса collectGoModuleViolations возвращал
+// collectFromGraph БЕЗ ApplySeverity -> modules[].details приходили с severity="" ->
+// агент на monorepo не получал объяснимый вердикт.
+func TestPerModule_ViolationsCarrySeverity(t *testing.T) {
+	root := makeMonorepo(t)
+	cfg := archlintcfg.Default()
+
+	svcA := filepath.Join(root, "svc-a")
+	vs, err := collectGoModuleViolations(svcA, nil, &cfg, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(vs) == 0 {
+		t.Fatal("svc-a (с клоном) должен дать нарушения")
+	}
+	withSeverity := 0
+	for _, v := range vs {
+		if v.Severity != "" {
+			withSeverity++
+		}
+	}
+	if withSeverity == 0 {
+		t.Errorf("ни одно per-module нарушение не несёт severity (ApplySeverity не применён); %d нарушений", len(vs))
+	}
+}
+
+// TestAggregateModuleDetails — multi-module delivery: top-level details СОБИРАЕТ modules[].details
+// (каждое с .Module). Агент, читающий top-level `details`, на monorepo должен видеть ВСЕ
+// нарушения (не пусто при violations>0) с указанием модуля.
+func TestAggregateModuleDetails(t *testing.T) {
+	results := []moduleScanResult{
+		{Module: "svc-a", Details: []mcp.Violation{{Kind: "dead-code", Module: "svc-a"}}},
+		{Module: "svc-b", Details: []mcp.Violation{{Kind: "god-class", Module: "svc-b"}, {Kind: "hub-node", Module: "svc-b"}}},
+	}
+	agg := aggregateModuleDetails(results)
+	if len(agg) != 3 {
+		t.Fatalf("агрегат = 3 нарушения (1+2), got %d", len(agg))
+	}
+	for _, v := range agg {
+		if v.Module == "" {
+			t.Errorf("нарушение %s без .Module в агрегате (агент не узнает модуль)", v.Kind)
+		}
 	}
 }

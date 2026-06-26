@@ -619,7 +619,15 @@ func collectGoModuleViolations(moduleDir string, excludes []string, cfg *archlin
 		return nil, err
 	}
 
-	return collectFromGraph(g, a, cfg, baseline), nil
+	violations := collectFromGraph(g, a, cfg, baseline)
+	// Объяснимость per-module — СИММЕТРИЯ с single-module runScan (симметрия объяснимости multi-module):
+	// без этого modules[].details приходили БЕЗ file:line/severity/remediation -> агент на
+	// monorepo получал нарушения без объяснимого вердикта. Применяем тот же обогащающий
+	// проход (display-поля, Fingerprint не трогают).
+	mcp.ApplyLocations(a, violations)
+	mcp.ApplySeverity(violations)
+
+	return violations, nil
 }
 
 // markDiffNew помечает IsNew нарушения, ВВЕДЁННЫЕ рабочим деревом vs git <ref>. ref-состояние
@@ -728,6 +736,11 @@ func runScanPerModule(codeDir string, mods []string, excludes []string, cfg *arc
 
 		blocking, _, passed := gateViolations(violations, cfg, baseline, threshold)
 
+		// Аннотируем нарушение его модулем -> top-level details (агрегат) несёт «из какого модуля».
+		for i := range violations {
+			violations[i].Module = rel
+		}
+
 		categories := make(map[string]int)
 		for _, v := range violations {
 			categories[v.Kind]++
@@ -764,6 +777,23 @@ func runScanPerModule(codeDir string, mods []string, excludes []string, cfg *arc
 	return nil
 }
 
+// aggregateModuleDetails собирает top-level details из modules[].details (каждое нарушение уже
+// несёт .Module). multi-module delivery: без агрегата top-level `details` был пуст при violations>0 на monorepo
+// -> агент не получал severity/remediation. modules[] сохраняется отдельно для per-module разбивки.
+func aggregateModuleDetails(results []moduleScanResult) []mcp.Violation {
+	total := 0
+	for _, r := range results {
+		total += len(r.Details)
+	}
+
+	out := make([]mcp.Violation, 0, total)
+	for _, r := range results {
+		out = append(out, r.Details...)
+	}
+
+	return out
+}
+
 // printPerModule печатает агрегат monorepo: JSON (modules[] + верхнеуровневая сумма/AND) либо текст
 // (секция на модуль с префиксом + сводка). Верхнеуровневые categories — сумма по kind (health их
 // потребляет по kind без изменений). Module-префикс отделяет нарушения разных модулей в выводе.
@@ -771,11 +801,15 @@ func printPerModule(results []moduleScanResult, aggCategories map[string]int, in
 	switch scanFormat {
 	case "json":
 		result := scanGateResult{
-			Passed:      allPassed,
-			Violations:  totalViolations,
-			Threshold:   threshold,
-			Blocking:    totalBlocking,
-			Categories:  aggCategories,
+			Passed:     allPassed,
+			Violations: totalViolations,
+			Threshold:  threshold,
+			Blocking:   totalBlocking,
+			Categories: aggCategories,
+			// top-level details АГРЕГИРУЕТ modules[].details (каждое с .Module) — multi-module delivery:
+			// агент, читающий top-level `details`, на monorepo получал ПУСТО при violations>0
+			// (нарушения сидели лишь в modules[].details) -> severity/remediation не доставлялись.
+			Details:     aggregateModuleDetails(results),
 			ConfigFile:  configFile,
 			MultiModule: info,
 			Modules:     results,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/model"
 )
 
@@ -23,8 +24,21 @@ import (
 // свежий self-прогон 2026-06-15 -> 0 находок (5 реальных мёртвых вычищены). Защита от
 // false-dead (destruction) — три over-approx (references / implements-dispatch / exported-entry),
 // доказаны юнит-тестами (TestDeadCode_ImplementsDispatch и др.). Разметка: golden id:dead-code.
-func DeadCode(g *model.Graph, configPatterns []string) []Violation {
+func DeadCode(g *model.Graph, a *analyzer.GoAnalyzer, configPatterns []string) []Violation {
 	r := EntryPoints(g, configPatterns)
+
+	// fileOf: символ -> файл объявления. Граф файл НЕ несёт -> источник = analyzer.
+	// Нужно для границы prod/_test.go (см. ниже). a==nil (TS/Rust/stdin-граф) -> пусто
+	// -> фильтр test-символов не активен (там и нет function|method-узлов).
+	fileOf := make(map[string]string)
+	if a != nil {
+		for id, f := range a.AllFunctions() {
+			fileOf[id] = f.File
+		}
+		for id, m := range a.AllMethods() {
+			fileOf[id] = m.File
+		}
+	}
 
 	kind := make(map[string]string)
 	for _, n := range g.Nodes {
@@ -79,6 +93,15 @@ func DeadCode(g *model.Graph, configPatterns []string) []Violation {
 	var out []Violation
 	for _, n := range g.Nodes {
 		if (n.Entity == "function" || n.Entity == "method") && !reached[n.ID] {
+			// Символ, ОБЪЯВЛЕННЫЙ в _test.go, — тестовая инфраструктура: его область
+			// достижимости = тестовые entry-points, а НЕ prod-R. Недостижимость из prod-R
+			// для него ОЖИДАЕМА и НЕ дефект. Помечать его ERROR = ложное срабатывание на
+			// легитимном тест-символе -> подрыв соундности (fire => defect). Пропускаем.
+			// (типичный кейс: тест-хелпер, объявленный и вызванный только внутри _test.go,
+			// был ложным ERROR «unreachable from R».) a==nil -> fileOf пуст -> не активно.
+			if decl, ok := fileOf[n.ID]; ok && isTestFile(decl) {
+				continue
+			}
 			out = append(out, Violation{
 				Kind:    "dead-code",
 				Message: fmt.Sprintf("dead code: %s is unreachable from entry points R", n.ID),

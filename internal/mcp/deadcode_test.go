@@ -3,8 +3,20 @@ package mcp
 import (
 	"testing"
 
+	"github.com/mshogin/archlint/internal/analyzer"
 	"github.com/mshogin/archlint/internal/model"
 )
+
+// deadTargets — список Target всех dead-code находок (для сообщений об ошибке).
+func deadTargets(vs []Violation) []string {
+	var out []string
+	for _, v := range vs {
+		if v.Kind == "dead-code" {
+			out = append(out, v.Target)
+		}
+	}
+	return out
+}
 
 func deadGraph(nodes []model.Node, edges []model.Edge) *model.Graph {
 	return &model.Graph{Nodes: nodes, Edges: edges}
@@ -30,7 +42,7 @@ func TestDeadCode_CallsReachAndOrphan(t *testing.T) {
 		},
 		[]model.Edge{{From: "p.main", To: "p.used", Type: model.EdgeCalls}},
 	)
-	vs := DeadCode(g, nil)
+	vs := DeadCode(g, nil, nil)
 	if !isDead(vs, "p.orphan") {
 		t.Fatalf("orphan должна быть мёртвой; %v", vs)
 	}
@@ -48,7 +60,7 @@ func TestDeadCode_ReferenceKeepsAlive(t *testing.T) {
 		[]model.Node{fn("p.main", "main"), fn("p.cb", "cb")}, // cb unexported, только referenced
 		[]model.Edge{{From: "p.main", To: "p.cb", Type: model.EdgeReferences}},
 	)
-	if isDead(DeadCode(g, nil), "p.cb") {
+	if isDead(DeadCode(g, nil, nil), "p.cb") {
 		t.Fatal("callback cb достижим через references -> НЕ мёртвый (иначе destruction)")
 	}
 }
@@ -74,7 +86,7 @@ func TestDeadCode_ImplementsDispatch(t *testing.T) {
 			{From: "p.impl", To: "p.impl.do", Type: model.EdgeContains},
 		},
 	)
-	vs := DeadCode(g, nil)
+	vs := DeadCode(g, nil, nil)
 	if isDead(vs, "p.impl.do") {
 		t.Fatalf("impl.do достижима через implements-dispatch (i.do()) -> живая; %v", vs)
 	}
@@ -93,7 +105,7 @@ func TestDeadCode_TestOnlyReachable(t *testing.T) {
 		},
 		[]model.Edge{{From: "p.TestHelper", To: "p.helper", Type: model.EdgeCalls}},
 	)
-	if isDead(DeadCode(g, nil), "p.helper") {
+	if isDead(DeadCode(g, nil, nil), "p.helper") {
 		t.Fatal("helper вызван из Test* -> живой (test-reachability), не удаляем")
 	}
 }
@@ -104,7 +116,56 @@ func TestDeadCode_ExportedIsEntry(t *testing.T) {
 		[]model.Node{fn("p.PublicAPI", "PublicAPI")},
 		nil,
 	)
-	if isDead(DeadCode(g, nil), "p.PublicAPI") {
+	if isDead(DeadCode(g, nil, nil), "p.PublicAPI") {
 		t.Fatal("exported PublicAPI = entry R -> живая")
 	}
+}
+
+// TestDeadCode_SkipsTestDeclaredSymbols — символ, ОБЪЯВЛЕННЫЙ в _test.go, НЕ должен
+// помечаться dead-code — его область достижимости = тестовые entry-points, не prod-R.
+// Fixture: deadProd (реальный prod-мёртвый) + usedTestHelper/unusedTestHelper (объявлены
+// в _test.go). Инвариант: prod-detection ЦЕЛ (deadProd ловится), тест-символы НЕ метятся.
+// До фикса unusedTestHelper был ложный dead-code ERROR (тест-хелпер unreachable из prod-R).
+func TestDeadCode_SkipsTestDeclaredSymbols(t *testing.T) {
+	a := analyzer.NewGoAnalyzer()
+	g, err := a.Analyze("testdata/deadcode_testdecl")
+	if err != nil {
+		t.Fatalf("analyze fixture: %v", err)
+	}
+	vs := DeadCode(g, a, nil)
+	// Реальный prod dead-code ОСТАЁТСЯ (нет over-suppression от фикса).
+	if !isDead(vs, "sample.deadProd") {
+		t.Errorf("deadProd (реальный prod-мёртвый) должен ловиться; findings=%v", deadTargets(vs))
+	}
+	// Символы, объявленные в _test.go, НЕ метятся (фикс границы prod/_test).
+	for _, sym := range []string{"sample.usedTestHelper", "sample.unusedTestHelper"} {
+		if isDead(vs, sym) {
+			t.Errorf("%s объявлен в _test.go -> НЕ должен быть dead-code (ложный ERROR); findings=%v", sym, deadTargets(vs))
+		}
+	}
+}
+
+// TestDeadCode_SelfCrucible_TestBoundary — ★SELF-CRUCIBLE (страж соундности B):
+// на archlint-self НИ ОДНА dead-code находка не объявлена в _test.go (инвариант
+// границы prod/_test). Если страж падает — dead-code снова ложно метит тест-инфру.
+func TestDeadCode_SelfCrucible_TestBoundary(t *testing.T) {
+	a := analyzer.NewGoAnalyzer()
+	g, err := a.Analyze("../..")
+	if err != nil {
+		t.Skipf("self-analyze: %v", err)
+	}
+	fileOf := make(map[string]string)
+	for id, f := range a.AllFunctions() {
+		fileOf[id] = f.File
+	}
+	for id, m := range a.AllMethods() {
+		fileOf[id] = m.File
+	}
+	vs := DeadCode(g, a, nil)
+	for _, v := range vs {
+		if isTestFile(fileOf[v.Target]) {
+			t.Errorf("SELF-FIRE: dead-code на _test.go-символе %s (%s) — ложный, нарушает границу prod/_test", v.Target, fileOf[v.Target])
+		}
+	}
+	t.Logf("SELF-CRUCIBLE B: %d dead-code на archlint-self, 0 из них test-declared", len(vs))
 }
