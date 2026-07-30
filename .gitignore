@@ -55,3 +55,11 @@ __pycache__/
 
 # Артефакты прогонов (гуляют между машинами, не трекать)
 scan-results/
+
+# Локальный бинарь-артефакт (не трекать)
+nightly-report
+
+# PO-черновики планов (НЕ применено, держим только локально)
+docs/deprecated-archive-draft-C.md
+docs/deprecated-museum-draft-A.md
+docs/agent-gate-integration.md
