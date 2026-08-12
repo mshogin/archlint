@@ -33,12 +33,12 @@ func toolDefinitions() []ToolDefinition {
 		},
 		{
 			Name:        "analyze_change",
-			Description: "Analyze the architectural impact of a file change: affected nodes, related edges, impact level, degradation report",
+			Description: "Analyze the architectural impact of a file change: affected nodes, related edges, impact level, degradation report. Pass diff to narrow the blast radius to the declarations that actually changed",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
 					"path": {"type": "string", "description": "File path that changed"},
-					"diff": {"type": "string", "description": "Optional diff content (unused, analysis is AST-based)"}
+					"diff": {"type": "string", "description": "Optional unified diff. If given, affected nodes are narrowed to declarations actually touched by the changed lines; otherwise the whole file is treated as affected"}
 				},
 				"required": ["path"]
 			}`),
@@ -76,12 +76,13 @@ func toolDefinitions() []ToolDefinition {
 		},
 		{
 			Name:        "get_callgraph",
-			Description: "Get call graph from a function or method entry point",
+			Description: "Get call graph from a function or method entry point. direction=callees (default) answers what it calls; direction=callers answers who calls it (blast radius of a change)",
 			InputSchema: json.RawMessage(`{
 				"type": "object",
 				"properties": {
 					"entry": {"type": "string", "description": "Entry point function/method ID (e.g. 'internal/service.OrderService.ProcessOrder')"},
-					"max_depth": {"type": "number", "description": "Maximum depth to traverse (default: 10)"}
+					"max_depth": {"type": "number", "description": "Maximum depth to traverse (default: 10)"},
+					"direction": {"type": "string", "enum": ["callees", "callers"], "description": "callees (default): who this entry calls; callers: who calls this entry"}
 				},
 				"required": ["entry"]
 			}`),
@@ -169,7 +170,13 @@ type DependencySummary struct {
 
 // ChangeAnalysis is the result of analyzing a file change.
 type ChangeAnalysis struct {
-	FilePath      string              `json:"filePath"`
+	FilePath string `json:"filePath"`
+	// Scope говорит, от чего считался радиус: scopeDecls - от объявлений, в
+	// которые попали строки диффа, scopeFile - от файла целиком (диффа не
+	// передали либо правка вне объявлений). Без этого поля «затронуто 12
+	// узлов» невозможно трактовать.
+	Scope         string              `json:"scope"`
+	ChangedLines  int                 `json:"changedLines,omitempty"`
 	AffectedNodes []string            `json:"affectedNodes"`
 	RelatedEdges  []DependencySummary `json:"relatedEdges,omitempty"`
 	Impact        string              `json:"impact"`
@@ -233,17 +240,20 @@ type Violation struct {
 
 // CallGraphNode represents a node in the call graph result.
 type CallGraphNode struct {
-	ID      string   `json:"id"`
-	Name    string   `json:"name"`
-	Depth   int      `json:"depth"`
-	CallsTo []string `json:"callsTo,omitempty"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Depth int    `json:"depth"`
+	// CallsTo заполняется при direction=callees, CalledBy - при callers.
+	CallsTo  []string `json:"callsTo,omitempty"`
+	CalledBy []string `json:"calledBy,omitempty"`
 }
 
 // CallGraphResult is the result of a call graph query.
 type CallGraphResult struct {
-	Entry    string          `json:"entry"`
-	MaxDepth int             `json:"maxDepth"`
-	Nodes    []CallGraphNode `json:"nodes"`
+	Entry     string          `json:"entry"`
+	MaxDepth  int             `json:"maxDepth"`
+	Direction string          `json:"direction"`
+	Nodes     []CallGraphNode `json:"nodes"`
 }
 
 // ViolationReport is the result of check_violations with rich metrics.

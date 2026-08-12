@@ -35,24 +35,43 @@ func handleAnalyzeChange(state StateReader, args json.RawMessage) (*ChangeAnalys
 
 	result := &ChangeAnalysis{
 		FilePath: absPath,
+		Scope:    scopeFile,
 	}
 
 	// Find all nodes defined in this file.
+	var decls []decl
+
 	for typeID, typeInfo := range a.AllTypes() {
 		if matchesFile(typeInfo.File, absPath) {
 			result.AffectedNodes = append(result.AffectedNodes, typeID)
+			decls = append(decls, decl{id: typeID, line: typeInfo.Line})
 		}
 	}
 
 	for funcID, funcInfo := range a.AllFunctions() {
 		if matchesFile(funcInfo.File, absPath) {
 			result.AffectedNodes = append(result.AffectedNodes, funcID)
+			decls = append(decls, decl{id: funcID, line: funcInfo.Line})
 		}
 	}
 
 	for methodID, methodInfo := range a.AllMethods() {
 		if matchesFile(methodInfo.File, absPath) {
 			result.AffectedNodes = append(result.AffectedNodes, methodID)
+			decls = append(decls, decl{id: methodID, line: methodInfo.Line})
+		}
+	}
+
+	// Дифф передан - сужаем «затронутое» до объявлений, в которые реально
+	// попали изменённые строки. Если сузить не вышло (правка выше первого
+	// объявления: импорты, package-level переменные), остаёмся на файле
+	// целиком: такая правка architecturally значима, терять её нельзя.
+	if changed := changedLines(params.Diff, absPath); len(changed) > 0 {
+		result.ChangedLines = len(changed)
+
+		if touched := declsTouched(decls, changed); len(touched) > 0 {
+			result.AffectedNodes = touched
+			result.Scope = scopeDecls
 		}
 	}
 
