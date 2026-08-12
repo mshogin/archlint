@@ -82,7 +82,7 @@ func toolDefinitions() []ToolDefinition {
 				"properties": {
 					"entry": {"type": "string", "description": "Entry point function/method ID (e.g. 'internal/service.OrderService.ProcessOrder')"},
 					"max_depth": {"type": "number", "description": "Maximum depth to traverse (default: 10)"},
-					"direction": {"type": "string", "enum": ["callees", "callers"], "description": "callees (default): who this entry calls; callers: who calls this entry"}
+					"direction": {"type": "string", "enum": ["callees", "callers"], "description": "callees (default): who this entry calls; callers: who calls this entry. In callers mode the entry node also gets referencedBy - approximate name-based links that cover interface dispatch and method values"}
 				},
 				"required": ["entry"]
 			}`),
@@ -246,6 +246,11 @@ type CallGraphNode struct {
 	// CallsTo заполняется при direction=callees, CalledBy - при callers.
 	CallsTo  []string `json:"callsTo,omitempty"`
 	CalledBy []string `json:"calledBy,omitempty"`
+	// ReferencedBy - ПРИБЛИЗИТЕЛЬНЫЕ связи по имени (references-рёбра): сюда
+	// попадают вызов через интерфейс и передача метода как значения, но также
+	// однофамильцы. Заполняется только для точки входа при direction=callers.
+	// Точность ниже, чем у CalledBy, - потребитель обязан это различать.
+	ReferencedBy []string `json:"referencedBy,omitempty"`
 }
 
 // CallGraphResult is the result of a call graph query.

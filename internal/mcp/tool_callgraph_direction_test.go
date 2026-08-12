@@ -165,3 +165,78 @@ func TestGetCallgraph_RejectsUnknownDirection(t *testing.T) {
 		t.Fatal("неизвестное direction должно быть ошибкой")
 	}
 }
+
+// Вызов через интерфейс: анализатор разрешает его в конкретный метод, но
+// РЕБРОМ references (по имени), а не calls. По одним calls такой метод
+// выглядит никем не вызываемым — ровно та слепая зона, из-за которой карточка
+// влияния занижала радиус для контроллеров и клиентов.
+func TestGetCallgraph_InterfaceDispatchInReferencedBy(t *testing.T) {
+	tmpDir := t.TempDir()
+	src := `package main
+
+type Fetcher interface {
+	Fetch(id int) string
+}
+
+type httpFetcher struct{}
+
+func (h *httpFetcher) Fetch(id int) string {
+	return "x"
+}
+
+func useIface(f Fetcher) string {
+	return f.Fetch(1)
+}
+
+func main() {
+	println(useIface(&httpFetcher{}))
+}
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	server := createInitializedServer(t, tmpDir)
+
+	var implID, callerID string
+
+	for _, n := range server.state.GetGraph().Nodes {
+		switch {
+		case n.Entity == "method" && n.Title == "Fetch":
+			implID = n.ID
+		case n.Entity == "function" && n.Title == "useIface":
+			callerID = n.ID
+		}
+	}
+
+	if implID == "" || callerID == "" {
+		t.Fatalf("не нашёл узлы: impl=%q caller=%q", implID, callerID)
+	}
+
+	res := callgraph(t, server, implID, callgraphCallers)
+
+	var node *CallGraphNode
+
+	for i := range res.Nodes {
+		if res.Nodes[i].ID == implID {
+			node = &res.Nodes[i]
+
+			break
+		}
+	}
+
+	if node == nil {
+		t.Fatal("в ответе нет узла реализации")
+	}
+
+	if !containsID(node.ReferencedBy, callerID) {
+		t.Fatalf("вызов через интерфейс потерян: referencedBy=%v", node.ReferencedBy)
+	}
+
+	// Точность полей не должна смешиваться: приблизительная связь не имеет
+	// права выглядеть как прямой вызов.
+	if containsID(node.CalledBy, callerID) {
+		t.Fatalf("приблизительная связь попала в calledBy: %v", node.CalledBy)
+	}
+}

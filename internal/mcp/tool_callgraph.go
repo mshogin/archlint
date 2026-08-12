@@ -3,6 +3,8 @@ package mcp
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/mshogin/archlint/internal/model"
 )
 
 // Направления обхода графа вызовов.
@@ -51,17 +53,31 @@ func handleGetCallgraph(state StateReader, args json.RawMessage) (*CallGraphResu
 	// Смежность строится по направлению обхода: для callers ребро A calls B
 	// читается как «B вызывается из A».
 	adj := make(map[string][]string)
+	refAdj := make(map[string][]string)
 	nodeNames := make(map[string]string)
 
 	for _, edge := range graph.Edges {
-		if edge.Type != "calls" {
-			continue
-		}
-
-		if params.Direction == callgraphCallers {
-			adj[edge.To] = append(adj[edge.To], edge.From)
-		} else {
-			adj[edge.From] = append(adj[edge.From], edge.To)
+		switch edge.Type {
+		case "calls":
+			if params.Direction == callgraphCallers {
+				adj[edge.To] = append(adj[edge.To], edge.From)
+			} else {
+				adj[edge.From] = append(adj[edge.From], edge.To)
+			}
+		case model.EdgeReferences:
+			// references строятся ПО ИМЕНИ (over-approximation, см.
+			// buildReferenceEdges): символ с именем N даёт ребро на все
+			// функции и методы с таким именем, без вывода типов.
+			//
+			// Складывать их с calls нельзя - список «вызывающих» перестанет
+			// быть проверяемым фактом. Но и терять нельзя: вызов через
+			// интерфейс и регистрация метода обработчиком маршрута попадают
+			// именно сюда, а по calls такой метод выглядит никем не
+			// вызываемым. Поэтому отдаём отдельным полем и не обходим их в
+			// BFS: обход по именам мгновенно вырождается в весь граф.
+			if params.Direction == callgraphCallers {
+				refAdj[edge.To] = append(refAdj[edge.To], edge.From)
+			}
 		}
 	}
 
@@ -117,6 +133,11 @@ func handleGetCallgraph(state StateReader, args json.RawMessage) (*CallGraphResu
 		// неверно и в отчёте, и моделью.
 		if params.Direction == callgraphCallers {
 			node.CalledBy = neighbours
+			// Приблизительные связи только для самой точки входа: вглубь они
+			// не обходятся и в отчёте нужны там, где задан вопрос.
+			if item.depth == 0 {
+				node.ReferencedBy = refAdj[item.id]
+			}
 		} else {
 			node.CallsTo = neighbours
 		}
