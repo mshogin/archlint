@@ -50,6 +50,31 @@ func handleGetCallgraph(state StateReader, args json.RawMessage) (*CallGraphResu
 
 	graph := state.GetGraph()
 
+	// Владелец узла и связи типов нужны, чтобы отделить настоящий диспетч
+	// через интерфейс от совпадения имён.
+	owner := make(map[string]string)              // метод -> его тип
+	usesTypes := make(map[string]map[string]bool) // узел -> типы, которые он использует
+	ifacesOf := make(map[string]map[string]bool)  // тип -> интерфейсы, которые он реализует
+
+	for _, edge := range graph.Edges {
+		switch edge.Type {
+		case model.EdgeContains:
+			owner[edge.To] = edge.From
+		case model.EdgeUses:
+			if usesTypes[edge.From] == nil {
+				usesTypes[edge.From] = map[string]bool{}
+			}
+
+			usesTypes[edge.From][edge.To] = true
+		case model.EdgeImplements:
+			if ifacesOf[edge.From] == nil {
+				ifacesOf[edge.From] = map[string]bool{}
+			}
+
+			ifacesOf[edge.From][edge.To] = true
+		}
+	}
+
 	// Смежность строится по направлению обхода: для callers ребро A calls B
 	// читается как «B вызывается из A».
 	adj := make(map[string][]string)
@@ -136,7 +161,8 @@ func handleGetCallgraph(state StateReader, args json.RawMessage) (*CallGraphResu
 			// Приблизительные связи только для самой точки входа: вглубь они
 			// не обходятся и в отчёте нужны там, где задан вопрос.
 			if item.depth == 0 {
-				node.ReferencedBy = refAdj[item.id]
+				node.DispatchedBy, node.ReferencedBy =
+					splitRefs(item.id, refAdj[item.id], owner, usesTypes, ifacesOf)
 			}
 		} else {
 			node.CallsTo = neighbours
@@ -146,4 +172,60 @@ func handleGetCallgraph(state StateReader, args json.RawMessage) (*CallGraphResu
 	}
 
 	return result, nil
+}
+
+// splitRefs делит приблизительные связи на правдоподобный диспетч и шум.
+//
+// Резолв по имени даёт ребро на КАЖДЫЙ метод с таким именем, поэтому у
+// распространённых имён (Get, Create) список наполовину состоит из чужих
+// типов. Отличить настоящий вызов через интерфейс от однофамильца можно по
+// уже имеющимся рёбрам: связь правдоподобна, если вызывающий (или тип, в
+// котором он объявлен) ИСПОЛЬЗУЕТ либо сам тип-владелец цели, либо интерфейс,
+// который этот тип реализует. Именно так выглядит внедрение зависимости:
+// Logic хранит поле типа HRClient, httpHR реализует HRClient.
+//
+// Заметим, что при нескольких реализациях одного интерфейса правдоподобными
+// окажутся все - и это ВЕРНО: какая именно реализация подставлена, без
+// анализа потока значений неизвестно, а ревьюеру важно увидеть их все.
+//
+// Оставшееся не выбрасывается, а возвращается вторым списком: молча выкинутая
+// связь вернула бы слепую зону, ради устранения которой всё и делалось.
+func splitRefs(target string, refs []string,
+	owner map[string]string,
+	usesTypes map[string]map[string]bool,
+	ifacesOf map[string]map[string]bool,
+) (dispatched, weak []string) {
+	targetType := owner[target]
+
+	// Множество типов, использование которых делает связь правдоподобной.
+	plausible := map[string]bool{}
+	if targetType != "" {
+		plausible[targetType] = true
+
+		for iface := range ifacesOf[targetType] {
+			plausible[iface] = true
+		}
+	}
+
+	for _, ref := range refs {
+		if usesAny(usesTypes[ref], plausible) || usesAny(usesTypes[owner[ref]], plausible) {
+			dispatched = append(dispatched, ref)
+
+			continue
+		}
+
+		weak = append(weak, ref)
+	}
+
+	return dispatched, weak
+}
+
+func usesAny(used, wanted map[string]bool) bool {
+	for t := range used {
+		if wanted[t] {
+			return true
+		}
+	}
+
+	return false
 }

@@ -246,10 +246,15 @@ type CallGraphNode struct {
 	// CallsTo заполняется при direction=callees, CalledBy - при callers.
 	CallsTo  []string `json:"callsTo,omitempty"`
 	CalledBy []string `json:"calledBy,omitempty"`
-	// ReferencedBy - ПРИБЛИЗИТЕЛЬНЫЕ связи по имени (references-рёбра): сюда
-	// попадают вызов через интерфейс и передача метода как значения, но также
-	// однофамильцы. Заполняется только для точки входа при direction=callers.
-	// Точность ниже, чем у CalledBy, - потребитель обязан это различать.
+	// DispatchedBy - вызов ЧЕРЕЗ ИНТЕРФЕЙС (или через сам тип-владелец):
+	// связь по имени, подтверждённая тем, что вызывающая сторона использует
+	// тип цели либо реализуемый им интерфейс. Точность заметно выше, чем у
+	// ReferencedBy, хотя при нескольких реализациях интерфейса сюда попадут
+	// все - какая подставлена, статически неизвестно.
+	DispatchedBy []string `json:"dispatchedBy,omitempty"`
+	// ReferencedBy - остаток: совпадения по имени, которые подтвердить не
+	// удалось (как правило однофамильцы из чужих типов). Заполняется только
+	// для точки входа при direction=callers.
 	ReferencedBy []string `json:"referencedBy,omitempty"`
 }
 

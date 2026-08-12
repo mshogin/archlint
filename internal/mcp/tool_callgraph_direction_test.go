@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -170,7 +171,7 @@ func TestGetCallgraph_RejectsUnknownDirection(t *testing.T) {
 // РЕБРОМ references (по имени), а не calls. По одним calls такой метод
 // выглядит никем не вызываемым — ровно та слепая зона, из-за которой карточка
 // влияния занижала радиус для контроллеров и клиентов.
-func TestGetCallgraph_InterfaceDispatchInReferencedBy(t *testing.T) {
+func TestGetCallgraph_InterfaceDispatchIsClassified(t *testing.T) {
 	tmpDir := t.TempDir()
 	src := `package main
 
@@ -230,13 +231,119 @@ func main() {
 		t.Fatal("в ответе нет узла реализации")
 	}
 
-	if !containsID(node.ReferencedBy, callerID) {
-		t.Fatalf("вызов через интерфейс потерян: referencedBy=%v", node.ReferencedBy)
+	// Вызывающий принимает Fetcher параметром, а httpFetcher его реализует —
+	// связь подтверждена графом, значит это диспетч, а не просто совпадение
+	// имени.
+	if !containsID(node.DispatchedBy, callerID) {
+		t.Fatalf("вызов через интерфейс не распознан: dispatchedBy=%v referencedBy=%v",
+			node.DispatchedBy, node.ReferencedBy)
 	}
 
-	// Точность полей не должна смешиваться: приблизительная связь не имеет
-	// права выглядеть как прямой вызов.
+	// Точность полей не должна смешиваться: диспетч не имеет права выглядеть
+	// как прямой вызов - в нём остаётся неопределённость реализации.
 	if containsID(node.CalledBy, callerID) {
-		t.Fatalf("приблизительная связь попала в calledBy: %v", node.CalledBy)
+		t.Fatalf("диспетч попал в calledBy: %v", node.CalledBy)
+	}
+}
+
+// Ключевая проверка: настоящий вызов через интерфейс отделяется от
+// однофамильца. Фикстура — типичное внедрение зависимости: Logic хранит поле
+// типа HRClient, httpHR его реализует, а Other.Get просто называется так же.
+func TestGetCallgraph_SeparatesDispatchFromNamesakes(t *testing.T) {
+	tmpDir := t.TempDir()
+	src := `package main
+
+type HRClient interface {
+	Get(id int) string
+}
+
+type httpHR struct{}
+
+func (h *httpHR) Get(id int) string { return "x" }
+
+type Logic struct {
+	hr HRClient
+}
+
+func (l *Logic) Fetch(id int) string {
+	return l.hr.Get(id)
+}
+
+type Unrelated struct{}
+
+func (u *Unrelated) Get(id int) string { return "no" }
+
+func main() {
+	l := &Logic{hr: &httpHR{}}
+	println(l.Fetch(1))
+}
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	server := createInitializedServer(t, tmpDir)
+
+	ids := map[string]string{}
+
+	for _, n := range server.state.GetGraph().Nodes {
+		ids[n.ID] = n.Entity
+	}
+
+	find := func(suffix string) string {
+		for id := range ids {
+			if strings.HasSuffix(id, suffix) {
+				return id
+			}
+		}
+
+		t.Fatalf("узел %q не найден", suffix)
+
+		return ""
+	}
+
+	implGet := find("httpHR.Get")
+	fetch := find("Logic.Fetch")
+	unrelatedGet := find("Unrelated.Get")
+
+	res := callgraph(t, server, implGet, callgraphCallers)
+
+	var node *CallGraphNode
+
+	for i := range res.Nodes {
+		if res.Nodes[i].ID == implGet {
+			node = &res.Nodes[i]
+
+			break
+		}
+	}
+
+	if node == nil {
+		t.Fatal("нет узла реализации в ответе")
+	}
+
+	// Logic.Fetch зовёт httpHR.Get через поле типа HRClient — это диспетч.
+	if !containsID(node.DispatchedBy, fetch) {
+		t.Fatalf("вызов через интерфейс не распознан: dispatchedBy=%v weak=%v",
+			node.DispatchedBy, node.ReferencedBy)
+	}
+
+	// А вот обратное: у однофамильца Unrelated.Get вызывающих через интерфейс
+	// быть не должно — Logic не использует Unrelated и он ничего общего с
+	// HRClient-зависимостью Logic не имеет... кроме имени метода.
+	other := callgraph(t, server, unrelatedGet, callgraphCallers)
+
+	for _, n := range other.Nodes {
+		if n.ID != unrelatedGet {
+			continue
+		}
+
+		// Unrelated реализует HRClient по сигнатуре, поэтому попасть в диспетч
+		// он ПРАВО имеет: статически неизвестно, что подставлено. Но тогда он
+		// обязан быть именно там, а не выдаваться за прямой вызов.
+		if containsID(n.CalledBy, fetch) {
+			t.Fatalf("совпадение по имени выдано за прямой вызов: %v", n.CalledBy)
+		}
 	}
 }
