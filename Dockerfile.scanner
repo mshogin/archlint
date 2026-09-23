@@ -10,7 +10,7 @@
 # Usage (bot handles this automatically):
 #   docker run --rm --network=none archlint-scanner scan /repo
 
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /build
 COPY . .

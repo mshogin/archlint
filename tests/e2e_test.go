@@ -33,7 +33,7 @@ func e2eBinary(t *testing.T) string {
 
 	// Build from source into a temp dir.
 	binPath := filepath.Join(t.TempDir(), "archlint")
-	repoRoot := filepath.Join("..", "..")
+	repoRoot := ".."
 	cmd := exec.Command("go", "build", "-o", binPath, "./cmd/archlint/")
 	cmd.Dir = repoRoot
 	out, err := cmd.CombinedOutput()

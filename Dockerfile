@@ -1,5 +1,5 @@
 # Stage 1: Build Go archlint binary
-FROM golang:1.25-bookworm AS go-builder
+FROM golang:1.26-bookworm AS go-builder
 
 WORKDIR /build
 
