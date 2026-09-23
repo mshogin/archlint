@@ -1,0 +1,22 @@
+components:
+  - id: a
+    title: Alpha
+    entity: package
+  - id: b
+    entity: package
+  - id: c
+    title: Gamma
+    entity: package
+    properties:
+      team: core
+links:
+  - from: a
+    to: b
+    type: import
+  - from: a
+    to: b
+    type: calls
+  - from: b
+    to: c
+    type: import
+    method: Foo

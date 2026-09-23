@@ -1,0 +1,12 @@
+components:
+  svc:
+    title: Service
+    entity: component
+  db:
+    title: Database
+    entity: datastore
+links:
+  svc:
+    - to: db
+      type: uses
+      method: query

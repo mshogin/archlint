@@ -29,6 +29,9 @@ tests/output/
 # Self-oracle: golden expectations for the soundness check (part of the product,
 # dogfooding transparency). Explicit exception to the *.yaml ignore.
 !docs/golden-expectation.yaml
+# Тестовые фикстуры: golden-входы обязаны ехать с репо, иначе тесты
+# зелёные локально и красные на CI. Исключение к общему игнору *.yaml.
+!**/testdata/*.yaml
 !.github/ISSUE_TEMPLATE/*.yml
 *.puml
 

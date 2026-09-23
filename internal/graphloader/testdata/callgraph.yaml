@@ -1,0 +1,26 @@
+entry_point: pkg.Main
+nodes:
+  - id: pkg.Main
+    package: pkg
+    function: Main
+    type: function
+    file: main.go
+    line: 10
+    depth: 0
+  - id: pkg.Helper
+    package: pkg
+    function: Helper
+    type: function
+    line: 20
+    depth: 1
+edges:
+  - from: pkg.Main
+    to: pkg.Helper
+    call_type: direct
+    line: 12
+  - from: pkg.Main
+    to: pkg.External
+    call_type: deferred
+    line: 15
+stats:
+  total: 3

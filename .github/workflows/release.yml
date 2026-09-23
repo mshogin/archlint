@@ -69,7 +69,7 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
-        run: go build -ldflags="-s -w" -o ${{ matrix.artifact }} ./cmd/archlint/
+        run: go build -ldflags="-s -w -X github.com/mshogin/archlint/internal/cli.version=${GITHUB_REF_NAME#v}" -o ${{ matrix.artifact }} ./cmd/archlint/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
