@@ -121,7 +121,29 @@ archlint — полиглот сейчас, но ЦЕЛЬ = ЧИСТЫЙ Go (0 P
 - Метрика без привязки/не-портируемая -> ВЫБРОС (удалить), не порт, не музей-навсегда.
 - ФИНАЛ фазы: validator/ УДАЛЁН (0 Python). Музей = только временный буфер на время порта.
 - Статус: ERROR-детекторы материализованы (SCC/циклы, слоистость-A, dead-code; DIP=WARNING; ISP done).
-  Батч 1 структурных дескрипторов (8, golden зелёные) сделан. graph_loader->Go в работе (фундамент).
+  Батч 1 структурных дескрипторов (8, golden зелёные) сделан.
+  ★БЛОКЕР-1 (graph_loader->Go, под-шаг 3.0 ФУНДАМЕНТ) ЗАКРЫТ (2026-06-29):
+  internal/graphloader/graphloader.go покрывает все 3 формата (parseArchlint/parseDochub/parseCallgraph
+  + DetectSource structure/behavior). golden против Python-эталона (validator.GraphLoader/NetworkX,
+  каноническая JSON-форма sort_keys) — 3/3 формата + DetectSource ЗЕЛЁНЫЕ (go test ./internal/graphloader/).
+  Предусловие выпила validator/graph_loader.py выполнено.
+  ★УТОЧНЕНИЕ ГОРИЗОНТА (2026-06-29): боевой путь УЖЕ Go-only — internal/ НЕ вызывает Python
+  (os/exec только archlint-сам + gh; 0 subprocess python). Единственный потребитель graph_loader.py
+  = validator/__main__.py (сам Python-пакет, вне боевого). Т.е. цель "0 Python в БОЕВОМ" по загрузке
+  ДОСТИГНУТА. Реальный остаток Фазы 3 = порт оставшихся ~274 метрик validator/structure -> Go через
+  ворота доказуемости; graph_loader.py rm'ится вместе с validator/ в финале (не отдельным шагом).
+  ★★КУРС-КОРРЕКЦИЯ (2026-06-30): порт НОВЫХ структурных метрик как приоритет — ОТМЕНЁН.
+  Фаза НАКОПЛЕНИЯ ERROR-детекторов ЗАКРЫТА: ERROR-набор насыщен, доказуемое ERROR-пространство
+  очерчено двумерным критерием-фильтром (ERROR требует ИЗМ.1 внешний term-контракт + ИЗМ.2 точный
+  граф; за стенами магнитуды/over-approximation — недоказуемо). Вектор ОКОНЧАТЕЛЬНО = ДОСТАВКА
+  доказуемого в живой блокирующий loop у пользователя (горизонт Б), НЕ копить детекторы.
+  SOLID-стержень в Go ЗАВЕРШЁН (SRP/OCP/ISP/DIP+lcom4; LSP — зафиксированный ОТКАЗ, proof-catalog.md:188).
+  architecture/core/quality/research метрики НЕ тащить в порт-приоритет (под двумерный критерий-фильтр:
+  большинство — магнитуда/конвенция/дубль LayerBackedge -> WARNING/музей, не ERROR).
+  ДЕЙСТВУЮЩИЙ ГОРИЗОНТ = ДОСТАВКА: уже-доказуемые ERROR-детекторы -> в живой агентский гейт
+  (pre-commit/scan-gate/MCP-gate, НЕ ждущий push), доказать failing-case'ом (внести дубль/цикл ->
+  гейт ОБЯЗАН упасть ERROR). taint-WARNING (data-flow) — backlog под продуктовым триггером
+  (отложено как противоречащее вектору доставки).
 
 ### Фаза 4 — research Тир2 через archmotif
 - Спектр/modularity/motif/симметрия через export-API форка (ADR-0002, вариант B').
