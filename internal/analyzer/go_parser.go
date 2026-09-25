@@ -64,7 +64,11 @@ func (p *GoParser) parseFile(filename string) error {
 	pkgDir := filepath.Dir(filename)
 	pkgID := p.getPkgID(pkgDir, pkgName)
 
-	if _, exists := p.packages[pkgID]; !exists {
+	if existing, exists := p.packages[pkgID]; exists {
+		if strings.HasSuffix(existing.Name, "_test") && !strings.HasSuffix(pkgName, "_test") {
+			existing.Name = pkgName
+		}
+	} else {
 		p.packages[pkgID] = &PackageInfo{
 			Name:    pkgName,
 			Path:    pkgID,

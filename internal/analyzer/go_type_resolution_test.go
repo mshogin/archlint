@@ -84,6 +84,59 @@ func Unknown(f *Filter) {}
 	}
 }
 
+func TestExternalTestPackageBeforeProductionPackage(t *testing.T) {
+	for _, tc := range []struct {
+		name, dir, target string
+	}{
+		{name: "subdirectory", dir: "foo", target: "foo.Thing"},
+		{name: "scan root", dir: "", target: "foo.Thing"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			importPath := "example.com/fixture"
+			if tc.dir != "" {
+				importPath += "/" + tc.dir
+			}
+			files := map[string]string{
+				"go.mod":                           "module example.com/fixture\n\ngo 1.26.1\n",
+				filepath.Join(tc.dir, "a_test.go"): "package foo_test\nimport foo \"" + importPath + "\"\ntype External struct { T foo.Thing }\n",
+				filepath.Join(tc.dir, "foo.go"):    "package foo\ntype Thing struct{}\n",
+				"bar/bar.go":                       "package bar\nimport \"" + importPath + "\"\ntype Holder struct { T foo.Thing }\nfunc Use(t *foo.Thing) *foo.Thing { return t }\n",
+			}
+			for name, body := range files {
+				path := filepath.Join(root, name)
+				if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(body), 0644); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			graph, err := NewGoAnalyzer().Analyze(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, want := range []struct{ from, kind string }{
+				{from: "bar.Holder", kind: "uses"},
+				{from: "bar.Use", kind: "uses"},
+				{from: "bar.Use", kind: "returns"},
+			} {
+				found := false
+				for _, edge := range graph.Edges {
+					if edge.From == want.from && edge.To == tc.target && edge.Type == want.kind {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("missing %s edge from %s to %s", want.kind, want.from, tc.target)
+				}
+			}
+		})
+	}
+}
+
 func TestPackageImportPathUsesNearestModule(t *testing.T) {
 	root := t.TempDir()
 	for _, tc := range []struct{ dir, module string }{

@@ -13,7 +13,12 @@ func (p *GoParser) resolveFileTypes() {
 	imports := make(map[string]*PackageInfo)
 	for _, pkg := range p.packages {
 		if path := packageImportPath(pkg.Dir); path != "" {
-			imports[path] = pkg
+			// At the scan root, external tests have a separate package ID but
+			// share the directory. Plain imports must use the production name.
+			if existing := imports[path]; existing == nil ||
+				(strings.HasSuffix(existing.Name, "_test") && !strings.HasSuffix(pkg.Name, "_test")) {
+				imports[path] = pkg
+			}
 		}
 	}
 	files := make(map[string]map[string]string)
