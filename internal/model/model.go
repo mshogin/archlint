@@ -94,7 +94,9 @@ type InterfaceMethodSig struct {
 type FieldInfo struct {
 	Name     string
 	TypeName string
-	TypePkg  string
+	// TypePkg is the source qualifier while parsing; the Go analyzer binds it
+	// to a graph package ID before building edges. A ? prefix means unresolved.
+	TypePkg string
 }
 
 // FunctionInfo содержит информацию о функции.

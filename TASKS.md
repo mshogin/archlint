@@ -6,6 +6,7 @@ Current work items and their status. Updated by contributors.
 
 | Issue | Title | Assignee | Status |
 |-------|-------|----------|--------|
+| #164 | Resolve Go types using file-scoped imports | - | Implemented locally; tests and self-gate pass; pending PR |
 | #5 | Tarjan SCC cycle detection | - | Backlog |
 | #3 | Bot-to-bot communication | all | Active channel |
 

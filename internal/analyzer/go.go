@@ -116,6 +116,7 @@ func (a *GoAnalyzer) Analyze(dir string) (*model.Graph, error) {
 		return nil, fmt.Errorf("directory walk error: %w", err)
 	}
 
+	parser.resolveFileTypes()
 	builder := newGoGraphBuilder(a.packages, a.types, a.functions, a.methods, &a.nodes, &a.edges)
 	builder.pkgRefs = a.pkgRefs
 	builder.buildGraph()
