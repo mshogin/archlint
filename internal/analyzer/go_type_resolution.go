@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"go/build"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -9,16 +10,39 @@ import (
 
 // resolveFileTypes binds qualifiers in their source file before graph construction.
 // Package IDs remain relative to the scan root; import paths remain module-qualified.
+// Call after all files have been parsed; repeated calls leave the bindings unchanged.
 func (p *GoParser) resolveFileTypes() {
-	imports := make(map[string]*PackageInfo)
-	for _, pkg := range p.packages {
-		if path := packageImportPath(pkg.Dir); path != "" {
-			// At the scan root, external tests have a separate package ID but
-			// share the directory. Plain imports must use the production name.
-			if existing := imports[path]; existing == nil ||
-				(strings.HasSuffix(existing.Name, "_test") && !strings.HasSuffix(pkg.Name, "_test")) {
-				imports[path] = pkg
-			}
+	if p.fileTypesResolved {
+		return
+	}
+	// A directory may contain an ignored generator (package main) or an
+	// external test package. Neither may determine the name of a plain import.
+	// Retain every buildable production name so the qualifier selects its own
+	// package even when several names share the scan root.
+	imports := make(map[string]map[string]string)
+	importPaths := make(map[string]string)
+	for file, name := range p.filePackageNames {
+		if strings.HasSuffix(name, "_test") {
+			continue
+		}
+		dir := filepath.Dir(file)
+		matches, err := build.Default.MatchFile(dir, filepath.Base(file))
+		if err != nil || !matches {
+			continue
+		}
+		path, ok := importPaths[dir]
+		if !ok {
+			path = packageImportPath(dir)
+			importPaths[dir] = path
+		}
+		if path == "" {
+			continue
+		}
+		if imports[path] == nil {
+			imports[path] = make(map[string]string)
+		}
+		if pkg := p.packages[p.getPkgID(dir, name)]; pkg != nil {
+			imports[path][name] = pkg.Path
 		}
 	}
 	files := make(map[string]map[string]string)
@@ -32,19 +56,26 @@ func (p *GoParser) resolveFileTypes() {
 			if err != nil {
 				continue
 			}
-			pkg := imports[path]
-			name := ""
 			if spec.Name != nil {
-				name = spec.Name.Name
-			} else if pkg != nil {
-				name = pkg.Name
-			}
-			if name == "" || name == "_" || name == "." {
+				alias := spec.Name.Name
+				if alias == "_" || alias == "." {
+					continue
+				}
+				// An alias does not identify the package name. Bind it only when
+				// the import path has one buildable production package.
+				if len(imports[path]) == 1 {
+					for _, pkgID := range imports[path] {
+						b[alias] = pkgID
+					}
+				} else {
+					b[alias] = "?" + path
+				}
 				continue
 			}
-			b[name] = "?" + path // Unknown imports must never match local types.
-			if pkg != nil {
-				b[name] = p.getPkgID(pkg.Dir, pkg.Name)
+			// For a plain import, the source qualifier must match the package's
+			// declared name (which may differ from the directory name).
+			for name, pkgID := range imports[path] {
+				b[name] = pkgID
 			}
 		}
 		files[file] = b
@@ -89,6 +120,7 @@ func (p *GoParser) resolveFileTypes() {
 		resolve(m.Results, m.File)
 		resolve(m.NamedParams, m.File)
 	}
+	p.fileTypesResolved = true
 }
 
 // packageImportPath uses the closest go.mod, including when scanning a subdirectory.

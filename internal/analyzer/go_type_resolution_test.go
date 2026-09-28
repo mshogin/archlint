@@ -137,6 +137,102 @@ func TestExternalTestPackageBeforeProductionPackage(t *testing.T) {
 	}
 }
 
+func TestIgnoredGeneratorDoesNotNameImportedPackage(t *testing.T) {
+	for _, tc := range []struct {
+		name, dir string
+	}{
+		{name: "subdirectory", dir: "foo"},
+		{name: "scan root"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			importPath := "example.com/fixture"
+			if tc.dir != "" {
+				importPath += "/" + tc.dir
+			}
+			files := map[string]string{
+				"go.mod":                          "module example.com/fixture\n\ngo 1.26.1\n",
+				filepath.Join(tc.dir, "a_gen.go"): "//go:build ignore\n\npackage main\nfunc main() {}\n",
+				filepath.Join(tc.dir, "foo.go"):   "package foo\ntype Thing struct{}\n",
+				"bar/bar.go": "package bar\nimport \"" + importPath + "\"\n" +
+					"type Holder struct { T foo.Thing }\nfunc Use(t *foo.Thing) *foo.Thing { return t }\n",
+				"bar/alias.go": "package bar\nimport alias \"" + importPath + "\"\n" +
+					"func Aliased(t *alias.Thing) {}\n",
+			}
+			for name, body := range files {
+				path := filepath.Join(root, name)
+				if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(body), 0644); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			target := "foo.Thing"
+			for run := 0; run < 20; run++ {
+				graph, err := NewGoAnalyzer().Analyze(root)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, want := range []struct{ from, kind string }{
+					{from: "bar.Holder", kind: "uses"},
+					{from: "bar.Use", kind: "uses"},
+					{from: "bar.Use", kind: "returns"},
+					{from: "bar.Aliased", kind: "uses"},
+				} {
+					found := false
+					for _, edge := range graph.Edges {
+						if edge.From == want.from && edge.To == target && edge.Type == want.kind {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("run %d: missing %s edge from %s to %s", run, want.kind, want.from, target)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestResolveFileTypesIsIdempotent(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/fixture\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	for name, body := range map[string]string{
+		"foo/foo.go": "package foo\ntype Thing struct{}\ntype Base interface { Run() }\n",
+		"bar/bar.go": "package bar\nimport \"example.com/fixture/foo\"\n" +
+			"type Holder struct { foo.Base }\nfunc Use(t *foo.Thing) {}\n",
+	} {
+		path := filepath.Join(root, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	p := newGoParser(make(map[string]*PackageInfo), make(map[string]*TypeInfo),
+		make(map[string]*FunctionInfo), make(map[string]*MethodInfo))
+	p.scanRoot = root
+	for _, name := range []string{"foo/foo.go", "bar/bar.go"} {
+		if err := p.parseFile(filepath.Join(root, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	p.resolveFileTypes()
+	p.resolveFileTypes()
+	if got := p.functions["bar.Use"].Params[0].TypePkg; got != "foo" {
+		t.Errorf("repeated binding changed param package to %q", got)
+	}
+	if got := p.types["bar.Holder"].Embeds[0]; got != "foo.Base" {
+		t.Errorf("repeated binding changed embed to %q", got)
+	}
+}
+
 func TestPackageImportPathUsesNearestModule(t *testing.T) {
 	root := t.TempDir()
 	for _, tc := range []struct{ dir, module string }{

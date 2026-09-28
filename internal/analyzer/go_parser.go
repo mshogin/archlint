@@ -12,11 +12,13 @@ import (
 
 // GoParser is responsible for parsing Go files and extracting structural information.
 type GoParser struct {
-	fileImports map[string][]*ast.ImportSpec
-	packages    map[string]*PackageInfo
-	types       map[string]*TypeInfo
-	functions   map[string]*FunctionInfo
-	methods     map[string]*MethodInfo
+	fileImports       map[string][]*ast.ImportSpec
+	filePackageNames  map[string]string
+	fileTypesResolved bool
+	packages          map[string]*PackageInfo
+	types             map[string]*TypeInfo
+	functions         map[string]*FunctionInfo
+	methods           map[string]*MethodInfo
 	// pkgRefs — package-level function-value-use по пакетам (а)-фикс. Делится с
 	// builder через analyzer (go.go выставляет parser.pkgRefs = a.pkgRefs).
 	pkgRefs map[string][]CallInfo
@@ -61,6 +63,10 @@ func (p *GoParser) parseFile(filename string) error {
 	p.fileImports[filename] = node.Imports
 
 	pkgName := node.Name.Name
+	if p.filePackageNames == nil {
+		p.filePackageNames = make(map[string]string)
+	}
+	p.filePackageNames[filename] = pkgName
 	pkgDir := filepath.Dir(filename)
 	pkgID := p.getPkgID(pkgDir, pkgName)
 
