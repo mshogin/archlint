@@ -275,7 +275,7 @@ func resolveParamInterface(
 	if p.TypePkg != "" {
 		// pkg-qualified: либо известный широкий внешний (курируемая таблица), либо
 		// no-verdict (своих кросс-пакетных по короткому имени пакета не резолвим).
-		// TypeName уже квалифицирован ("io.ReadWriteCloser"), TypePkg — короткое имя.
+		// TypeName уже квалифицирован ("io.ReadWriteCloser"), TypePkg — ID пакета или ?qualifier.
 		key := p.TypeName
 		if ms, ok := knownWideInterfaces[key]; ok {
 			set := make(map[string]bool, len(ms))

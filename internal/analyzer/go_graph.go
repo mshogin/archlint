@@ -563,26 +563,23 @@ func (g *GoGraphBuilder) resolveTypeDependency(typeName, typePkg, currentPkg str
 	}
 
 	if typePkg != "" {
-		for typeID := range g.types {
-			if strings.Contains(typeID, typePkg) && strings.HasSuffix(typeID, "."+strings.Split(typeName, ".")[len(strings.Split(typeName, "."))-1]) {
-				return typeID
-			}
+		id := typePkg + "." + lastSegment(typeName)
+		if _, ok := g.types[id]; ok {
+			return id
 		}
-
 		return ""
 	}
-
-	localID := currentPkg + "." + typeName
-	if _, exists := g.types[localID]; exists {
-		return localID
-	}
-
-	for typeID := range g.types {
-		if strings.HasSuffix(typeID, "."+typeName) {
-			return typeID
+	// Qualified embedded types have already been bound to their source imports.
+	if strings.Contains(typeName, ".") {
+		if _, ok := g.types[typeName]; ok {
+			return typeName
 		}
+		return ""
 	}
-
+	id := currentPkg + "." + typeName
+	if _, ok := g.types[id]; ok {
+		return id
+	}
 	return ""
 }
 
