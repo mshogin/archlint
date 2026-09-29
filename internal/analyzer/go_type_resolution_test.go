@@ -175,6 +175,18 @@ func TestIgnoredGeneratorDoesNotNameImportedPackage(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				foundPackage := false
+				for _, node := range graph.Nodes {
+					if node.ID == "foo" && node.Entity == "package" {
+						foundPackage = true
+						if node.Title != "foo" {
+							t.Errorf("run %d: package foo has title %q", run, node.Title)
+						}
+					}
+				}
+				if tc.dir != "" && !foundPackage {
+					t.Errorf("run %d: missing package foo", run)
+				}
 				for _, want := range []struct{ from, kind string }{
 					{from: "bar.Holder", kind: "uses"},
 					{from: "bar.Use", kind: "uses"},
@@ -194,6 +206,110 @@ func TestIgnoredGeneratorDoesNotNameImportedPackage(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Imports must resolve against all parsed packages, independently of the
+// GOOS, GOARCH, and build tags of the machine running archlint.
+func TestImportBindingIndependentOfHostBuildContext(t *testing.T) {
+	for _, tc := range []struct {
+		name, file, body string
+	}{
+		{name: "GOOS file suffix", file: "foo_plan9.go", body: "package foo\ntype Thing struct{}\n"},
+		{name: "GOARCH file suffix", file: "foo_wasm.go", body: "package foo\ntype Thing struct{}\n"},
+		{name: "GOOS build tag", file: "foo.go", body: "//go:build plan9\n\npackage foo\ntype Thing struct{}\n"},
+		{name: "custom build tag", file: "foo.go", body: "//go:build integration\n\npackage foo\ntype Thing struct{}\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			files := map[string]string{
+				"go.mod":                      "module example.com/fixture\n\ngo 1.26.1\n",
+				filepath.Join("foo", tc.file): tc.body,
+				"bar/bar.go": "package bar\nimport \"example.com/fixture/foo\"\n" +
+					"type Holder struct { T foo.Thing }\nfunc Use(t *foo.Thing) *foo.Thing { return t }\n",
+				"bar/alias.go": "package bar\nimport alias \"example.com/fixture/foo\"\n" +
+					"func Aliased(t *alias.Thing) {}\n",
+			}
+			for name, body := range files {
+				path := filepath.Join(root, name)
+				if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, []byte(body), 0644); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			graph, err := NewGoAnalyzer().Analyze(root)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, want := range []struct{ from, kind string }{
+				{from: "bar.Holder", kind: "uses"},
+				{from: "bar.Use", kind: "uses"},
+				{from: "bar.Use", kind: "returns"},
+				{from: "bar.Aliased", kind: "uses"},
+			} {
+				found := false
+				for _, edge := range graph.Edges {
+					if edge.From == want.from && edge.To == "foo.Thing" && edge.Type == want.kind {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("missing %s edge from %s to foo.Thing", want.kind, want.from)
+				}
+			}
+		})
+	}
+}
+
+func TestImportBindingWithMultiplePackageNames(t *testing.T) {
+	root := t.TempDir()
+	for name, body := range map[string]string{
+		"go.mod":         "module example.com/fixture\n",
+		"foo/a_plan9.go": "package foo\ntype Thing struct{}\n",
+		"foo/b_linux.go": "package other\ntype Different struct{}\n",
+		"bar/foo.go": "package bar\nimport \"example.com/fixture/foo\"\n" +
+			"func Use(t foo.Thing) {}\n",
+		"bar/other.go": "package bar\nimport \"example.com/fixture/foo\"\n" +
+			"func Other(t other.Different) {}\n",
+		"bar/alias.go": "package bar\nimport alias \"example.com/fixture/foo\"\n" +
+			"func Ambiguous(t alias.Thing) {}\n",
+	} {
+		path := filepath.Join(root, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(body), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	graph, err := NewGoAnalyzer().Analyze(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"bar.Use": "foo.Thing", "bar.Other": "foo.Different"}
+	seen := make(map[string]bool)
+	for _, edge := range graph.Edges {
+		if edge.Type != "uses" {
+			continue
+		}
+		if edge.From == "bar.Ambiguous" {
+			t.Errorf("ambiguous alias guessed target %s", edge.To)
+		}
+		if target, ok := want[edge.From]; ok {
+			if edge.To != target {
+				t.Errorf("%s points to %s, want %s", edge.From, edge.To, target)
+			}
+			seen[edge.From] = true
+		}
+	}
+	for from := range want {
+		if !seen[from] {
+			t.Errorf("missing uses edge from %s", from)
+		}
 	}
 }
 

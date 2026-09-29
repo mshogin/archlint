@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"go/build"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -17,19 +16,17 @@ func (p *GoParser) resolveFileTypes() {
 	}
 	// A directory may contain an ignored generator (package main) or an
 	// external test package. Neither may determine the name of a plain import.
-	// Retain every buildable production name so the qualifier selects its own
-	// package even when several names share the scan root.
+	// Retain every production name regardless of the host build context: the
+	// analyzer parses every Go file, including files for other platforms and
+	// build tags. The source qualifier selects its own package when several
+	// names share a directory.
 	imports := make(map[string]map[string]string)
 	importPaths := make(map[string]string)
 	for file, name := range p.filePackageNames {
-		if strings.HasSuffix(name, "_test") {
+		if name == "main" || strings.HasSuffix(name, "_test") {
 			continue
 		}
 		dir := filepath.Dir(file)
-		matches, err := build.Default.MatchFile(dir, filepath.Base(file))
-		if err != nil || !matches {
-			continue
-		}
 		path, ok := importPaths[dir]
 		if !ok {
 			path = packageImportPath(dir)
@@ -62,7 +59,7 @@ func (p *GoParser) resolveFileTypes() {
 					continue
 				}
 				// An alias does not identify the package name. Bind it only when
-				// the import path has one buildable production package.
+				// the import path has one production package name.
 				if len(imports[path]) == 1 {
 					for _, pkgID := range imports[path] {
 						b[alias] = pkgID
