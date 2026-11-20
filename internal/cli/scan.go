@@ -27,6 +27,7 @@ var (
 	scanBaselineFile string
 	scanSignals      bool
 	scanDiff         string
+	scanExcludeTests bool
 )
 
 var scanCmd = &cobra.Command{
@@ -66,6 +67,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&scanSignals, "signals", false, "Audit/slow mode: also compute structural magnitude descriptors (centralities, coupling, smells) and include them under `signals` in JSON. Off by default — the fast gate stays free of magnitudes (speed constitution).")
 	scanCmd.Flags().StringVar(&scanDiff, "diff", "", "Self-audit delta: mark findings INTRODUCED by the working tree vs git <ref> as NEW (all severity, same canonical fingerprint as the ERROR gate). Empty value (--diff alone) compares against HEAD. Requires a git repo.")
 	scanCmd.Flags().Lookup("diff").NoOptDefVal = "HEAD"
+	scanCmd.Flags().BoolVar(&scanExcludeTests, "exclude-tests", true, excludeTestsFlagUsage)
 	rootCmd.AddCommand(scanCmd)
 }
 
@@ -234,6 +236,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 			}
 		}
 
+		// До multi-module ветки: runScanPerModule использует cfg сразу.
+		cfg.ApplyExcludeTestsFlag(flagChanged(cmd, "exclude-tests"), scanExcludeTests)
+
 		excludes := mergeExcludes(cfg.ExcludePaths, scanExclude)
 		resolvedExcludes = excludes
 
@@ -272,6 +277,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 			graph = g
 		}
 	}
+
+	cfg.ApplyExcludeTestsFlag(flagChanged(cmd, "exclude-tests"), scanExcludeTests)
 
 	// --- Delta gate (Фаза 5) ---
 	// Загружаем baseline-снимок ДО сбора: нужен collectFromGraph для OCP baseline-conditional
@@ -596,6 +603,11 @@ func collectFromGraph(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintc
 	// существующего S vs baseline. nil baseline -> abstain (CollectOCP вернёт nil). Go-only (a!=nil).
 	if a != nil {
 		violations = append(violations, mcp.CollectOCP(a, baseline)...)
+	}
+
+	// exclude_tests (default true): находки на тестовом коде не попадают в отчёт/гейт.
+	if cfg.TestsExcluded() {
+		violations = mcp.DropTestTargets(a, violations)
 	}
 
 	// Стабильный порядок: kind, затем target.

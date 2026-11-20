@@ -15,6 +15,7 @@ var (
 	baselineOutputFile string
 	baselineConfigFile string
 	baselineExclude    []string
+	baselineExclTests  bool
 )
 
 var baselineCmd = &cobra.Command{
@@ -41,10 +42,11 @@ func init() {
 	baselineCmd.Flags().StringVarP(&baselineOutputFile, "output", "o", "", "Output path (default: <directory>/.archlint-baseline.json)")
 	baselineCmd.Flags().StringVar(&baselineConfigFile, "config", "", "Path to .archlint.yaml config file (default: <directory>/.archlint.yaml)")
 	baselineCmd.Flags().StringSliceVar(&baselineExclude, "exclude", nil, "Directory basenames to skip during the source walk (additive). Repeatable.")
+	baselineCmd.Flags().BoolVar(&baselineExclTests, "exclude-tests", true, excludeTestsFlagUsage)
 	rootCmd.AddCommand(baselineCmd)
 }
 
-func runBaseline(_ *cobra.Command, args []string) error {
+func runBaseline(cmd *cobra.Command, args []string) error {
 	codeDir := args[0]
 
 	var cfg archlintcfg.Config
@@ -58,6 +60,8 @@ func runBaseline(_ *cobra.Command, args []string) error {
 		cfg = archlintcfg.Load(absDir)
 	}
 
+	cfg.ApplyExcludeTestsFlag(flagChanged(cmd, "exclude-tests"), baselineExclTests)
+
 	excludes := mergeExcludes(cfg.ExcludePaths, baselineExclude)
 
 	graph, a, err := analyzeForGate(codeDir, excludes)
@@ -70,6 +74,10 @@ func runBaseline(_ *cobra.Command, args []string) error {
 	// «что было», чтобы scan отличил НОВУЮ ветку существующего S от нового S (baseline-conditional OCP).
 	// Эмитятся только здесь (baseline-генерация), не в scan-выводе. BuildBaseline снимет их (tracked).
 	violations = append(violations, mcp.CollectDispatchFacts(a)...)
+	// exclude_tests: та же фильтрация, что в scan -> baseline и гейт симметричны.
+	if cfg.TestsExcluded() {
+		violations = mcp.DropTestTargets(a, violations)
+	}
 	baseline := mcp.BuildBaseline(violations)
 
 	data, err := json.MarshalIndent(baseline, "", "  ")
