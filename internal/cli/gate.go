@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"os"
 
 	"github.com/mshogin/archlint/internal/analyzer"
@@ -49,4 +50,12 @@ func analyzeForGate(codeDir string, excludes []string) (*model.Graph, *analyzer.
 // синхронизации двух списков. BuildBaseline отфильтрует не-ERROR-class.
 func errorClassViolations(graph *model.Graph, a *analyzer.GoAnalyzer, cfg *archlintcfg.Config) []mcp.Violation {
 	return mcp.CollectErrorClassViolations(graph, a, cfg)
+}
+
+// excludeTestsFlagUsage — общий текст флага --exclude-tests (scan/baseline/check).
+const excludeTestsFlagUsage = "Drop findings on test code (_test.go symbols, <pkg>_test packages); tests still feed the graph. Overrides exclude_tests in .archlint.yaml. Use --exclude-tests=false to report them"
+
+// flagChanged — nil-safe cmd.Flags().Changed (run* вызываются из тестов с cmd == nil).
+func flagChanged(cmd *cobra.Command, name string) bool {
+	return cmd != nil && cmd.Flags().Changed(name)
 }

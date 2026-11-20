@@ -123,6 +123,27 @@ type Config struct {
 	// Contexts declares named component groups (architect's declaration, alongside
 	// layers). Behaviour metrics gate the graph against them. Empty -> inactive.
 	Contexts []ContextDef `yaml:"contexts,omitempty"`
+	// ExcludeTests drops findings whose target is declared in a _test.go file
+	// (test functions, stubs, suites) or belongs to an external <pkg>_test package.
+	// Tests still take part in the graph (test-reachability for dead-code,
+	// test-only-prod-symbol); only the report is filtered. nil -> default true.
+	ExcludeTests *bool `yaml:"exclude_tests,omitempty"`
+}
+
+// TestsExcluded reports whether findings on test code are dropped (default true).
+func (c *Config) TestsExcluded() bool {
+	if c.ExcludeTests == nil {
+		return true
+	}
+
+	return *c.ExcludeTests
+}
+
+// ApplyExcludeTestsFlag overrides exclude_tests from the CLI flag when it was set explicitly.
+func (c *Config) ApplyExcludeTestsFlag(changed, value bool) {
+	if changed {
+		c.ExcludeTests = &value
+	}
 }
 
 // ContextComponents returns the set of ALL component IDs declared across every

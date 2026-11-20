@@ -167,6 +167,20 @@ allowed_dependencies:
 | `isp` | Interface Segregation: max methods per interface | 5 |
 | `dip` | Dependency Inversion: detect concrete deps | - |
 
+### Test code (`exclude_tests`)
+
+By default (`exclude_tests: true`) findings on test code are dropped from the report, the gate and the baseline:
+symbols declared in `_test.go` files (test functions, stubs, suites) and external `<pkg>_test` packages.
+Test files are still parsed and take part in the graph, so test-reachability for `dead-code` and
+`test-only-prod-symbol-exported` keep working.
+
+```yaml
+exclude_tests: false   # report findings on test code too
+```
+
+The `--exclude-tests` flag of `scan`, `check` and `baseline` overrides the config:
+`archlint scan . --exclude-tests=false`.
+
 ---
 
 ## CI/CD Integration

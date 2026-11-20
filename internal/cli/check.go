@@ -11,7 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var checkFormat string
+var (
+	checkFormat       string
+	checkExcludeTests bool
+)
 
 var checkCmd = &cobra.Command{
 	Use:   "check [directory]",
@@ -29,6 +32,7 @@ Examples:
 
 func init() {
 	checkCmd.Flags().StringVar(&checkFormat, "format", "text", "Output format: text or json")
+	checkCmd.Flags().BoolVar(&checkExcludeTests, "exclude-tests", true, excludeTestsFlagUsage)
 	rootCmd.AddCommand(checkCmd)
 }
 
@@ -94,6 +98,10 @@ func runCheck(cmd *cobra.Command, args []string) error {
 				Target:  ss,
 			})
 		}
+	}
+
+	if checkExcludeTests {
+		violations = mcp.DropTestTargets(a, violations)
 	}
 
 	// Sort violations by kind then target for stable output.
